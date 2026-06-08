@@ -56,7 +56,7 @@ Set environment variables in PowerShell:
 
 ```powershell
 $env:SUPABASE_URL='https://your-project.supabase.co'
-$env:SUPABASE_SERVICE_ROLE_KEY='your-service-role-key'
+$env:SUPABASE_SECRET_KEY='sb_secret_xxx'
 ```
 
 Preview what the script will do:
@@ -97,8 +97,8 @@ Important profile fields:
 - `role`: `admin` or `worker`.
 - `must_change_password`: `true` for initial accounts.
 
-Never expose `SUPABASE_SERVICE_ROLE_KEY` in client-side code or Vercel public
-environment variables.
+Never expose `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY` in client-side
+code or Vercel public environment variables.
 
 ## 5. Storage
 
@@ -122,4 +122,7 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
-Do not expose the Supabase service role key in client code.
+Use the publishable key (`sb_publishable_xxx`) as
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+
+Do not expose the Supabase secret key (`sb_secret_xxx`) in client code.

@@ -11,18 +11,19 @@ const isDryRun = args.has("--dry-run");
 const shouldResetPassword = args.has("--reset-password");
 
 const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serviceRoleKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY;
 
 if (!supabaseUrl || !serviceRoleKey) {
   console.error(
     [
       "Missing required environment variables.",
       "Set SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL.",
-      "Set SUPABASE_SERVICE_ROLE_KEY.",
+      "Set SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY.",
       "",
       "Example:",
       "$env:SUPABASE_URL='https://xxxx.supabase.co'",
-      "$env:SUPABASE_SERVICE_ROLE_KEY='service-role-key'",
+      "$env:SUPABASE_SECRET_KEY='sb_secret_xxx'",
       "npm run seed:supabase-users -- --dry-run"
     ].join("\n")
   );
