@@ -16,8 +16,12 @@ Open `SQL Editor` and run the migration files in this order:
 
 1. `supabase/migrations/20250822_initial_schema.sql`
 2. `supabase/migrations/20260608_production_persistence.sql`
+3. `supabase/migrations/20260608_data_admin_permissions.sql`
 
 Do not disable RLS. The migrations enable RLS and add policies.
+
+Only `vinhlpp` can import/export DATA. Other admin accounts can view the
+dashboard and task lists, but cannot access the DATA import/export screen.
 
 ## 3. Configure Auth
 

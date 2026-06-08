@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { isDataAdminAccount } from "@/lib/permissions";
 import type { AuthAccount } from "@/types/domain";
 
 interface AdminShellProps {
@@ -16,7 +17,7 @@ interface AdminShellProps {
 const links = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/tasks", label: "Hạng mục" },
-  { href: "/admin/upload", label: "Import / Export" },
+  { href: "/admin/upload", label: "Import / Export", dataAdminOnly: true },
   { href: "/worker", label: "Xem worker" }
 ] as const;
 
@@ -28,6 +29,10 @@ export const AdminShell = ({
   onLogout
 }: AdminShellProps): React.ReactElement => {
   const pathname = usePathname();
+  const canManageData = isDataAdminAccount(account);
+  const visibleLinks = links.filter(
+    (link) => !("dataAdminOnly" in link) || !link.dataAdminOnly || canManageData
+  );
 
   return (
     <main className="min-h-dvh bg-transparent lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -40,7 +45,7 @@ export const AdminShell = ({
           <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
         </div>
         <nav className="mt-6 space-y-2">
-          {links.map((link) => (
+          {visibleLinks.map((link) => (
             <Link
               className={`focus-ring pressable flex min-h-11 items-center rounded-2xl px-3 text-sm font-bold ${
                 pathname === link.href
@@ -76,18 +81,22 @@ export const AdminShell = ({
               <p className="mt-1 text-sm text-[var(--text-muted)]">{subtitle}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link
-                className="focus-ring pressable min-h-11 rounded-2xl bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-md"
-                href="/admin/upload"
-              >
-                Import Excel
-              </Link>
-              <Link
-                className="focus-ring pressable min-h-11 rounded-2xl border border-[var(--primary)] bg-white px-4 py-3 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
-                href="/admin/upload"
-              >
-                Export DATA
-              </Link>
+              {canManageData ? (
+                <>
+                  <Link
+                    className="focus-ring pressable min-h-11 rounded-2xl bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-md"
+                    href="/admin/upload"
+                  >
+                    Import Excel
+                  </Link>
+                  <Link
+                    className="focus-ring pressable min-h-11 rounded-2xl border border-[var(--primary)] bg-white px-4 py-3 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
+                    href="/admin/upload"
+                  >
+                    Export DATA
+                  </Link>
+                </>
+              ) : null}
               <Link
                 className="focus-ring pressable min-h-11 rounded-2xl border border-[var(--primary)] bg-white px-4 py-3 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
                 href="/admin/tasks"

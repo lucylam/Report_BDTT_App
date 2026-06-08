@@ -7,6 +7,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
 import { downloadExportWorkbook } from "@/lib/excel/exporter";
 import { parseExcelFile } from "@/lib/excel/parser";
+import { isDataAdminAccount } from "@/lib/permissions";
 import { useAppData } from "@/hooks/useAppData";
 import type { ImportPreview, Task } from "@/types/domain";
 
@@ -84,19 +85,21 @@ const AdminUploadPage = (): React.ReactElement => {
     );
   }
 
-  if (currentAccount.role !== "admin") {
+  const canManageData = isDataAdminAccount(currentAccount);
+
+  if (currentAccount.role !== "admin" || !canManageData) {
     return (
       <main className="min-h-dvh px-4 py-8">
         <section className="soft-panel mx-auto max-w-md rounded-[2rem] p-6">
-          <h1 className="text-xl font-semibold">Không có quyền import</h1>
+          <h1 className="text-xl font-semibold">Không có quyền import/export DATA</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Chỉ admin được import/export Excel.
+            Chỉ tài khoản vinhlpp được import và export DATA. Các admin khác vẫn có thể xem dashboard và danh sách hạng mục.
           </p>
           <Link
             className="focus-ring pressable mt-4 inline-flex min-h-11 items-center rounded-2xl bg-[var(--foreground)] px-4 text-sm font-semibold text-white"
-            href="/worker"
+            href={currentAccount.role === "admin" ? "/admin" : "/worker"}
           >
-            Về worker
+            Quay lại
           </Link>
         </section>
       </main>
