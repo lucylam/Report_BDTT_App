@@ -29,8 +29,24 @@ Recommended settings for this internal app:
 - Confirm email: disabled for the first internal rollout.
 - Secure email change: enabled if available.
 
-The app can keep the username login UX by converting local-part usernames to
-PVCFC email addresses, for example `thanhcm` to `thanhcm@pvcfc.com.vn`.
+The app should keep the username login UX by converting local-part usernames to
+internal Supabase-only auth identifiers.
+
+Use this convention:
+
+```text
+{username}@bdtt.local
+```
+
+Example:
+
+```text
+thanhcm -> thanhcm@bdtt.local
+```
+
+This address is only an internal Supabase Auth identifier. It is not connected to
+PVCFC email, does not receive email, and should not be used as a real contact
+address.
 
 ## 4. Create worker/admin users
 
@@ -38,7 +54,7 @@ For each worker:
 
 1. Open `Authentication > Users`.
 2. Click `Add user`.
-3. Email: full PVCFC email, for example `thanhcm@pvcfc.com.vn`.
+3. Email: internal auth identifier, for example `thanhcm@bdtt.local`.
 4. Password: `123456`.
 5. Auto confirm user: enabled.
 
@@ -47,7 +63,7 @@ Then insert or import the matching row in `public.profiles`.
 Important profile fields:
 
 - `id`: must equal the auth user id.
-- `email`: full email.
+- `email`: use the same internal auth identifier, for example `thanhcm@bdtt.local`.
 - `username`: email local-part in lowercase.
 - `role`: `admin` or `worker`.
 - `must_change_password`: `true` for initial accounts.
