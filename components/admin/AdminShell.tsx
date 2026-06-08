@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { isDataAdminAccount } from "@/lib/permissions";
 import type { AuthAccount } from "@/types/domain";
 
@@ -90,6 +91,7 @@ export const AdminShell = ({
               Đăng xuất
             </button>
           </div>
+          <PwaInstallButton className="mt-3" compact showHint variant="panel" />
         </header>
 
         <header className="sticky top-0 z-20 hidden border-b border-white/50 bg-white/60 px-4 py-4 backdrop-blur-xl lg:block lg:px-8">

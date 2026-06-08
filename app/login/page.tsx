@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { DEFAULT_INITIAL_PASSWORD } from "@/lib/accounts";
 import { useAppData } from "@/hooks/useAppData";
 
@@ -94,6 +95,7 @@ const LoginPage = (): React.ReactElement => {
             {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
         </form>
+        <PwaInstallButton className="mt-5" showHint variant="panel" />
       </section>
     </main>
   );

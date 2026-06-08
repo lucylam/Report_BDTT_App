@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CountdownBanner } from "@/components/worker/CountdownBanner";
+import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { SummaryPills } from "@/components/worker/SummaryPills";
 import { WorkerGroupedTaskList } from "@/components/worker/WorkerGroupedTaskList";
 import { WorkerSearchControls } from "@/components/worker/WorkerSearchControls";
@@ -226,6 +227,7 @@ export const WorkerMobileView = ({
             <h2 className="text-lg font-semibold">{worker.fullName}</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
             <p className="mt-1 text-sm text-[var(--text-muted)]">{worker.email}</p>
+            <PwaInstallButton className="mt-4" compact showHint variant="panel" />
             <button
               className="focus-ring pressable mt-4 min-h-11 w-full rounded-2xl border border-[var(--border)] bg-white/75 px-4 text-sm font-semibold shadow-sm"
               onClick={onLogout}
