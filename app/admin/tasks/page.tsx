@@ -1,0 +1,54 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { AdminShell } from "@/components/admin/AdminShell";
+import { TasksTable } from "@/components/admin/TasksTable";
+import { useAppData } from "@/hooks/useAppData";
+
+const AdminTasksPage = (): React.ReactElement => {
+  const router = useRouter();
+  const { currentAccount, data, logout } = useAppData();
+
+  useEffect(() => {
+    if (!data) return;
+    if (!currentAccount) router.replace("/login");
+    if (currentAccount?.mustChangePassword) router.replace("/change-password");
+  }, [currentAccount, data, router]);
+
+  if (!currentAccount || currentAccount.mustChangePassword) {
+    return (
+      <main className="min-h-dvh p-6">
+        <p className="text-sm text-slate-600">Đang kiểm tra đăng nhập...</p>
+      </main>
+    );
+  }
+
+  if (currentAccount.role !== "admin") {
+    return (
+      <main className="min-h-dvh p-6">
+        <Link className="focus-ring text-sm font-semibold text-[var(--primary)]" href="/worker">
+          Về worker
+        </Link>
+      </main>
+    );
+  }
+
+  return (
+    <AdminShell
+      account={currentAccount}
+      onLogout={logout}
+      subtitle="Tra cứu, lọc và kiểm tra toàn bộ hạng mục."
+      title="Tất cả hạng mục"
+    >
+      {data ? (
+        <TasksTable data={data} limit={100} />
+      ) : (
+        <p className="text-sm text-slate-600">Đang tải dữ liệu...</p>
+      )}
+    </AdminShell>
+  );
+};
+
+export default AdminTasksPage;

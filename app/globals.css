@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+:root {
+  --font-sans: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --background: #f7f5ef;
+  --foreground: #171717;
+  --text-muted: #6f716f;
+  --text-soft: #9b9d99;
+  --surface: #fffefa;
+  --surface-muted: #f0eee7;
+  --surface-glass: rgba(255, 255, 255, 0.78);
+  --surface-warm: #fbedd0;
+  --border: rgba(24, 24, 24, 0.08);
+  --border-strong: rgba(24, 24, 24, 0.16);
+  --primary: #0f5d56;
+  --primary-strong: #073f3a;
+  --primary-soft: #e1f0ed;
+  --accent: #f3bd5b;
+  --accent-soft: #fff1d6;
+  --warning: #9a620f;
+  --warning-soft: #fff1d6;
+  --danger: #a93a3a;
+  --danger-soft: #f7e2de;
+  --success: #287342;
+  --success-soft: #e6f2e3;
+  --info: #356d8d;
+  --info-soft: #e3edf3;
+  --shadow-soft-sm: 0 10px 28px rgba(20, 20, 20, 0.06);
+  --shadow-soft-md: 0 18px 54px rgba(20, 20, 20, 0.09);
+  --shadow-floating: 0 18px 45px rgba(30, 25, 15, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(243, 189, 91, 0.2), transparent 34rem),
+    linear-gradient(180deg, #faf9f5 0%, var(--background) 48%, #f5eddf 100%);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: 0;
+}
+
+h1,
+h2,
+h3,
+p {
+  letter-spacing: 0;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.tracking-tight,
+.tracking-wide {
+  letter-spacing: 0 !important;
+}
+
+button {
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.soft-card {
+  border: 1px solid var(--border);
+  background: var(--surface-glass);
+  box-shadow: var(--shadow-soft-sm);
+  backdrop-filter: blur(18px);
+}
+
+.soft-panel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft-md);
+}
+
+.pressable {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease;
+}
+
+.pressable:hover {
+  transform: translateY(-1px);
+}
+
+.pressable:active {
+  transform: scale(0.985);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-ring:focus-visible {
+  outline: 3px solid rgba(243, 189, 91, 0.55);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

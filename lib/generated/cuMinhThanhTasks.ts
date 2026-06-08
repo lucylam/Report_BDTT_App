@@ -1,0 +1,90 @@
+import type { Task } from "@/types/domain";
+
+type TaskSeed = readonly [
+  stt: number,
+  taskName: string,
+  wo: string,
+  tagname: string,
+  nhom: string,
+  donVi: string,
+  section: string,
+  duration: string,
+  priority: 1 | 2 | 3,
+  startDate: string,
+  finishDate: string,
+  resourceName: string,
+  nhomTruong: string
+];
+
+const rows: readonly TaskSeed[] = [
+  [3, "Trung tu:12 mths for 41PT-1007", "100000164156", "41PT-1007", "DK- AMLL", "UTILITY", "41000", "1.5 hrs", 1, "2025-08-22", "2025-08-22", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [4, "Trung tu:12 mths for 41PT-1005", "100000164154", "41PT-1005", "DK- AMLL", "UTILITY", "41000", "1.5 hrs", 1, "2025-08-22", "2025-08-22", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [8, "Trung tu:12 mths for 29PXT-1001B", "100000164063", "29PXT-1001B", "DK- AMLL", "UTILITY", "29000", "1.5 hrs", 1, "2025-08-22", "2025-08-22", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [12, "Trung tu:12 mths for 29PT-1004", "100000164036", "29PT-1004", "DK- AMLL", "UTILITY", "29000", "1.5 hrs", 1, "2025-08-22", "2025-08-22", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [13, "Trung tu:12 mths for 29PT-1002", "100000164033", "29PT-1002", "DK- AMLL", "UTILITY", "29000", "1.5 hrs", 1, "2025-08-22", "2025-08-22", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [15, "Trung tu:12 mths for 29FT-2001", "100000164019", "29FT-2001", "DK- AMLL", "UTILITY", "29000", "10 hrs", 1, "2025-08-24", "2025-08-24", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [18, "Trung tu:12 mths for 21LT-1104", "100000163998", "21LT-1104", "DK- AMLL", "UTILITY", "21000", "10 hrs", 1, "2025-08-24", "2025-08-24", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [22, "Trung tu:12 mths for 29PXT-1001C", "100000163824", "29PXT-1001C", "DK- AMLL", "UTILITY", "29000", "10 hrs", 1, "2025-08-24", "2025-08-24", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [23, "Trung tu:12 mths for 29PXT-1001A", "100000163821", "29PXT-1001A", "DK- AMLL", "UTILITY", "29000", "10 hrs", 1, "2025-08-24", "2025-08-24", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [27, "Trung tu:12 mths for 29PT-1003", "100000163794", "29PT-1003", "DK- AMLL", "UTILITY", "29000", "10 hrs", 1, "2025-08-24", "2025-08-24", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [30, "Trung tu:12 mths for 29FT-1005", "100000163776", "29FT-1005", "DK- AMLL", "UTILITY", "29000", "10 hrs", 1, "2025-08-24", "2025-08-24", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [32, "Trung tu:12 mths for 21LT-1102", "100000163755", "21LT-1102", "DK- AMLL", "UTILITY", "21000", "10 hrs", 1, "2025-08-24", "2025-08-24", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [40, "Trung tu:12 mths for 06PT-0206", "100000167109", "06PT-0206", "DK- AMLL", "UREA", "MN CO2", "1.5 hrs", 1, "2025-08-18", "2025-08-18", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [41, "Trung tu:12 mths for 06PT-0204", "100000167106", "06PT-0204", "DK- AMLL", "UREA", "MN CO2", "10 hrs", 1, "2025-08-26", "2025-08-26", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [46, "Trung tu:12 mths for 06LT-0250", "100000167091", "06LT-0250", "DK- AMLL", "UREA", "MN CO2", "10 hrs", 1, "2025-08-26", "2025-08-26", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [47, "Trung tu:12 mths for 06FT-0202", "100000167088", "06FT-0202", "DK- AMLL", "UREA", "MN CO2", "2 hrs", 1, "2025-08-18", "2025-08-18", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [58, "Trung tu:12 mths for 06LT-0251", "100000167009", "06LT-0251", "DK- AMLL", "UREA", "MN CO2", "10 hrs", 1, "2025-08-26", "2025-08-26", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [60, "Trung tu:12 mths for 07LT-2645", "100000164358", "07LT-2645", "DK- AMLL", "UREA", "TAO HAT", "10 hrs", 1, "2025-08-25", "2025-08-25", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [61, "Trung tu:12 mths for 07LT-2642", "100000164355", "07LT-2642", "DK- AMLL", "UREA", "TAO HAT", "10 hrs", 1, "2025-08-25", "2025-08-25", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [62, "Trung tu:12 mths for 07LT-2641B", "100000164352", "07LT-2641B", "DK- AMLL", "UREA", "TAO HAT", "10 hrs", 1, "2025-08-26", "2025-08-26", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [63, "Trung tu:12 mths for 07LT-2641A", "100000164349", "07LT-2641A", "DK- AMLL", "UREA", "TAO HAT", "10 hrs", 1, "2025-08-26", "2025-08-26", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [65, "Trung tu:12 mths for 06LXT-1010C", "100000164054", "06LXT-1010C", "DK- AMLL", "UREA", "UREA", "2.5 hrs", 1, "2025-08-19", "2025-08-19", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [66, "Trung tu:12 mths for 06LXT-1010A", "100000164051", "06LXT-1010A", "DK- AMLL", "UREA", "UREA", "2.5 hrs", 1, "2025-08-19", "2025-08-19", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [67, "Trung tu:12 mths for 06LT-1114", "100000164048", "06LT-1114", "DK- AMLL", "UREA", "UREA", "2.5 hrs", 1, "2025-08-19", "2025-08-19", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [68, "Trung tu:12 mths for 06LT-1049", "100000164045", "06LT-1049", "DK- AMLL", "UREA", "UREA", "10 hrs", 1, "2025-08-27", "2025-08-27", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [69, "Trung tu:12 mths for 06LT-1045", "100000164031", "06LT-1045", "DK- AMLL", "UREA", "UREA", "1 hr", 1, "2025-08-19", "2025-08-19", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [70, "Trung tu:12 mths for 06LT-1023", "100000164028", "06LT-1023", "DK- AMLL", "UREA", "UREA", "1 hr", 1, "2025-08-19", "2025-08-19", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [71, "Trung tu:12 mths for 06LT-1014", "100000164025", "06LT-1014", "DK- AMLL", "UREA", "UREA", "10 hrs", 1, "2025-08-21", "2025-08-21", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [72, "Trung tu:12 mths for 06LT-1042", "100000164010", "06LT-1042", "DK- AMLL", "UREA", "UREA", "10 hrs", 1, "2025-08-27", "2025-08-27", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [73, "Trung tu:12 mths for 06LT-1030", "100000164007", "06LT-1030", "DK- AMLL", "UREA", "UREA", "10 hrs", 1, "2025-08-27", "2025-08-27", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [74, "Trung tu:12 mths for 06LT-1019", "100000164004", "06LT-1019", "DK- AMLL", "UREA", "UREA", "2.5 hrs", 1, "2025-08-20", "2025-08-20", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [75, "Trung tu:12 mths for 06LT-1013", "100000164001", "06LT-1013", "DK- AMLL", "UREA", "UREA", "10 hrs", 1, "2025-08-27", "2025-08-27", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [79, "Trung tu:12 mths for 06LXT-1115A", "100000163815", "06LXT-1115A", "DK- AMLL", "UREA", "UREA", "2 hrs", 1, "2025-08-20", "2025-08-20", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [80, "Trung tu:12 mths for 06LXT-1010B", "100000163812", "06LXT-1010B", "DK- AMLL", "UREA", "UREA", "2.5 hrs", 1, "2025-08-20", "2025-08-20", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [81, "Trung tu:12 mths for 06LT-1126", "100000163809", "06LT-1126", "DK- AMLL", "UREA", "UREA", "2.5 hrs", 1, "2025-08-21", "2025-08-21", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [82, "Trung tu:12 mths for 06LT-1113", "100000163806", "06LT-1113", "DK- AMLL", "UREA", "UREA", "2.5 hrs", 1, "2025-08-21", "2025-08-21", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [83, "Trung tu:12 mths for 06LT-1046", "100000163791", "06LT-1046", "DK- AMLL", "UREA", "UREA", "1 hr", 1, "2025-08-21", "2025-08-21", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [84, "Trung tu:12 mths for 06LT-1025", "100000163788", "06LT-1025", "DK- AMLL", "UREA", "UREA", "1 hr", 1, "2025-08-21", "2025-08-21", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [85, "Trung tu:12 mths for 06LT-1022", "100000163785", "06LT-1022", "DK- AMLL", "UREA", "UREA", "10 hrs", 1, "2025-08-22", "2025-08-22", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [86, "Trung tu:12 mths for 06LT-1044", "100000163770", "06LT-1044", "DK- AMLL", "UREA", "UREA", "2.5 hrs", 1, "2025-08-22", "2025-08-22", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [87, "Trung tu:12 mths for 06LT-1034", "100000163767", "06LT-1034", "DK- AMLL", "UREA", "UREA", "10 hrs", 1, "2025-08-27", "2025-08-27", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [88, "Trung tu:12 mths for 06LT-1029", "100000163764", "06LT-1029", "DK- AMLL", "UREA", "UREA", "2.5 hrs", 1, "2025-08-22", "2025-08-22", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [89, "Trung tu:12 mths for 06LT-1018", "100000163761", "06LT-1018", "DK- AMLL", "UREA", "UREA", "2.5 hrs", 1, "2025-08-22", "2025-08-22", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [90, "Trung tu:12 mths for 06LT-1009", "100000163758", "06LT-1009", "DK- AMLL", "UREA", "UREA", "2.5 hrs", 1, "2025-08-22", "2025-08-22", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [164, "Trung tu:12 mths for 04LT-4261B", "100000165970", "04LT-4261B", "DK- AMLL", "AMONIA", "4400", "10 hrs", 1, "2025-08-25", "2025-08-25", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"],
+  [165, "Trung tu:12 mths for 04LT-4261A", "100000165967", "04LT-4261A", "DK- AMLL", "AMONIA", "4400", "10 hrs", 1, "2025-08-25", "2025-08-25", "AMLL_CÙ MINH THÀNH", "TB ĐO_NGUYỄN THANH HẢI"]
+];
+
+const createTaskId = (stt: number, tagname: string): string => {
+  return `task-${stt}-${tagname.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`.replace(/-+$/g, "");
+};
+
+export const cuMinhThanhTasks: readonly Task[] = rows.map((row) => ({
+  id: createTaskId(row[0], row[3]),
+  stt: row[0],
+  taskName: row[1],
+  wo: row[2],
+  tagname: row[3],
+  nhom: row[4],
+  donVi: row[5],
+  section: row[6],
+  duration: row[7],
+  priority: row[8],
+  startDate: row[9],
+  finishDate: row[10],
+  resourceName: row[11],
+  nhomTruong: row[12],
+  assignedTo: "user-thanhcm",
+  isCancelled: false,
+  cancelReason: ""
+}));
