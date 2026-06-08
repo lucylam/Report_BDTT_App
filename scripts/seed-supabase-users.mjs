@@ -144,8 +144,11 @@ const assertDatabaseReady = async () => {
       .limit(1);
 
     if (error) {
+      const hint = error.message.toLowerCase().includes("invalid api key")
+        ? " Check that SUPABASE_SECRET_KEY belongs to the same project as SUPABASE_URL."
+        : " Apply Supabase migrations before seeding users.";
       throw new Error(
-        `Database is not ready. Cannot access public.${table}: ${error.message}. Apply Supabase migrations before seeding users.`
+        `Database is not ready. Cannot access public.${table}: ${error.message}.${hint}`
       );
     }
   }
