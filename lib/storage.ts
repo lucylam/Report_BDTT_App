@@ -1,5 +1,7 @@
 "use client";
 
+import { getLoginUsername } from "@/lib/accounts";
+import { normalizeStoredAppData } from "@/lib/appDataMigration";
 import { createDemoData } from "@/lib/demoData";
 import type {
   AppData,
@@ -41,7 +43,7 @@ export const loadAppData = (): AppData => {
       saveAppData(demo);
       return demo;
     }
-    return {
+    const normalizedData = normalizeStoredAppData({
       accounts: parsed.accounts,
       profiles: parsed.profiles,
       tasks: parsed.tasks.map(normalizeTask),
@@ -49,7 +51,9 @@ export const loadAppData = (): AppData => {
       dailySnapshots: parsed.dailySnapshots ?? [],
       offlineQueue: parsed.offlineQueue ?? [],
       activeUserId: parsed.activeUserId ?? null
-    };
+    });
+    saveAppData(normalizedData);
+    return normalizedData;
   } catch (error) {
     console.error("[loadAppData]", error);
     const demo = createDemoData();
@@ -70,7 +74,7 @@ export const loginAccount = (
   username: string,
   password: string
 ): { readonly data: AppData; readonly account: AuthAccount } => {
-  const normalizedUsername = username.trim().toLowerCase();
+  const normalizedUsername = getLoginUsername(username);
   const account = data.accounts.find(
     (item) => item.username === normalizedUsername
   );

@@ -87,7 +87,12 @@ const adminUsernames = new Set(
   ].map((username) => username.toLowerCase())
 );
 
-const getUsername = (email: string): string => email.split("@")[0]?.toLowerCase() ?? email;
+export const getLoginUsername = (value: string): string => {
+  const normalizedValue = value.trim().toLowerCase();
+  return normalizedValue.split("@")[0] ?? normalizedValue;
+};
+
+const getUsername = (email: string): string => getLoginUsername(email);
 
 const toResourceName = (fullName: string): string => fullName.toUpperCase();
 
