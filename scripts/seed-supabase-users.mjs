@@ -134,6 +134,23 @@ const listAllUsers = async () => {
   return users;
 };
 
+const assertDatabaseReady = async () => {
+  const requiredTables = ["profiles", "tasks", "progress"];
+
+  for (const table of requiredTables) {
+    const { error } = await supabase
+      .from(table)
+      .select("id")
+      .limit(1);
+
+    if (error) {
+      throw new Error(
+        `Database is not ready. Cannot access public.${table}: ${error.message}. Apply Supabase migrations before seeding users.`
+      );
+    }
+  }
+};
+
 const createOrUpdateAuthUser = async (account, existingUser) => {
   if (isDryRun) {
     return {
@@ -215,6 +232,8 @@ const main = async () => {
   if (duplicateUsernames.length > 0) {
     throw new Error(`Duplicate usernames: ${[...new Set(duplicateUsernames)].join(", ")}`);
   }
+
+  await assertDatabaseReady();
 
   const existingUsers = await listAllUsers();
   const usersByEmail = new Map(
