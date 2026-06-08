@@ -16,6 +16,7 @@ interface AdminShellProps {
 
 const links = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/personnel", label: "Nhân sự" },
   { href: "/admin/tasks", label: "Hạng mục" },
   { href: "/admin/upload", label: "Import / Export", dataAdminOnly: true },
   { href: "/worker", label: "Xem worker" }

@@ -8,7 +8,6 @@ import { KpiCards } from "@/components/admin/KpiCards";
 import { ProgressCharts } from "@/components/admin/ProgressCharts";
 import { SnapshotPanel } from "@/components/admin/SnapshotPanel";
 import { TasksTable } from "@/components/admin/TasksTable";
-import { WorkerStatusTable } from "@/components/admin/WorkerStatusTable";
 import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
 import { buildPhaseOneDashboard } from "@/lib/dashboard";
 import { calculateMetrics } from "@/lib/progress";
@@ -64,7 +63,6 @@ const AdminPage = (): React.ReactElement => {
       <KpiCards metrics={metrics} />
       <SnapshotPanel snapshots={data.dailySnapshots} />
       <ProgressCharts dashboard={dashboard} reportDateLabel={formatViDate(DEFAULT_REPORT_DATE)} />
-      <WorkerStatusTable data={data} />
       <TasksTable data={data} />
     </AdminShell>
   );
