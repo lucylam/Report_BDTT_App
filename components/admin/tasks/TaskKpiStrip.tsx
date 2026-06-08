@@ -1,0 +1,32 @@
+import type { TaskKpis } from "@/components/admin/tasks/taskTableModel";
+
+interface TaskKpiStripProps {
+  readonly kpis: TaskKpis;
+}
+
+const kpiItems = [
+  { key: "total", label: "Tổng hạng mục", tone: "text-[var(--foreground)]" },
+  { key: "p1Open", label: "P1 chưa xong", tone: "text-[var(--danger)]" },
+  { key: "notStarted", label: "Chưa thực hiện", tone: "text-slate-700" },
+  { key: "inProgress", label: "Đang thực hiện", tone: "text-[var(--warning)]" },
+  { key: "cancelled", label: "Cancel", tone: "text-[var(--danger)]" },
+  { key: "completed", label: "Hoàn thành", tone: "text-[var(--success)]" }
+] as const;
+
+export const TaskKpiStrip = ({ kpis }: TaskKpiStripProps): React.ReactElement => {
+  return (
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      {kpiItems.map((item) => (
+        <div
+          className="rounded-3xl border border-[var(--border-strong)] bg-white/90 p-4 shadow-[var(--shadow-soft-sm)]"
+          key={item.key}
+        >
+          <p className="text-xs font-bold uppercase text-slate-600">{item.label}</p>
+          <p className={`mt-2 text-3xl font-bold tabular-nums ${item.tone}`}>
+            {kpis[item.key]}
+          </p>
+        </div>
+      ))}
+    </section>
+  );
+};
