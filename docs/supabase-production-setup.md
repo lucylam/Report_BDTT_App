@@ -50,7 +50,36 @@ address.
 
 ## 4. Create worker/admin users
 
-For each worker:
+Preferred method: run the local seed script after applying the SQL migrations.
+
+Set environment variables in PowerShell:
+
+```powershell
+$env:SUPABASE_URL='https://your-project.supabase.co'
+$env:SUPABASE_SERVICE_ROLE_KEY='your-service-role-key'
+```
+
+Preview what the script will do:
+
+```powershell
+npm run seed:supabase-users -- --dry-run
+```
+
+Create missing Auth users and upsert matching `public.profiles` rows:
+
+```powershell
+npm run seed:supabase-users
+```
+
+The script is idempotent. Existing Auth users are not duplicated and existing
+passwords are not reset by default. To force all seeded accounts back to the
+default password, run:
+
+```powershell
+npm run seed:supabase-users -- --reset-password
+```
+
+Manual method for a quick single-user test:
 
 1. Open `Authentication > Users`.
 2. Click `Add user`.
@@ -67,6 +96,9 @@ Important profile fields:
 - `username`: email local-part in lowercase.
 - `role`: `admin` or `worker`.
 - `must_change_password`: `true` for initial accounts.
+
+Never expose `SUPABASE_SERVICE_ROLE_KEY` in client-side code or Vercel public
+environment variables.
 
 ## 5. Storage
 
