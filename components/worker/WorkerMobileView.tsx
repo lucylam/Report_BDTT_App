@@ -85,14 +85,14 @@ export const WorkerMobileView = ({
   const unitChips = getTaskUnitChips(allTasks);
 
   return (
-    <main className="min-h-dvh overflow-x-hidden bg-transparent pb-28 lg:hidden">
-      <header className="sticky top-0 z-20 bg-white/70 px-4 pb-4 pt-5 backdrop-blur-xl">
+    <main className="mobile-app-page bg-transparent lg:hidden">
+      <header className="mobile-topbar sticky top-0 z-20 bg-white/85 px-4 pb-3 backdrop-blur-xl">
         <p className="text-sm font-semibold text-[var(--text-muted)]">
           {formatViDate(DEFAULT_REPORT_DATE)}
         </p>
         <div className="mt-1 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-semibold leading-tight text-[var(--foreground)]">
+            <h1 className="text-2xl font-bold leading-tight text-[var(--foreground)]">
               Báo cáo tiến độ
             </h1>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
@@ -126,12 +126,10 @@ export const WorkerMobileView = ({
             </div>
           ) : null}
           <CountdownBanner />
-          <section className="px-4 py-4">
-            <SummaryPills percents={percents} />
-          </section>
 
-          <section className="px-4 pb-3">
-            <div className="grid grid-cols-4 gap-1 rounded-2xl border border-[var(--border-strong)] bg-white/85 p-1.5 shadow-[var(--shadow-soft-sm)]">
+          <section className="sticky top-[calc(var(--mobile-topbar-height)+var(--safe-top))] z-10 space-y-3 bg-[var(--background)]/92 px-4 py-3 backdrop-blur-xl">
+            <SummaryPills percents={percents} />
+            <div className="grid grid-cols-4 gap-1 rounded-2xl border border-[var(--border-strong)] bg-white/90 p-1.5 shadow-[var(--shadow-soft-sm)]">
               {filters.map((item) => (
                 <button
                   className={`focus-ring pressable min-h-11 rounded-xl px-1 text-xs font-semibold leading-tight sm:px-2 sm:text-sm ${
@@ -169,9 +167,6 @@ export const WorkerMobileView = ({
             >
               Cancel: {cancelledCount}
             </button>
-          </section>
-
-          <section className="px-4 pb-2">
             <WorkerSearchControls
               groupMode={groupMode}
               inputId="worker-mobile-task-search"
@@ -183,7 +178,7 @@ export const WorkerMobileView = ({
             />
           </section>
 
-          <section className="space-y-4 px-4 py-4">
+          <section className="space-y-3 px-4 py-3">
             <WorkerGroupedTaskList
               onCancel={onCancel}
               onChange={onChange}
@@ -242,7 +237,7 @@ export const WorkerMobileView = ({
         </section>
       ) : null}
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 px-5 pb-[max(0.8rem,env(safe-area-inset-bottom))]">
+      <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-30 px-3">
         <div className="grid grid-cols-4 gap-1 rounded-3xl border border-[var(--border-strong)] bg-white/90 p-2 text-center text-xs font-semibold shadow-[var(--shadow-floating)] backdrop-blur-xl">
           {tabs.map((item) => (
             <button

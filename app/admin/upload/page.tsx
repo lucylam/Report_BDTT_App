@@ -114,7 +114,7 @@ const AdminUploadPage = (): React.ReactElement => {
       title="Import / Export Excel"
     >
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="soft-card rounded-3xl p-6">
+        <div className="soft-card rounded-3xl p-5 lg:p-6">
           <h2 className="text-xl font-semibold">Import hạng mục từ Excel</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
             Chỉ đọc sheet DATA cột A:M. Các cột tiến độ sau M sẽ được tạo từ dữ liệu
@@ -147,7 +147,7 @@ const AdminUploadPage = (): React.ReactElement => {
           </button>
         </div>
 
-        <div className="soft-card rounded-3xl p-6">
+        <div className="soft-card rounded-3xl p-5 lg:p-6">
           <h2 className="text-xl font-semibold">Export DATA hoàn chỉnh</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
             File export lấy danh sách hạng mục hiện tại và điền tiến độ, ghi chú mới nhất từ
@@ -187,7 +187,7 @@ const ImportPreviewPanel = ({
   readonly preview: ImportPreview;
 }): React.ReactElement => {
   return (
-    <section className="soft-card rounded-3xl p-6">
+    <section className="soft-card rounded-3xl p-5 lg:p-6">
       <h2 className="text-xl font-semibold">Preview import</h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <Metric label="Dòng hạng mục" value={String(preview.rowCount)} />

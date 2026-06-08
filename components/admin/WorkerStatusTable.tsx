@@ -157,7 +157,7 @@ const WorkerCard = ({ row }: { readonly row: WorkerRow }): React.ReactElement =>
           tone={row.submitted ? "success" : "danger"}
         />
       </div>
-      <div className="mt-3 grid grid-cols-4 gap-2 text-center text-sm">
+      <div className="mt-3 grid grid-cols-2 gap-2 text-center text-sm sm:grid-cols-4">
         <Metric label="Hạng mục" value={String(row.assigned)} />
         <Metric label="Xong" value={String(row.done)} />
         <Metric label="Cancel" value={String(row.cancelled)} />

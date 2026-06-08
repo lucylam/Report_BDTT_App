@@ -29,6 +29,10 @@
   --shadow-soft-sm: 0 10px 28px rgba(20, 20, 20, 0.06);
   --shadow-soft-md: 0 18px 54px rgba(20, 20, 20, 0.09);
   --shadow-floating: 0 18px 45px rgba(30, 25, 15, 0.16);
+  --mobile-topbar-height: 4.75rem;
+  --mobile-bottom-nav-height: 5.5rem;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -39,6 +43,7 @@ html {
   background: var(--background);
   color: var(--foreground);
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -54,6 +59,8 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
 
 button,
@@ -126,6 +133,24 @@ button:disabled {
 .focus-ring:focus-visible {
   outline: 3px solid rgba(243, 189, 91, 0.55);
   outline-offset: 2px;
+}
+
+.mobile-app-page {
+  min-height: 100dvh;
+  overflow-x: hidden;
+  padding-bottom: calc(var(--mobile-bottom-nav-height) + var(--safe-bottom));
+}
+
+.mobile-topbar {
+  padding-top: max(0.75rem, var(--safe-top));
+}
+
+.mobile-bottom-nav {
+  padding-bottom: max(0.75rem, var(--safe-bottom));
+}
+
+.mobile-scroll-section {
+  scroll-margin-top: calc(var(--mobile-topbar-height) + var(--safe-top));
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -3,23 +3,23 @@ import type { SaveState } from "@/components/worker/types";
 const statusMap: Record<SaveState, { readonly label: string; readonly className: string }> = {
   idle: {
     label: "Sẵn sàng",
-    className: "bg-[var(--surface-muted)] text-[var(--text-muted)]"
+    className: "bg-white text-slate-800 ring-1 ring-[var(--border-strong)]"
   },
   saving: {
     label: "Đang lưu",
-    className: "bg-[var(--info-soft)] text-[var(--info)]"
+    className: "bg-[var(--info)] text-white"
   },
   saved: {
     label: "Đã lưu",
-    className: "bg-[var(--success-soft)] text-[var(--success)]"
+    className: "bg-[var(--success)] text-white"
   },
   offline: {
     label: "Lưu tạm offline",
-    className: "bg-[var(--warning-soft)] text-[var(--warning)]"
+    className: "bg-[var(--warning)] text-white"
   },
   error: {
     label: "Lỗi lưu",
-    className: "bg-[var(--danger-soft)] text-[var(--danger)]"
+    className: "bg-[var(--danger)] text-white"
   }
 };
 
@@ -32,7 +32,7 @@ export const SaveStatus = ({
   return (
     <span
       aria-live="polite"
-      className={`inline-flex min-h-7 items-center rounded-full px-3 text-xs font-semibold shadow-sm ${status.className}`}
+      className={`inline-flex min-h-7 items-center rounded-full px-3 text-xs font-bold shadow-sm ${status.className}`}
     >
       {status.label}
     </span>

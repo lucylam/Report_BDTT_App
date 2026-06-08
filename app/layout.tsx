@@ -2,9 +2,23 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  applicationName: "BDTT",
   title: "BDTT Progress",
   description: "Internal maintenance progress reporting app",
-  manifest: "/manifest.webmanifest"
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "BDTT"
+  },
+  icons: {
+    icon: [
+      { url: "/icons/app-icon.svg", type: "image/svg+xml" },
+      { url: "/icons/app-icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
+      { url: "/icons/app-icon-512.svg", sizes: "512x512", type: "image/svg+xml" }
+    ],
+    apple: [{ url: "/icons/app-icon-192.svg", sizes: "192x192", type: "image/svg+xml" }]
+  }
 };
 
 export const viewport: Viewport = {

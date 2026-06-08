@@ -34,9 +34,10 @@ export const AdminShell = ({
   const visibleLinks = links.filter(
     (link) => !("dataAdminOnly" in link) || !link.dataAdminOnly || canManageData
   );
+  const mobileLinks = visibleLinks.slice(0, 5);
 
   return (
-    <main className="min-h-dvh bg-transparent lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
+    <main className="min-h-dvh overflow-x-hidden bg-transparent pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom))] lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:pb-0">
       <aside className="m-4 mr-0 hidden rounded-3xl border border-white/70 bg-white/75 p-5 shadow-[var(--shadow-soft-md)] backdrop-blur-xl lg:block">
         <p className="text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
           BDTT Admin
@@ -70,7 +71,28 @@ export const AdminShell = ({
       </aside>
 
       <section className="min-w-0">
-        <header className="sticky top-0 z-20 border-b border-white/50 bg-white/60 px-4 py-4 backdrop-blur-xl lg:px-8">
+        <header className="mobile-topbar sticky top-0 z-20 border-b border-white/60 bg-white/85 px-4 pb-3 backdrop-blur-xl lg:hidden">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase text-[var(--primary)]">BDTT Admin</p>
+              <h1 className="truncate text-2xl font-bold leading-tight text-[var(--foreground)]">
+                {title}
+              </h1>
+              <p className="truncate text-xs font-semibold text-[var(--text-muted)]">
+                @{account.username}
+              </p>
+            </div>
+            <button
+              className="focus-ring pressable min-h-11 shrink-0 rounded-2xl border border-[var(--border-strong)] bg-white px-3 text-sm font-bold text-slate-800 shadow-sm"
+              onClick={onLogout}
+              type="button"
+            >
+              Đăng xuất
+            </button>
+          </div>
+        </header>
+
+        <header className="sticky top-0 z-20 hidden border-b border-white/50 bg-white/60 px-4 py-4 backdrop-blur-xl lg:block lg:px-8">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
@@ -119,6 +141,27 @@ export const AdminShell = ({
           {children}
         </div>
       </section>
+
+      <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-30 px-3 lg:hidden">
+        <div className="grid gap-1 rounded-3xl border border-[var(--border-strong)] bg-white/90 p-2 text-center text-[11px] font-bold shadow-[var(--shadow-floating)] backdrop-blur-xl" style={{ gridTemplateColumns: `repeat(${mobileLinks.length}, minmax(0, 1fr))` }}>
+          {mobileLinks.map((link) => {
+            const active = pathname === link.href;
+            return (
+              <Link
+                className={`focus-ring pressable flex min-h-12 items-center justify-center rounded-2xl px-1 leading-tight ${
+                  active
+                    ? "bg-[var(--primary-strong)] text-white shadow-md"
+                    : "text-slate-800 hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+                }`}
+                href={link.href}
+                key={link.href}
+              >
+                {link.href === "/admin/upload" ? "DATA" : link.label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </main>
   );
 };

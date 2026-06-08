@@ -54,7 +54,7 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
           key={card.label}
         >
           <p className="text-xs font-semibold uppercase tracking-wide opacity-75">{card.label}</p>
-          <p className="mt-3 text-4xl font-semibold tabular-nums tracking-tight">{card.value}</p>
+          <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight sm:text-4xl">{card.value}</p>
           <p className="mt-2 text-xs font-medium leading-5 opacity-75">{card.helper}</p>
         </div>
       ))}
