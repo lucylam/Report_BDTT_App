@@ -2,14 +2,14 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  applicationName: "BDTT",
-  title: "BDTT Progress",
-  description: "Internal maintenance progress reporting app",
+  applicationName: "BDTT 2026",
+  title: "Tiến độ BDTT 2026",
+  description: "Theo dõi tiến độ BDTT 2026 nội bộ",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "BDTT"
+    title: "BDTT 2026"
   },
   icons: {
     icon: [

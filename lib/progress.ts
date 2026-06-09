@@ -57,7 +57,7 @@ export const calculateMetrics = (
       .map((record) => record.userId)
   );
   const workerIds = data.profiles
-    .filter((profile) => profile.role === "worker")
+    .filter((profile) => profile.role === "worker" && !profile.isPlaceholder)
     .map((profile) => profile.id);
   const priorityOpen = activeTasks.filter((task) => {
     return (

@@ -4,7 +4,7 @@ import path from "node:path";
 
 const DEFAULT_PASSWORD = "123456";
 const INTERNAL_AUTH_DOMAIN = "bdtt.local";
-const ACCOUNT_SOURCE = "lib/accounts.ts";
+const ACCOUNT_SOURCE = "lib/org2026.ts";
 
 const args = new Set(process.argv.slice(2));
 const isDryRun = args.has("--dry-run");
@@ -41,61 +41,53 @@ const getUsername = (email) => email.split("@")[0]?.trim().toLowerCase() ?? emai
 const getInternalEmail = (username) => `${username}@${INTERNAL_AUTH_DOMAIN}`;
 const toResourceName = (fullName) => fullName.toUpperCase();
 
-const extractBlock = (source, name) => {
-  const start = source.indexOf(`const ${name}`);
-  if (start === -1) {
-    throw new Error(`Cannot find ${name} in ${ACCOUNT_SOURCE}`);
-  }
-
-  const end = source.indexOf("];", start);
-  if (end === -1) {
-    throw new Error(`Cannot find end of ${name} in ${ACCOUNT_SOURCE}`);
-  }
-
-  return source.slice(start, end);
-};
-
-const parseSeedRows = (block) => {
+const parsePersonRows = (source) => {
   const rows = [];
   const rowPattern =
-    /\[\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"(?:\s*,\s*"([^"]+)")?\s*\]/g;
+    /person\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"/g;
 
-  for (const match of block.matchAll(rowPattern)) {
+  for (const match of source.matchAll(rowPattern)) {
     rows.push({
       fullName: match[1],
       employeeCode: match[2],
       sourceEmail: match[3],
-      explicitRole: match[4] ?? null
+      explicitRole: match[4],
+      canLogin: true
     });
   }
 
   return rows;
 };
 
-const parseAdminUsernames = (source) => {
-  const start = source.indexOf("const adminUsernames");
-  if (start === -1) return new Set();
+const parsePlaceholderRows = (source) => {
+  const rows = [];
+  const rowPattern = /placeholder\(\s*"([^"]+)"\s*,\s*"([^"]+)"/g;
 
-  const end = source.indexOf("].map", start);
-  if (end === -1) return new Set();
+  for (const match of source.matchAll(rowPattern)) {
+    rows.push({
+      fullName: match[2],
+      employeeCode: match[1].toUpperCase(),
+      sourceEmail: `${match[1]}@placeholder.local`,
+      explicitRole: "worker",
+      username: match[1],
+      canLogin: false
+    });
+  }
 
-  const block = source.slice(start, end);
-  return new Set(
-    [...block.matchAll(/"([^"]+)"/g)].map((match) => match[1].toLowerCase())
-  );
+  return rows;
 };
 
 const loadAccounts = async () => {
   const source = await readFile(path.join(process.cwd(), ACCOUNT_SOURCE), "utf8");
-  const resourceSeeds = parseSeedRows(extractBlock(source, "resourceSeeds"));
-  const adminSeeds = parseSeedRows(extractBlock(source, "adminSeeds"));
-  const adminUsernames = parseAdminUsernames(source);
+  const seeds = [...parsePersonRows(source), ...parsePlaceholderRows(source)];
 
-  return [...resourceSeeds, ...adminSeeds].map((seed) => {
-    const username = getUsername(seed.sourceEmail);
-    const role = adminUsernames.has(username)
-      ? "admin"
-      : seed.explicitRole ?? "worker";
+  if (seeds.length === 0) {
+    throw new Error(`Cannot find organization seed rows in ${ACCOUNT_SOURCE}`);
+  }
+
+  return seeds.map((seed) => {
+    const username = seed.username ?? getUsername(seed.sourceEmail);
+    const role = seed.explicitRole;
 
     return {
       authEmail: getInternalEmail(username),
@@ -106,7 +98,8 @@ const loadAccounts = async () => {
       nhom: role === "admin" ? "Supervisor" : "Chưa phân nhóm",
       nhomTruong: "",
       role,
-      sourceEmail: seed.sourceEmail.toLowerCase()
+      sourceEmail: seed.sourceEmail.toLowerCase(),
+      canLogin: seed.canLogin
     };
   });
 };
@@ -246,10 +239,21 @@ const main = async () => {
   const summary = {
     create: 0,
     exists: 0,
-    "reset-password": 0
+    "reset-password": 0,
+    "skipped-placeholder": 0
   };
 
   for (const account of accounts) {
+    if (!account.canLogin) {
+      summary["skipped-placeholder"] += 1;
+      console.log(
+        `${isDryRun ? "[dry-run] " : ""}${"skipped-placeholder".padEnd(20)} ${account.username.padEnd(
+          28
+        )} ${account.role.padEnd(6)} ${account.authEmail}`
+      );
+      continue;
+    }
+
     const existingUser = usersByEmail.get(account.authEmail);
     const result = await createOrUpdateAuthUser(account, existingUser);
     await upsertProfile(account, result.id);
@@ -264,7 +268,7 @@ const main = async () => {
 
   console.log("");
   console.log(
-    `Done. total=${accounts.length}, create=${summary.create}, exists=${summary.exists}, reset-password=${summary["reset-password"]}`
+    `Done. total=${accounts.length}, create=${summary.create}, exists=${summary.exists}, reset-password=${summary["reset-password"]}, skipped-placeholder=${summary["skipped-placeholder"]}`
   );
   if (isDryRun) {
     console.log("Dry run only. No Auth users or profiles were changed.");

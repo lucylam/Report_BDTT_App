@@ -48,7 +48,7 @@ export const CancelReasonDialog = ({
           <span className="text-sm font-semibold">Lý do hủy</span>
           <textarea
             autoFocus
-            className="focus-ring mt-2 min-h-28 w-full resize-y rounded-2xl border border-[var(--border)] bg-white/90 px-4 py-3 text-base leading-6"
+            className="focus-ring mt-2 min-h-28 w-full resize-y rounded-[1.5rem] border border-[var(--border)] bg-white/90 px-4 py-3 text-base leading-6"
             onChange={(event) => {
               setReason(event.target.value);
               setError("");
@@ -67,14 +67,14 @@ export const CancelReasonDialog = ({
         ) : null}
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
           <button
-            className="focus-ring pressable min-h-11 rounded-2xl border border-[var(--border)] bg-white/80 px-4 text-sm font-semibold"
+            className="focus-ring pressable min-h-11 rounded-full border border-[var(--border)] bg-white/80 px-4 text-sm font-semibold"
             onClick={onClose}
             type="button"
           >
             Không hủy
           </button>
           <button
-            className="focus-ring pressable min-h-11 rounded-2xl bg-[var(--danger)] px-4 text-sm font-semibold text-white"
+            className="focus-ring pressable min-h-11 rounded-full bg-[var(--danger)] px-4 text-sm font-semibold text-white"
             type="submit"
           >
             Xác nhận Cancel

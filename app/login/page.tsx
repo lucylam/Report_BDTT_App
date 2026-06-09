@@ -1,26 +1,36 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { CompanyBrand } from "@/components/CompanyBrand";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
-import { DEFAULT_INITIAL_PASSWORD } from "@/lib/accounts";
 import { useAppData } from "@/hooks/useAppData";
+import { BDTT_2026_TITLE } from "@/lib/org2026";
+import { loadRememberLoginPreference } from "@/lib/storage";
 
 const LoginPage = (): React.ReactElement => {
   const router = useRouter();
   const { login } = useAppData();
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [rememberLogin, setRememberLogin] = useState<boolean>(true);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    const timerId = window.setTimeout(() => {
+      setRememberLogin(loadRememberLoginPreference());
+    }, 0);
+    return () => window.clearTimeout(timerId);
+  }, []);
 
   const submitLogin = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
     setError("");
     setIsSubmitting(true);
     try {
-      const account = login(username, password);
+      const account = login(username, password, rememberLogin);
       if (account.mustChangePassword) {
         router.replace("/change-password");
       } else {
@@ -36,23 +46,27 @@ const LoginPage = (): React.ReactElement => {
   };
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4 py-8">
-      <section className="soft-panel w-full max-w-md rounded-[2rem] p-7">
-        <p className="text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
-          BDTT Internal
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold leading-tight">Đăng nhập tài khoản nội bộ</h1>
-        <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-          Dùng username là phần trước ký tự @ trong email PVCFC. Mật khẩu mặc định
-          lần đầu là {DEFAULT_INITIAL_PASSWORD}.
-        </p>
+    <main className="flex min-h-dvh items-center justify-center px-4 py-5 md:py-8">
+      <section className="soft-panel w-full max-w-md overflow-hidden p-5 md:p-7">
+        <CompanyBrand className="rounded-[1.5rem] bg-white/76 p-4 ring-1 ring-[var(--border)]" variant="full" />
+        <div className="mt-5 rounded-[1.75rem] bg-[var(--primary-strong)] px-5 py-6 text-white shadow-[var(--shadow-floating)]">
+          <p className="text-xs font-bold uppercase tracking-wide text-white/75">
+            {BDTT_2026_TITLE}
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold leading-tight md:text-4xl">
+            Đăng nhập
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-white/78">
+            Worker và cấp quản lý dùng username nội bộ để vào đúng workspace.
+          </p>
+        </div>
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={submitLogin}>
           <label className="block">
             <span className="text-sm font-semibold">Username</span>
             <input
               autoComplete="username"
-              className="focus-ring mt-2 min-h-12 w-full rounded-2xl border border-[var(--border)] bg-white/90 px-4 text-base shadow-sm"
+              className="focus-ring control-pill mt-2 min-h-12 w-full rounded-full px-4 text-base"
               onChange={(event) => setUsername(event.target.value)}
               placeholder="thanhcm"
               required
@@ -61,23 +75,32 @@ const LoginPage = (): React.ReactElement => {
           </label>
           <label className="block">
             <span className="text-sm font-semibold">Mật khẩu</span>
-            <div className="mt-2 flex rounded-2xl border border-[var(--border)] bg-white/90 shadow-sm">
+            <div className="control-pill mt-2 flex rounded-full">
               <input
                 autoComplete="current-password"
-                className="focus-ring min-h-12 min-w-0 flex-1 rounded-l-2xl border-0 bg-transparent px-4 text-base"
+                className="focus-ring min-h-12 min-w-0 flex-1 rounded-l-full border-0 bg-transparent px-4 text-base"
                 onChange={(event) => setPassword(event.target.value)}
                 required
                 type={showPassword ? "text" : "password"}
                 value={password}
               />
               <button
-                className="focus-ring min-h-12 rounded-r-2xl border-l border-[var(--border)] px-4 text-sm font-semibold text-[var(--primary)]"
+                className="focus-ring min-h-12 rounded-r-full border-l border-[var(--border)] px-4 text-sm font-semibold text-[var(--primary-strong)]"
                 onClick={() => setShowPassword((current) => !current)}
                 type="button"
               >
                 {showPassword ? "Ẩn" : "Hiện"}
               </button>
             </div>
+          </label>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-2xl bg-white/72 px-4 py-3 text-sm font-semibold text-slate-800 ring-1 ring-[var(--border)]">
+            <input
+              checked={rememberLogin}
+              className="h-5 w-5 accent-[var(--primary-strong)]"
+              onChange={(event) => setRememberLogin(event.target.checked)}
+              type="checkbox"
+            />
+            <span>Ghi nhớ đăng nhập trên thiết bị này</span>
           </label>
           {error ? (
             <p
@@ -88,14 +111,14 @@ const LoginPage = (): React.ReactElement => {
             </p>
           ) : null}
           <button
-            className="focus-ring pressable min-h-12 rounded-2xl bg-[var(--foreground)] px-4 py-3 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+            className="focus-ring pressable min-h-12 rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-[var(--shadow-soft-sm)] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmitting}
             type="submit"
           >
             {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
         </form>
-        <PwaInstallButton className="mt-5" showHint variant="panel" />
+        <PwaInstallButton className="mt-4" compact />
       </section>
     </main>
   );

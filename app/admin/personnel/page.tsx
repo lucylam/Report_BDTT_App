@@ -6,6 +6,8 @@ import { useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { WorkerStatusTable } from "@/components/admin/WorkerStatusTable";
 import { useAppData } from "@/hooks/useAppData";
+import { BDTT_2026_SUBTITLE } from "@/lib/org2026";
+import { getOrgScopeLabel, getScopedAppData } from "@/lib/permissions";
 
 const AdminPersonnelPage = (): React.ReactElement => {
   const router = useRouter();
@@ -35,15 +37,18 @@ const AdminPersonnelPage = (): React.ReactElement => {
     );
   }
 
+  const scopedData = data ? getScopedAppData(data, currentAccount) : null;
+  const scopeLabel = getOrgScopeLabel(currentAccount);
+
   return (
     <AdminShell
       account={currentAccount}
       onLogout={logout}
-      subtitle="Theo dõi trạng thái báo cáo, tiến độ và phân bổ hạng mục theo từng worker."
+      subtitle={`${BDTT_2026_SUBTITLE} · ${scopeLabel}`}
       title="Nhân sự"
     >
-      {data ? (
-        <WorkerStatusTable data={data} />
+      {scopedData ? (
+        <WorkerStatusTable data={scopedData} />
       ) : (
         <p className="text-sm text-slate-600">Đang tải dữ liệu nhân sự...</p>
       )}

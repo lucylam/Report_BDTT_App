@@ -15,10 +15,10 @@ const kpiItems = [
 
 export const TaskKpiStrip = ({ kpis }: TaskKpiStripProps): React.ReactElement => {
   return (
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+    <section className="grid grid-cols-2 gap-3 xl:grid-cols-6">
       {kpiItems.map((item) => (
         <div
-          className="rounded-3xl border border-[var(--border-strong)] bg-white/90 p-4 shadow-[var(--shadow-soft-sm)]"
+          className="rounded-[1.5rem] border border-white/80 bg-white/86 p-4 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl"
           key={item.key}
         >
           <p className="text-xs font-bold uppercase text-slate-600">{item.label}</p>

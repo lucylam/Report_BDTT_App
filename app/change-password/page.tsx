@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { CompanyBrand } from "@/components/CompanyBrand";
 import { useAppData } from "@/hooks/useAppData";
 
 const ChangePasswordPage = (): React.ReactElement => {
@@ -56,15 +57,17 @@ const ChangePasswordPage = (): React.ReactElement => {
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-8">
-      <section className="soft-panel w-full max-w-md rounded-[2rem] p-7">
-        <p className="text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
-          First login
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold leading-tight">Bắt buộc đổi mật khẩu</h1>
-        <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-          Tài khoản {currentAccount.username} đang dùng mật khẩu mặc định. Hãy đặt
-          mật khẩu mới trước khi vào app.
-        </p>
+      <section className="soft-panel w-full max-w-md overflow-hidden p-5 md:p-7">
+        <CompanyBrand className="rounded-[1.5rem] bg-white/76 p-4 ring-1 ring-[var(--border)]" variant="full" />
+        <div className="mt-5 rounded-[1.75rem] bg-[var(--primary-strong)] px-5 py-6 text-white shadow-[var(--shadow-floating)]">
+          <p className="text-xs font-bold uppercase tracking-wide text-white/75">
+            First login
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold leading-tight md:text-4xl">Đổi mật khẩu</h1>
+          <p className="mt-3 text-sm leading-6 text-white/78">
+            Tài khoản {currentAccount.username} cần đặt mật khẩu mới trước khi vào workspace.
+          </p>
+        </div>
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={submitChange}>
           <PasswordField
@@ -80,7 +83,7 @@ const ChangePasswordPage = (): React.ReactElement => {
             value={confirmPassword}
           />
           <button
-            className="focus-ring pressable min-h-11 rounded-2xl border border-[var(--border)] bg-white/80 px-4 py-3 text-sm font-semibold text-[var(--primary)] shadow-sm"
+            className="focus-ring pressable min-h-11 rounded-full border border-[var(--border)] bg-white/80 px-4 py-3 text-sm font-bold text-[var(--primary-strong)] shadow-sm"
             onClick={() => setShowPassword((current) => !current)}
             type="button"
           >
@@ -95,7 +98,7 @@ const ChangePasswordPage = (): React.ReactElement => {
             </p>
           ) : null}
           <button
-            className="focus-ring pressable min-h-12 rounded-2xl bg-[var(--foreground)] px-4 py-3 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+            className="focus-ring pressable min-h-12 rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-[var(--shadow-soft-sm)] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmitting}
             type="submit"
           >
@@ -123,7 +126,7 @@ const PasswordField = ({
       <span className="text-sm font-semibold">{label}</span>
       <input
         autoComplete="new-password"
-        className="focus-ring mt-2 min-h-12 w-full rounded-2xl border border-[var(--border)] bg-white/90 px-4 text-base shadow-sm"
+        className="focus-ring control-pill mt-2 min-h-12 w-full rounded-full px-4 text-base"
         minLength={6}
         onChange={(event) => onChange(event.target.value)}
         required

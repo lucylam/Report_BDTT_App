@@ -26,10 +26,10 @@ interface TaskFilterToolbarProps {
 }
 
 const inputControlClass =
-  "focus-ring min-h-12 w-full rounded-2xl border border-[var(--border-strong)] bg-white px-4 text-base font-semibold text-slate-800 shadow-sm placeholder:text-slate-500";
+  "focus-ring control-pill min-h-12 w-full rounded-full px-4 text-base font-semibold text-slate-800 placeholder:text-slate-500";
 
 const selectControlClass =
-  "focus-ring min-h-11 w-full rounded-2xl border border-[var(--border-strong)] bg-white px-3 text-sm font-semibold text-slate-800 shadow-sm";
+  "focus-ring control-pill min-h-11 w-full rounded-full px-3 text-sm font-semibold text-slate-800";
 
 export const TaskFilterToolbar = ({
   query,
@@ -52,7 +52,7 @@ export const TaskFilterToolbar = ({
   onQuickFilterChange
 }: TaskFilterToolbarProps): React.ReactElement => {
   return (
-    <section className="rounded-3xl border border-[var(--border-strong)] bg-white/90 p-4 shadow-[var(--shadow-soft-sm)]">
+    <section className="soft-panel p-4">
       <div className="grid gap-3 xl:grid-cols-[minmax(260px,1.4fr)_repeat(5,minmax(120px,1fr))]">
         <label>
           <span className="mb-2 block text-xs font-bold uppercase text-[var(--primary-strong)]">
@@ -150,8 +150,8 @@ const QuickChip = ({
     <button
       className={`focus-ring pressable min-h-10 rounded-full border px-4 text-sm font-bold ${
         selected
-          ? "border-[var(--primary)] bg-[var(--primary-strong)] text-white shadow-md"
-          : "border-[var(--border-strong)] bg-white text-slate-800 shadow-sm hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+          ? "border-[var(--primary-strong)] bg-[var(--primary-strong)] text-white shadow-md"
+          : "border-white/80 bg-white/85 text-slate-800 shadow-sm hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
       }`}
       onClick={onClick}
       type="button"

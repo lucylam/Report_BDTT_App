@@ -30,7 +30,11 @@ interface UseAppDataResult {
   readonly data: AppData | null;
   readonly currentAccount: AuthAccount | null;
   readonly currentProfile: Profile | null;
-  readonly login: (username: string, password: string) => AuthAccount;
+  readonly login: (
+    username: string,
+    password: string,
+    rememberLogin: boolean
+  ) => AuthAccount;
   readonly logout: () => void;
   readonly changePassword: (nextPassword: string) => void;
   readonly setImportedTasks: (tasks: readonly Task[]) => void;
@@ -56,9 +60,13 @@ export const useAppData = (): UseAppDataResult => {
     return () => window.clearTimeout(timerId);
   }, []);
 
-  const login = (username: string, password: string): AuthAccount => {
+  const login = (
+    username: string,
+    password: string,
+    rememberLogin: boolean
+  ): AuthAccount => {
     const base = data ?? loadAppData();
-    const result = loginAccount(base, username, password);
+    const result = loginAccount(base, username, password, rememberLogin);
     setData(result.data);
     return result.account;
   };

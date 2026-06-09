@@ -24,12 +24,53 @@ const matchesFilter = (
   percent: ProgressPercent,
   filter: WorkerFilter
 ): boolean => {
-  if (task.isCancelled) return filter === "cancelled";
+  if (filter === "cancelled") return task.isCancelled;
+  if (task.isCancelled) return false;
   if (filter === "todo") return percent === 0;
   if (filter === "progress") return percent > 0 && percent < 100;
   if (filter === "done") return percent === 100;
   if (filter === "p1") return task.priority === 1 && percent < 100;
   return true;
+};
+
+const submitProgressToDatabase = async ({
+  task,
+  update,
+  worker
+}: {
+  readonly task: Task;
+  readonly update: {
+    readonly taskId: string;
+    readonly userId: string;
+    readonly reportDate: string;
+    readonly percent: ProgressPercent;
+    readonly note: string;
+    readonly photoPath?: string;
+  };
+  readonly worker: {
+    readonly username: string;
+    readonly fullName: string;
+    readonly resourceName: string;
+  };
+}): Promise<void> => {
+  const response = await fetch("/api/progress/submit", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      update,
+      task,
+      worker
+    })
+  });
+
+  if (!response.ok) {
+    const result = (await response.json().catch(() => null)) as
+      | { readonly error?: string }
+      | null;
+    throw new Error(result?.error || "Không ghi được tiến độ vào DB web.");
+  }
 };
 
 const WorkerPage = (): React.ReactElement => {
@@ -101,8 +142,12 @@ const WorkerPage = (): React.ReactElement => {
     );
   }
 
-  const handleChange = (taskId: string, update: WorkerProgressUpdate): void => {
-    if (data.tasks.find((task) => task.id === taskId)?.isCancelled) return;
+  const handleChange = async (
+    taskId: string,
+    update: WorkerProgressUpdate
+  ): Promise<void> => {
+    const task = data.tasks.find((item) => item.id === taskId);
+    if (!task || task.isCancelled) return;
     setSaveStates((current) => ({
       ...current,
       [taskId]: isOnline ? "saving" : "offline"
@@ -118,9 +163,16 @@ const WorkerPage = (): React.ReactElement => {
       };
       if (isOnline) {
         updateProgress(payload);
-        window.setTimeout(() => {
-          setSaveStates((current) => ({ ...current, [taskId]: "saved" }));
-        }, 180);
+        await submitProgressToDatabase({
+          task,
+          update: payload,
+          worker: {
+            username: worker.username,
+            fullName: worker.fullName,
+            resourceName: worker.resourceName
+          }
+        });
+        setSaveStates((current) => ({ ...current, [taskId]: "saved" }));
       } else {
         queueProgress(payload);
       }

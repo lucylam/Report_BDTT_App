@@ -124,9 +124,24 @@ Set these in Vercel Project Settings > Environment Variables:
 ```text
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+GOOGLE_SERVICE_ACCOUNT_EMAIL=...
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY=...
+GOOGLE_SHEETS_SPREADSHEET_ID=1wknfHCcrVVvc1p8mj91yXLlcVbO3vrJjDF3mulH5N1w
+GOOGLE_SHEETS_DATA_SHEET_NAME=DATA
 ```
 
 Use the publishable key (`sb_publishable_xxx`) as
 `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
-Do not expose the Supabase secret key (`sb_secret_xxx`) in client code.
+Use the Supabase service role key only as `SUPABASE_SERVICE_ROLE_KEY` on the
+server. It is required for `/api/progress/submit` to save worker progress into
+the database while the current app still uses username-based local auth.
+
+For Google Sheets sync, create a Google Cloud service account, copy its email
+and private key into the variables above, then share the target spreadsheet with
+that service account email as Editor. Store multiline private keys with escaped
+newlines (`\n`) if your host requires a single-line env value.
+
+Do not expose the Supabase secret key (`sb_secret_xxx`) or Google private key in
+client code.

@@ -102,7 +102,7 @@ export const TasksTable = ({
         units={units}
       />
 
-      <section className="soft-card rounded-3xl p-5">
+      <section className="soft-panel p-4 lg:p-5">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="text-xl font-bold">Danh sách hạng mục</h2>
@@ -110,7 +110,7 @@ export const TasksTable = ({
               Hiển thị {rows.length}/{filteredRows.length} dòng phù hợp.
             </p>
           </div>
-          <p className="rounded-full bg-white px-3 py-2 text-sm font-bold text-slate-800 ring-1 ring-[var(--border-strong)]">
+          <p className="rounded-full bg-white/82 px-3 py-2 text-sm font-bold text-slate-800 ring-1 ring-[var(--border-strong)]">
             Tổng dữ liệu: {allRows.length} hạng mục
           </p>
         </div>
@@ -126,7 +126,7 @@ export const TasksTable = ({
 
         {visibleCount < filteredRows.length ? (
           <button
-            className="focus-ring pressable mt-4 min-h-11 w-full rounded-2xl border border-[var(--primary)] bg-white px-4 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
+            className="focus-ring pressable mt-4 min-h-11 w-full rounded-full border border-[var(--primary)] bg-white px-4 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
             onClick={() => setVisibleCount((current) => current + limit)}
             type="button"
           >

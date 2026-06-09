@@ -51,16 +51,16 @@ export const TaskCard = ({
             : "border-l-slate-400";
 
   return (
-    <article className={`soft-card overflow-hidden rounded-3xl border-l-4 ${borderClass}`}>
-      <div className="flex items-start justify-between gap-3 p-4">
+    <article className={`soft-card overflow-hidden border-l-4 ${borderClass}`}>
+      <div className="flex items-start justify-between gap-3 p-3">
         <div className="min-w-0">
-          <h2 className="font-mono text-lg font-semibold text-[var(--foreground)]">
+          <h2 className="font-mono text-base font-semibold text-[var(--foreground)]">
             {task.tagname}
           </h2>
           <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-700">
             {task.taskName}
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {task.isCancelled ? <StatusBadge label="Cancel" tone="danger" /> : null}
             <StatusBadge label={`P${task.priority}`} tone={priorityTone(task.priority)} />
             <StatusBadge label={task.donVi || "N/A"} tone="info" />
@@ -68,21 +68,21 @@ export const TaskCard = ({
             {hasDetail ? <StatusBadge label="Có ghi nhận" tone="success" /> : null}
           </div>
         </div>
-        <span className="rounded-2xl bg-white/90 px-3 py-2 text-base font-semibold tabular-nums shadow-sm ring-1 ring-[var(--border)]">
+        <span className="rounded-full bg-white/90 px-3 py-2 text-base font-semibold tabular-nums shadow-sm ring-1 ring-[var(--border)]">
           {task.isCancelled ? "NA" : `${percent}%`}
         </span>
       </div>
 
-      <div className="mx-4 h-2 overflow-hidden rounded-full bg-white/70 ring-1 ring-[var(--border)]">
+      <div className="mx-3 h-2 overflow-hidden rounded-full bg-white/70 ring-1 ring-[var(--border)]">
         <div
           className={`h-full rounded-full ${percentTone(percent)}`}
           style={{ width: `${task.isCancelled ? 0 : percent}%` }}
         />
       </div>
 
-      <div className="p-4">
+      <div className="p-3">
         {task.isCancelled ? (
-          <div className="rounded-2xl bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
+          <div className="rounded-[1.5rem] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
             Hạng mục này đã được hủy và đã báo cho admin.
             {task.cancelReason ? (
               <span className="mt-2 block font-medium text-slate-700">
@@ -101,7 +101,7 @@ export const TaskCard = ({
               task={task}
             />
             <button
-              className="focus-ring pressable mt-3 min-h-11 w-full rounded-2xl border border-[var(--border)] bg-white/80 px-3 text-sm font-semibold text-[var(--primary)] shadow-sm"
+              className="focus-ring pressable mt-3 min-h-11 w-full rounded-full border border-[var(--border)] bg-white/80 px-3 text-sm font-semibold text-[var(--primary-strong)] shadow-sm"
               onClick={() => setIsExpanded((current) => !current)}
               type="button"
             >
@@ -109,7 +109,7 @@ export const TaskCard = ({
             </button>
             {isExpanded ? (
               <button
-                className="focus-ring pressable mt-2 min-h-11 w-full rounded-2xl border border-[var(--danger)] bg-white/75 px-3 text-sm font-semibold text-[var(--danger)]"
+                className="focus-ring pressable mt-2 min-h-11 w-full rounded-full border border-[var(--danger)] bg-white/75 px-3 text-sm font-semibold text-[var(--danger)]"
                 onClick={onCancel}
                 type="button"
               >

@@ -6,6 +6,8 @@ import { useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { TasksTable } from "@/components/admin/TasksTable";
 import { useAppData } from "@/hooks/useAppData";
+import { BDTT_2026_SUBTITLE } from "@/lib/org2026";
+import { getOrgScopeLabel, getScopedAppData } from "@/lib/permissions";
 
 const AdminTasksPage = (): React.ReactElement => {
   const router = useRouter();
@@ -35,15 +37,18 @@ const AdminTasksPage = (): React.ReactElement => {
     );
   }
 
+  const scopedData = data ? getScopedAppData(data, currentAccount) : null;
+  const scopeLabel = getOrgScopeLabel(currentAccount);
+
   return (
     <AdminShell
       account={currentAccount}
       onLogout={logout}
-      subtitle="Tra cứu, lọc và kiểm tra toàn bộ hạng mục."
+      subtitle={`${BDTT_2026_SUBTITLE} · ${scopeLabel}`}
       title="Tất cả hạng mục"
     >
-      {data ? (
-        <TasksTable data={data} limit={100} />
+      {scopedData ? (
+        <TasksTable data={scopedData} limit={100} />
       ) : (
         <p className="text-sm text-slate-600">Đang tải dữ liệu...</p>
       )}

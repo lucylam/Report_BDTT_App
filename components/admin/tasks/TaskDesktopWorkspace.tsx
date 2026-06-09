@@ -23,9 +23,9 @@ export const TaskDesktopWorkspace = ({
 
   return (
     <section className="hidden gap-4 lg:grid xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="max-h-[680px] overflow-auto rounded-[2rem] border border-[var(--border-strong)] bg-white/90 shadow-[var(--shadow-soft-sm)]">
+      <div className="max-h-[680px] overflow-auto rounded-[2rem] border border-white/80 bg-white/88 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl">
         <table className="min-w-[1320px] text-left text-sm">
-          <thead className="sticky top-0 z-20 border-b border-[var(--border-strong)] bg-white/95 font-bold text-slate-800 backdrop-blur">
+          <thead className="sticky top-0 z-20 border-b border-[var(--border-strong)] bg-white/95 font-bold text-slate-800 backdrop-blur-xl">
             <tr>
               <th className="sticky left-0 z-30 bg-white py-3 pl-4 pr-4">Tagname</th>
               <th className="py-3 pr-4">WO</th>
@@ -48,7 +48,7 @@ export const TaskDesktopWorkspace = ({
                 <tr
                   aria-pressed={selected}
                   className={`cursor-pointer border-b border-[var(--border)] ${
-                    selected ? "bg-[var(--primary-soft)]" : "hover:bg-white"
+                    selected ? "bg-[var(--primary-soft)]" : "hover:bg-white/75"
                   }`}
                   key={task.id}
                   onClick={() => onSelectTask(task.id)}

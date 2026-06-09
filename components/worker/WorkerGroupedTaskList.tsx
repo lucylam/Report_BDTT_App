@@ -23,7 +23,7 @@ export const WorkerGroupedTaskList = ({
   onCancel
 }: WorkerGroupedTaskListProps): React.ReactElement => {
   const [collapsedGroups, setCollapsedGroups] = useState<ReadonlySet<string>>(
-    () => new Set()
+    () => new Set(taskGroups.slice(1).map((group) => group.key))
   );
 
   const toggleGroup = (groupKey: string): void => {
@@ -52,15 +52,37 @@ export const WorkerGroupedTaskList = ({
       {taskGroups.map((group) => {
         const isCollapsed = collapsedGroups.has(group.key);
         return (
-          <div className="space-y-3" key={group.key}>
+          <div className="space-y-2" key={group.key}>
             <button
-              className="focus-ring pressable flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-[var(--border-strong)] border-l-4 border-l-[var(--primary)] bg-white/95 px-4 text-left shadow-[var(--shadow-soft-sm)]"
+              aria-expanded={!isCollapsed}
+              className={`focus-ring pressable flex min-h-12 w-full items-center justify-between gap-3 rounded-[1.5rem] border px-4 text-left shadow-[var(--shadow-soft-sm)] ${
+                isCollapsed
+                  ? "border-[var(--border-strong)] bg-[var(--primary-pale)] text-[var(--primary-strong)]"
+                  : "border-[var(--primary)] bg-[var(--primary-strong)] text-white"
+              }`}
               onClick={() => toggleGroup(group.key)}
               type="button"
             >
-              <span className="font-bold text-[var(--foreground)]">{group.label}</span>
-              <span className="shrink-0 rounded-full bg-[var(--primary-soft)] px-2.5 py-1 text-sm font-bold text-[var(--primary-strong)]">
-                {group.tasks.length} hạng mục · {isCollapsed ? "Mở nhóm" : "Thu gọn"}
+              <span className="min-w-0">
+                <span className="block truncate font-bold">{group.label}</span>
+                <span className={`mt-0.5 block text-xs font-semibold ${isCollapsed ? "text-[var(--text-muted)]" : "text-white/75"}`}>
+                  {group.tasks.length} hạng mục
+                </span>
+              </span>
+              <span className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-bold ${
+                isCollapsed
+                  ? "bg-white/86 text-[var(--primary-strong)] ring-1 ring-[var(--border)]"
+                  : "bg-white/16 text-white"
+              }`}>
+                {isCollapsed ? "Mở" : "Đóng"}
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 border-b-2 border-r-2 transition-transform ${
+                    isCollapsed
+                      ? "translate-y-[-1px] rotate-45 border-[var(--primary-strong)]"
+                      : "translate-y-[1px] rotate-[225deg] border-white"
+                  }`}
+                />
               </span>
             </button>
             {isCollapsed ? null : (

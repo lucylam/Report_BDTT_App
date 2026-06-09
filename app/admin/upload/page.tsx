@@ -19,6 +19,7 @@ const AdminUploadPage = (): React.ReactElement => {
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [message, setMessage] = useState<string>("");
   const [isParsing, setIsParsing] = useState<boolean>(false);
+  const [isSyncingSheet, setIsSyncingSheet] = useState<boolean>(false);
 
   const handleFile = async (file: File): Promise<void> => {
     if (!data) return;
@@ -71,6 +72,44 @@ const AdminUploadPage = (): React.ReactElement => {
     }
   };
 
+  const syncGoogleSheet = async (): Promise<void> => {
+    if (!data) return;
+    setIsSyncingSheet(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/google-sheets/sync-data", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+      const result = (await response.json().catch(() => null)) as
+        | {
+            readonly ok?: boolean;
+            readonly updatedRows?: number;
+            readonly updatedColumns?: number;
+            readonly error?: string;
+          }
+        | null;
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(result?.error || "Không sync được Google Sheet DATA.");
+      }
+
+      setMessage(
+        `Đã đẩy ${result.updatedRows ?? 0} dòng, ${result.updatedColumns ?? 0} cột về Google Sheet DATA.`
+      );
+    } catch (error) {
+      console.error("[AdminUploadPage.syncGoogleSheet]", error);
+      setMessage(
+        error instanceof Error ? error.message : "Lỗi sync Google Sheet DATA."
+      );
+    } finally {
+      setIsSyncingSheet(false);
+    }
+  };
+
   useEffect(() => {
     if (!data) return;
     if (!currentAccount) router.replace("/login");
@@ -90,13 +129,13 @@ const AdminUploadPage = (): React.ReactElement => {
   if (currentAccount.role !== "admin" || !canManageData) {
     return (
       <main className="min-h-dvh px-4 py-8">
-        <section className="soft-panel mx-auto max-w-md rounded-[2rem] p-6">
+        <section className="soft-panel mx-auto max-w-md p-6">
           <h1 className="text-xl font-semibold">Không có quyền import/export DATA</h1>
           <p className="mt-2 text-sm text-slate-600">
             Chỉ tài khoản vinhlpp được import và export DATA. Các admin khác vẫn có thể xem dashboard và danh sách hạng mục.
           </p>
           <Link
-            className="focus-ring pressable mt-4 inline-flex min-h-11 items-center rounded-2xl bg-[var(--foreground)] px-4 text-sm font-semibold text-white"
+            className="focus-ring pressable mt-4 inline-flex min-h-11 items-center rounded-full bg-[var(--primary-strong)] px-4 text-sm font-bold text-white"
             href={currentAccount.role === "admin" ? "/admin" : "/worker"}
           >
             Quay lại
@@ -114,7 +153,7 @@ const AdminUploadPage = (): React.ReactElement => {
       title="Import / Export Excel"
     >
       <section className="grid gap-4 lg:grid-cols-2">
-        <div className="soft-card rounded-3xl p-5 lg:p-6">
+        <div className="soft-card p-5 lg:p-6">
           <h2 className="text-xl font-semibold">Import hạng mục từ Excel</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
             Chỉ đọc sheet DATA cột A:M. Các cột tiến độ sau M sẽ được tạo từ dữ liệu
@@ -124,7 +163,7 @@ const AdminUploadPage = (): React.ReactElement => {
             <span className="text-sm font-semibold">Chọn file .xlsx</span>
             <input
               accept=".xlsx"
-              className="focus-ring mt-2 block w-full rounded-2xl border border-[var(--border)] bg-white/90 p-3 text-base shadow-sm"
+              className="focus-ring control-pill mt-2 block w-full rounded-full p-3 text-base"
               disabled={!data || isParsing}
               onChange={(event) => {
                 const file = event.target.files?.[0];
@@ -133,12 +172,12 @@ const AdminUploadPage = (): React.ReactElement => {
               type="file"
             />
           </label>
-          <div className="mt-4 rounded-2xl bg-[var(--warning-soft)] p-4 text-sm leading-6 text-[var(--warning)]">
+          <div className="mt-4 rounded-[1.5rem] bg-[var(--warning-soft)] p-4 text-sm leading-6 text-[var(--warning)]">
             Khi xác nhận import, danh sách hạng mục hiện tại trong demo/local data sẽ được
             thay thế bằng file mới.
           </div>
           <button
-            className="focus-ring pressable mt-4 min-h-11 w-full rounded-2xl bg-[var(--foreground)] px-4 py-3 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+            className="focus-ring pressable mt-4 min-h-11 w-full rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!preview || preview.missingColumns.length > 0}
             onClick={applyImport}
             type="button"
@@ -147,7 +186,7 @@ const AdminUploadPage = (): React.ReactElement => {
           </button>
         </div>
 
-        <div className="soft-card rounded-3xl p-5 lg:p-6">
+        <div className="soft-card p-5 lg:p-6">
           <h2 className="text-xl font-semibold">Export DATA hoàn chỉnh</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
             File export lấy danh sách hạng mục hiện tại và điền tiến độ, ghi chú mới nhất từ
@@ -158,17 +197,25 @@ const AdminUploadPage = (): React.ReactElement => {
             <Metric label="Tổng hạng mục" value={String(data?.tasks.length ?? 0)} />
           </div>
           <button
-            className="focus-ring pressable mt-4 min-h-11 w-full rounded-2xl border border-[var(--border)] bg-white/80 px-4 py-3 text-sm font-semibold shadow-sm"
+            className="focus-ring pressable mt-4 min-h-11 w-full rounded-full border border-[var(--border)] bg-white/82 px-4 py-3 text-sm font-bold shadow-sm"
             disabled={!data}
             onClick={exportFile}
             type="button"
           >
             Export DATA hoàn chỉnh
           </button>
+          <button
+            className="focus-ring pressable mt-3 min-h-11 w-full rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={!data || isSyncingSheet}
+            onClick={() => void syncGoogleSheet()}
+            type="button"
+          >
+            {isSyncingSheet ? "Đang đẩy lên Google Sheet..." : "Đẩy lên Google Sheet DATA"}
+          </button>
           {message ? (
             <p
               aria-live="polite"
-              className="mt-4 rounded-2xl bg-white/70 p-3 text-sm text-slate-700 ring-1 ring-[var(--border)]"
+              className="mt-4 rounded-[1.5rem] bg-white/82 p-3 text-sm text-slate-700 ring-1 ring-[var(--border)]"
             >
               {message}
             </p>
@@ -187,7 +234,7 @@ const ImportPreviewPanel = ({
   readonly preview: ImportPreview;
 }): React.ReactElement => {
   return (
-    <section className="soft-card rounded-3xl p-5 lg:p-6">
+    <section className="soft-card p-5 lg:p-6">
       <h2 className="text-xl font-semibold">Preview import</h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <Metric label="Dòng hạng mục" value={String(preview.rowCount)} />
@@ -218,7 +265,7 @@ const ImportPreviewPanel = ({
 
 const SampleTask = ({ task }: { readonly task: Task }): React.ReactElement => {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-white/70 p-3 text-sm shadow-sm">
+    <div className="rounded-[1.25rem] border border-[var(--border)] bg-white/82 p-3 text-sm shadow-sm">
       <p className="font-mono font-semibold">{task.tagname}</p>
       <p className="mt-1 text-slate-700">{task.taskName}</p>
       <p className="mt-1 text-xs text-[var(--text-muted)]">
@@ -236,7 +283,7 @@ const Metric = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-[var(--border)]">
+    <div className="rounded-[1.25rem] bg-white/82 p-4 shadow-sm ring-1 ring-[var(--border)]">
       <p className="text-sm text-[var(--text-muted)]">{label}</p>
       <p className="mt-1 text-2xl font-semibold">{value}</p>
     </div>
@@ -256,7 +303,7 @@ const PreviewList = ({
       {values.length === 0 ? (
         <p className="mt-2 text-sm text-slate-600">Không có</p>
       ) : (
-        <ul className="mt-2 max-h-56 overflow-auto rounded-2xl border border-[var(--border)] bg-white/70 p-3 text-sm">
+        <ul className="mt-2 max-h-56 overflow-auto rounded-[1.5rem] border border-[var(--border)] bg-white/82 p-3 text-sm">
           {values.map((value) => (
             <li className="border-b border-[var(--border)] py-2 last:border-b-0" key={value}>
               {value}

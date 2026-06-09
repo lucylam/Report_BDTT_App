@@ -16,7 +16,7 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
       {rows.map((row) => {
         const { task, percent, status, progress } = row;
         return (
-          <article className="soft-card rounded-3xl p-5" key={task.id}>
+          <article className="soft-card p-4" key={task.id}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-mono text-lg font-bold leading-tight">{task.tagname}</p>
@@ -68,7 +68,7 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
 
 const Chip = ({ label }: { readonly label: string }): React.ReactElement => {
   return (
-    <span className="rounded-full bg-white px-2.5 py-1 text-slate-800 ring-1 ring-[var(--border-strong)]">
+    <span className="rounded-full bg-white/86 px-2.5 py-1 text-slate-800 ring-1 ring-[var(--border-strong)]">
       {label}
     </span>
   );
@@ -82,7 +82,7 @@ const Info = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-2xl bg-white p-3 ring-1 ring-[var(--border-strong)]">
+    <div className="rounded-[1.25rem] bg-white/86 p-3 ring-1 ring-[var(--border-strong)]">
       <p className="text-xs font-bold uppercase text-slate-600">{label}</p>
       <p className="mt-1 truncate font-semibold text-slate-900">{value}</p>
     </div>

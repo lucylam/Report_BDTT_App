@@ -3,6 +3,8 @@ import { REPORT_DATES, dateToExcelSerial } from "@/lib/date";
 import { getTaskPercent } from "@/lib/progress";
 import type { AppData, Task } from "@/types/domain";
 
+export type ExportCellValue = string | number;
+
 const createBaseRow = (task: Task): Record<string, string | number> => {
   return {
     Stt: task.stt,
@@ -54,8 +56,18 @@ const createExportRow = (
   return row;
 };
 
+export const buildExportRows = (data: AppData): Array<Record<string, ExportCellValue>> => {
+  return data.tasks.map((task) => createExportRow(data, task));
+};
+
+export const buildExportSheetValues = (data: AppData): ExportCellValue[][] => {
+  const rows = buildExportRows(data);
+  const headers = rows[0] ? Object.keys(rows[0]) : [];
+  return [headers, ...rows.map((row) => headers.map((header) => row[header] ?? ""))];
+};
+
 export const buildExportWorkbook = (data: AppData): XLSX.WorkBook => {
-  const rows = data.tasks.map((task) => createExportRow(data, task));
+  const rows = buildExportRows(data);
   const worksheet = XLSX.utils.json_to_sheet(rows);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "DATA");

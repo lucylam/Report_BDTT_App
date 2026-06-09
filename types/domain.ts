@@ -2,6 +2,27 @@ export type ProgressPercent = 0 | 25 | 50 | 75 | 100;
 
 export type UserRole = "admin" | "worker";
 
+export type OrgRole =
+  | "toTruong"
+  | "nhomTruong"
+  | "nhomPho"
+  | "pnt"
+  | "member"
+  | "placeholder"
+  | "supervisor";
+
+export interface OrgMetadata {
+  readonly orgGroup: string;
+  readonly subgroup: string;
+  readonly orgRole: OrgRole;
+  readonly orgTitle: string;
+  readonly orgAssignment: string;
+  readonly managedGroups: readonly string[];
+  readonly managedSubgroups: readonly string[];
+  readonly isPlaceholder: boolean;
+  readonly canLogin: boolean;
+}
+
 export interface Profile {
   readonly id: string;
   readonly email: string;
@@ -12,6 +33,15 @@ export interface Profile {
   readonly nhom: string;
   readonly nhomTruong: string;
   readonly role: UserRole;
+  readonly orgGroup: string;
+  readonly subgroup: string;
+  readonly orgRole: OrgRole;
+  readonly orgTitle: string;
+  readonly orgAssignment: string;
+  readonly managedGroups: readonly string[];
+  readonly managedSubgroups: readonly string[];
+  readonly isPlaceholder: boolean;
+  readonly canLogin: boolean;
   readonly mustChangePassword: boolean;
 }
 
@@ -23,6 +53,15 @@ export interface AuthAccount {
   readonly fullName: string;
   readonly resourceName: string;
   readonly role: UserRole;
+  readonly orgGroup: string;
+  readonly subgroup: string;
+  readonly orgRole: OrgRole;
+  readonly orgTitle: string;
+  readonly orgAssignment: string;
+  readonly managedGroups: readonly string[];
+  readonly managedSubgroups: readonly string[];
+  readonly isPlaceholder: boolean;
+  readonly canLogin: boolean;
   readonly password: string;
   readonly mustChangePassword: boolean;
 }

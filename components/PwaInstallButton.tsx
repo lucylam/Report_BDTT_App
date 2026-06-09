@@ -96,9 +96,13 @@ export const PwaInstallButton = ({
     }
   };
 
+  const buttonClass = compact
+    ? "focus-ring pressable min-h-11 w-full rounded-full border border-[var(--border-strong)] bg-white/84 px-4 text-sm font-bold text-slate-800 shadow-sm hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+    : "focus-ring pressable min-h-11 rounded-full bg-[var(--primary-strong)] px-4 text-sm font-bold text-white shadow-sm";
+
   const button = deferredPrompt ? (
     <button
-      className={`focus-ring pressable min-h-11 rounded-2xl bg-[var(--foreground)] px-4 text-sm font-bold text-white shadow-sm ${compact ? "w-full" : ""}`}
+      className={buttonClass}
       onClick={installApp}
       type="button"
     >
@@ -115,7 +119,7 @@ export const PwaInstallButton = ({
   if (variant === "panel") {
     return (
       <div
-        className={`rounded-3xl border border-[var(--border)] bg-white/70 p-4 shadow-sm ${className}`}
+        className={`rounded-[1.75rem] border border-[var(--border)] bg-white/82 p-4 shadow-sm ${className}`}
       >
         <p className="text-sm font-bold text-[var(--foreground)]">Dùng như mobile app</p>
         <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">

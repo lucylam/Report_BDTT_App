@@ -33,7 +33,7 @@ export const DashboardExportButton = ({
 
   return (
     <button
-      className="focus-ring pressable min-h-11 rounded-2xl bg-[var(--foreground)] px-4 py-3 text-sm font-semibold text-white shadow-sm"
+      className="focus-ring pressable min-h-11 rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-[var(--shadow-soft-sm)]"
       onClick={() => {
         void exportPng();
       }}

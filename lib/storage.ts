@@ -14,6 +14,8 @@ import type {
 } from "@/types/domain";
 
 const STORAGE_KEY = "bdtt-progress-demo-v4";
+const REMEMBER_LOGIN_KEY = "bdtt-remember-login";
+const SESSION_USER_KEY = "bdtt-session-user-id";
 
 interface ProgressUpdateInput {
   readonly taskId: string;
@@ -52,13 +54,47 @@ export const loadAppData = (): AppData => {
       offlineQueue: parsed.offlineQueue ?? [],
       activeUserId: parsed.activeUserId ?? null
     });
-    saveAppData(normalizedData);
-    return normalizedData;
+    const nextData = {
+      ...normalizedData,
+      activeUserId: getEffectiveActiveUserId(normalizedData.activeUserId, normalizedData)
+    };
+    saveAppData(nextData);
+    return nextData;
   } catch (error) {
     console.error("[loadAppData]", error);
     const demo = createDemoData();
     saveAppData(demo);
     return demo;
+  }
+};
+
+export const loadRememberLoginPreference = (): boolean => {
+  if (typeof window === "undefined") return true;
+  return window.localStorage.getItem(REMEMBER_LOGIN_KEY) !== "false";
+};
+
+const setRememberLoginPreference = (rememberLogin: boolean): void => {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(REMEMBER_LOGIN_KEY, rememberLogin ? "true" : "false");
+};
+
+const getEffectiveActiveUserId = (
+  storedActiveUserId: string | null,
+  data: AppData
+): string | null => {
+  const candidate = loadRememberLoginPreference()
+    ? storedActiveUserId
+    : window.sessionStorage.getItem(SESSION_USER_KEY);
+  if (!candidate) return null;
+  return data.accounts.some((account) => account.id === candidate) ? candidate : null;
+};
+
+const setSessionUserId = (accountId: string | null): void => {
+  if (typeof window === "undefined") return;
+  if (accountId) {
+    window.sessionStorage.setItem(SESSION_USER_KEY, accountId);
+  } else {
+    window.sessionStorage.removeItem(SESSION_USER_KEY);
   }
 };
 
@@ -72,7 +108,8 @@ const normalizeTask = (task: Task): Task => {
 export const loginAccount = (
   data: AppData,
   username: string,
-  password: string
+  password: string,
+  rememberLogin: boolean
 ): { readonly data: AppData; readonly account: AuthAccount } => {
   const normalizedUsername = getLoginUsername(username);
   const account = data.accounts.find(
@@ -83,10 +120,16 @@ export const loginAccount = (
     throw new Error("Sai tài khoản hoặc mật khẩu.");
   }
 
+  if (!account.canLogin) {
+    throw new Error("Tài khoản tạm chưa được kích hoạt.");
+  }
+
   const nextData: AppData = {
     ...data,
     activeUserId: account.id
   };
+  setRememberLoginPreference(rememberLogin);
+  setSessionUserId(rememberLogin ? null : account.id);
   saveAppData(nextData);
   return { data: nextData, account };
 };
@@ -96,6 +139,7 @@ export const logoutAccount = (data: AppData): AppData => {
     ...data,
     activeUserId: null
   };
+  setSessionUserId(null);
   saveAppData(nextData);
   return nextData;
 };
@@ -135,7 +179,11 @@ export const changeAccountPassword = (
 
 export const saveAppData = (data: AppData): void => {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  const persistedData: AppData = {
+    ...data,
+    activeUserId: loadRememberLoginPreference() ? data.activeUserId : null
+  };
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedData));
 };
 
 export const replaceTasks = (data: AppData, tasks: readonly Task[]): AppData => {

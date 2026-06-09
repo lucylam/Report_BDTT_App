@@ -39,13 +39,13 @@ export const ProgressCharts = ({
 }): React.ReactElement => {
   return (
     <section className="grid gap-5">
-      <div className="soft-panel rounded-[2rem] p-6">
+      <div className="soft-panel p-5 lg:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
               Dashboard báo cáo
             </p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
               Báo cáo ngắn tiến độ BDTT 2025
             </h2>
             <p className="mt-2 text-sm text-[var(--text-muted)]">
@@ -72,7 +72,7 @@ export const ProgressCharts = ({
 
       <LeadStatusChart data={dashboard.byLeadStatus} />
 
-      <section className="soft-panel rounded-[2rem] p-5">
+      <section className="soft-panel p-5">
         <h2 className="text-xl font-semibold">Chi tiết theo phân nhóm resource</h2>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
           Tương ứng cụm chart resource trong DASH BOARD: HTĐK, TBCH, AMLL, BENT, NHIỆT, PI, TLTBĐK.
@@ -99,7 +99,7 @@ const ChartShell = ({
   readonly title: string;
 }): React.ReactElement => {
   return (
-    <section className="soft-card rounded-3xl p-5">
+    <section className="soft-card p-5">
       <h2 className="text-lg font-semibold">{title}</h2>
       <p className="mt-1 text-sm text-[var(--text-muted)]">{subtitle}</p>
       {children}
@@ -239,7 +239,7 @@ const ResourceGroupChart = ({
   if (group.rows.length === 0) {
     return (
       <ChartShell subtitle="Chưa có hạng mục thuộc nhóm này trong dữ liệu hiện tại" title={group.title}>
-        <div className="mt-4 rounded-2xl bg-white/70 p-4 text-sm text-[var(--text-muted)] ring-1 ring-[var(--border)]">
+        <div className="mt-4 rounded-[1.5rem] bg-white/82 p-4 text-sm text-[var(--text-muted)] ring-1 ring-[var(--border)]">
           Không có dữ liệu để hiển thị.
         </div>
       </ChartShell>
@@ -256,7 +256,7 @@ const DeferredDashboardNotice = (): React.ReactElement => {
     "Hai bảng VOTTING cuối dashboard"
   ];
   return (
-    <section className="soft-card rounded-3xl border-dashed p-5">
+    <section className="soft-card border-dashed p-5">
       <h2 className="text-lg font-semibold">Dashboard sẽ bổ sung ở giai đoạn sau</h2>
       <p className="mt-1 text-sm text-[var(--text-muted)]">
         Các phần này không render giả vì hiện chưa có đủ trường dữ liệu trong DATA A:M.
@@ -264,7 +264,7 @@ const DeferredDashboardNotice = (): React.ReactElement => {
       <div className="mt-3 flex flex-wrap gap-2">
         {items.map((item) => (
           <span
-            className="rounded-full bg-white/70 px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-[var(--border)]"
+            className="rounded-full bg-white/82 px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-[var(--border)]"
             key={item}
           >
             {item}

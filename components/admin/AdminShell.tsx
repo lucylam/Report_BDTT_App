@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { PwaInstallButton } from "@/components/PwaInstallButton";
-import { isDataAdminAccount } from "@/lib/permissions";
+import { CompanyBrand } from "@/components/CompanyBrand";
+import { hasFullOrgScope, isDataAdminAccount } from "@/lib/permissions";
 import type { AuthAccount } from "@/types/domain";
 
 interface AdminShellProps {
@@ -16,12 +16,13 @@ interface AdminShellProps {
 }
 
 const links = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/personnel", label: "Nhân sự" },
+  { href: "/admin", label: "Tổng quan" },
+  { href: "/admin/personnel", label: "Worker" },
   { href: "/admin/tasks", label: "Hạng mục" },
-  { href: "/admin/upload", label: "Import / Export", dataAdminOnly: true },
-  { href: "/worker", label: "Xem worker" }
+  { href: "/admin/upload", label: "DATA", dataAdminOnly: true }
 ] as const;
+
+const workspaceLink = { href: "/worker", label: "Workspace" } as const;
 
 export const AdminShell = ({
   account,
@@ -32,28 +33,39 @@ export const AdminShell = ({
 }: AdminShellProps): React.ReactElement => {
   const pathname = usePathname();
   const canManageData = isDataAdminAccount(account);
-  const visibleLinks = links.filter(
-    (link) => !("dataAdminOnly" in link) || !link.dataAdminOnly || canManageData
-  );
+  const canViewDashboard = hasFullOrgScope(account);
+  const visibleLinks = links
+    .filter(
+      (link) => !("dataAdminOnly" in link) || !link.dataAdminOnly || canManageData
+    )
+    .map((link) =>
+      link.href === "/admin" && !canViewDashboard
+        ? { ...link, label: "Theo dõi" }
+        : link
+    );
   const mobileLinks = visibleLinks.slice(0, 5);
 
   return (
-    <main className="min-h-dvh overflow-x-hidden bg-transparent pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom))] lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:pb-0">
-      <aside className="m-4 mr-0 hidden rounded-3xl border border-white/70 bg-white/75 p-5 shadow-[var(--shadow-soft-md)] backdrop-blur-xl lg:block">
-        <p className="text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
-          BDTT Admin
-        </p>
-        <div className="mt-6 rounded-3xl bg-white/75 p-4 shadow-sm ring-1 ring-[var(--border)]">
-          <p className="font-semibold">{account.fullName}</p>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
+    <main className="w-full max-w-[100vw] overflow-x-hidden min-h-dvh bg-transparent pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+1rem)] lg:grid lg:grid-cols-[292px_minmax(0,1fr)] lg:pb-0">
+      <aside className="m-5 mr-0 hidden rounded-[2rem] border border-white/80 bg-white/80 p-5 shadow-[var(--shadow-soft-md)] backdrop-blur-xl lg:block">
+        <CompanyBrand variant="sidebar" />
+        <div className="mt-5 rounded-[1.75rem] bg-[var(--primary-strong)] p-5 text-white shadow-[var(--shadow-floating)]">
+          <p className="text-lg font-semibold leading-tight">{account.fullName}</p>
+          <p className="mt-1 text-sm text-white/72">@{account.username}</p>
+          <p className="mt-3 text-sm font-bold leading-5 text-white">
+            {account.orgTitle}
+          </p>
+          <p className="mt-2 text-sm leading-5 text-white/78">
+            {account.orgAssignment}
+          </p>
         </div>
         <nav className="mt-6 space-y-2">
           {visibleLinks.map((link) => (
             <Link
-              className={`focus-ring pressable flex min-h-11 items-center rounded-2xl px-3 text-sm font-bold ${
+              className={`focus-ring pressable flex min-h-12 items-center rounded-full px-4 text-sm font-bold ${
                 pathname === link.href
-                  ? "bg-[var(--primary-strong)] text-white shadow-md"
-                  : "border border-transparent text-slate-800 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+                  ? "bg-[var(--primary-strong)] text-white shadow-[var(--shadow-soft-sm)]"
+                  : "border border-transparent bg-white/60 text-slate-800 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
               }`}
               href={link.href}
               key={link.href}
@@ -62,8 +74,19 @@ export const AdminShell = ({
             </Link>
           ))}
         </nav>
+        <div className="mt-6 border-t border-[var(--border-strong)] pt-5">
+          <p className="px-2 text-xs font-bold uppercase text-[var(--text-muted)]">
+            Chế độ thao tác
+          </p>
+          <Link
+            className="focus-ring pressable mt-2 flex min-h-12 items-center justify-center rounded-full border border-[var(--primary)] bg-white px-4 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
+            href={workspaceLink.href}
+          >
+            Mở {workspaceLink.label}
+          </Link>
+        </div>
         <button
-          className="focus-ring pressable mt-6 min-h-11 w-full rounded-2xl border border-[var(--border-strong)] bg-white px-4 text-sm font-bold text-slate-800 shadow-sm hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
+          className="focus-ring pressable mt-6 min-h-12 w-full rounded-full border border-[var(--border-strong)] bg-white/80 px-4 text-sm font-bold text-slate-800 shadow-sm hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
           onClick={onLogout}
           type="button"
         >
@@ -71,51 +94,51 @@ export const AdminShell = ({
         </button>
       </aside>
 
-      <section className="min-w-0">
-        <header className="mobile-topbar sticky top-0 z-20 border-b border-white/60 bg-white/85 px-4 pb-3 backdrop-blur-xl lg:hidden">
+      <section className="min-w-0 overflow-x-hidden">
+        <header className="mobile-topbar sticky top-0 z-20 border-b border-white/70 bg-white/88 px-4 pb-3 backdrop-blur-xl lg:hidden">
           <div className="flex items-center justify-between gap-3">
+            <CompanyBrand variant="compact" />
             <div className="min-w-0">
-              <p className="text-xs font-bold uppercase text-[var(--primary)]">BDTT Admin</p>
-              <h1 className="truncate text-2xl font-bold leading-tight text-[var(--foreground)]">
+              <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">BDTT 2026</p>
+              <h1 className="truncate text-xl font-bold leading-tight text-[var(--foreground)]">
                 {title}
               </h1>
               <p className="truncate text-xs font-semibold text-[var(--text-muted)]">
-                @{account.username}
+                {account.orgTitle}
               </p>
             </div>
             <button
-              className="focus-ring pressable min-h-11 shrink-0 rounded-2xl border border-[var(--border-strong)] bg-white px-3 text-sm font-bold text-slate-800 shadow-sm"
+              className="focus-ring pressable min-h-11 shrink-0 rounded-full border border-[var(--border-strong)] bg-white px-4 text-sm font-bold text-slate-800 shadow-sm"
               onClick={onLogout}
               type="button"
             >
               Đăng xuất
             </button>
           </div>
-          <PwaInstallButton className="mt-3" compact showHint variant="panel" />
         </header>
 
-        <header className="sticky top-0 z-20 hidden border-b border-white/50 bg-white/60 px-4 py-4 backdrop-blur-xl lg:block lg:px-8">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
+        <header className="sticky top-0 z-20 hidden border-b border-white/60 bg-white/70 px-4 py-4 backdrop-blur-xl lg:block lg:px-8">
+          <div className="flex w-full min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
               <p className="text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
-                Admin
+                BDTT 2026 workspace
               </p>
-              <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[var(--foreground)] lg:text-4xl">
+              <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[var(--foreground)]">
                 {title}
               </h1>
               <p className="mt-1 text-sm text-[var(--text-muted)]">{subtitle}</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex min-w-0 flex-wrap gap-2">
               {canManageData ? (
                 <>
                   <Link
-                    className="focus-ring pressable min-h-11 rounded-2xl bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-md"
+                    className="focus-ring pressable min-h-11 rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-md"
                     href="/admin/upload"
                   >
                     Import Excel
                   </Link>
                   <Link
-                    className="focus-ring pressable min-h-11 rounded-2xl border border-[var(--primary)] bg-white px-4 py-3 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
+                    className="focus-ring pressable min-h-11 rounded-full border border-[var(--primary)] bg-white px-4 py-3 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
                     href="/admin/upload"
                   >
                     Export DATA
@@ -123,7 +146,7 @@ export const AdminShell = ({
                 </>
               ) : null}
               <Link
-                className="focus-ring pressable min-h-11 rounded-2xl border border-[var(--primary)] bg-white px-4 py-3 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
+                className="focus-ring pressable min-h-11 rounded-full border border-[var(--primary)] bg-white px-4 py-3 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
                 href="/admin/tasks"
               >
                 Xem hạng mục
@@ -139,18 +162,24 @@ export const AdminShell = ({
           </div>
         </header>
 
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-5 lg:px-8">
+        <div className="flex w-full min-w-0 flex-col gap-4 px-4 py-4 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+1.25rem)] lg:gap-5 lg:px-8 lg:py-5 lg:pb-5">
           {children}
         </div>
       </section>
 
       <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-30 px-3 lg:hidden">
-        <div className="grid gap-1 rounded-3xl border border-[var(--border-strong)] bg-white/90 p-2 text-center text-[11px] font-bold shadow-[var(--shadow-floating)] backdrop-blur-xl" style={{ gridTemplateColumns: `repeat(${mobileLinks.length}, minmax(0, 1fr))` }}>
+        <Link
+          className="focus-ring pressable mx-auto mb-2 flex min-h-11 w-fit items-center justify-center rounded-full border border-[var(--primary)] bg-white px-5 text-sm font-bold text-[var(--primary-strong)] shadow-[var(--shadow-soft-sm)]"
+          href={workspaceLink.href}
+        >
+          Mở {workspaceLink.label}
+        </Link>
+        <div className="floating-pill grid gap-1 rounded-[2rem] p-2 text-center text-xs font-bold" style={{ gridTemplateColumns: `repeat(${mobileLinks.length}, minmax(0, 1fr))` }}>
           {mobileLinks.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
-                className={`focus-ring pressable flex min-h-12 items-center justify-center rounded-2xl px-1 leading-tight ${
+                className={`focus-ring pressable flex min-h-12 items-center justify-center rounded-full px-1 leading-tight ${
                   active
                     ? "bg-[var(--primary-strong)] text-white shadow-md"
                     : "text-slate-800 hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"

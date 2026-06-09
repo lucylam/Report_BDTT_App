@@ -1,59 +1,46 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { CompanyBrand } from "@/components/CompanyBrand";
+import { useAppData } from "@/hooks/useAppData";
+import { BDTT_2026_SUBTITLE, BDTT_2026_TITLE } from "@/lib/org2026";
 
 const HomePage = (): React.ReactElement => {
+  const router = useRouter();
+  const { currentAccount, data } = useAppData();
+
+  useEffect(() => {
+    if (!data || !currentAccount) return;
+    router.replace(currentAccount.role === "admin" ? "/admin" : "/worker");
+  }, [currentAccount, data, router]);
+
   return (
-    <main className="min-h-dvh px-4 py-6 md:px-8">
-      <section className="mx-auto flex max-w-5xl flex-col gap-8">
-        <div className="soft-panel rounded-[2rem] p-7">
-          <p className="text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
-            BDTT Maintenance Progress
+    <main className="flex min-h-dvh items-center justify-center px-4 py-6">
+      <section className="soft-panel w-full max-w-md overflow-hidden p-5 md:p-7">
+        <CompanyBrand className="rounded-[1.5rem] bg-white/76 p-4 ring-1 ring-[var(--border)]" variant="full" />
+        <div className="mt-5 rounded-[1.75rem] bg-[var(--primary-strong)] px-5 py-7 text-white shadow-[var(--shadow-floating)]">
+          <p className="text-xs font-bold uppercase tracking-wide text-white/75">
+            {BDTT_2026_SUBTITLE}
           </p>
-          <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-tight text-[var(--foreground)] md:text-5xl">
-            Báo cáo tiến độ bảo dưỡng hằng ngày
+          <h1 className="mt-3 text-3xl font-semibold leading-tight md:text-4xl">
+            {BDTT_2026_TITLE}
           </h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700">
-            MVP demo dùng Excel sheet DATA cột A:M làm danh mục hạng mục,
-            sau đó nhận tiến độ từ worker trong app và xuất lại sheet DATA
-            hoàn chỉnh.
+          <p className="mt-3 text-sm leading-6 text-white/78">
+            Một điểm vào duy nhất cho worker cập nhật tiến độ và cấp quản lý theo dõi tình hình.
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="mt-5 rounded-[1.75rem] bg-white/80 p-4 ring-1 ring-[var(--border)]">
+          <p className="text-sm font-semibold text-[var(--text-muted)]">
+            Đăng nhập bằng username PVCFC. Hệ thống sẽ tự mở đúng màn hình theo tài khoản.
+          </p>
           <Link
-            className="focus-ring pressable soft-card rounded-3xl p-6 hover:border-[var(--primary)]"
+            className="focus-ring pressable mt-4 flex min-h-12 items-center justify-center rounded-full bg-[var(--primary-strong)] px-5 text-sm font-bold text-white shadow-[var(--shadow-soft-sm)]"
             href="/login"
           >
-            <span className="text-sm font-semibold text-[var(--primary)]">
-              Login
-            </span>
-            <h2 className="mt-2 text-xl font-semibold">Đăng nhập nội bộ</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Username là phần trước @ trong email PVCFC, bắt buộc đổi mật khẩu lần đầu.
-            </p>
-          </Link>
-          <Link
-            className="focus-ring pressable soft-card rounded-3xl p-6 hover:border-[var(--primary)]"
-            href="/admin"
-          >
-            <span className="text-sm font-semibold text-[var(--primary)]">
-              Admin
-            </span>
-            <h2 className="mt-2 text-xl font-semibold">Dashboard</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              KPI, bảng worker, bảng hạng mục và dữ liệu tiến độ demo.
-            </p>
-          </Link>
-          <Link
-            className="focus-ring pressable soft-card rounded-3xl p-6 hover:border-[var(--primary)]"
-            href="/admin/upload"
-          >
-            <span className="text-sm font-semibold text-[var(--primary)]">
-              Excel
-            </span>
-            <h2 className="mt-2 text-xl font-semibold">Import / Export</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Import sheet DATA A:M và export file DATA hoàn chỉnh.
-            </p>
+            Vào màn hình đăng nhập
           </Link>
         </div>
       </section>
