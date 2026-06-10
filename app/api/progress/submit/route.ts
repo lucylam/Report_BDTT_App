@@ -40,7 +40,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const supabase = await createServerSupabaseClient();
   if (!supabase) {
     return NextResponse.json(
-      { error: "Chưa cấu hình Supabase server env." },
+      {
+        error:
+          "Chưa cấu hình Supabase server env trên Vercel. Cần NEXT_PUBLIC_SUPABASE_URL và SUPABASE_SERVICE_ROLE_KEY, hoặc BDTT_SERVER_CONFIG_JSON."
+      },
       { status: 503 }
     );
   }

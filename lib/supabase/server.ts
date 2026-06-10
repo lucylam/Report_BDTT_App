@@ -24,10 +24,13 @@ const getSupabaseServerConfig = async (): Promise<
   const serverConfig = await readServerConfigFile();
   const serviceRoleKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SERVICE_ROLE ??
+    process.env.SUPABASE_SERVICE_KEY ??
     process.env.SUPABASE_SECRET_KEY ??
     serverConfig?.supabase?.service_role;
   const url =
     process.env.SUPABASE_URL ??
+    process.env.SUPABASE_PROJECT_URL ??
     process.env.NEXT_PUBLIC_SUPABASE_URL ??
     serverConfig?.supabase?.supabase_url ??
     serverConfig?.supabase?.url ??

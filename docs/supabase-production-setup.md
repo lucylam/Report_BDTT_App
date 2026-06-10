@@ -119,10 +119,19 @@ admins can read all task photos.
 
 ## 6. Vercel environment variables
 
-Set these in Vercel Project Settings > Environment Variables:
+Get values from Supabase first:
+
+1. Open Supabase project.
+2. Go to `Project Settings > API`.
+3. Copy `Project URL`.
+4. Copy the anon/publishable key.
+5. Copy the `service_role` key. Keep this key server-only.
+
+Set these in `Vercel Project Settings > Environment Variables` for Production,
+Preview, and Development as needed:
 
 ```text
-NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 GOOGLE_SERVICE_ACCOUNT_EMAIL=...
@@ -131,17 +140,39 @@ GOOGLE_SHEETS_SPREADSHEET_ID=1wknfHCcrVVvc1p8mj91yXLlcVbO3vrJjDF3mulH5N1w
 GOOGLE_SHEETS_DATA_SHEET_NAME=DATA
 ```
 
+After adding or changing Vercel variables, redeploy the project. Existing
+deployments do not automatically receive newly added environment variables.
+
+Alternative for Vercel: instead of splitting the Google and Supabase secrets into
+separate variables, paste the combined local credential file contents into one
+server-only variable:
+
+```text
+BDTT_SERVER_CONFIG_JSON=...
+```
+
+Do not use `BDTT_SERVER_CONFIG_PATH` on Vercel. Vercel cannot read a file path
+from your local computer.
+
 Use the publishable key (`sb_publishable_xxx`) as
 `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
 Use the Supabase service role key only as `SUPABASE_SERVICE_ROLE_KEY` on the
 server. It is required for `/api/progress/submit` to save worker progress into
 the database while the current app still uses username-based local auth.
+It is also required for `/api/tasks/import` to import DATA A:M into
+`public.tasks`.
 
 For Google Sheets sync, create a Google Cloud service account, copy its email
 and private key into the variables above, then share the target spreadsheet with
 that service account email as Editor. Store multiline private keys with escaped
 newlines (`\n`) if your host requires a single-line env value.
+
+You can also paste the standard Google service account JSON into:
+
+```text
+GOOGLE_SERVICE_ACCOUNT_JSON=...
+```
 
 For local development only, the server can also read a gitignored combined
 credential file via:

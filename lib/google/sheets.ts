@@ -1,6 +1,10 @@
 import crypto from "node:crypto";
 import type { ExportCellValue } from "@/lib/excel/exporter";
-import { readGoogleServiceAccountFromPath, readServerConfigFile } from "@/lib/serverConfig";
+import {
+  readGoogleServiceAccountFromJson,
+  readGoogleServiceAccountFromPath,
+  readServerConfigFile
+} from "@/lib/serverConfig";
 
 const DEFAULT_SPREADSHEET_ID = "1wknfHCcrVVvc1p8mj91yXLlcVbO3vrJjDF3mulH5N1w";
 const DEFAULT_SHEET_NAME = "DATA";
@@ -28,6 +32,17 @@ const getServiceAccountCredential = async (): Promise<{
     return { clientEmail: envClientEmail, privateKey: envPrivateKey };
   }
 
+  const jsonValue = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (jsonValue) {
+    const credential = readGoogleServiceAccountFromJson(jsonValue);
+    if (credential.client_email && credential.private_key) {
+      return {
+        clientEmail: credential.client_email,
+        privateKey: credential.private_key
+      };
+    }
+  }
+
   const jsonPath = process.env.GOOGLE_SERVICE_ACCOUNT_JSON_PATH;
   if (jsonPath) {
     const credential = await readGoogleServiceAccountFromPath(jsonPath);
@@ -49,7 +64,7 @@ const getServiceAccountCredential = async (): Promise<{
   }
 
   throw new Error(
-    "Chưa cấu hình Google service account. Cần GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY, GOOGLE_SERVICE_ACCOUNT_JSON_PATH, hoặc BDTT_SERVER_CONFIG_PATH."
+    "Chưa cấu hình Google service account. Cần GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY, GOOGLE_SERVICE_ACCOUNT_JSON, GOOGLE_SERVICE_ACCOUNT_JSON_PATH, BDTT_SERVER_CONFIG_JSON, hoặc BDTT_SERVER_CONFIG_PATH."
   );
 };
 

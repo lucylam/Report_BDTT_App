@@ -63,29 +63,40 @@ const extractTopLevelJsonObjects = (raw: string): readonly string[] => {
 
 let cachedConfig: Promise<ServerConfigFile | null> | null = null;
 
+const parseServerConfig = (raw: string): ServerConfigFile => {
+  const parsedObjects = extractTopLevelJsonObjects(raw).map((value) => JSON.parse(value) as unknown);
+  const googleServiceAccount =
+    parsedObjects.find((value): value is GoogleServiceAccountConfig => {
+      const config = value as GoogleServiceAccountConfig;
+      return config.type === "service_account" && Boolean(config.client_email && config.private_key);
+    }) ?? null;
+  const supabase =
+    parsedObjects.find((value): value is SupabaseServiceConfig => {
+      const config = value as SupabaseServiceConfig;
+      return Boolean(config.service_role);
+    }) ?? null;
+
+  return { googleServiceAccount, supabase };
+};
+
 export const readServerConfigFile = async (): Promise<ServerConfigFile | null> => {
+  const configJson = process.env.BDTT_SERVER_CONFIG_JSON;
+  if (configJson) return parseServerConfig(configJson);
+
   const configPath = process.env.BDTT_SERVER_CONFIG_PATH;
   if (!configPath) return null;
 
   if (!cachedConfig) {
-    cachedConfig = readFile(configPath, "utf8").then((raw) => {
-      const parsedObjects = extractTopLevelJsonObjects(raw).map((value) => JSON.parse(value) as unknown);
-      const googleServiceAccount =
-        parsedObjects.find((value): value is GoogleServiceAccountConfig => {
-          const config = value as GoogleServiceAccountConfig;
-          return config.type === "service_account" && Boolean(config.client_email && config.private_key);
-        }) ?? null;
-      const supabase =
-        parsedObjects.find((value): value is SupabaseServiceConfig => {
-          const config = value as SupabaseServiceConfig;
-          return Boolean(config.service_role);
-        }) ?? null;
-
-      return { googleServiceAccount, supabase };
-    });
+    cachedConfig = readFile(configPath, "utf8").then(parseServerConfig);
   }
 
   return cachedConfig;
+};
+
+export const readGoogleServiceAccountFromJson = (
+  raw: string
+): GoogleServiceAccountConfig => {
+  return parseServerConfig(raw).googleServiceAccount ?? (JSON.parse(raw) as GoogleServiceAccountConfig);
 };
 
 export const readGoogleServiceAccountFromPath = async (
@@ -93,4 +104,3 @@ export const readGoogleServiceAccountFromPath = async (
 ): Promise<GoogleServiceAccountConfig> => {
   return JSON.parse(await readFile(jsonPath, "utf8")) as GoogleServiceAccountConfig;
 };
-

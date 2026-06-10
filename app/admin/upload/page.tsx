@@ -13,6 +13,21 @@ import type { ImportPreview, Task } from "@/types/domain";
 
 const MAX_EXCEL_SIZE_BYTES = 5 * 1024 * 1024;
 
+const readApiResult = async <T extends { readonly error?: string }>(
+  response: Response
+): Promise<T | { readonly error: string }> => {
+  const text = await response.text();
+  if (!text) return { error: `HTTP ${response.status}: server không trả nội dung.` };
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return {
+      error: `HTTP ${response.status}: ${text.slice(0, 240)}`
+    };
+  }
+};
+
 const AdminUploadPage = (): React.ReactElement => {
   const router = useRouter();
   const { currentAccount, data, logout, setImportedTasks } = useAppData();
@@ -68,7 +83,7 @@ const AdminUploadPage = (): React.ReactElement => {
           tasks: preview.tasks
         })
       });
-      const result = (await response.json().catch(() => null)) as
+      const result = (await readApiResult(response)) as
         | {
             readonly ok?: boolean;
             readonly inserted?: number;
@@ -78,7 +93,9 @@ const AdminUploadPage = (): React.ReactElement => {
         | null;
 
       if (!response.ok || !result?.ok) {
-        throw new Error(result?.error || "Không import được DATA vào database.");
+        throw new Error(
+          result?.error || `Không import được DATA vào database. HTTP ${response.status}.`
+        );
       }
 
       setImportedTasks(preview.tasks);
@@ -122,7 +139,7 @@ const AdminUploadPage = (): React.ReactElement => {
         },
         body: JSON.stringify(data)
       });
-      const result = (await response.json().catch(() => null)) as
+      const result = (await readApiResult(response)) as
         | {
             readonly ok?: boolean;
             readonly updatedRows?: number;
@@ -133,7 +150,9 @@ const AdminUploadPage = (): React.ReactElement => {
         | null;
 
       if (!response.ok || !result?.ok) {
-        throw new Error(result?.error || "Không sync được Google Sheet DATA.");
+        throw new Error(
+          result?.error || `Không sync được Google Sheet DATA. HTTP ${response.status}.`
+        );
       }
 
       setMessage(
