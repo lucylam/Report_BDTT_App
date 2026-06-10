@@ -23,6 +23,8 @@ interface DbTaskKey {
   readonly resource_name: string | null;
 }
 
+const DB_PAGE_SIZE = 1000;
+
 const normalizeText = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
 
@@ -88,6 +90,30 @@ const toTaskRow = (
   updated_at: new Date().toISOString()
 });
 
+const listExistingTasks = async (
+  supabase: NonNullable<Awaited<ReturnType<typeof createServerSupabaseClient>>>
+): Promise<{ readonly tasks: DbTaskKey[]; readonly error: string | null }> => {
+  const tasks: DbTaskKey[] = [];
+  let page = 0;
+
+  while (true) {
+    const from = page * DB_PAGE_SIZE;
+    const to = from + DB_PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("id, wo, tagname, resource_name")
+      .range(from, to);
+
+    if (error) return { tasks: [], error: error.message };
+
+    tasks.push(...((data ?? []) as DbTaskKey[]));
+    if (!data || data.length < DB_PAGE_SIZE) break;
+    page += 1;
+  }
+
+  return { tasks, error: null };
+};
+
 export const POST = async (request: Request): Promise<NextResponse> => {
   const supabase = await createServerSupabaseClient();
   if (!supabase) {
@@ -137,15 +163,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   }
 
   const importBatchId = batch?.id ?? null;
-  const { data: existingTasks, error: existingTasksError } = await supabase
-    .from("tasks")
-    .select("id, wo, tagname, resource_name");
-  if (existingTasksError) {
-    return NextResponse.json({ error: existingTasksError.message }, { status: 500 });
+  const existingTaskResult = await listExistingTasks(supabase);
+  if (existingTaskResult.error) {
+    return NextResponse.json({ error: existingTaskResult.error }, { status: 500 });
   }
 
   const existingByKey = new Map<string, string>();
-  ((existingTasks ?? []) as DbTaskKey[]).forEach((task) => {
+  existingTaskResult.tasks.forEach((task) => {
     const key = createTaskKey(task);
     if (!existingByKey.has(key)) existingByKey.set(key, task.id);
   });
@@ -153,10 +177,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   let inserted = 0;
   let updated = 0;
   const rowsToInsert: ReturnType<typeof toTaskRow>[] = [];
-  const rowsToUpdate: Array<{
-    readonly id: string;
-    readonly row: ReturnType<typeof toTaskRow>;
-  }> = [];
+  const rowsToUpdate: Array<ReturnType<typeof toTaskRow> & { readonly id: string }> = [];
 
   tasks.forEach((task) => {
     const assignedTo = findAssignedProfileId(dbProfiles, task.resourceName);
@@ -169,7 +190,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       })
     );
     if (existingId) {
-      rowsToUpdate.push({ id: existingId, row });
+      rowsToUpdate.push({ id: existingId, ...row });
     } else {
       rowsToInsert.push(row);
     }
@@ -183,15 +204,14 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     inserted = rowsToInsert.length;
   }
 
-  for (const item of rowsToUpdate) {
+  if (rowsToUpdate.length > 0) {
     const { error: updateError } = await supabase
       .from("tasks")
-      .update(item.row)
-      .eq("id", item.id);
+      .upsert(rowsToUpdate, { onConflict: "id" });
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
-    updated += 1;
+    updated = rowsToUpdate.length;
   }
 
   return NextResponse.json({
@@ -201,4 +221,3 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     rowCount: tasks.length
   });
 };
-
