@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
 import { ModeSwitch } from "@/components/ModeSwitch";
-import { hasFullOrgScope, isDataAdminAccount } from "@/lib/permissions";
+import { isDataAdminAccount } from "@/lib/permissions";
 import type { AuthAccount } from "@/types/domain";
 
 interface AdminShellProps {
@@ -17,9 +17,9 @@ interface AdminShellProps {
 }
 
 const links = [
-  { href: "/admin", label: "Tổng quan" },
-  { href: "/admin/personnel", label: "Worker" },
-  { href: "/admin/tasks", label: "Hạng mục" },
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/personnel", label: "Thành viên" },
+  { href: "/admin/tasks", label: "WorkOrder" },
   { href: "/admin/upload", label: "DATA", dataAdminOnly: true }
 ] as const;
 
@@ -32,16 +32,9 @@ export const AdminShell = ({
 }: AdminShellProps): React.ReactElement => {
   const pathname = usePathname();
   const canManageData = isDataAdminAccount(account);
-  const canViewDashboard = hasFullOrgScope(account);
-  const visibleLinks = links
-    .filter(
-      (link) => !("dataAdminOnly" in link) || !link.dataAdminOnly || canManageData
-    )
-    .map((link) =>
-      link.href === "/admin" && !canViewDashboard
-        ? { ...link, label: "Theo dõi" }
-        : link
-    );
+  const visibleLinks = links.filter(
+    (link) => !("dataAdminOnly" in link) || !link.dataAdminOnly || canManageData
+  );
   const mobileLinks = visibleLinks.slice(0, 5);
 
   return (

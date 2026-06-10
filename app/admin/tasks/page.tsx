@@ -45,7 +45,7 @@ const AdminTasksPage = (): React.ReactElement => {
       account={currentAccount}
       onLogout={logout}
       subtitle={`${BDTT_2026_SUBTITLE} · ${scopeLabel}`}
-      title="Tất cả hạng mục"
+      title="WorkOrder"
     >
       {scopedData ? (
         <TasksTable data={scopedData} limit={100} />
