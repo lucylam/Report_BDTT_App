@@ -18,6 +18,22 @@ const inferSupabaseUrlFromServiceRoleKey = (serviceRoleKey: string): string | nu
   return decoded?.ref ? `https://${decoded.ref}.supabase.co` : null;
 };
 
+const isValidHttpUrl = (value: string | null | undefined): value is string => {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const firstValidHttpUrl = (
+  values: readonly (string | null | undefined)[]
+): string | null => {
+  return values.find(isValidHttpUrl) ?? null;
+};
+
 const getSupabaseServerConfig = async (): Promise<
   { readonly url: string; readonly serviceRoleKey: string } | null
 > => {
@@ -28,13 +44,17 @@ const getSupabaseServerConfig = async (): Promise<
     process.env.SUPABASE_SERVICE_KEY ??
     process.env.SUPABASE_SECRET_KEY ??
     serverConfig?.supabase?.service_role;
-  const url =
-    process.env.SUPABASE_URL ??
-    process.env.SUPABASE_PROJECT_URL ??
-    process.env.NEXT_PUBLIC_SUPABASE_URL ??
-    serverConfig?.supabase?.supabase_url ??
-    serverConfig?.supabase?.url ??
-    (serviceRoleKey ? inferSupabaseUrlFromServiceRoleKey(serviceRoleKey) : null);
+  const inferredUrl = serviceRoleKey
+    ? inferSupabaseUrlFromServiceRoleKey(serviceRoleKey)
+    : null;
+  const url = firstValidHttpUrl([
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_PROJECT_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    serverConfig?.supabase?.supabase_url,
+    serverConfig?.supabase?.url,
+    inferredUrl
+  ]);
 
   if (!url || !serviceRoleKey) return null;
   return { url, serviceRoleKey };
