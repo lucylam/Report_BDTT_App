@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
+import { ModeSwitch } from "@/components/ModeSwitch";
 import { hasFullOrgScope, isDataAdminAccount } from "@/lib/permissions";
 import type { AuthAccount } from "@/types/domain";
 
@@ -21,8 +22,6 @@ const links = [
   { href: "/admin/tasks", label: "Hạng mục" },
   { href: "/admin/upload", label: "DATA", dataAdminOnly: true }
 ] as const;
-
-const workspaceLink = { href: "/worker", label: "Workspace" } as const;
 
 export const AdminShell = ({
   account,
@@ -74,17 +73,6 @@ export const AdminShell = ({
             </Link>
           ))}
         </nav>
-        <div className="mt-6 border-t border-[var(--border-strong)] pt-5">
-          <p className="px-2 text-xs font-bold uppercase text-[var(--text-muted)]">
-            Chế độ thao tác
-          </p>
-          <Link
-            className="focus-ring pressable mt-2 flex min-h-12 items-center justify-center rounded-full border border-[var(--primary)] bg-white px-4 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
-            href={workspaceLink.href}
-          >
-            Mở {workspaceLink.label}
-          </Link>
-        </div>
         <button
           className="focus-ring pressable mt-6 min-h-12 w-full rounded-full border border-[var(--border-strong)] bg-white/80 px-4 text-sm font-bold text-slate-800 shadow-sm hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
           onClick={onLogout}
@@ -107,13 +95,16 @@ export const AdminShell = ({
                 {account.orgTitle}
               </p>
             </div>
-            <button
-              className="focus-ring pressable min-h-11 shrink-0 rounded-full border border-[var(--border-strong)] bg-white px-4 text-sm font-bold text-slate-800 shadow-sm"
-              onClick={onLogout}
-              type="button"
-            >
-              Đăng xuất
-            </button>
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <ModeSwitch activeMode="supervision" className="max-w-[13.5rem] text-xs" href="/worker" />
+              <button
+                className="focus-ring pressable min-h-10 rounded-full border border-[var(--border-strong)] bg-white px-4 text-xs font-bold text-slate-800 shadow-sm"
+                onClick={onLogout}
+                type="button"
+              >
+                Đăng xuất
+              </button>
+            </div>
           </div>
         </header>
 
@@ -128,37 +119,7 @@ export const AdminShell = ({
               </h1>
               <p className="mt-1 text-sm text-[var(--text-muted)]">{subtitle}</p>
             </div>
-            <div className="flex min-w-0 flex-wrap gap-2">
-              {canManageData ? (
-                <>
-                  <Link
-                    className="focus-ring pressable min-h-11 rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-md"
-                    href="/admin/upload"
-                  >
-                    Import Excel
-                  </Link>
-                  <Link
-                    className="focus-ring pressable min-h-11 rounded-full border border-[var(--primary)] bg-white px-4 py-3 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
-                    href="/admin/upload"
-                  >
-                    Export DATA
-                  </Link>
-                </>
-              ) : null}
-              <Link
-                className="focus-ring pressable min-h-11 rounded-full border border-[var(--primary)] bg-white px-4 py-3 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
-                href="/admin/tasks"
-              >
-                Xem hạng mục
-              </Link>
-              <button
-                className="focus-ring pressable min-h-11 rounded-2xl border border-[var(--border-strong)] bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-sm lg:hidden"
-                onClick={onLogout}
-                type="button"
-              >
-                Đăng xuất
-              </button>
-            </div>
+            <ModeSwitch activeMode="supervision" href="/worker" />
           </div>
         </header>
 
@@ -168,12 +129,6 @@ export const AdminShell = ({
       </section>
 
       <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-30 px-3 lg:hidden">
-        <Link
-          className="focus-ring pressable mx-auto mb-2 flex min-h-11 w-fit items-center justify-center rounded-full border border-[var(--primary)] bg-white px-5 text-sm font-bold text-[var(--primary-strong)] shadow-[var(--shadow-soft-sm)]"
-          href={workspaceLink.href}
-        >
-          Mở {workspaceLink.label}
-        </Link>
         <div className="floating-pill grid gap-1 rounded-[2rem] p-2 text-center text-xs font-bold" style={{ gridTemplateColumns: `repeat(${mobileLinks.length}, minmax(0, 1fr))` }}>
           {mobileLinks.map((link) => {
             const active = pathname === link.href;

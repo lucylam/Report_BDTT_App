@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
+import { ModeSwitch } from "@/components/ModeSwitch";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { SummaryPills } from "@/components/worker/SummaryPills";
 import {
@@ -182,15 +182,6 @@ export const WorkerDesktopView = ({
           </p>
         </div>
 
-        {isAdminAccount ? (
-          <Link
-            className="focus-ring pressable mt-4 flex min-h-11 items-center justify-center rounded-full border border-[var(--primary)] bg-white px-4 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
-            href="/admin"
-          >
-            Quay lại giao diện admin
-          </Link>
-        ) : null}
-
         <div className="mt-5">
           <SummaryPills percents={percents} />
         </div>
@@ -258,16 +249,21 @@ export const WorkerDesktopView = ({
                   Danh sách công việc
                 </h2>
               </div>
-              <p
-                aria-live="polite"
-                className={`rounded-full px-4 py-2 text-sm font-semibold shadow-sm ${
-                  isOnline
-                    ? "bg-[var(--success-soft)] text-[var(--success)]"
-                    : "bg-[var(--warning-soft)] text-[var(--warning)]"
-                }`}
-              >
-                {isOnline ? "Cập nhật trực tiếp" : "Đang offline"}
-              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <p
+                  aria-live="polite"
+                  className={`rounded-full px-4 py-2 text-sm font-semibold shadow-sm ${
+                    isOnline
+                      ? "bg-[var(--success-soft)] text-[var(--success)]"
+                      : "bg-[var(--warning-soft)] text-[var(--warning)]"
+                  }`}
+                >
+                  {isOnline ? "Cập nhật trực tiếp" : "Đang offline"}
+                </p>
+                {isAdminAccount ? (
+                  <ModeSwitch activeMode="workspace" href="/admin" />
+                ) : null}
+              </div>
             </div>
 
             <div className="mb-4">
@@ -305,6 +301,7 @@ export const WorkerDesktopView = ({
       {tab === "overview" ? (
         <section className="min-h-dvh p-6">
           <DesktopPageHeader
+            action={isAdminAccount ? <ModeSwitch activeMode="workspace" href="/admin" /> : null}
             eyebrow={`${allTasks.length} hạng mục`}
             status={isOnline ? "Cập nhật trực tiếp" : "Đang offline"}
             title="Tổng quan cá nhân"
@@ -342,6 +339,7 @@ export const WorkerDesktopView = ({
       {tab === "history" ? (
         <section className="min-h-dvh p-6">
           <DesktopPageHeader
+            action={isAdminAccount ? <ModeSwitch activeMode="workspace" href="/admin" /> : null}
             eyebrow="7 ngày gần nhất"
             status={`${historyRows.reduce((total, row) => total + row.updates.length, 0)} cập nhật`}
             title="Lịch sử cập nhật"
@@ -390,6 +388,7 @@ export const WorkerDesktopView = ({
       {tab === "account" ? (
         <section className="min-h-dvh p-6">
           <DesktopPageHeader
+            action={isAdminAccount ? <ModeSwitch activeMode="workspace" href="/admin" /> : null}
             eyebrow="Worker account"
             status={isOnline ? "Online" : "Offline"}
             title="Tài khoản"
@@ -430,10 +429,12 @@ export const WorkerDesktopView = ({
 };
 
 const DesktopPageHeader = ({
+  action,
   eyebrow,
   status,
   title
 }: {
+  readonly action?: ReactNode;
   readonly eyebrow: string;
   readonly status: string;
   readonly title: string;
@@ -444,9 +445,12 @@ const DesktopPageHeader = ({
         <p className="text-sm font-semibold text-[var(--primary)]">{eyebrow}</p>
         <h2 className="mt-1 text-2xl font-semibold tracking-tight">{title}</h2>
       </div>
-      <p className="rounded-full bg-[var(--success-soft)] px-4 py-2 text-sm font-semibold text-[var(--success)] shadow-sm">
-        {status}
-      </p>
+      <div className="flex shrink-0 items-center gap-2">
+        <p className="rounded-full bg-[var(--success-soft)] px-4 py-2 text-sm font-semibold text-[var(--success)] shadow-sm">
+          {status}
+        </p>
+        {action}
+      </div>
     </div>
   );
 };

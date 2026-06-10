@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
+import { ModeSwitch } from "@/components/ModeSwitch";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { CountdownBanner } from "@/components/worker/CountdownBanner";
 import { SummaryPills } from "@/components/worker/SummaryPills";
@@ -165,12 +165,11 @@ export const WorkerMobileView = ({
           </div>
         </div>
         {isAdminAccount ? (
-          <Link
-            className="focus-ring pressable mt-3 flex min-h-10 items-center justify-center rounded-full border border-[var(--primary)] bg-white px-4 text-sm font-bold text-[var(--primary-strong)] shadow-sm"
+          <ModeSwitch
+            activeMode="workspace"
+            className="mt-3 max-w-none text-xs"
             href="/admin"
-          >
-            Quay lại admin
-          </Link>
+          />
         ) : null}
       </header>
 
