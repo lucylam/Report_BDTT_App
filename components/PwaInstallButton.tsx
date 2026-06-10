@@ -44,6 +44,7 @@ export const PwaInstallButton = ({
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [isIos, setIsIos] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event): void => {
@@ -64,6 +65,7 @@ export const PwaInstallButton = ({
         setInstallState("installed");
       }
       setIsIos(isIosDevice());
+      setIsMobile(window.matchMedia("(max-width: 768px)").matches);
     }, 0);
 
     return () => {
@@ -77,8 +79,8 @@ export const PwaInstallButton = ({
     return null;
   }
 
-  const canShowIosHint = showHint && isIos && !deferredPrompt;
-  if (!deferredPrompt && !canShowIosHint) {
+  const canShowFallbackHint = showHint && isMobile && !deferredPrompt;
+  if (!deferredPrompt && !canShowFallbackHint) {
     return null;
   }
 
@@ -110,9 +112,11 @@ export const PwaInstallButton = ({
     </button>
   ) : null;
 
-  const hint = canShowIosHint ? (
+  const hint = canShowFallbackHint ? (
     <p className="text-sm font-semibold leading-6 text-[var(--text-muted)]">
-      iPhone/iPad: bấm Chia sẻ, sau đó chọn Thêm vào Màn hình chính.
+      {isIos
+        ? "iPhone/iPad: bấm Chia sẻ, sau đó chọn Thêm vào Màn hình chính."
+        : "Android: mở bằng Chrome trên link HTTPS, sau đó chọn Cài app hoặc Thêm vào màn hình chính."}
     </p>
   ) : null;
 

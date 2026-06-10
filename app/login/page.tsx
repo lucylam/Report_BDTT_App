@@ -118,7 +118,7 @@ const LoginPage = (): React.ReactElement => {
             {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
         </form>
-        <PwaInstallButton className="mt-4" compact />
+        <PwaInstallButton className="mt-4" compact showHint />
       </section>
     </main>
   );

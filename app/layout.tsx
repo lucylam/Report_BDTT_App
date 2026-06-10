@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { PwaRuntime } from "@/components/PwaRuntime";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,11 +14,13 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/icons/app-icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/app-icon-512.png", sizes: "512x512", type: "image/png" },
       { url: "/icons/app-icon.svg", type: "image/svg+xml" },
       { url: "/icons/app-icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
       { url: "/icons/app-icon-512.svg", sizes: "512x512", type: "image/svg+xml" }
     ],
-    apple: [{ url: "/icons/app-icon-192.svg", sizes: "192x192", type: "image/svg+xml" }]
+    apple: [{ url: "/icons/app-icon-192.png", sizes: "192x192", type: "image/png" }]
   }
 };
 
@@ -34,7 +37,10 @@ interface RootLayoutProps {
 const RootLayout = ({ children }: RootLayoutProps): React.ReactElement => {
   return (
     <html lang="vi">
-      <body>{children}</body>
+      <body>
+        <PwaRuntime />
+        {children}
+      </body>
     </html>
   );
 };
