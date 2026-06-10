@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Task } from "@/types/domain";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 interface ImportTasksBody {
   readonly fileName?: string;
@@ -24,12 +25,21 @@ interface DbTaskKey {
 }
 
 const DB_PAGE_SIZE = 1000;
+const WRITE_CHUNK_SIZE = 300;
 
 const normalizeText = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
 
 const normalizeResourceName = (value: string): string =>
   value.trim().replace(/\s+/g, " ").toUpperCase();
+
+const chunkArray = <T,>(items: readonly T[], size: number): T[][] => {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+};
 
 const getResourceNameSuffix = (value: string): string => {
   const parts = value.split("_");
@@ -115,112 +125,125 @@ const listExistingTasks = async (
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
-  const supabase = await createServerSupabaseClient();
-  if (!supabase) {
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (!supabase) {
+      return NextResponse.json(
+        {
+          error:
+            "Chưa cấu hình Supabase server env trên Vercel. Cần NEXT_PUBLIC_SUPABASE_URL và SUPABASE_SERVICE_ROLE_KEY, hoặc BDTT_SERVER_CONFIG_JSON."
+        },
+        { status: 503 }
+      );
+    }
+
+    const body = (await request.json()) as ImportTasksBody;
+    const tasks = body.tasks ?? [];
+    if (tasks.length === 0) {
+      return NextResponse.json(
+        { error: "Không có hạng mục để import vào database." },
+        { status: 400 }
+      );
+    }
+
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, username, resource_name");
+    if (profilesError) {
+      return NextResponse.json({ error: profilesError.message }, { status: 500 });
+    }
+
+    const dbProfiles = (profiles ?? []) as DbProfile[];
+    const importedBy =
+      dbProfiles.find(
+        (profile) =>
+          normalizeText(profile.username).toLowerCase() ===
+          normalizeText(body.importedByUsername).toLowerCase()
+      )?.id ?? null;
+
+    const { data: batch, error: batchError } = await supabase
+      .from("import_batches")
+      .insert({
+        file_name: normalizeText(body.fileName) || "DATA.xlsx",
+        sheet_name: "DATA",
+        imported_by: importedBy,
+        row_count: tasks.length,
+        status: "applied"
+      })
+      .select("id")
+      .single();
+    if (batchError) {
+      return NextResponse.json({ error: batchError.message }, { status: 500 });
+    }
+
+    const importBatchId = batch?.id ?? null;
+    const existingTaskResult = await listExistingTasks(supabase);
+    if (existingTaskResult.error) {
+      return NextResponse.json({ error: existingTaskResult.error }, { status: 500 });
+    }
+
+    const existingByKey = new Map<string, string>();
+    existingTaskResult.tasks.forEach((task) => {
+      const key = createTaskKey(task);
+      if (!existingByKey.has(key)) existingByKey.set(key, task.id);
+    });
+
+    let inserted = 0;
+    let updated = 0;
+    const rowsToInsert: ReturnType<typeof toTaskRow>[] = [];
+    const rowsToUpdate: Array<ReturnType<typeof toTaskRow> & { readonly id: string }> = [];
+
+    tasks.forEach((task) => {
+      const assignedTo = findAssignedProfileId(dbProfiles, task.resourceName);
+      const row = toTaskRow(task, importBatchId, assignedTo);
+      const existingId = existingByKey.get(
+        createTaskKey({
+          tagname: task.tagname,
+          wo: task.wo,
+          resource_name: task.resourceName
+        })
+      );
+      if (existingId) {
+        rowsToUpdate.push({ id: existingId, ...row });
+      } else {
+        rowsToInsert.push(row);
+      }
+    });
+
+    for (const rows of chunkArray(rowsToInsert, WRITE_CHUNK_SIZE)) {
+      const { error: insertError } = await supabase.from("tasks").insert(rows);
+      if (insertError) {
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+      }
+      inserted += rows.length;
+    }
+
+    for (const rows of chunkArray(rowsToUpdate, WRITE_CHUNK_SIZE)) {
+      const { error: updateError } = await supabase
+        .from("tasks")
+        .upsert(rows, { onConflict: "id" });
+      if (updateError) {
+        return NextResponse.json({ error: updateError.message }, { status: 500 });
+      }
+      updated += rows.length;
+    }
+
+    return NextResponse.json({
+      ok: true,
+      inserted,
+      updated,
+      rowCount: tasks.length
+    });
+  } catch (error) {
+    console.error("[api/tasks/import]", error);
     return NextResponse.json(
       {
         error:
-          "Chưa cấu hình Supabase server env trên Vercel. Cần NEXT_PUBLIC_SUPABASE_URL và SUPABASE_SERVICE_ROLE_KEY, hoặc BDTT_SERVER_CONFIG_JSON."
+          error instanceof Error
+            ? error.message
+            : "Lỗi import DATA vào database."
       },
-      { status: 503 }
+      { status: 500 }
     );
   }
-
-  const body = (await request.json()) as ImportTasksBody;
-  const tasks = body.tasks ?? [];
-  if (tasks.length === 0) {
-    return NextResponse.json(
-      { error: "Không có hạng mục để import vào database." },
-      { status: 400 }
-    );
-  }
-
-  const { data: profiles, error: profilesError } = await supabase
-    .from("profiles")
-    .select("id, username, resource_name");
-  if (profilesError) {
-    return NextResponse.json({ error: profilesError.message }, { status: 500 });
-  }
-
-  const dbProfiles = (profiles ?? []) as DbProfile[];
-  const importedBy =
-    dbProfiles.find(
-      (profile) =>
-        normalizeText(profile.username).toLowerCase() ===
-        normalizeText(body.importedByUsername).toLowerCase()
-    )?.id ?? null;
-
-  const { data: batch, error: batchError } = await supabase
-    .from("import_batches")
-    .insert({
-      file_name: normalizeText(body.fileName) || "DATA.xlsx",
-      sheet_name: "DATA",
-      imported_by: importedBy,
-      row_count: tasks.length,
-      status: "applied"
-    })
-    .select("id")
-    .single();
-  if (batchError) {
-    return NextResponse.json({ error: batchError.message }, { status: 500 });
-  }
-
-  const importBatchId = batch?.id ?? null;
-  const existingTaskResult = await listExistingTasks(supabase);
-  if (existingTaskResult.error) {
-    return NextResponse.json({ error: existingTaskResult.error }, { status: 500 });
-  }
-
-  const existingByKey = new Map<string, string>();
-  existingTaskResult.tasks.forEach((task) => {
-    const key = createTaskKey(task);
-    if (!existingByKey.has(key)) existingByKey.set(key, task.id);
-  });
-
-  let inserted = 0;
-  let updated = 0;
-  const rowsToInsert: ReturnType<typeof toTaskRow>[] = [];
-  const rowsToUpdate: Array<ReturnType<typeof toTaskRow> & { readonly id: string }> = [];
-
-  tasks.forEach((task) => {
-    const assignedTo = findAssignedProfileId(dbProfiles, task.resourceName);
-    const row = toTaskRow(task, importBatchId, assignedTo);
-    const existingId = existingByKey.get(
-      createTaskKey({
-        tagname: task.tagname,
-        wo: task.wo,
-        resource_name: task.resourceName
-      })
-    );
-    if (existingId) {
-      rowsToUpdate.push({ id: existingId, ...row });
-    } else {
-      rowsToInsert.push(row);
-    }
-  });
-
-  if (rowsToInsert.length > 0) {
-    const { error: insertError } = await supabase.from("tasks").insert(rowsToInsert);
-    if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
-    }
-    inserted = rowsToInsert.length;
-  }
-
-  if (rowsToUpdate.length > 0) {
-    const { error: updateError } = await supabase
-      .from("tasks")
-      .upsert(rowsToUpdate, { onConflict: "id" });
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
-    }
-    updated = rowsToUpdate.length;
-  }
-
-  return NextResponse.json({
-    ok: true,
-    inserted,
-    updated,
-    rowCount: tasks.length
-  });
 };

@@ -10,6 +10,8 @@ const DEFAULT_SPREADSHEET_ID = "1wknfHCcrVVvc1p8mj91yXLlcVbO3vrJjDF3mulH5N1w";
 const DEFAULT_SHEET_NAME = "DATA";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
+const PROGRESS_CLEAR_RANGE_PATTERN = /^N3:AF[3-9]\d*$/;
+const PROGRESS_UPDATE_RANGE = "N3";
 
 const base64UrlEncode = (value: string): string =>
   Buffer.from(value)
@@ -111,9 +113,15 @@ const getAccessToken = async (): Promise<string> => {
     })
   });
 
-  const json = (await response.json()) as { access_token?: string; error?: string; error_description?: string };
+  const json = (await response.json()) as {
+    access_token?: string;
+    error?: string;
+    error_description?: string;
+  };
   if (!response.ok || !json.access_token) {
-    throw new Error(json.error_description || json.error || "Không lấy được Google access token.");
+    throw new Error(
+      json.error_description || json.error || "Không lấy được Google access token."
+    );
   }
 
   return json.access_token;
@@ -128,9 +136,31 @@ const getSheetName = (): string =>
 const sheetRange = (sheetName: string, range: string): string =>
   `${sheetName}!${range}`;
 
+const assertProgressWriteRange = (options: {
+  readonly clearRange?: string;
+  readonly updateRange?: string;
+}): { readonly clearRange: string; readonly updateRange: string } => {
+  const clearRange = options.clearRange;
+  const updateRange = options.updateRange;
+
+  if (!clearRange || !PROGRESS_CLEAR_RANGE_PATTERN.test(clearRange)) {
+    throw new Error(
+      `Google Sheet sync bị chặn: clearRange phải nằm trong N3:AF..., hiện tại là "${clearRange ?? "trống"}".`
+    );
+  }
+
+  if (updateRange !== PROGRESS_UPDATE_RANGE) {
+    throw new Error(
+      `Google Sheet sync bị chặn: updateRange phải là ${PROGRESS_UPDATE_RANGE}, hiện tại là "${updateRange ?? "trống"}".`
+    );
+  }
+
+  return { clearRange, updateRange };
+};
+
 export const syncDataSheetValues = async (
   values: readonly (readonly ExportCellValue[])[],
-  options?: {
+  options: {
     readonly clearRange?: string;
     readonly updateRange?: string;
   }
@@ -139,6 +169,7 @@ export const syncDataSheetValues = async (
     throw new Error("Không có dữ liệu để ghi Google Sheet.");
   }
 
+  const safeRange = assertProgressWriteRange(options);
   const accessToken = await getAccessToken();
   const spreadsheetId = getSpreadsheetId();
   const sheetName = getSheetName();
@@ -147,7 +178,7 @@ export const syncDataSheetValues = async (
     "content-type": "application/json"
   };
 
-  const clearRange = encodeURIComponent(sheetRange(sheetName, options?.clearRange ?? "A:ZZ"));
+  const clearRange = encodeURIComponent(sheetRange(sheetName, safeRange.clearRange));
   const clearResponse = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${clearRange}:clear`,
     {
@@ -161,7 +192,7 @@ export const syncDataSheetValues = async (
     throw new Error(`Không clear được sheet DATA: ${errorText}`);
   }
 
-  const updateRange = encodeURIComponent(sheetRange(sheetName, options?.updateRange ?? "A1"));
+  const updateRange = encodeURIComponent(sheetRange(sheetName, safeRange.updateRange));
   const updateResponse = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${updateRange}?valueInputOption=USER_ENTERED`,
     {
