@@ -15,9 +15,9 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
       emphasis: "primary"
     },
     {
-      label: "Worker chưa báo cáo",
+      label: "Chưa báo cáo",
       value: String(metrics.unsubmittedWorkers),
-      helper: "Cần nhắc cập nhật",
+      helper: "Thành viên cần nhắc",
       emphasis: metrics.unsubmittedWorkers > 0 ? "danger" : "success"
     },
     {
@@ -27,9 +27,9 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
       emphasis: metrics.priorityOpen > 0 ? "danger" : "success"
     },
     {
-      label: "Hạng mục Cancel",
+      label: "Cancel",
       value: String(metrics.cancelled),
-      helper: "Worker đã báo cancel",
+      helper: "WorkOrder đã báo hủy",
       emphasis: metrics.cancelled > 0 ? "danger" : "neutral"
     },
     {
@@ -39,23 +39,23 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
       emphasis: metrics.overdue > 0 ? "danger" : "success"
     },
     {
-      label: "Đang thực hiện",
+      label: "Đang làm",
       value: String(metrics.inProgress),
       helper: "0 < % < 100",
       emphasis: "warning"
-    },
+    }
   ];
 
   return (
     <section className="grid grid-cols-2 gap-3 xl:grid-cols-6">
       {cards.map((card) => (
         <div
-          className={`min-h-28 rounded-[1.75rem] border p-4 shadow-[var(--shadow-soft-sm)] sm:min-h-36 sm:p-5 ${toneClass(card.emphasis)}`}
+          className={`min-h-28 rounded-[1.5rem] border p-4 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl sm:min-h-32 ${toneClass(card.emphasis)}`}
           key={card.label}
         >
-          <p className="text-xs font-bold uppercase tracking-wide opacity-75">{card.label}</p>
-          <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight sm:mt-3 sm:text-4xl">{card.value}</p>
-          <p className="mt-2 text-xs font-semibold leading-5 opacity-75">{card.helper}</p>
+          <p className="text-xs font-bold uppercase opacity-70">{card.label}</p>
+          <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">{card.value}</p>
+          <p className="mt-2 text-xs font-semibold leading-5 opacity-70">{card.helper}</p>
         </div>
       ))}
     </section>
@@ -75,5 +75,5 @@ const toneClass = (emphasis: string): string => {
   if (emphasis === "success") {
     return "border-[var(--success)] bg-[var(--success-soft)] text-[var(--success)]";
   }
-  return "border-white/70 bg-white/86 text-slate-900 backdrop-blur-xl";
+  return "border-white/80 bg-white/82 text-slate-900";
 };

@@ -17,11 +17,8 @@ import {
 } from "recharts";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { KpiCards } from "@/components/admin/KpiCards";
-import { ProgressCharts } from "@/components/admin/ProgressCharts";
 import { SnapshotPanel } from "@/components/admin/SnapshotPanel";
-import { TasksTable } from "@/components/admin/TasksTable";
 import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
-import { buildPhaseOneDashboard } from "@/lib/dashboard";
 import { BDTT_2026_SUBTITLE } from "@/lib/org2026";
 import { getOrgScopeLabel, getScopedAppData, hasFullOrgScope } from "@/lib/permissions";
 import { calculateMetrics, getTaskPercent } from "@/lib/progress";
@@ -83,8 +80,6 @@ const AdminPage = (): React.ReactElement => {
     );
   }
 
-  const dashboard = buildPhaseOneDashboard(scopedData, DEFAULT_REPORT_DATE);
-
   return (
     <AdminShell
       account={currentAccount}
@@ -96,8 +91,6 @@ const AdminPage = (): React.ReactElement => {
       <OrganizationDashboard data={scopedData} />
       <SupervisorFocusPanel data={scopedData} metrics={metrics} />
       <SnapshotPanel snapshots={scopedData.dailySnapshots} />
-      <TasksTable data={scopedData} limit={12} />
-      <ProgressCharts dashboard={dashboard} reportDateLabel={formatViDate(DEFAULT_REPORT_DATE)} />
     </AdminShell>
   );
 };
@@ -592,9 +585,9 @@ const ChartCard = ({
   readonly title: string;
 }): React.ReactElement => {
   return (
-    <section className="soft-card p-5">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">{subtitle}</p>
+    <section className="rounded-[2rem] border border-white/80 bg-white/82 p-5 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl">
+      <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+      <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--text-muted)]">{subtitle}</p>
       {children}
     </section>
   );
