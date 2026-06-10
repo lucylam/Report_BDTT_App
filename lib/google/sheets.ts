@@ -10,7 +10,7 @@ const DEFAULT_SPREADSHEET_ID = "1wknfHCcrVVvc1p8mj91yXLlcVbO3vrJjDF3mulH5N1w";
 const DEFAULT_SHEET_NAME = "DATA";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
-const PROGRESS_CLEAR_RANGE_PATTERN = /^N3:AF[3-9]\d*$/;
+const PROGRESS_CLEAR_RANGE_PATTERN = /^N3:AF(\d+)$/;
 const PROGRESS_UPDATE_RANGE = "N3";
 
 const base64UrlEncode = (value: string): string =>
@@ -142,8 +142,10 @@ const assertProgressWriteRange = (options: {
 }): { readonly clearRange: string; readonly updateRange: string } => {
   const clearRange = options.clearRange;
   const updateRange = options.updateRange;
+  const clearRangeMatch = clearRange?.match(PROGRESS_CLEAR_RANGE_PATTERN);
+  const clearEndRow = clearRangeMatch ? Number(clearRangeMatch[1]) : 0;
 
-  if (!clearRange || !PROGRESS_CLEAR_RANGE_PATTERN.test(clearRange)) {
+  if (!clearRangeMatch || clearEndRow < 3) {
     throw new Error(
       `Google Sheet sync bị chặn: clearRange phải nằm trong N3:AF..., hiện tại là "${clearRange ?? "trống"}".`
     );
@@ -155,7 +157,7 @@ const assertProgressWriteRange = (options: {
     );
   }
 
-  return { clearRange, updateRange };
+  return { clearRange: clearRangeMatch[0], updateRange };
 };
 
 export const syncDataSheetValues = async (
