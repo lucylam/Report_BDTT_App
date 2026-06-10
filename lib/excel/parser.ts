@@ -88,24 +88,29 @@ const findAssignedProfile = (
   );
 };
 
-const getHeaderMap = (worksheet: XLSX.WorkSheet): Map<string, string> => {
+const getHeaderInfo = (
+  worksheet: XLSX.WorkSheet
+): { readonly headerMap: Map<string, string>; readonly headerRowIndex: number } => {
   const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, {
     header: 1,
     blankrows: false
   });
-  const headerRow = rows.find((row) => {
+  const headerRowIndex = rows.findIndex((row) => {
     const values = Object.values(row).map((value) => getString(value));
     return values.includes("Stt") && values.includes("Tagname");
   });
 
   const map = new Map<string, string>();
-  if (!headerRow) return map;
+  if (headerRowIndex < 0) {
+    return { headerMap: map, headerRowIndex: 1 };
+  }
 
+  const headerRow = rows[headerRowIndex];
   Object.values(headerRow).forEach((header) => {
     const text = getString(header);
     if (text) map.set(normalizeHeader(text), text);
   });
-  return map;
+  return { headerMap: map, headerRowIndex };
 };
 
 const isDataRow = (row: Partial<DataRow>): row is DataRow => {
@@ -127,7 +132,7 @@ export const parseDataSheet = (
     };
   }
 
-  const headerMap = getHeaderMap(worksheet);
+  const { headerMap, headerRowIndex } = getHeaderInfo(worksheet);
   const missingColumns = REQUIRED_HEADERS.filter(
     (header) => !headerMap.has(normalizeHeader(header))
   );
@@ -143,7 +148,7 @@ export const parseDataSheet = (
   }
 
   const rows = XLSX.utils.sheet_to_json<Partial<DataRow>>(worksheet, {
-    range: 1,
+    range: headerRowIndex,
     defval: ""
   });
 

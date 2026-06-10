@@ -143,5 +143,15 @@ and private key into the variables above, then share the target spreadsheet with
 that service account email as Editor. Store multiline private keys with escaped
 newlines (`\n`) if your host requires a single-line env value.
 
+For local development only, the server can also read a gitignored combined
+credential file via:
+
+```text
+BDTT_SERVER_CONFIG_PATH=C:/path/to/bdtt-sheet-api-xxxx.json
+```
+
+That file may contain a Google service account object and a Supabase
+`service_role` object. Do not upload this file to GitHub or Vercel.
+
 Do not expose the Supabase secret key (`sb_secret_xxx`) or Google private key in
 client code.

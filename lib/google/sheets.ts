@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { ExportCellValue } from "@/lib/excel/exporter";
+import { readGoogleServiceAccountFromPath, readServerConfigFile } from "@/lib/serverConfig";
 
 const DEFAULT_SPREADSHEET_ID = "1wknfHCcrVVvc1p8mj91yXLlcVbO3vrJjDF3mulH5N1w";
 const DEFAULT_SHEET_NAME = "DATA";
@@ -15,6 +16,41 @@ const base64UrlEncode = (value: string): string =>
 
 const normalizePrivateKey = (value: string): string => {
   return value.replace(/\\n/g, "\n");
+};
+
+const getServiceAccountCredential = async (): Promise<{
+  readonly clientEmail: string;
+  readonly privateKey: string;
+}> => {
+  const envClientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const envPrivateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+  if (envClientEmail && envPrivateKey) {
+    return { clientEmail: envClientEmail, privateKey: envPrivateKey };
+  }
+
+  const jsonPath = process.env.GOOGLE_SERVICE_ACCOUNT_JSON_PATH;
+  if (jsonPath) {
+    const credential = await readGoogleServiceAccountFromPath(jsonPath);
+    if (credential.client_email && credential.private_key) {
+      return {
+        clientEmail: credential.client_email,
+        privateKey: credential.private_key
+      };
+    }
+  }
+
+  const serverConfig = await readServerConfigFile();
+  const credential = serverConfig?.googleServiceAccount;
+  if (credential?.client_email && credential.private_key) {
+    return {
+      clientEmail: credential.client_email,
+      privateKey: credential.private_key
+    };
+  }
+
+  throw new Error(
+    "Chưa cấu hình Google service account. Cần GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY, GOOGLE_SERVICE_ACCOUNT_JSON_PATH, hoặc BDTT_SERVER_CONFIG_PATH."
+  );
 };
 
 const createJwt = (clientEmail: string, privateKey: string): string => {
@@ -47,14 +83,7 @@ const createJwt = (clientEmail: string, privateKey: string): string => {
 };
 
 const getAccessToken = async (): Promise<string> => {
-  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const privateKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
-
-  if (!clientEmail || !privateKey) {
-    throw new Error(
-      "Chưa cấu hình GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY."
-    );
-  }
+  const { clientEmail, privateKey } = await getServiceAccountCredential();
 
   const response = await fetch(TOKEN_URL, {
     method: "POST",
@@ -85,7 +114,11 @@ const sheetRange = (sheetName: string, range: string): string =>
   `${sheetName}!${range}`;
 
 export const syncDataSheetValues = async (
-  values: readonly (readonly ExportCellValue[])[]
+  values: readonly (readonly ExportCellValue[])[],
+  options?: {
+    readonly clearRange?: string;
+    readonly updateRange?: string;
+  }
 ): Promise<{ readonly updatedRows: number; readonly updatedColumns: number }> => {
   if (values.length === 0 || values[0].length === 0) {
     throw new Error("Không có dữ liệu để ghi Google Sheet.");
@@ -99,7 +132,7 @@ export const syncDataSheetValues = async (
     "content-type": "application/json"
   };
 
-  const clearRange = encodeURIComponent(sheetRange(sheetName, "A:ZZ"));
+  const clearRange = encodeURIComponent(sheetRange(sheetName, options?.clearRange ?? "A:ZZ"));
   const clearResponse = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${clearRange}:clear`,
     {
@@ -113,7 +146,7 @@ export const syncDataSheetValues = async (
     throw new Error(`Không clear được sheet DATA: ${errorText}`);
   }
 
-  const updateRange = encodeURIComponent(sheetRange(sheetName, "A1"));
+  const updateRange = encodeURIComponent(sheetRange(sheetName, options?.updateRange ?? "A1"));
   const updateResponse = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${updateRange}?valueInputOption=USER_ENTERED`,
     {

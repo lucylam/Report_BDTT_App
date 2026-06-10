@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { buildExportSheetValues } from "@/lib/excel/exporter";
+import { buildProgressSheetRangeValues } from "@/lib/excel/exporter";
 import { syncDataSheetValues } from "@/lib/google/sheets";
 import type { AppData } from "@/types/domain";
 
@@ -15,10 +15,14 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       );
     }
 
-    const values = buildExportSheetValues(data as AppData);
-    const result = await syncDataSheetValues(values);
+    const rangeValues = buildProgressSheetRangeValues(data as AppData);
+    const result = await syncDataSheetValues(rangeValues.values, {
+      clearRange: rangeValues.clearRange,
+      updateRange: rangeValues.range
+    });
     return NextResponse.json({
       ok: true,
+      range: rangeValues.clearRange,
       ...result
     });
   } catch (error) {

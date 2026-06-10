@@ -11,7 +11,8 @@ export const REPORT_DATES: readonly string[] = [
   "2025-08-25",
   "2025-08-26",
   "2025-08-27",
-  "2025-08-28"
+  "2025-08-28",
+  "2025-08-29"
 ];
 
 export const DEFAULT_REPORT_DATE = "2025-08-22";

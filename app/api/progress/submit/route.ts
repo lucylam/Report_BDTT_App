@@ -37,7 +37,7 @@ const isUuid = (value: string): boolean => {
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   if (!supabase) {
     return NextResponse.json(
       { error: "Chưa cấu hình Supabase server env." },

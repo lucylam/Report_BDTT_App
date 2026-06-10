@@ -19,10 +19,13 @@ const AdminUploadPage = (): React.ReactElement => {
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [message, setMessage] = useState<string>("");
   const [isParsing, setIsParsing] = useState<boolean>(false);
+  const [isImporting, setIsImporting] = useState<boolean>(false);
   const [isSyncingSheet, setIsSyncingSheet] = useState<boolean>(false);
+  const [selectedFileName, setSelectedFileName] = useState<string>("");
 
   const handleFile = async (file: File): Promise<void> => {
     if (!data) return;
+    setSelectedFileName(file.name);
     if (!file.name.toLowerCase().endsWith(".xlsx")) {
       setMessage("Chỉ hỗ trợ file .xlsx.");
       return;
@@ -49,12 +52,47 @@ const AdminUploadPage = (): React.ReactElement => {
     }
   };
 
-  const applyImport = (): void => {
-    if (!preview || preview.missingColumns.length > 0) return;
-    setImportedTasks(preview.tasks);
-    setMessage(
-      `Đã thay danh sách hiện tại bằng ${preview.tasks.length} hạng mục trong demo local.`
-    );
+  const applyImport = async (): Promise<void> => {
+    if (!preview || preview.missingColumns.length > 0 || !currentAccount) return;
+    setIsImporting(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/tasks/import", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({
+          fileName: selectedFileName || "DATA.xlsx",
+          importedByUsername: currentAccount.username,
+          tasks: preview.tasks
+        })
+      });
+      const result = (await response.json().catch(() => null)) as
+        | {
+            readonly ok?: boolean;
+            readonly inserted?: number;
+            readonly updated?: number;
+            readonly error?: string;
+          }
+        | null;
+
+      if (!response.ok || !result?.ok) {
+        throw new Error(result?.error || "Không import được DATA vào database.");
+      }
+
+      setImportedTasks(preview.tasks);
+      setMessage(
+        `Đã import ${preview.tasks.length} hạng mục: thêm ${result.inserted ?? 0}, cập nhật ${
+          result.updated ?? 0
+        } trong database.`
+      );
+    } catch (error) {
+      console.error("[AdminUploadPage.applyImport]", error);
+      setMessage(error instanceof Error ? error.message : "Lỗi import DATA vào database.");
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const exportFile = (): void => {
@@ -89,6 +127,7 @@ const AdminUploadPage = (): React.ReactElement => {
             readonly ok?: boolean;
             readonly updatedRows?: number;
             readonly updatedColumns?: number;
+            readonly range?: string;
             readonly error?: string;
           }
         | null;
@@ -98,7 +137,7 @@ const AdminUploadPage = (): React.ReactElement => {
       }
 
       setMessage(
-        `Đã đẩy ${result.updatedRows ?? 0} dòng, ${result.updatedColumns ?? 0} cột về Google Sheet DATA.`
+        `Đã đẩy ${result.updatedRows ?? 0} dòng, ${result.updatedColumns ?? 0} cột (${result.range ?? "N:AF"}) về Google Sheet DATA.`
       );
     } catch (error) {
       console.error("[AdminUploadPage.syncGoogleSheet]", error);
@@ -173,16 +212,16 @@ const AdminUploadPage = (): React.ReactElement => {
             />
           </label>
           <div className="mt-4 rounded-[1.5rem] bg-[var(--warning-soft)] p-4 text-sm leading-6 text-[var(--warning)]">
-            Khi xác nhận import, danh sách hạng mục hiện tại trong demo/local data sẽ được
-            thay thế bằng file mới.
+            Khi xác nhận import, danh sách hạng mục hiện tại sẽ được ghi vào database và
+            thay thế bằng file mới trên web.
           </div>
           <button
             className="focus-ring pressable mt-4 min-h-11 w-full rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={!preview || preview.missingColumns.length > 0}
-            onClick={applyImport}
+            disabled={!preview || preview.missingColumns.length > 0 || isImporting}
+            onClick={() => void applyImport()}
             type="button"
           >
-            Xác nhận thay danh sách hạng mục
+            {isImporting ? "Đang import vào database..." : "Xác nhận thay danh sách hạng mục"}
           </button>
         </div>
 
