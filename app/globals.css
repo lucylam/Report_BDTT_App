@@ -1,35 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --font-sans: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-plus-jakarta), "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --background: #d8e9e3;
-  --foreground: #171717;
-  --text-muted: #68736f;
-  --text-soft: #94a09b;
-  --surface: #f8fbf8;
-  --surface-muted: #eaf2ee;
-  --surface-glass: rgba(255, 255, 255, 0.82);
-  --surface-warm: #fff1d2;
-  --border: rgba(15, 83, 70, 0.08);
-  --border-strong: rgba(15, 83, 70, 0.16);
-  --primary: #07906f;
-  --primary-strong: #007b5e;
-  --primary-soft: #dceee9;
-  --primary-pale: #edf8f4;
-  --accent: #f7c95f;
-  --accent-soft: #fff4d5;
-  --warning: #a96b08;
-  --warning-soft: #fff2d5;
-  --danger: #a93a3a;
-  --danger-soft: #f7e2de;
-  --success: #287342;
-  --success-soft: #e6f2e3;
-  --info: #27739a;
-  --info-soft: #e1f0f5;
-  --shadow-soft-sm: 0 10px 28px rgba(7, 77, 62, 0.08);
-  --shadow-soft-md: 0 22px 58px rgba(7, 77, 62, 0.12);
-  --shadow-floating: 0 18px 48px rgba(7, 77, 62, 0.2);
+  --background: #eef1f7;
+  --foreground: #101828;
+  --text-muted: #667085;
+  --text-soft: #98a2b3;
+  --surface: #f7f9fc;
+  --surface-muted: #eef3f7;
+  --surface-glass: rgba(255, 255, 255, 0.86);
+  --surface-warm: #fff4e7;
+  --card: #ffffff;
+  --line: #eef1f6;
+  --line-soft: #f3f5f9;
+  --border: rgba(16, 24, 40, 0.075);
+  --border-strong: rgba(16, 24, 40, 0.13);
+  --primary: #0f8f6a;
+  --primary-strong: #0b6b4f;
+  --primary-soft: #e7f3ee;
+  --primary-pale: #f0faf6;
+  --accent: #f08a3c;
+  --accent-soft: #fdefe2;
+  --warning: #b7791f;
+  --warning-soft: #fff3d8;
+  --danger: #d94f3d;
+  --danger-soft: #fdeae6;
+  --success: #0b7a55;
+  --success-soft: #e7f3ee;
+  --info: #3e7bfa;
+  --info-soft: #e9f0ff;
+  --purple: #7c5cff;
+  --purple-soft: #f0edff;
+  --shadow-soft-sm: 0 8px 22px -16px rgba(16, 24, 40, 0.35);
+  --shadow-soft-md: 0 18px 42px -26px rgba(16, 24, 40, 0.32);
+  --shadow-floating: 0 24px 56px -30px rgba(16, 24, 40, 0.45);
+  --radius-card: 1.625rem;
+  --radius-panel: 2rem;
   --mobile-topbar-height: 4.35rem;
   --mobile-bottom-nav-height: 5.5rem;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -53,9 +60,10 @@ body {
   margin: 0;
   min-height: 100dvh;
   background:
-    radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.82), transparent 28rem),
-    radial-gradient(circle at 85% 12%, rgba(7, 144, 111, 0.16), transparent 32rem),
-    linear-gradient(180deg, #eef7f3 0%, var(--background) 56%, #cfe4dc 100%);
+    radial-gradient(880px 500px at 0% 0%, rgba(251, 232, 211, 0.95) 0%, transparent 58%),
+    radial-gradient(1000px 620px at 100% 0%, rgba(232, 238, 249, 0.95) 0%, transparent 58%),
+    radial-gradient(900px 680px at 82% 100%, rgba(223, 238, 230, 0.9) 0%, transparent 54%),
+    #eef1f7;
   color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 16px;
@@ -106,26 +114,27 @@ button:disabled {
   background: var(--surface-glass);
   box-shadow: var(--shadow-soft-sm);
   backdrop-filter: blur(18px);
-  border-radius: 1.75rem !important;
+  border-radius: var(--radius-card) !important;
 }
 
 .soft-panel {
   border: 1px solid var(--border);
-  background: var(--surface);
+  background: rgba(247, 249, 252, 0.88);
   box-shadow: var(--shadow-soft-md);
-  border-radius: 2rem !important;
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-panel) !important;
 }
 
 .floating-pill {
   border: 1px solid var(--border-strong);
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.9);
   box-shadow: var(--shadow-floating);
   backdrop-filter: blur(20px);
 }
 
 .control-pill {
   border: 1px solid var(--border-strong);
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.9);
   box-shadow: var(--shadow-soft-sm);
 }
 
@@ -151,8 +160,92 @@ button:disabled {
 }
 
 .focus-ring:focus-visible {
-  outline: 3px solid rgba(243, 189, 91, 0.55);
+  outline: 3px solid rgba(15, 143, 106, 0.28);
   outline-offset: 2px;
+}
+
+.app-shell {
+  background:
+    radial-gradient(760px 440px at 0% 0%, rgba(251, 232, 211, 0.92), transparent 58%),
+    radial-gradient(760px 440px at 100% 0%, rgba(232, 238, 249, 0.95), transparent 60%),
+    radial-gradient(640px 520px at 80% 100%, rgba(223, 238, 230, 0.92), transparent 58%),
+    var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  box-shadow: 0 40px 90px -50px rgba(16, 24, 40, 0.45);
+}
+
+.glass-card {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--shadow-soft-sm);
+  backdrop-filter: blur(18px);
+}
+
+.metric-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-soft-sm);
+}
+
+.metric-card::after {
+  content: "";
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  height: 0.55rem;
+  width: 0.55rem;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.icon-button {
+  display: grid;
+  min-height: 2.625rem;
+  min-width: 2.625rem;
+  place-items: center;
+  border-radius: 0.875rem;
+  border: 1px solid transparent;
+  color: var(--text-soft);
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.icon-button:hover {
+  background: var(--line-soft);
+  color: var(--foreground);
+  transform: translateY(-1px);
+}
+
+.icon-button-active {
+  background: var(--primary-strong);
+  color: white;
+  box-shadow: var(--shadow-soft-sm);
+}
+
+.progress-track {
+  height: 0.56rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.bottom-sheet {
+  border-radius: 1.75rem 1.75rem 0 0;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -22px 48px -24px rgba(16, 24, 40, 0.4);
+  backdrop-filter: blur(20px);
 }
 
 .mobile-app-page {

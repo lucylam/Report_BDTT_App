@@ -30,14 +30,11 @@ export const CancelReasonDialog = ({
   return (
     <div
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-end bg-black/45 p-4 backdrop-blur-sm sm:items-center sm:justify-center"
+      className="fixed inset-0 z-50 flex items-end bg-slate-950/45 p-4 backdrop-blur-sm sm:items-center sm:justify-center"
       role="dialog"
     >
-      <form
-        className="soft-panel w-full rounded-[2rem] p-6 sm:max-w-lg"
-        onSubmit={submit}
-      >
-        <p className="text-sm font-semibold uppercase tracking-wide text-[var(--danger)]">
+      <form className="bottom-sheet w-full p-6 sm:max-w-lg" onSubmit={submit}>
+        <p className="text-sm font-bold uppercase tracking-wide text-[var(--danger)]">
           Hủy hạng mục
         </p>
         <h2 className="mt-2 text-2xl font-semibold">{task.tagname}</h2>
@@ -48,12 +45,12 @@ export const CancelReasonDialog = ({
           <span className="text-sm font-semibold">Lý do hủy</span>
           <textarea
             autoFocus
-            className="focus-ring mt-2 min-h-28 w-full resize-y rounded-[1.5rem] border border-[var(--border)] bg-white/90 px-4 py-3 text-base leading-6"
+            className="focus-ring mt-2 min-h-28 w-full resize-y rounded-[1.35rem] border border-[var(--line)] bg-white/90 px-4 py-3 text-base leading-6"
             onChange={(event) => {
               setReason(event.target.value);
               setError("");
             }}
-            placeholder="Ví dụ: không thực hiện được do thiếu vật tư, thiết bị chưa sẵn sàng..."
+            placeholder="Ví dụ: thiếu vật tư, thiết bị chưa sẵn sàng, không thể thực hiện theo điều kiện hiện tại..."
             value={reason}
           />
         </label>
@@ -67,7 +64,7 @@ export const CancelReasonDialog = ({
         ) : null}
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
           <button
-            className="focus-ring pressable min-h-11 rounded-full border border-[var(--border)] bg-white/80 px-4 text-sm font-semibold"
+            className="focus-ring pressable min-h-11 rounded-full border border-[var(--line)] bg-white/80 px-4 text-sm font-semibold"
             onClick={onClose}
             type="button"
           >

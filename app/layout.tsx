@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { PwaRuntime } from "@/components/PwaRuntime";
 import "./globals.css";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin", "vietnamese"],
+  variable: "--font-plus-jakarta",
+  display: "swap"
+});
 
 export const metadata: Metadata = {
   applicationName: "BDTT 2026",
@@ -36,7 +43,7 @@ interface RootLayoutProps {
 
 const RootLayout = ({ children }: RootLayoutProps): React.ReactElement => {
   return (
-    <html lang="vi">
+    <html className={plusJakartaSans.variable} lang="vi">
       <body>
         <PwaRuntime />
         {children}

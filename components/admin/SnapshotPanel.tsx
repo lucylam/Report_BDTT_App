@@ -13,7 +13,7 @@ export const SnapshotPanel = ({
 
   if (!latest) {
     return (
-      <section className="soft-card border-dashed p-5">
+      <section className="glass-card border-dashed p-5">
         <h2 className="text-lg font-semibold">Snapshot ngày</h2>
         <p className="mt-2 text-sm text-slate-600">
           Chưa có snapshot. Worker hoặc admin có thể ghi nhận snapshot báo cáo ngày.
@@ -23,7 +23,7 @@ export const SnapshotPanel = ({
   }
 
   return (
-    <section className="soft-card p-5">
+    <section className="glass-card p-5">
       <h2 className="text-lg font-semibold">Snapshot gần nhất</h2>
       <div className="mt-3 grid gap-3 sm:grid-cols-4">
         <SnapshotMetric label="Ngày" value={latest.snapshotDate} />

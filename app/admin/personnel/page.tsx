@@ -6,7 +6,6 @@ import { useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { WorkerStatusTable } from "@/components/admin/WorkerStatusTable";
 import { useAppData } from "@/hooks/useAppData";
-import { BDTT_2026_SUBTITLE } from "@/lib/org2026";
 import { getOrgScopeLabel, getScopedAppData } from "@/lib/permissions";
 
 const AdminPersonnelPage = (): React.ReactElement => {
@@ -44,7 +43,7 @@ const AdminPersonnelPage = (): React.ReactElement => {
     <AdminShell
       account={currentAccount}
       onLogout={logout}
-      subtitle={`${BDTT_2026_SUBTITLE} · ${scopeLabel}`}
+      subtitle={`Tổ Thiết bị Đo lường & Điều khiển · ${scopeLabel}`}
       title="Thành viên"
     >
       {scopedData ? (

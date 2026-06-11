@@ -158,7 +158,7 @@ export const WorkerDesktopView = ({
 
   return (
     <main className="hidden min-h-dvh bg-transparent lg:grid lg:grid-cols-[300px_minmax(0,1fr)]">
-      <aside className="m-5 mr-0 rounded-[2rem] border border-white/80 bg-white/80 p-5 shadow-[var(--shadow-soft-md)] backdrop-blur-xl">
+      <aside className="m-5 mr-0 rounded-[2rem] border border-white/80 bg-white/82 p-5 shadow-[var(--shadow-soft-md)] backdrop-blur-xl">
         <CompanyBrand variant="sidebar" />
         <p className="mt-5 text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
           Worker workspace
@@ -168,7 +168,7 @@ export const WorkerDesktopView = ({
           {formatViDate(DEFAULT_REPORT_DATE)}
         </p>
 
-        <div className="mt-6 rounded-[1.75rem] border border-[var(--border)] bg-[var(--primary-strong)] p-4 text-white shadow-[var(--shadow-floating)]">
+        <div className="mt-6 rounded-[1.75rem] border border-white/20 bg-[var(--primary-strong)] p-4 text-white shadow-[var(--shadow-floating)]">
           <p className="font-semibold">{worker.fullName}</p>
           <p className="mt-1 text-sm text-white/70">@{account.username}</p>
           <p className="mt-3 text-sm font-bold leading-5 text-white">{worker.orgTitle}</p>
@@ -186,7 +186,7 @@ export const WorkerDesktopView = ({
           <SummaryPills percents={percents} />
         </div>
 
-        <div className="mt-5 rounded-[1.5rem] border border-[var(--border)] bg-white/55 p-2">
+        <div className="mt-5 rounded-[1.5rem] border border-[var(--line)] bg-white/55 p-2">
           {tabs.map((item) => (
             <button
               className={`focus-ring pressable min-h-11 w-full rounded-full px-4 text-left text-sm font-semibold ${
@@ -213,7 +213,7 @@ export const WorkerDesktopView = ({
                 className={`focus-ring pressable min-h-11 w-full rounded-full px-4 text-left text-sm font-semibold ${
                   item.key === filter
                     ? "bg-[var(--primary-strong)] text-white shadow-md ring-1 ring-[var(--primary)]"
-                    : "border border-[var(--border)] bg-white/80 text-slate-800 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+                    : "border border-[var(--line)] bg-white/80 text-slate-800 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
                 }`}
                 key={item.key}
                 onClick={() => {
@@ -286,7 +286,7 @@ export const WorkerDesktopView = ({
             />
           </div>
 
-          <aside className="soft-panel sticky top-6 h-[calc(100dvh-3rem)] overflow-auto p-6">
+          <aside className="glass-card sticky top-6 h-[calc(100dvh-3rem)] overflow-auto p-6">
             <WorkerDesktopTaskDetail
               onCancel={onCancel}
               onChange={onChange}
@@ -317,13 +317,13 @@ export const WorkerDesktopView = ({
             <DailyCompletionChart rows={historyRows} />
           </div>
           <div className="mt-5 grid gap-5 xl:grid-cols-3">
-            <div className="soft-card rounded-3xl p-5 xl:col-span-2">
+            <div className="glass-card rounded-[1.65rem] p-5 xl:col-span-2">
               <h2 className="text-xl font-semibold">Điểm cần chú ý</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
                 Hạng mục P1 chưa xong: <strong>{p1Open}</strong>. Dữ liệu tính theo ngày báo cáo hiện tại.
               </p>
             </div>
-            <div className="soft-card rounded-3xl p-5">
+            <div className="glass-card rounded-[1.65rem] p-5">
               <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">
                 Báo cáo hôm nay
               </p>
@@ -348,7 +348,7 @@ export const WorkerDesktopView = ({
             {historyRows.map((row) => {
               const isSelected = selectedHistoryDate === row.date;
               return (
-                <article className="soft-card overflow-hidden rounded-3xl" key={row.date}>
+                <article className="glass-card overflow-hidden rounded-[1.65rem]" key={row.date}>
                   <button
                     aria-expanded={isSelected}
                     className="focus-ring pressable flex min-h-20 w-full items-center justify-between gap-3 p-5 text-left"
@@ -394,11 +394,11 @@ export const WorkerDesktopView = ({
             title="Tài khoản"
           />
           <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-            <div className="soft-panel p-6">
+            <div className="glass-card p-6">
               <h2 className="text-xl font-semibold">{worker.fullName}</h2>
               <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
               <p className="mt-1 text-sm text-[var(--text-muted)]">{worker.email}</p>
-              <div className="mt-4 rounded-[1.25rem] bg-[var(--primary-pale)] p-4 ring-1 ring-[var(--border)]">
+              <div className="mt-4 rounded-[1.25rem] bg-[var(--primary-pale)] p-4 ring-1 ring-[var(--line)]">
                 <p className="text-sm font-bold text-[var(--primary-strong)]">{worker.orgTitle}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-700">{worker.orgAssignment}</p>
               </div>
@@ -408,7 +408,7 @@ export const WorkerDesktopView = ({
               </div>
               <PwaInstallButton className="mt-5" showHint variant="panel" />
             </div>
-            <div className="soft-card p-6">
+            <div className="glass-card p-6">
               <h2 className="text-xl font-semibold">Trạng thái phiên làm việc</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
                 Tài khoản này đang dùng workspace worker để cập nhật tiến độ, ghi chú và ảnh theo từng hạng mục.

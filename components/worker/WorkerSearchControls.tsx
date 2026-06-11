@@ -20,13 +20,13 @@ export const WorkerSearchControls = ({
   onGroupModeChange
 }: WorkerSearchControlsProps): React.ReactElement => {
   return (
-    <div className="soft-card p-3">
+    <div className="glass-card rounded-[1.35rem] p-3">
       <label className="block" htmlFor={inputId}>
-        <span className="text-xs font-bold uppercase tracking-wide text-[var(--primary-strong)]">
+        <span className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">
           Tìm nhanh tag / WO / khu vực
         </span>
         <div className="control-pill mt-2 flex min-h-11 items-center gap-2 rounded-full px-3 focus-within:border-[var(--primary)] focus-within:ring-4 focus-within:ring-[var(--primary-soft)] md:min-h-12">
-          <span aria-hidden="true" className="text-sm font-semibold text-[var(--primary)]">
+          <span aria-hidden="true" className="text-sm font-extrabold text-[var(--primary)]">
             Tìm
           </span>
           <input
@@ -40,7 +40,7 @@ export const WorkerSearchControls = ({
           />
           {searchQuery ? (
             <button
-              className="focus-ring pressable min-h-9 rounded-xl bg-[var(--primary-soft)] px-3 text-sm font-semibold text-[var(--primary-strong)]"
+              className="focus-ring pressable min-h-9 rounded-full bg-[var(--primary-soft)] px-3 text-sm font-extrabold text-[var(--primary-strong)]"
               onClick={() => onSearchChange("")}
               type="button"
             >
@@ -50,18 +50,16 @@ export const WorkerSearchControls = ({
         </div>
       </label>
 
-      <div className="mt-2 flex flex-wrap items-center gap-2 md:mt-3">
-        <span className="text-xs font-bold text-slate-700">
-          {resultLabel}
-        </span>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-extrabold text-slate-700">{resultLabel}</span>
         {unitChips.map((unit) => {
           const active = searchQuery.trim().toLowerCase() === unit.toLowerCase();
           return (
             <button
-              className={`focus-ring pressable min-h-8 rounded-full border px-3 text-xs font-semibold md:min-h-9 ${
+              className={`focus-ring pressable min-h-9 rounded-full border px-3 text-xs font-bold ${
                 active
                   ? "border-[var(--primary)] bg-[var(--primary)] text-white shadow-sm"
-                  : "border-[var(--border-strong)] bg-white/82 text-slate-800 shadow-sm hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+                  : "border-[var(--border)] bg-white/88 text-slate-800 shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
               }`}
               key={unit}
               onClick={() => onSearchChange(active ? "" : unit)}
@@ -73,15 +71,15 @@ export const WorkerSearchControls = ({
         })}
       </div>
 
-      <div className="control-pill mt-2 grid grid-cols-2 gap-1 rounded-full p-1 md:mt-3">
+      <div className="control-pill mt-3 grid grid-cols-2 gap-1 rounded-full p-1">
         <GroupButton
           active={groupMode === "unit"}
-          label="Nhóm theo đơn vị"
+          label="Theo đơn vị"
           onClick={() => onGroupModeChange("unit")}
         />
         <GroupButton
           active={groupMode === "section"}
-          label="Nhóm theo section"
+          label="Theo section"
           onClick={() => onGroupModeChange("section")}
         />
       </div>
@@ -100,7 +98,7 @@ const GroupButton = ({
 }): React.ReactElement => {
   return (
     <button
-      className={`focus-ring pressable min-h-10 rounded-full px-2 text-xs font-semibold ${
+      className={`focus-ring pressable min-h-10 rounded-full px-2 text-xs font-extrabold ${
         active
           ? "bg-[var(--primary-strong)] text-white shadow-md"
           : "text-slate-800 hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"

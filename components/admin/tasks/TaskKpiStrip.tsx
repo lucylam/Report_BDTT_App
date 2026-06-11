@@ -15,14 +15,16 @@ const kpiItems = [
 
 export const TaskKpiStrip = ({ kpis }: TaskKpiStripProps): React.ReactElement => {
   return (
-    <section className="grid grid-cols-2 gap-3 xl:grid-cols-6">
+    <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
       {kpiItems.map((item) => (
         <div
-          className="rounded-[1.5rem] border border-white/80 bg-white/86 p-4 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl"
+          className={`metric-card rounded-[1.35rem] p-4 ${item.tone}`}
           key={item.key}
         >
-          <p className="text-xs font-bold uppercase text-slate-600">{item.label}</p>
-          <p className={`mt-2 text-3xl font-bold tabular-nums ${item.tone}`}>
+          <p className="text-[11px] font-extrabold uppercase text-[var(--text-soft)]">
+            {item.label}
+          </p>
+          <p className="mt-2 text-3xl font-extrabold tabular-nums">
             {kpis[item.key]}
           </p>
         </div>

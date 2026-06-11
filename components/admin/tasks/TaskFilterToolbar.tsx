@@ -52,10 +52,10 @@ export const TaskFilterToolbar = ({
   onQuickFilterChange
 }: TaskFilterToolbarProps): React.ReactElement => {
   return (
-    <section className="soft-panel p-4">
+    <section className="glass-card rounded-[1.65rem] p-4">
       <div className="grid gap-3 xl:grid-cols-[minmax(260px,1.4fr)_repeat(5,minmax(120px,1fr))]">
         <label>
-          <span className="mb-2 block text-xs font-bold uppercase text-[var(--primary-strong)]">
+          <span className="mb-2 block text-xs font-extrabold uppercase text-[var(--primary-strong)]">
             Tìm nhanh
           </span>
           <input
@@ -151,7 +151,7 @@ const QuickChip = ({
       className={`focus-ring pressable min-h-10 rounded-full border px-4 text-sm font-bold ${
         selected
           ? "border-[var(--primary-strong)] bg-[var(--primary-strong)] text-white shadow-md"
-          : "border-white/80 bg-white/85 text-slate-800 shadow-sm hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+          : "border-[var(--line)] bg-white/90 text-slate-800 shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
       }`}
       onClick={onClick}
       type="button"

@@ -29,11 +29,8 @@ export const WorkerGroupedTaskList = ({
   const toggleGroup = (groupKey: string): void => {
     setCollapsedGroups((current) => {
       const next = new Set(current);
-      if (next.has(groupKey)) {
-        next.delete(groupKey);
-      } else {
-        next.add(groupKey);
-      }
+      if (next.has(groupKey)) next.delete(groupKey);
+      else next.add(groupKey);
       return next;
     });
   };
@@ -57,7 +54,7 @@ export const WorkerGroupedTaskList = ({
               aria-expanded={!isCollapsed}
               className={`focus-ring pressable flex min-h-12 w-full items-center justify-between gap-3 rounded-[1.5rem] border px-4 text-left shadow-[var(--shadow-soft-sm)] ${
                 isCollapsed
-                  ? "border-[var(--border-strong)] bg-[var(--primary-pale)] text-[var(--primary-strong)]"
+                  ? "border-[var(--line)] bg-white/82 text-[var(--primary-strong)]"
                   : "border-[var(--primary)] bg-[var(--primary-strong)] text-white"
               }`}
               onClick={() => toggleGroup(group.key)}
@@ -71,7 +68,7 @@ export const WorkerGroupedTaskList = ({
               </span>
               <span className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-bold ${
                 isCollapsed
-                  ? "bg-white/86 text-[var(--primary-strong)] ring-1 ring-[var(--border)]"
+                  ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-1 ring-[var(--line)]"
                   : "bg-white/16 text-white"
               }`}>
                 {isCollapsed ? "Mở" : "Đóng"}

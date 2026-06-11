@@ -60,7 +60,7 @@ export const WorkerDesktopTaskList = ({
               aria-expanded={!isCollapsed}
               className={`focus-ring pressable sticky top-0 z-10 mb-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-[1.5rem] border px-4 text-left text-sm font-bold shadow-[var(--shadow-soft-sm)] backdrop-blur-xl ${
                 isCollapsed
-                  ? "border-[var(--border-strong)] bg-[var(--primary-pale)] text-[var(--primary-strong)]"
+                  ? "border-[var(--line)] bg-white/82 text-[var(--primary-strong)]"
                   : "border-[var(--primary)] bg-[var(--primary-strong)] text-white"
               }`}
               onClick={() => toggleGroup(group.key)}
@@ -79,7 +79,7 @@ export const WorkerDesktopTaskList = ({
               <span
                 className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-bold ${
                   isCollapsed
-                    ? "bg-white/86 text-[var(--primary-strong)] ring-1 ring-[var(--border)]"
+                    ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-1 ring-[var(--line)]"
                     : "bg-white/16 text-white"
                 }`}
               >

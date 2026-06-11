@@ -11,12 +11,12 @@ export const CompanyBrand = ({
 }: CompanyBrandProps): React.ReactElement => {
   const isCompact = variant === "compact";
   const isFull = variant === "full";
-  const logoSize = isCompact ? "h-11 w-11" : isFull ? "h-20 w-20" : "h-16 w-16";
+  const logoSize = isCompact ? "h-10 w-10" : isFull ? "h-16 w-16" : "h-14 w-14";
 
   return (
     <div
       aria-label="Tổng Công Ty Phân Bón Dầu Khí Cà Mau - Nhà máy Đạm Cà Mau"
-      className={`flex items-center gap-4 ${className}`}
+      className={`flex min-w-0 items-center gap-4 ${className}`}
     >
       <Image
         alt="PETROVIETNAM PVCFC"
@@ -28,26 +28,24 @@ export const CompanyBrand = ({
       {isCompact ? null : (
         <div className={`min-w-0 ${isFull ? "" : "flex-1"}`}>
           <p
-            className={`font-bold leading-tight text-[var(--foreground)] ${
-              isFull ? "text-lg md:text-xl" : "text-sm"
+            className={`font-extrabold leading-tight text-[var(--foreground)] ${
+              isFull ? "text-base md:text-lg" : "text-sm"
             }`}
           >
             Tổng Công Ty Phân Bón Dầu Khí Cà Mau
           </p>
           <p
-            className={`mt-0.5 font-bold uppercase tracking-wide text-[var(--primary-strong)] ${
-              isFull ? "text-sm md:text-base" : "text-xs"
+            className={`mt-1 font-extrabold uppercase text-[var(--primary-strong)] ${
+              isFull ? "text-sm" : "text-xs"
             }`}
           >
             Nhà máy Đạm Cà Mau
           </p>
-          <p
-            className={`${isFull ? "text-sm" : "text-xs"} mt-1 font-semibold text-[var(--text-muted)]`}
-          >
+          <p className={`${isFull ? "text-sm" : "text-xs"} mt-1 font-bold text-[var(--text-muted)]`}>
             Xưởng Điều khiển
           </p>
           {isFull ? (
-            <p className="mt-3 text-sm font-semibold text-slate-700 md:text-base">
+            <p className="mt-3 text-sm font-semibold text-slate-700">
               Chung một niềm tin - Vươn mình phát triển
             </p>
           ) : null}

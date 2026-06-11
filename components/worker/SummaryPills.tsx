@@ -4,29 +4,40 @@ interface SummaryPillsProps {
   readonly percents: readonly ProgressPercent[];
 }
 
-export const SummaryPills = ({
-  percents
-}: SummaryPillsProps): React.ReactElement => {
+export const SummaryPills = ({ percents }: SummaryPillsProps): React.ReactElement => {
   const done = percents.filter((percent) => percent === 100).length;
-  const progress = percents.filter(
-    (percent) => percent > 0 && percent < 100
-  ).length;
+  const progress = percents.filter((percent) => percent > 0 && percent < 100).length;
   const todo = percents.filter((percent) => percent === 0).length;
 
   return (
     <div className="grid grid-cols-3 gap-2">
-      <div className="rounded-[1.35rem] bg-white/82 px-2 py-2 text-center shadow-[var(--shadow-soft-sm)] ring-1 ring-[var(--border)] md:py-3">
-        <p className="text-xl font-semibold tabular-nums text-[var(--success)] md:text-2xl">{done}</p>
-        <p className="text-xs font-semibold text-[var(--text-muted)]">Hoàn thành</p>
-      </div>
-      <div className="rounded-[1.35rem] bg-white/82 px-2 py-2 text-center shadow-[var(--shadow-soft-sm)] ring-1 ring-[var(--border)] md:py-3">
-        <p className="text-xl font-semibold tabular-nums text-[var(--warning)] md:text-2xl">{progress}</p>
-        <p className="text-xs font-semibold text-[var(--text-muted)]">Đang thực hiện</p>
-      </div>
-      <div className="rounded-[1.35rem] bg-white/82 px-2 py-2 text-center shadow-[var(--shadow-soft-sm)] ring-1 ring-[var(--border)] md:py-3">
-        <p className="text-xl font-semibold tabular-nums text-slate-500 md:text-2xl">{todo}</p>
-        <p className="text-xs font-semibold text-[var(--text-muted)]">Chưa thực hiện</p>
-      </div>
+      <SummaryCard label="Hoàn thành" tone="success" value={done} />
+      <SummaryCard label="Đang làm" tone="warning" value={progress} />
+      <SummaryCard label="Chưa làm" tone="neutral" value={todo} />
+    </div>
+  );
+};
+
+const SummaryCard = ({
+  label,
+  tone,
+  value
+}: {
+  readonly label: string;
+  readonly tone: "success" | "warning" | "neutral";
+  readonly value: number;
+}): React.ReactElement => {
+  const color =
+    tone === "success"
+      ? "text-[var(--success)]"
+      : tone === "warning"
+        ? "text-[var(--warning)]"
+        : "text-[var(--text-muted)]";
+
+  return (
+    <div className={`metric-card rounded-[1.25rem] p-3 text-center ${color}`}>
+      <p className="text-2xl font-extrabold tabular-nums md:text-3xl">{value}</p>
+      <p className="mt-1 text-[11px] font-extrabold text-[var(--text-muted)]">{label}</p>
     </div>
   );
 };

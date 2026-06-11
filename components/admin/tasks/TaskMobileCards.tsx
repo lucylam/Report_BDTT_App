@@ -16,12 +16,16 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
       {rows.map((row) => {
         const { task, percent, status, progress } = row;
         return (
-          <article className="soft-card p-4" key={task.id}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-mono text-lg font-bold leading-tight">{task.tagname}</p>
-                <p className="mt-1 text-xs font-bold uppercase text-[var(--primary-strong)]">
+          <article className="glass-card rounded-[1.25rem] p-4" key={task.id}>
+            <div className="flex items-center gap-3">
+              <ProgressRing percent={task.isCancelled ? 0 : percent} />
+              <div className="min-w-0 flex-1">
+                <p className="font-mono text-base font-extrabold leading-tight">{task.tagname}</p>
+                <p className="mt-1 truncate text-xs font-bold uppercase text-[var(--primary-strong)]">
                   WO {task.wo || "N/A"} · P{task.priority}
+                </p>
+                <p className="mt-1 truncate text-xs font-semibold text-[var(--text-muted)]">
+                  Sec {task.section || "N/A"} · {task.donVi || "N/A"}
                 </p>
               </div>
               <StatusBadge
@@ -30,32 +34,28 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
               />
             </div>
 
-            <p className="mt-3 text-sm font-semibold leading-5 text-slate-800">
+            <p className="mt-3 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">
               {task.taskName || "N/A"}
             </p>
 
             <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
               <Chip label={task.nhom || "N/A"} />
-              <Chip label={task.donVi || "N/A"} />
-              <Chip label={task.section || "N/A"} />
+              <Chip label={task.resourceName || "N/A"} />
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-              <Info label="Resource" value={task.resourceName || "N/A"} />
               <Info label="Finish" value={task.finishDate || "N/A"} />
+              <Info label="Trạng thái" value={getStatusLabel(status)} />
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <StatusBadge label={getStatusLabel(status)} tone={getStatusTone(status)} />
-              {task.isCancelled ? (
-                <span className="rounded-full bg-[var(--danger-soft)] px-3 py-1.5 text-xs font-bold text-[var(--danger)]">
-                  {task.cancelReason || "Chưa nhập lý do"}
-                </span>
-              ) : null}
-            </div>
+            {task.isCancelled ? (
+              <p className="mt-3 rounded-[1rem] bg-[var(--danger-soft)] p-3 text-sm font-bold text-[var(--danger)]">
+                {task.cancelReason || "Chưa nhập lý do cancel"}
+              </p>
+            ) : null}
 
             {progress?.note ? (
-              <p className="mt-3 rounded-2xl bg-white p-3 text-sm font-medium leading-6 text-slate-800 ring-1 ring-[var(--border-strong)]">
+              <p className="mt-3 rounded-[1rem] bg-white p-3 text-sm font-medium leading-6 text-slate-800 ring-1 ring-[var(--border)]">
                 {progress.note}
               </p>
             ) : null}
@@ -66,9 +66,39 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
   );
 };
 
+const ProgressRing = ({ percent }: { readonly percent: number }): React.ReactElement => {
+  const color =
+    percent === 100 ? "var(--success)" : percent > 0 ? "var(--warning)" : "var(--text-soft)";
+  const dash = Math.max(percent, 2);
+
+  return (
+    <div className="relative h-12 w-12 shrink-0">
+      <svg className="h-12 w-12 -rotate-90" viewBox="0 0 42 42">
+        <circle cx="21" cy="21" fill="none" r="15.9" stroke="var(--line)" strokeWidth="5" />
+        <circle
+          cx="21"
+          cy="21"
+          fill="none"
+          r="15.9"
+          stroke={color}
+          strokeDasharray={`${dash} ${100 - dash}`}
+          strokeLinecap="round"
+          strokeWidth="5"
+        />
+      </svg>
+      <span
+        className="absolute inset-0 grid place-items-center text-[11px] font-extrabold"
+        style={{ color }}
+      >
+        {percent}%
+      </span>
+    </div>
+  );
+};
+
 const Chip = ({ label }: { readonly label: string }): React.ReactElement => {
   return (
-    <span className="rounded-full bg-white/86 px-2.5 py-1 text-slate-800 ring-1 ring-[var(--border-strong)]">
+    <span className="rounded-full bg-white/88 px-2.5 py-1 text-slate-800 ring-1 ring-[var(--border)]">
       {label}
     </span>
   );
@@ -82,9 +112,9 @@ const Info = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[1.25rem] bg-white/86 p-3 ring-1 ring-[var(--border-strong)]">
-      <p className="text-xs font-bold uppercase text-slate-600">{label}</p>
-      <p className="mt-1 truncate font-semibold text-slate-900">{value}</p>
+    <div className="rounded-[1rem] bg-white/88 p-3 ring-1 ring-[var(--border)]">
+      <p className="text-[11px] font-extrabold uppercase text-[var(--text-soft)]">{label}</p>
+      <p className="mt-1 truncate font-bold text-slate-900">{value}</p>
     </div>
   );
 };

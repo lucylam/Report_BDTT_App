@@ -39,7 +39,7 @@ export const ProgressCharts = ({
 }): React.ReactElement => {
   return (
     <section className="grid gap-5">
-      <div className="soft-panel p-5 lg:p-6">
+      <div className="glass-card p-5 lg:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
@@ -72,7 +72,7 @@ export const ProgressCharts = ({
 
       <LeadStatusChart data={dashboard.byLeadStatus} />
 
-      <section className="soft-panel p-5">
+      <section className="glass-card p-5">
         <h2 className="text-xl font-semibold">Chi tiết theo phân nhóm resource</h2>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
           Tương ứng cụm chart resource trong DASH BOARD: HTĐK, TBCH, AMLL, BENT, NHIỆT, PI, TLTBĐK.
@@ -99,7 +99,7 @@ const ChartShell = ({
   readonly title: string;
 }): React.ReactElement => {
   return (
-    <section className="soft-card p-5">
+    <section className="glass-card p-5">
       <h2 className="text-lg font-semibold">{title}</h2>
       <p className="mt-1 text-sm text-[var(--text-muted)]">{subtitle}</p>
       {children}
@@ -256,7 +256,7 @@ const DeferredDashboardNotice = (): React.ReactElement => {
     "Hai bảng VOTTING cuối dashboard"
   ];
   return (
-    <section className="soft-card border-dashed p-5">
+    <section className="glass-card border-dashed p-5">
       <h2 className="text-lg font-semibold">Dashboard sẽ bổ sung ở giai đoạn sau</h2>
       <p className="mt-1 text-sm text-[var(--text-muted)]">
         Các phần này không render giả vì hiện chưa có đủ trường dữ liệu trong DATA A:M.

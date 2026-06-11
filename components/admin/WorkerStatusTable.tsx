@@ -186,7 +186,7 @@ export const WorkerStatusTable = ({
 
   return (
     <section className="grid min-w-0 max-w-full gap-4 overflow-x-hidden">
-      <div className="soft-panel min-w-0 max-w-full overflow-hidden p-4 lg:p-5">
+      <div className="glass-card min-w-0 max-w-full overflow-hidden p-4 lg:p-5">
         <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">
@@ -240,7 +240,7 @@ export const WorkerStatusTable = ({
       </div>
 
       <div className="grid min-w-0 max-w-full items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.82fr)]">
-        <section className="soft-panel min-w-0 max-w-full self-start overflow-hidden p-4 lg:p-5">
+        <section className="glass-card min-w-0 max-w-full self-start overflow-hidden p-4 lg:p-5">
           <div className="grid gap-3 lg:hidden">
             {filteredRows.map((row) => (
               <WorkerCard
@@ -254,7 +254,7 @@ export const WorkerStatusTable = ({
 
           <div className="hidden max-w-full overflow-x-auto lg:block">
             <table className="min-w-[1040px] text-left text-sm">
-              <thead className="sticky top-0 border-b border-[var(--border-strong)] bg-white/95 font-bold text-slate-800 backdrop-blur">
+              <thead className="sticky top-0 border-b border-[var(--line)] bg-white/95 font-bold text-slate-800 backdrop-blur">
                 <tr>
                   <th className="py-3 pr-4">Tên</th>
                   <th className="py-3 pr-4">Nhóm</th>
@@ -271,7 +271,7 @@ export const WorkerStatusTable = ({
                   const active = selectedRow?.profile.id === row.profile.id;
                   return (
                     <tr
-                      className={`border-b border-[var(--border)] ${
+                      className={`border-b border-[var(--line)] ${
                         active ? "bg-[var(--primary-pale)]" : "hover:bg-white/50"
                       }`}
                       key={row.profile.id}
@@ -299,13 +299,7 @@ export const WorkerStatusTable = ({
                       <td className="py-3 pr-4">{row.percent}%</td>
                       <td className="py-3 pr-4">
                         <StatusBadge
-                          label={
-                            dateFilter === "all-days"
-                              ? `${row.submittedDays}/${row.totalDays} ngày`
-                              : row.submitted
-                                ? "Đã gửi"
-                                : "Chưa gửi"
-                          }
+                          label={getWorkerSubmissionLabel(row, dateFilter)}
                           tone={
                             dateFilter === "all-days"
                               ? getSubmissionTone(row)
@@ -329,6 +323,11 @@ export const WorkerStatusTable = ({
   );
 };
 
+const getWorkerSubmissionLabel = (row: WorkerRow, dateFilter: DateFilter): string => {
+  if (dateFilter === "all-days") return `${row.submittedDays}/${row.totalDays} ngày`;
+  return row.submitted ? "Đã gửi" : "Chưa gửi";
+};
+
 const DateButton = ({
   active,
   label,
@@ -343,7 +342,7 @@ const DateButton = ({
       className={`focus-ring pressable min-h-10 shrink-0 rounded-full border px-4 text-sm font-bold ${
         active
           ? "border-[var(--primary)] bg-[var(--primary-strong)] text-white shadow-md"
-          : "border-[var(--border-strong)] bg-white/86 text-slate-800 shadow-sm hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+          : "border-[var(--line)] bg-white/86 text-slate-800 shadow-sm hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
       }`}
       onClick={onClick}
       type="button"
@@ -364,7 +363,7 @@ const WorkerCard = ({
 }): React.ReactElement => {
   return (
     <button
-      className={`focus-ring soft-card w-full p-4 text-left ${
+      className={`focus-ring metric-card w-full p-4 text-left ${
         active ? "ring-2 ring-[var(--primary)]" : ""
       }`}
       onClick={onSelect}
@@ -380,10 +379,7 @@ const WorkerCard = ({
             {row.profile.orgAssignment}
           </p>
         </div>
-        <StatusBadge
-          label={`${row.submittedDays}/${row.totalDays} ngày`}
-          tone={getSubmissionTone(row)}
-        />
+        <StatusBadge label={getWorkerSubmissionLabel(row, "all-days")} tone={getSubmissionTone(row)} />
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-center text-sm sm:grid-cols-4">
         <Metric label="Hạng mục" value={String(row.assigned)} />
@@ -404,7 +400,7 @@ const WorkerDetailPanel = ({
 }): React.ReactElement => {
   if (!row) {
     return (
-    <aside className="soft-panel min-w-0 max-w-full self-start overflow-hidden p-5">
+      <aside className="glass-card min-w-0 max-w-full self-start overflow-hidden p-5">
         <p className="text-sm font-semibold text-[var(--text-muted)]">
           Chọn một worker để xem chi tiết báo cáo.
         </p>
@@ -413,7 +409,7 @@ const WorkerDetailPanel = ({
   }
 
   return (
-    <aside className="soft-panel min-w-0 max-w-full self-start overflow-hidden p-5">
+    <aside className="glass-card min-w-0 max-w-full self-start overflow-hidden p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">
@@ -423,7 +419,7 @@ const WorkerDetailPanel = ({
           <p className="mt-1 text-sm text-[var(--text-muted)]">
             @{row.profile.username} · {row.profile.nhom}
           </p>
-          <div className="mt-3 rounded-[1.25rem] bg-[var(--primary-pale)] p-3 ring-1 ring-[var(--border)]">
+          <div className="mt-3 rounded-[1.25rem] bg-[var(--primary-pale)] p-3 ring-1 ring-[var(--line)]">
             <p className="text-sm font-bold text-[var(--primary-strong)]">
               {row.profile.orgTitle}
             </p>
@@ -433,13 +429,7 @@ const WorkerDetailPanel = ({
           </div>
         </div>
         <StatusBadge
-          label={
-            dateFilter === "all-days"
-              ? `${row.submittedDays}/${row.totalDays} ngày`
-              : row.submitted
-                ? "Đã gửi"
-                : "Chưa gửi"
-          }
+          label={getWorkerSubmissionLabel(row, dateFilter)}
           tone={
             dateFilter === "all-days"
               ? getSubmissionTone(row)
@@ -467,7 +457,7 @@ const WorkerDetailPanel = ({
               className={`rounded-[1.25rem] border p-3 ${
                 dateFilter === day.date
                   ? "border-[var(--primary)] bg-[var(--primary-pale)]"
-                  : "border-[var(--border)] bg-white/74"
+                  : "border-[var(--line)] bg-white/74"
               }`}
               key={day.date}
             >
@@ -492,13 +482,13 @@ const WorkerDetailPanel = ({
         </h3>
         <div className="mt-3 grid gap-2">
           {row.taskStatuses.length === 0 ? (
-            <p className="rounded-[1.25rem] bg-white/78 p-4 text-sm font-semibold text-[var(--text-muted)] ring-1 ring-[var(--border)]">
+            <p className="rounded-[1.25rem] bg-white/78 p-4 text-sm font-semibold text-[var(--text-muted)] ring-1 ring-[var(--line)]">
               Worker này chưa có task được phân công.
             </p>
           ) : (
             row.taskStatuses.map(({ latestRecord, percent, task }) => (
               <article
-                className="rounded-[1.25rem] border border-[var(--border)] bg-white/78 p-3"
+                className="rounded-[1.25rem] border border-[var(--line)] bg-white/78 p-3"
                 key={task.id}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -539,7 +529,7 @@ const Metric = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="flex min-h-14 flex-col items-center justify-center rounded-[1.25rem] bg-white/86 p-2 text-center text-slate-900 ring-1 ring-[var(--border-strong)]">
+    <div className="flex min-h-14 flex-col items-center justify-center rounded-[1.25rem] bg-white/86 p-2 text-center text-slate-900 ring-1 ring-[var(--line)]">
       <p className="text-xs font-bold text-slate-700">{label}</p>
       <p className="mt-1 text-sm font-bold">{value}</p>
     </div>

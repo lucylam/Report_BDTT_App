@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
-import { BDTT_2026_SUBTITLE } from "@/lib/org2026";
 import {
   getOrgScopeLabel,
   getScopedAppData,
@@ -49,7 +48,7 @@ const AdminPage = (): React.ReactElement => {
   if (!data || !currentAccount || currentAccount.mustChangePassword) {
     return (
       <main className="min-h-dvh p-6">
-        <p className="text-sm text-slate-600">Đang tải dashboard...</p>
+        <p className="text-sm font-semibold text-slate-600">Đang tải dashboard...</p>
       </main>
     );
   }
@@ -57,13 +56,13 @@ const AdminPage = (): React.ReactElement => {
   if (currentAccount.role !== "admin") {
     return (
       <main className="min-h-dvh px-4 py-8">
-        <section className="soft-panel mx-auto max-w-md rounded-[2rem] p-6">
-          <h1 className="text-xl font-semibold">Không có quyền giám sát</h1>
-          <p className="mt-2 text-sm text-slate-600">
+        <section className="glass-card mx-auto max-w-md p-6">
+          <h1 className="text-xl font-extrabold">Không có quyền giám sát</h1>
+          <p className="mt-2 text-sm font-semibold text-slate-600">
             Tài khoản worker chỉ được vào màn hình Việc của tôi.
           </p>
           <Link
-            className="focus-ring pressable mt-4 inline-flex min-h-11 items-center rounded-2xl bg-[var(--foreground)] px-4 text-sm font-semibold text-white"
+            className="focus-ring pressable mt-4 inline-flex min-h-11 items-center rounded-full bg-[var(--foreground)] px-4 text-sm font-extrabold text-white"
             href="/worker"
           >
             Về Workspace
@@ -82,14 +81,10 @@ const AdminPage = (): React.ReactElement => {
     <AdminShell
       account={currentAccount}
       onLogout={logout}
-      subtitle={`${BDTT_2026_SUBTITLE} · ${scopeLabel} · Ngày báo cáo: ${formatViDate(DEFAULT_REPORT_DATE)}`}
+      subtitle={`Tổ Thiết bị Đo lường & Điều khiển · ${scopeLabel} · Ngày báo cáo: ${formatViDate(DEFAULT_REPORT_DATE)}`}
       title={isFullScope ? "Dashboard giám sát" : "Dashboard nhóm"}
     >
-      <ManagementDashboard
-        data={scopedData}
-        isFullScope={isFullScope}
-        metrics={metrics}
-      />
+      <ManagementDashboard data={scopedData} isFullScope={isFullScope} metrics={metrics} />
     </AdminShell>
   );
 };
@@ -118,21 +113,21 @@ const ManagementDashboard = ({
 
   return (
     <section className="grid min-w-0 gap-5">
-      <section className="soft-panel p-5 lg:p-6">
-        <p className="text-xs font-bold uppercase tracking-wide text-[var(--primary-strong)]">
+      <section className="glass-card rounded-[1.65rem] p-5 lg:p-6">
+        <p className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">
           Điều hành tiến độ
         </p>
-        <div className="mt-2 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+        <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-2xl font-extrabold tracking-normal text-[var(--foreground)]">
               Theo dõi theo {isFullScope ? "nhóm và phân nhóm" : "phân nhóm"}
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-muted)]">
-              Dashboard ưu tiên câu hỏi quản lý: đơn vị nào đạt kế hoạch, đơn vị nào cần nhắc,
-              còn bao nhiêu việc chưa triển khai và có bao nhiêu WorkOrder trễ tiến độ.
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-[var(--text-muted)]">
+              Tập trung vào đơn vị đạt kế hoạch, đơn vị cần tăng cường, WorkOrder trễ
+              và mức báo cáo của worker trong ngày.
             </p>
           </div>
-          <div className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--text-muted)]">
+          <div className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-extrabold text-[var(--text-muted)] shadow-[var(--shadow-soft-sm)]">
             Mốc đạt: {PLAN_TARGET_PERCENT}% · {formatViDate(DEFAULT_REPORT_DATE)}
           </div>
         </div>
@@ -145,7 +140,7 @@ const ManagementDashboard = ({
         rows={rows}
       />
 
-      <section className="grid min-w-0 gap-5 2xl:grid-cols-2">
+      <section className="grid min-w-0 gap-5 2xl:grid-cols-[0.9fr_1.1fr]">
         <ManagementTable
           emptyText="Chưa có đơn vị nào đạt mốc kế hoạch trong phạm vi hiện tại."
           rows={onTrackRows}
@@ -189,7 +184,7 @@ const ManagementKpiStrip = ({
     readonly tone: Tone;
   }> = [
     {
-      label: "Tổng đơn vị báo cáo",
+      label: "Đơn vị báo cáo",
       value: formatNumber(rows.length),
       helper: `${fullyReported}/${rows.length} đơn vị đủ báo cáo`,
       tone: "info"
@@ -201,19 +196,19 @@ const ManagementKpiStrip = ({
       tone: "success"
     },
     {
-      label: "Cần tăng cường triển khai",
+      label: "Cần tăng cường",
       value: formatNumber(attentionCount),
       helper: "Cần theo dõi",
       tone: "warning"
     },
     {
-      label: "Kế hoạch hành động trễ tiến độ",
+      label: "WorkOrder trễ",
       value: formatNumber(metrics.overdue),
-      helper: `${overdueUnits} đơn vị có WorkOrder trễ`,
+      helper: `${overdueUnits} đơn vị có WO trễ`,
       tone: "danger"
     },
     {
-      label: "Tỷ lệ đạt trung bình",
+      label: "Tỷ lệ đạt TB",
       value: `${metrics.overallPercent}%`,
       helper: `Mốc đạt ${PLAN_TARGET_PERCENT}%`,
       tone: metrics.overallPercent >= PLAN_TARGET_PERCENT ? "success" : "warning"
@@ -221,19 +216,19 @@ const ManagementKpiStrip = ({
   ];
 
   return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       {cards.map((card) => (
         <article
-          className={`rounded-[1.4rem] border-2 bg-white/95 p-5 shadow-[0_16px_36px_rgba(15,83,69,0.08)] ${toneBorder(card.tone)}`}
+          className={`metric-card rounded-[1.35rem] p-5 ${toneText(card.tone)}`}
           key={card.label}
         >
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+          <p className="text-[11px] font-extrabold uppercase text-[var(--text-soft)]">
             {card.label}
           </p>
-          <p className={`mt-3 text-4xl font-extrabold leading-none ${toneText(card.tone)}`}>
+          <p className="mt-3 text-4xl font-extrabold leading-none tabular-nums">
             {card.value}
           </p>
-          <p className="mt-3 text-sm font-medium text-[var(--text-muted)]">{card.helper}</p>
+          <p className="mt-3 text-sm font-semibold text-[var(--text-muted)]">{card.helper}</p>
         </article>
       ))}
     </section>
@@ -256,36 +251,27 @@ const ManagementTable = ({
   const isSuccess = tone === "success";
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-[1.5rem] border border-[var(--border)] bg-white/95 shadow-[0_18px_44px_rgba(15,83,69,0.10)]">
-      <header
-        className={`flex flex-wrap items-center gap-3 px-4 py-3 text-white ${
-          isSuccess ? "bg-[#2f8238]" : "bg-[#e9560a]"
-        }`}
-      >
-        <h3 className="text-lg font-extrabold">{title}</h3>
-        <span className="rounded-full bg-white/18 px-3 py-1 text-sm font-semibold">
+    <section className="glass-card min-w-0 overflow-hidden rounded-[1.65rem]">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4">
+        <h3 className="text-lg font-extrabold text-[var(--foreground)]">{title}</h3>
+        <span
+          className={`rounded-full px-3 py-1 text-sm font-extrabold ${
+            isSuccess
+              ? "bg-[var(--success-soft)] text-[var(--success)]"
+              : "bg-[var(--accent-soft)] text-[var(--accent)]"
+          }`}
+        >
           {subtitle}
         </span>
       </header>
 
       {rows.length === 0 ? (
-        <div className="p-5 text-sm text-[var(--text-muted)]">{emptyText}</div>
+        <div className="p-5 text-sm font-semibold text-[var(--text-muted)]">{emptyText}</div>
       ) : (
-        <div className="overflow-x-auto">
-          <div className="min-w-[780px]">
-            <div className="grid grid-cols-[minmax(180px,1.2fr)_minmax(210px,1fr)_64px_64px_64px_64px_64px] items-center border-b border-[var(--border)] bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-600">
-              <span>Đơn vị</span>
-              <span>% đạt so với kế hoạch</span>
-              <span className="text-center">Tổng</span>
-              <span className="text-center text-[#287342]">HT</span>
-              <span className="text-center text-[#0f66c3]">ĐTH</span>
-              <span className="text-center text-[#be2d2d]">Trễ</span>
-              <span className="text-center text-slate-500">CTK</span>
-            </div>
-            {rows.map((row) => (
-              <ManagementRow isSuccess={isSuccess} key={row.key} row={row} />
-            ))}
-          </div>
+        <div className="divide-y divide-[var(--line-soft)]">
+          {rows.map((row) => (
+            <ManagementRow isSuccess={isSuccess} key={row.key} row={row} />
+          ))}
         </div>
       )}
     </section>
@@ -299,90 +285,108 @@ const ManagementRow = ({
   readonly isSuccess: boolean;
   readonly row: OrgUnitRow;
 }): React.ReactElement => {
-  const barColor = row.overdue > 0 ? "#c92f2f" : isSuccess ? "#2f8238" : "#f07800";
+  const barColor = row.overdue > 0 ? "var(--danger)" : isSuccess ? "var(--success)" : "var(--accent)";
 
   return (
-    <div className="grid grid-cols-[minmax(180px,1.2fr)_minmax(210px,1fr)_64px_64px_64px_64px_64px] items-center border-b border-slate-100 px-4 py-3 text-sm last:border-b-0 even:bg-[#fbfaf7]">
+    <article className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center">
       <div className="min-w-0">
-        <p className="truncate text-base font-extrabold text-[var(--foreground)]">
-          {row.shortName}
-        </p>
-        <p className="mt-0.5 truncate text-xs font-semibold text-slate-500">{row.context}</p>
-        <p className="mt-1 text-xs text-slate-500">
-          {row.submitted}/{row.members} thành viên có báo cáo
-        </p>
-      </div>
-
-      <div className="min-w-0 pr-3">
-        <div className="flex items-center gap-3">
-          <div className="h-3 min-w-0 flex-1 overflow-hidden rounded-full bg-slate-200">
-            <div
-              className="h-full rounded-full"
-              style={{ backgroundColor: barColor, width: `${Math.min(row.percent, 100)}%` }}
-            />
-          </div>
-          <span
-            className="w-14 text-right text-sm font-extrabold"
-            style={{ color: barColor }}
+        <div className="flex min-w-0 items-center gap-3">
+          <div
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-[0.8rem] text-sm font-extrabold text-white"
+            style={{ background: rowAvatarColor(row.shortName) }}
           >
-            {row.percent}%
-          </span>
+            {getInitials(row.shortName)}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-base font-extrabold text-[var(--foreground)]">
+              {row.shortName}
+            </p>
+            <p className="truncate text-xs font-semibold text-[var(--text-muted)]">
+              {row.context}
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <MiniTag className="bg-[var(--success-soft)] text-[var(--success)]" label={`HT ${row.completed}`} />
+          <MiniTag className="bg-[var(--warning-soft)] text-[var(--warning)]" label={`ĐTH ${row.inProgress}`} />
+          <MiniTag className="bg-[var(--danger-soft)] text-[var(--danger)]" label={`Trễ ${row.overdue}`} />
+          <MiniTag label={`Tổng ${row.tasks}`} />
         </div>
       </div>
 
-      <CountCell value={row.tasks} />
-      <CountCell className="text-[#287342]" value={row.completed} />
-      <CountCell className="text-[#0f66c3]" value={row.inProgress} />
-      <CountCell className={row.overdue > 0 ? "text-[#be2d2d]" : "text-slate-400"} value={row.overdue} />
-      <CountCell className="text-slate-500" value={row.notStarted} />
-    </div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-3">
+          <div className="progress-track min-w-0 flex-1">
+            <div
+              className="progress-fill"
+              style={{ backgroundColor: barColor, width: `${Math.min(row.percent, 100)}%` }}
+            />
+          </div>
+          <span className="w-12 text-right text-sm font-extrabold" style={{ color: barColor }}>
+            {row.percent}%
+          </span>
+        </div>
+        <p className="mt-2 text-xs font-semibold text-[var(--text-muted)]">
+          {row.submitted}/{row.members} thành viên có báo cáo · {row.notStarted} chưa triển khai
+        </p>
+      </div>
+    </article>
   );
 };
 
-const CountCell = ({
-  className = "text-[var(--foreground)]",
-  value
+const MiniTag = ({
+  className = "bg-[var(--line-soft)] text-[var(--text-muted)]",
+  label
 }: {
   readonly className?: string;
-  readonly value: number;
+  readonly label: string;
 }): React.ReactElement => (
-  <span className={`text-center text-base font-extrabold ${className}`}>
-    {formatNumber(value)}
+  <span className={`rounded-lg px-2.5 py-1 text-[11px] font-extrabold ${className}`}>
+    {label}
   </span>
 );
 
 const StatusLegend = (): React.ReactElement => (
-  <section className="soft-panel flex flex-wrap items-center justify-center gap-x-8 gap-y-3 px-5 py-4 text-sm">
-    <span className="font-bold text-[#287342]">HT</span>
-    <span className="text-[var(--text-muted)]">Hoàn thành</span>
-    <span className="font-bold text-[#0f66c3]">ĐTH</span>
-    <span className="text-[var(--text-muted)]">Đang thực hiện</span>
-    <span className="font-bold text-[#be2d2d]">Trễ</span>
-    <span className="text-[var(--text-muted)]">Trễ tiến độ</span>
-    <span className="font-bold text-slate-500">CTK</span>
-    <span className="text-[var(--text-muted)]">Chưa triển khai</span>
+  <section className="glass-card flex flex-wrap items-center justify-center gap-x-7 gap-y-3 rounded-[1.35rem] px-5 py-4 text-sm">
+    <LegendDot className="bg-[var(--success)]" label="Hoàn thành" />
+    <LegendDot className="bg-[var(--warning)]" label="Đang thực hiện" />
+    <LegendDot className="bg-[var(--danger)]" label="Trễ tiến độ" />
+    <LegendDot className="bg-[var(--text-soft)]" label="Chưa triển khai" />
   </section>
+);
+
+const LegendDot = ({
+  className,
+  label
+}: {
+  readonly className: string;
+  readonly label: string;
+}): React.ReactElement => (
+  <span className="inline-flex items-center gap-2 font-bold text-[var(--text-muted)]">
+    <span className={`h-2.5 w-2.5 rounded ${className}`} />
+    {label}
+  </span>
 );
 
 const buildOrgUnitRows = (data: AppData, level: OrgUnitLevel): OrgUnitRow[] => {
   const units = new Map<
     string,
     {
-      readonly groupName: string;
-      readonly subgroupName: string;
-      readonly profiles: Set<string>;
-      readonly submitted: Set<string>;
-      readonly tasks: Task[];
+      groupName: string;
+      subgroupName: string;
+      profiles: Set<string>;
+      submitted: Set<string>;
+      tasks: Task[];
     }
   >();
 
   data.profiles
     .filter((profile) => profile.role === "worker")
     .forEach((profile) => {
-      const groupName = profile.orgGroup || "Chưa phân nhóm";
-      const subgroupName = profile.subgroup || "Chưa phân nhóm";
+      const groupName = profile.orgGroup || profile.nhom || "Chưa phân nhóm";
+      const subgroupName = profile.subgroup || profile.nhom || groupName;
       const key = level === "group" ? groupName : `${groupName}::${subgroupName}`;
-      const unit =
+      const current =
         units.get(key) ??
         {
           groupName,
@@ -391,21 +395,24 @@ const buildOrgUnitRows = (data: AppData, level: OrgUnitLevel): OrgUnitRow[] => {
           submitted: new Set<string>(),
           tasks: []
         };
-
-      unit.profiles.add(profile.id);
-      units.set(key, unit);
+      current.profiles.add(profile.id);
+      if (
+        data.progress.some(
+          (record) => record.userId === profile.id && record.reportDate === DEFAULT_REPORT_DATE
+        )
+      ) {
+        current.submitted.add(profile.id);
+      }
+      units.set(key, current);
     });
 
-  const profileById = new Map(data.profiles.map((profile) => [profile.id, profile]));
   data.tasks.forEach((task) => {
-    if (!task.assignedTo) return;
-    const profile = profileById.get(task.assignedTo);
+    const profile = data.profiles.find((item) => item.id === task.assignedTo);
     if (!profile) return;
-
-    const groupName = profile.orgGroup || "Chưa phân nhóm";
-    const subgroupName = profile.subgroup || "Chưa phân nhóm";
+    const groupName = profile.orgGroup || task.nhom || "Chưa phân nhóm";
+    const subgroupName = profile.subgroup || task.nhom || groupName;
     const key = level === "group" ? groupName : `${groupName}::${subgroupName}`;
-    const unit =
+    const current =
       units.get(key) ??
       {
         groupName,
@@ -414,63 +421,31 @@ const buildOrgUnitRows = (data: AppData, level: OrgUnitLevel): OrgUnitRow[] => {
         submitted: new Set<string>(),
         tasks: []
       };
-
-    unit.profiles.add(profile.id);
-    unit.tasks.push(task);
-    units.set(key, unit);
+    current.tasks.push(task);
+    units.set(key, current);
   });
-
-  data.progress
-    .filter((record) => record.reportDate === DEFAULT_REPORT_DATE)
-    .forEach((record) => {
-      const profile = profileById.get(record.userId);
-      if (!profile) return;
-
-      const groupName = profile.orgGroup || "Chưa phân nhóm";
-      const subgroupName = profile.subgroup || "Chưa phân nhóm";
-      const key = level === "group" ? groupName : `${groupName}::${subgroupName}`;
-      const unit = units.get(key);
-      unit?.submitted.add(record.userId);
-    });
 
   return Array.from(units.entries())
     .map(([key, unit]) => {
       const activeTasks = unit.tasks.filter((task) => !task.isCancelled);
-      const percentSum = activeTasks.reduce(
-        (sum, task) => sum + getTaskPercent(data.progress, task.id, DEFAULT_REPORT_DATE),
-        0
+      const percents = activeTasks.map((task) =>
+        getTaskPercent(data.progress, task.id, DEFAULT_REPORT_DATE)
       );
-      const completed = activeTasks.filter(
-        (task) => getTaskPercent(data.progress, task.id, DEFAULT_REPORT_DATE) === 100
-      ).length;
-      const inProgress = activeTasks.filter((task) => {
-        const percent = getTaskPercent(data.progress, task.id, DEFAULT_REPORT_DATE);
-        return percent > 0 && percent < 100;
-      }).length;
-      const notStarted = activeTasks.filter(
-        (task) => getTaskPercent(data.progress, task.id, DEFAULT_REPORT_DATE) === 0
-      ).length;
+      const totalPercent = percents.reduce<number>((sum, percent) => sum + percent, 0);
+      const completed = percents.filter((percent) => percent === 100).length;
+      const inProgress = percents.filter((percent) => percent > 0 && percent < 100).length;
+      const notStarted = percents.filter((percent) => percent === 0).length;
       const overdue = activeTasks.filter((task) => {
         const percent = getTaskPercent(data.progress, task.id, DEFAULT_REPORT_DATE);
         return task.finishDate < DEFAULT_REPORT_DATE && percent < 100;
       }).length;
-      const cancelled = unit.tasks.filter((task) => task.isCancelled).length;
-      const percent =
-        activeTasks.length === 0 ? 0 : Math.round(percentSum / activeTasks.length);
-      const shortName =
-        level === "group" ? compactGroupName(unit.groupName) : compactSubgroupName(unit.subgroupName);
+      const name = level === "group" ? unit.groupName : unit.subgroupName;
 
       return {
         key,
-        name:
-          level === "group"
-            ? unit.groupName
-            : `${unit.subgroupName} - ${unit.groupName}`,
-        shortName,
-        context:
-          level === "group"
-            ? `${unit.profiles.size} thành viên · ${unit.tasks.length} WorkOrder`
-            : unit.groupName,
+        name,
+        shortName: shortenName(name),
+        context: level === "group" ? "Nhóm chức năng" : unit.groupName,
         members: unit.profiles.size,
         submitted: unit.submitted.size,
         tasks: activeTasks.length,
@@ -478,45 +453,50 @@ const buildOrgUnitRows = (data: AppData, level: OrgUnitLevel): OrgUnitRow[] => {
         inProgress,
         notStarted,
         overdue,
-        cancelled,
-        percent
+        cancelled: unit.tasks.length - activeTasks.length,
+        percent: activeTasks.length === 0 ? 0 : Math.round(totalPercent / activeTasks.length)
       };
     })
-    .sort((left, right) => right.tasks - left.tasks);
+    .sort((left, right) => {
+      if (right.tasks !== left.tasks) return right.tasks - left.tasks;
+      return left.shortName.localeCompare(right.shortName);
+    });
 };
 
-const compactGroupName = (name: string): string => {
-  return name
+const shortenName = (name: string): string =>
+  name
     .replace(/^Nhóm\s+/i, "")
     .replace("Thiết bị", "TB")
     .replace("Điều khiển", "ĐK")
-    .replace("Hệ thống", "HT")
-    .replace("Hậu cần và Tổng hợp", "Hậu cần");
+    .replace("Đo lường", "Đo lường")
+    .trim();
+
+const getInitials = (value: string): string => {
+  const letters = value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((item) => item[0] ?? "")
+    .join("");
+  return (letters || "?").toUpperCase();
 };
 
-const compactSubgroupName = (name: string): string => {
-  return name
-    .replace(/^Phân nhóm\s+/i, "PN")
-    .replace(/^P\.Nhóm\s+/i, "PN")
-    .replace(" - ", " · ");
+const rowAvatarColor = (value: string): string => {
+  if (value.includes("Đo")) return "linear-gradient(135deg,#f08a3c,#f4ab5e)";
+  if (value.includes("Chấp")) return "linear-gradient(135deg,#3e7bfa,#6fa0ff)";
+  if (value.includes("HT")) return "linear-gradient(135deg,#7c5cff,#a48bff)";
+  if (value.includes("Tháo")) return "linear-gradient(135deg,#0b6b4f,#15a06f)";
+  return "linear-gradient(135deg,#98a2b3,#c0c7d4)";
 };
 
-const toneBorder = (tone: Tone): string => {
-  if (tone === "success") return "border-[#2f8238]";
-  if (tone === "warning") return "border-[#f07800]";
-  if (tone === "danger") return "border-[#d12f2f]";
-  return "border-[#1587e8]";
-};
+const formatNumber = (value: number): string =>
+  new Intl.NumberFormat("vi-VN").format(value);
 
 const toneText = (tone: Tone): string => {
-  if (tone === "success") return "text-[#2f8238]";
-  if (tone === "warning") return "text-[#e9560a]";
-  if (tone === "danger") return "text-[#c92f2f]";
-  return "text-[var(--foreground)]";
-};
-
-const formatNumber = (value: number): string => {
-  return new Intl.NumberFormat("vi-VN").format(value);
+  if (tone === "success") return "text-[var(--success)]";
+  if (tone === "warning") return "text-[var(--accent)]";
+  if (tone === "danger") return "text-[var(--danger)]";
+  return "text-[var(--info)]";
 };
 
 export default AdminPage;

@@ -22,10 +22,10 @@ export const TaskDesktopWorkspace = ({
     rows.find((row) => row.task.id === selectedTaskId) ?? rows[0] ?? null;
 
   return (
-    <section className="hidden gap-4 lg:grid xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="max-h-[680px] overflow-auto rounded-[2rem] border border-white/80 bg-white/88 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl">
+    <section className="hidden gap-5 lg:grid xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="glass-card max-h-[680px] overflow-auto rounded-[1.65rem]">
         <table className="min-w-[1320px] text-left text-sm">
-          <thead className="sticky top-0 z-20 border-b border-[var(--border-strong)] bg-white/95 font-bold text-slate-800 backdrop-blur-xl">
+          <thead className="sticky top-0 z-20 border-b border-[var(--line)] bg-white/95 font-extrabold uppercase text-[11px] text-[var(--text-soft)] backdrop-blur-xl">
             <tr>
               <th className="sticky left-0 z-30 bg-white py-3 pl-4 pr-4">Tagname</th>
               <th className="py-3 pr-4">WO</th>
@@ -48,7 +48,7 @@ export const TaskDesktopWorkspace = ({
                 <tr
                   aria-pressed={selected}
                   className={`cursor-pointer border-b border-[var(--border)] ${
-                    selected ? "bg-[var(--primary-soft)]" : "hover:bg-white/75"
+                    selected ? "bg-[var(--primary-soft)]" : "hover:bg-[var(--line-soft)]"
                   }`}
                   key={task.id}
                   onClick={() => onSelectTask(task.id)}
@@ -63,7 +63,7 @@ export const TaskDesktopWorkspace = ({
                 >
                   <td
                     className={`sticky left-0 z-10 py-3 pl-4 pr-4 font-mono font-bold backdrop-blur ${
-                      selected ? "bg-[var(--primary-soft)]" : "bg-white/95"
+                    selected ? "bg-[var(--primary-soft)]" : "bg-white/95"
                     }`}
                   >
                     {task.tagname}

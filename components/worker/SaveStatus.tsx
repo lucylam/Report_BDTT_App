@@ -3,7 +3,7 @@ import type { SaveState } from "@/components/worker/types";
 const statusMap: Record<SaveState, { readonly label: string; readonly className: string }> = {
   idle: {
     label: "Sẵn sàng",
-    className: "bg-white text-slate-800 ring-1 ring-[var(--border-strong)]"
+    className: "bg-white text-slate-800 ring-1 ring-[var(--border)]"
   },
   saving: {
     label: "Đang lưu",
@@ -14,7 +14,7 @@ const statusMap: Record<SaveState, { readonly label: string; readonly className:
     className: "bg-[var(--success)] text-white"
   },
   offline: {
-    label: "Lưu tạm offline",
+    label: "Lưu offline",
     className: "bg-[var(--warning)] text-white"
   },
   error: {
@@ -23,16 +23,12 @@ const statusMap: Record<SaveState, { readonly label: string; readonly className:
   }
 };
 
-export const SaveStatus = ({
-  state
-}: {
-  readonly state: SaveState;
-}): React.ReactElement => {
+export const SaveStatus = ({ state }: { readonly state: SaveState }): React.ReactElement => {
   const status = statusMap[state];
   return (
     <span
       aria-live="polite"
-      className={`inline-flex min-h-7 items-center rounded-full px-3 text-xs font-bold shadow-sm ${status.className}`}
+      className={`inline-flex min-h-7 items-center rounded-full px-3 text-xs font-extrabold shadow-sm ${status.className}`}
     >
       {status.label}
     </span>

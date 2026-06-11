@@ -14,13 +14,6 @@ interface TaskCardProps {
   readonly onCancel: () => void;
 }
 
-const percentTone = (percent: ProgressPercent): string => {
-  if (percent === 100) return "bg-[var(--success)]";
-  if (percent === 75) return "bg-[var(--info)]";
-  if (percent > 0) return "bg-[var(--warning)]";
-  return "bg-slate-400";
-};
-
 const priorityTone = (priority: 1 | 2 | 3): "danger" | "warning" | "neutral" => {
   if (priority === 1) return "danger";
   if (priority === 2) return "warning";
@@ -39,28 +32,26 @@ export const TaskCard = ({
   );
   const percent = progress?.percent ?? 0;
   const hasDetail = Boolean(progress?.note || progress?.photoPath);
-  const borderClass =
-    task.isCancelled
-      ? "border-l-[var(--danger)]"
-      : percent === 100
-        ? "border-l-[var(--success)]"
-        : task.priority === 1
-          ? "border-l-[var(--danger)]"
-          : task.priority === 2
-            ? "border-l-[var(--warning)]"
-            : "border-l-slate-400";
 
   return (
-    <article className={`soft-card overflow-hidden border-l-4 ${borderClass}`}>
-      <div className="flex items-start justify-between gap-3 p-3">
-        <div className="min-w-0">
-          <h2 className="font-mono text-base font-semibold text-[var(--foreground)]">
-            {task.tagname}
-          </h2>
-          <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-700">
-            {task.taskName}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+    <article className="glass-card overflow-hidden rounded-[1.25rem]">
+      <div className="flex items-start gap-3 p-4">
+        <ProgressRing cancelled={task.isCancelled} percent={percent} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="font-mono text-base font-extrabold leading-tight text-[var(--foreground)]">
+                {task.tagname}
+              </h2>
+              <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-slate-700">
+                {task.taskName}
+              </p>
+            </div>
+            <span className="shrink-0 rounded-full bg-white/92 px-3 py-2 text-sm font-extrabold tabular-nums shadow-sm ring-1 ring-[var(--border)]">
+              {task.isCancelled ? "NA" : `${percent}%`}
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {task.isCancelled ? <StatusBadge label="Cancel" tone="danger" /> : null}
             <StatusBadge label={`P${task.priority}`} tone={priorityTone(task.priority)} />
             <StatusBadge label={task.donVi || "N/A"} tone="info" />
@@ -68,24 +59,29 @@ export const TaskCard = ({
             {hasDetail ? <StatusBadge label="Có ghi nhận" tone="success" /> : null}
           </div>
         </div>
-        <span className="rounded-full bg-white/90 px-3 py-2 text-base font-semibold tabular-nums shadow-sm ring-1 ring-[var(--border)]">
-          {task.isCancelled ? "NA" : `${percent}%`}
-        </span>
       </div>
 
-      <div className="mx-3 h-2 overflow-hidden rounded-full bg-white/70 ring-1 ring-[var(--border)]">
+      <div className="mx-4 progress-track">
         <div
-          className={`h-full rounded-full ${percentTone(percent)}`}
-          style={{ width: `${task.isCancelled ? 0 : percent}%` }}
+          className="progress-fill"
+          style={{
+            background:
+              percent === 100
+                ? "var(--success)"
+                : percent > 0
+                  ? "var(--warning)"
+                  : "var(--text-soft)",
+            width: `${task.isCancelled ? 0 : percent}%`
+          }}
         />
       </div>
 
-      <div className="p-3">
+      <div className="p-4">
         {task.isCancelled ? (
-          <div className="rounded-[1.5rem] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
+          <div className="rounded-[1.25rem] bg-[var(--danger-soft)] p-4 text-sm font-bold text-[var(--danger)]">
             Hạng mục này đã được hủy và đã báo cho admin.
             {task.cancelReason ? (
-              <span className="mt-2 block font-medium text-slate-700">
+              <span className="mt-2 block font-semibold text-slate-700">
                 Lý do: {task.cancelReason}
               </span>
             ) : null}
@@ -101,7 +97,7 @@ export const TaskCard = ({
               task={task}
             />
             <button
-              className="focus-ring pressable mt-3 min-h-11 w-full rounded-full border border-[var(--border)] bg-white/80 px-3 text-sm font-semibold text-[var(--primary-strong)] shadow-sm"
+              className="focus-ring pressable mt-3 min-h-11 w-full rounded-full border border-[var(--border)] bg-white/86 px-3 text-sm font-extrabold text-[var(--primary-strong)] shadow-sm"
               onClick={() => setIsExpanded((current) => !current)}
               type="button"
             >
@@ -109,7 +105,7 @@ export const TaskCard = ({
             </button>
             {isExpanded ? (
               <button
-                className="focus-ring pressable mt-2 min-h-11 w-full rounded-full border border-[var(--danger)] bg-white/75 px-3 text-sm font-semibold text-[var(--danger)]"
+                className="focus-ring pressable mt-2 min-h-11 w-full rounded-full border border-[var(--danger)] bg-white/78 px-3 text-sm font-extrabold text-[var(--danger)]"
                 onClick={onCancel}
                 type="button"
               >
@@ -120,5 +116,46 @@ export const TaskCard = ({
         )}
       </div>
     </article>
+  );
+};
+
+const ProgressRing = ({
+  cancelled,
+  percent
+}: {
+  readonly cancelled: boolean;
+  readonly percent: ProgressPercent;
+}): React.ReactElement => {
+  const safePercent = cancelled ? 0 : percent;
+  const color =
+    cancelled || safePercent === 0
+      ? "var(--text-soft)"
+      : safePercent === 100
+        ? "var(--success)"
+        : "var(--warning)";
+  const dash = Math.max(safePercent, 2);
+
+  return (
+    <div className="relative h-12 w-12 shrink-0">
+      <svg className="h-12 w-12 -rotate-90" viewBox="0 0 42 42">
+        <circle cx="21" cy="21" fill="none" r="15.9" stroke="var(--line)" strokeWidth="5" />
+        <circle
+          cx="21"
+          cy="21"
+          fill="none"
+          r="15.9"
+          stroke={color}
+          strokeDasharray={`${dash} ${100 - dash}`}
+          strokeLinecap="round"
+          strokeWidth="5"
+        />
+      </svg>
+      <span
+        className="absolute inset-0 grid place-items-center text-[10px] font-extrabold"
+        style={{ color }}
+      >
+        {cancelled ? "NA" : `${safePercent}%`}
+      </span>
+    </div>
   );
 };

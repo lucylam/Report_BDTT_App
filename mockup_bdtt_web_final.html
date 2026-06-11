@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PVCFC · Theo dõi tiến độ — Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-grad-1:#fbe8d3;      /* peach */
+    --bg-grad-2:#e8eef9;      /* soft blue */
+    --bg-grad-3:#dfeee6;      /* mint */
+    --shell:#f7f9fc;
+    --card:#ffffff;
+    --ink:#101828;
+    --ink-soft:#475467;
+    --ink-mute:#98a2b3;
+    --line:#eef1f6;
+    --line-soft:#f3f5f9;
+    --accent:#0b6b4f;          /* PVCFC green */
+    --accent-soft:#e7f3ee;
+    --orange:#f08a3c;
+    --orange-soft:#fdefe2;
+    --blue:#3e7bfa;
+    --blue-soft:#e9f0ff;
+    --red:#e2533b;
+    --red-soft:#fdeae6;
+    --amber:#e0a83b;
+    --purple:#7c5cff;
+    --radius:26px;
+    --radius-sm:16px;
+    --shadow:0 18px 40px -24px rgba(16,24,40,.28);
+    --shadow-sm:0 6px 18px -12px rgba(16,24,40,.25);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(900px 500px at 0% 0%, var(--bg-grad-1) 0%, transparent 55%),
+      radial-gradient(1000px 600px at 100% 0%, var(--bg-grad-2) 0%, transparent 55%),
+      radial-gradient(900px 700px at 80% 100%, var(--bg-grad-3) 0%, transparent 50%),
+      #eef1f7;
+    min-height:100vh;
+    padding:22px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    width:100%;margin:0 auto;
+    background:var(--shell);
+    border-radius:34px;
+    box-shadow:0 40px 90px -50px rgba(16,24,40,.45);
+    display:flex;overflow:hidden;min-height:calc(100vh - 44px);
+    border:1px solid rgba(255,255,255,.6);
+  }
+
+  /* ---------- icon rail ---------- */
+  .rail{
+    width:74px;flex:0 0 74px;
+    background:var(--card);
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;align-items:center;
+    padding:20px 0;gap:6px;
+  }
+  .logo{
+    width:42px;height:42px;border-radius:13px;
+    background:linear-gradient(135deg,#0b6b4f,#15a06f);
+    display:grid;place-items:center;color:#fff;font-weight:800;font-size:11px;
+    letter-spacing:.5px;margin-bottom:18px;box-shadow:var(--shadow-sm);
+  }
+  .rail-ico{
+    width:42px;height:42px;border-radius:13px;display:grid;place-items:center;
+    color:var(--ink-mute);cursor:pointer;transition:.18s;
+  }
+  .rail-ico svg{width:20px;height:20px}
+  .rail-ico:hover{background:var(--line-soft);color:var(--ink-soft)}
+  .rail-ico.on{background:var(--accent);color:#fff;box-shadow:var(--shadow-sm)}
+  .rail-sp{flex:1}
+
+  /* ---------- main ---------- */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0}
+
+  .topbar{
+    display:flex;align-items:center;gap:18px;
+    padding:22px 30px 16px;
+  }
+  .eyebrow{font-size:11px;letter-spacing:.16em;font-weight:700;color:var(--accent);text-transform:uppercase}
+  .h1{font-size:25px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+  .sub{font-size:12.5px;color:var(--ink-mute);margin-top:3px}
+  .search{
+    margin-left:auto;display:flex;align-items:center;gap:9px;
+    background:var(--card);border:1px solid var(--line);
+    padding:10px 16px;border-radius:999px;min-width:280px;color:var(--ink-mute);
+    font-size:13px;box-shadow:var(--shadow-sm);
+  }
+  .search svg{width:16px;height:16px}
+  .seg{
+    display:flex;background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:4px;box-shadow:var(--shadow-sm);
+  }
+  .seg button{
+    border:0;background:transparent;font:inherit;font-size:12.5px;font-weight:600;
+    color:var(--ink-soft);padding:7px 16px;border-radius:999px;cursor:pointer;transition:.15s;
+  }
+  .seg button.on{background:var(--ink);color:#fff}
+  .user{
+    display:flex;align-items:center;gap:10px;background:var(--card);
+    border:1px solid var(--line);border-radius:999px;padding:5px 14px 5px 5px;box-shadow:var(--shadow-sm);
+  }
+  .ava{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f08a3c,#f2b463);
+    display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px}
+  .user b{font-size:13px;font-weight:700;display:block;line-height:1.15}
+  .user span{font-size:11px;color:var(--ink-mute)}
+
+  .pagewrap{padding:8px 30px 30px;overflow:auto}
+  .page{display:none}
+  .page.on{display:block}
+
+  /* ---------- generic card ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .card-pad{padding:22px}
+  .ttl{font-size:15px;font-weight:700;letter-spacing:-.01em}
+  .ttl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .chip-ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--line-soft);color:var(--ink-soft);cursor:pointer}
+  .chip-ico svg{width:15px;height:15px}
+
+  /* ---------- dashboard grid ---------- */
+  .grid{display:grid;grid-template-columns:1.05fr 1.4fr;gap:20px;align-items:start}
+  .col{display:flex;flex-direction:column;gap:20px}
+  .col-r{display:flex;flex-direction:column;gap:20px}
+  @media(min-width:1500px){
+    .grid{grid-template-columns:1fr 1.3fr 1fr}
+    .small-row{grid-template-columns:1fr !important}
+  }
+
+  /* KPI strip */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+  .kpi .lab{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);font-weight:700}
+  .kpi .num{font-size:30px;font-weight:800;letter-spacing:-.03em;margin-top:6px;line-height:1}
+  .kpi .foot{font-size:11px;color:var(--ink-mute);margin-top:7px}
+  .kpi .dot{position:absolute;top:16px;right:16px;width:9px;height:9px;border-radius:50%}
+  .kpi.k-blue .num{color:var(--blue)} .kpi.k-blue .dot{background:var(--blue)}
+  .kpi.k-green .num{color:var(--accent)} .kpi.k-green .dot{background:var(--accent)}
+  .kpi.k-orange .num{color:var(--orange)} .kpi.k-orange .dot{background:var(--orange)}
+  .kpi.k-red .num{color:var(--red)} .kpi.k-red .dot{background:var(--red)}
+  .kpi.k-amber .num{color:var(--amber)} .kpi.k-amber .dot{background:var(--amber)}
+
+  /* donut */
+  .donut-wrap{display:flex;align-items:center;gap:26px}
+  .donut{position:relative;width:150px;height:150px;flex:0 0 150px}
+  .donut .center{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+  .donut .center b{font-size:26px;font-weight:800;letter-spacing:-.02em}
+  .donut .center span{font-size:10.5px;color:var(--ink-mute);display:block;margin-top:2px}
+  .legend{display:flex;flex-direction:column;gap:13px}
+  .leg{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-soft)}
+  .leg i{width:11px;height:11px;border-radius:4px;display:inline-block}
+  .leg b{margin-left:auto;color:var(--ink);font-weight:700}
+
+  /* progress list */
+  .pbar{height:9px;border-radius:999px;background:var(--line);overflow:hidden;flex:1}
+  .pbar span{display:block;height:100%;border-radius:999px}
+  .prow{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line-soft)}
+  .prow:last-child{border-bottom:0}
+  .prow .nm{width:120px;flex:0 0 120px}
+  .prow .nm b{font-size:13px;font-weight:700;display:block}
+  .prow .nm small{font-size:10.5px;color:var(--ink-mute)}
+  .prow .pct{width:46px;text-align:right;font-weight:700;font-size:13px;flex:0 0 46px}
+  .mini{display:flex;gap:5px;flex:0 0 auto}
+  .mini b{font-size:11px;font-weight:700;padding:3px 7px;border-radius:7px;background:var(--line-soft);color:var(--ink-soft);min-width:26px;text-align:center}
+  .mini b.ht{background:var(--accent-soft);color:var(--accent)}
+  .mini b.tre{background:var(--red-soft);color:var(--red)}
+
+  /* unit cards (cần tăng cường) */
+  .unit{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:11px;transition:.15s}
+  .unit:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px)}
+  .unit .ic{width:40px;height:40px;border-radius:12px;flex:0 0 40px;display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px}
+  .unit .meta b{font-size:13.5px;font-weight:700;display:block}
+  .unit .meta small{font-size:11px;color:var(--ink-mute)}
+  .unit .bar{flex:1;display:flex;align-items:center;gap:10px;max-width:200px}
+  .unit .pct2{font-weight:800;font-size:13px;width:42px;text-align:right}
+
+  /* meeting / ticket style cards */
+  .listcard{padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:11px;display:flex;align-items:center;gap:12px}
+  .listcard .lico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:0 0 38px}
+  .listcard b{font-size:13px;font-weight:700;display:block}
+  .listcard small{font-size:11px;color:var(--ink-mute)}
+  .listcard .time{margin-left:auto;font-size:12px;font-weight:700;color:var(--ink-soft)}
+  .seeall{font-size:12.5px;font-weight:700;color:var(--accent);cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-top:4px}
+
+  /* ---------- workorder table ---------- */
+  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .fpill{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:9px 15px;font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;box-shadow:var(--shadow-sm)}
+  .fpill.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .wo-layout{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+  @media(min-width:1500px){ .wo-layout{grid-template-columns:1fr 380px} }
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead th{text-align:left;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-mute);font-weight:700;padding:0 12px 12px}
+  tbody td{padding:13px 12px;border-top:1px solid var(--line-soft);vertical-align:middle}
+  tbody tr{cursor:pointer;transition:.12s}
+  tbody tr:hover{background:var(--line-soft)}
+  tbody tr.sel{background:var(--accent-soft)}
+  .tag{font-weight:700;color:var(--ink)}
+  .pri{font-size:11px;font-weight:800;color:var(--red)}
+  .badge{font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;display:inline-block;white-space:nowrap}
+  .b-done{background:var(--accent-soft);color:var(--accent)}
+  .b-doing{background:var(--amber);color:#fff}
+  .b-todo{background:var(--line);color:var(--ink-soft)}
+  .pminip{display:flex;align-items:center;gap:8px}
+  .pminip .pbar{width:60px;flex:0 0 60px}
+  .pminip b{font-size:12px;font-weight:700;width:34px}
+
+  /* detail card */
+  .detail{position:sticky;top:8px}
+  .detail .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .detail .tagbig{font-size:21px;font-weight:800;letter-spacing:-.02em}
+  .detail .wo{font-size:12px;color:var(--accent);font-weight:600;margin-bottom:18px}
+  .dblock{background:var(--line-soft);border-radius:14px;padding:13px 15px;margin-bottom:11px}
+  .dblock .k{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-mute);font-weight:700}
+  .dblock .v{font-size:14px;font-weight:700;margin-top:3px}
+  .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .dgrid .dblock{margin-bottom:0}
+
+  @media(max-width:1080px){
+    .grid{grid-template-columns:1fr}
+    .wo-layout{grid-template-columns:1fr}
+    .detail{position:static}
+    .kpis{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:680px){
+    body{padding:8px}.rail{display:none}.search{display:none}.user b,.user span{display:none}
+    .topbar{flex-wrap:wrap;padding:16px}.pagewrap{padding:8px 14px 20px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- icon rail -->
+  <nav class="rail">
+    <div class="logo">PVCFC</div>
+    <div class="rail-ico on" data-go="dash" title="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    </div>
+    <div class="rail-ico" title="Thành viên">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 6a3 3 0 0 1 0 5.5M16.5 20a5.5 5.5 0 0 0-2-4"/></svg>
+    </div>
+    <div class="rail-ico" data-go="wo" title="WorkOrder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h10"/></svg>
+    </div>
+    <div class="rail-ico" title="Dữ liệu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>
+    </div>
+    <div class="rail-sp"></div>
+    <div class="rail-ico" title="Trợ giúp">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.7"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>
+    </div>
+    <div class="rail-ico" title="Cài đặt">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>
+    </div>
+  </nav>
+
+  <div class="main">
+    <!-- topbar -->
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Giám sát · BDTT 2026</div>
+        <div class="h1" id="pgTitle">Dashboard giám sát</div>
+        <div class="sub" id="pgSub">Tổ Thiết bị Đo lường &amp; Điều khiển · Toàn bộ tổ · Báo cáo: T6, 22/08/2025</div>
+      </div>
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+        Tìm WorkOrder, hạng mục, đơn vị…
+      </div>
+      <div class="seg">
+        <button id="tDash" class="on" onclick="go('dash')">Dashboard</button>
+        <button id="tWo" onclick="go('wo')">WorkOrder</button>
+      </div>
+      <div class="user">
+        <div class="ava">LV</div>
+        <div><b>Lâm Phùng Phước Vinh</b><span>Giám sát · Nhóm Hậu cần</span></div>
+      </div>
+    </header>
+
+    <div class="pagewrap">
+
+      <!-- ========================= DASHBOARD ========================= -->
+      <section id="page-dash" class="page on">
+
+        <div class="kpis">
+          <div class="kpi k-blue"><span class="dot"></span><div class="lab">Đơn vị báo cáo</div><div class="num">5</div><div class="foot">0/5 đủ báo cáo</div></div>
+          <div class="kpi k-green"><span class="dot"></span><div class="lab">Đáp ứng kế hoạch</div><div class="num">0</div><div class="foot">Đạt mốc tiến độ</div></div>
+          <div class="kpi k-orange"><span class="dot"></span><div class="lab">Cần tăng cường</div><div class="num">5</div><div class="foot">Cần theo dõi</div></div>
+          <div class="kpi k-red"><span class="dot"></span><div class="lab">WorkOrder trễ</div><div class="num">16</div><div class="foot">1 đơn vị có WO trễ</div></div>
+          <div class="kpi k-amber"><span class="dot"></span><div class="lab">Tỷ lệ đạt TB</div><div class="num">16%</div><div class="foot">Mốc đạt 50%</div></div>
+        </div>
+
+        <div class="grid">
+          <!-- left column -->
+          <div class="col">
+            <!-- overview donut -->
+            <div class="card card-pad">
+              <div class="ttl-row">
+                <div class="ttl">Tổng quan hạng mục</div>
+                <div class="chip-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M17 7H8M17 7v9"/></svg></div>
+              </div>
+              <div class="donut-wrap">
+                <div class="donut">
+                  <svg viewBox="0 0 42 42" width="150" height="150">
+                    <circle cx="21" cy="21" r="15.9" fill="none" stroke="#eef1f6" stroke-width="6"/>
+                    <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--accent)" stroke-width="6"
+                      stroke-dasharray="12.5 87.5" stroke-dashoffset="25" stroke-linecap="round"/>
+                    <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--amber)" stroke-width="6"
+                      stroke-dasharray="6.25 93.75" stroke-dashoffset="12.5" stroke-linecap="round"/>
+                    <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--orange)" stroke-width="6"
+                      stroke-dasharray="81.25 18.75" stroke-dashoffset="6.25" stroke-linecap="round"/>
+                  </svg>
+                  <div class="center"><b>48</b><span>hạng mục</span></div>
+                </div>
+                <div class="legend">
+                  <div class="leg"><i style="background:var(--accent)"></i> Hoàn thành <b>6</b></div>
+                  <div class="leg"><i style="background:var(--amber)"></i> Đang thực hiện <b>3</b></div>
+                  <div class="leg"><i style="background:var(--orange)"></i> Chưa triển khai <b>39</b></div>
+                  <div class="leg"><i style="background:var(--red)"></i> Trễ tiến độ <b>16</b></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- progress vs plan -->
+            <div class="card card-pad">
+              <div class="ttl-row"><div class="ttl">Tiến độ so với kế hoạch</div><div class="chip-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="12" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="18" cy="14" r="2"/></svg></div></div>
+              <div class="prow">
+                <div class="nm"><b>TB Đo lường</b><small>48 WorkOrder</small></div>
+                <div class="pbar"><span style="width:16%;background:var(--orange)"></span></div>
+                <div class="pct" style="color:var(--orange)">16%</div>
+                <div class="mini"><b class="ht">6</b><b class="tre">16</b></div>
+              </div>
+              <div class="prow">
+                <div class="nm"><b>TB Chấp hành</b><small>0 WorkOrder</small></div>
+                <div class="pbar"><span style="width:2%;background:var(--ink-mute)"></span></div>
+                <div class="pct">0%</div>
+                <div class="mini"><b>0</b><b>0</b></div>
+              </div>
+              <div class="prow">
+                <div class="nm"><b>TB HT ĐK</b><small>0 WorkOrder</small></div>
+                <div class="pbar"><span style="width:2%;background:var(--ink-mute)"></span></div>
+                <div class="pct">0%</div>
+                <div class="mini"><b>0</b><b>0</b></div>
+              </div>
+              <div class="prow">
+                <div class="nm"><b>Tháo/Lắp TB ĐK</b><small>0 WorkOrder</small></div>
+                <div class="pbar"><span style="width:2%;background:var(--ink-mute)"></span></div>
+                <div class="pct">0%</div>
+                <div class="mini"><b>0</b><b>0</b></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- right column -->
+          <div class="col-r">
+            <!-- cần tăng cường -->
+            <div class="card card-pad">
+              <div class="ttl-row">
+                <div class="ttl">Cần tăng cường triển khai · <span style="color:var(--orange)">5 đơn vị</span></div>
+                <div class="chip-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg></div>
+              </div>
+
+              <div class="unit">
+                <div class="ic" style="background:linear-gradient(135deg,#f08a3c,#f4ab5e)">ĐL</div>
+                <div class="meta" style="flex:1"><b>TB Đo lường</b><small>20 thành viên · 2/20 đã báo cáo</small></div>
+                <div class="bar"><div class="pbar"><span style="width:16%;background:var(--orange)"></span></div></div>
+                <div class="pct2" style="color:var(--orange)">16%</div>
+              </div>
+
+              <div class="unit">
+                <div class="ic" style="background:linear-gradient(135deg,#3e7bfa,#6fa0ff)">CH</div>
+                <div class="meta" style="flex:1"><b>TB Chấp hành</b><small>18 thành viên · 0/18 đã báo cáo</small></div>
+                <div class="bar"><div class="pbar"><span style="width:2%;background:var(--ink-mute)"></span></div></div>
+                <div class="pct2">0%</div>
+              </div>
+
+              <div class="unit">
+                <div class="ic" style="background:linear-gradient(135deg,#7c5cff,#a48bff)">HT</div>
+                <div class="meta" style="flex:1"><b>TB HT ĐK</b><small>9 thành viên · 0/9 đã báo cáo</small></div>
+                <div class="bar"><div class="pbar"><span style="width:2%;background:var(--ink-mute)"></span></div></div>
+                <div class="pct2">0%</div>
+              </div>
+
+              <div class="unit">
+                <div class="ic" style="background:linear-gradient(135deg,#0b6b4f,#15a06f)">TL</div>
+                <div class="meta" style="flex:1"><b>Tháo/Lắp TB ĐK</b><small>3 thành viên · 0/3 đã báo cáo</small></div>
+                <div class="bar"><div class="pbar"><span style="width:2%;background:var(--ink-mute)"></span></div></div>
+                <div class="pct2">0%</div>
+              </div>
+
+              <div class="unit" style="margin-bottom:0">
+                <div class="ic" style="background:linear-gradient(135deg,#98a2b3,#c0c7d4)">?</div>
+                <div class="meta" style="flex:1"><b>Chưa phân nhóm</b><small>1 thành viên · 0/1 đã báo cáo</small></div>
+                <div class="bar"><div class="pbar"><span style="width:2%;background:var(--ink-mute)"></span></div></div>
+                <div class="pct2">0%</div>
+              </div>
+            </div>
+
+            <!-- two small cards row -->
+            <div class="small-row" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+              <div class="card card-pad">
+                <div class="ttl-row"><div class="ttl">Đáp ứng kế hoạch</div></div>
+                <div style="text-align:center;padding:18px 6px;color:var(--ink-mute);font-size:12.5px">
+                  <div style="width:46px;height:46px;border-radius:14px;background:var(--accent-soft);display:grid;place-items:center;margin:0 auto 12px">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--accent)" stroke-width="2"><path d="m5 13 4 4L19 7"/></svg>
+                  </div>
+                  Chưa có đơn vị nào đạt mốc kế hoạch trong phạm vi hiện tại.
+                </div>
+              </div>
+
+              <div class="card card-pad">
+                <div class="ttl-row"><div class="ttl">Mốc đạt</div></div>
+                <div style="display:flex;align-items:center;gap:16px">
+                  <div class="donut" style="width:96px;height:96px;flex:0 0 96px">
+                    <svg viewBox="0 0 42 42" width="96" height="96">
+                      <circle cx="21" cy="21" r="15.9" fill="none" stroke="#eef1f6" stroke-width="7"/>
+                      <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--amber)" stroke-width="7" stroke-dasharray="16 84" stroke-dashoffset="25" stroke-linecap="round"/>
+                    </svg>
+                    <div class="center"><b style="font-size:19px">16%</b></div>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--ink-soft)">
+                    Mốc kế hoạch <b style="color:var(--ink)">50%</b> · T6 22/08/2025.<br><br>
+                    Còn <b style="color:var(--red)">34%</b> để đạt mốc giai đoạn.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================= WORKORDER ========================= -->
+      <section id="page-wo" class="page">
+
+        <div class="kpis" style="grid-template-columns:repeat(6,1fr)">
+          <div class="kpi k-green"><span class="dot"></span><div class="lab">Tổng hạng mục</div><div class="num" style="color:var(--ink)">48</div></div>
+          <div class="kpi k-red"><span class="dot"></span><div class="lab">P1 chưa xong</div><div class="num">41</div></div>
+          <div class="kpi k-orange"><span class="dot"></span><div class="lab">Chưa thực hiện</div><div class="num">39</div></div>
+          <div class="kpi k-amber"><span class="dot"></span><div class="lab">Đang thực hiện</div><div class="num">3</div></div>
+          <div class="kpi"><div class="lab">Cancel</div><div class="num" style="color:var(--ink-mute)">0</div></div>
+          <div class="kpi k-green"><span class="dot"></span><div class="lab">Hoàn thành</div><div class="num">6</div></div>
+        </div>
+
+        <div class="filters">
+          <div class="fpill on">Tất cả · 48</div>
+          <div class="fpill">P1 chưa xong · 41</div>
+          <div class="fpill">Chưa thực hiện · 39</div>
+          <div class="fpill">Đang thực hiện · 3</div>
+          <div class="fpill">Hoàn thành · 6</div>
+          <div class="fpill">Cancel · 0</div>
+        </div>
+
+        <div class="wo-layout">
+          <div class="card card-pad">
+            <div class="ttl-row"><div class="ttl">Danh sách hạng mục</div><div class="sub">Hiển thị 48/48 dòng phù hợp</div></div>
+            <table>
+              <thead><tr><th>Tagname</th><th>WO</th><th>Hạng mục</th><th>Section</th><th>P</th><th>Tiến độ</th><th>Trạng thái</th></tr></thead>
+              <tbody id="woBody"></tbody>
+            </table>
+          </div>
+
+          <!-- detail card -->
+          <div class="card card-pad detail" id="woDetail">
+            <div class="top">
+              <div class="tagbig" id="dTag">41PT-1007</div>
+              <span class="badge b-done" id="dProg">100%</span>
+            </div>
+            <div class="wo" id="dWo">WO 100000164156</div>
+
+            <div class="dblock"><div class="k">Hạng mục</div><div class="v" id="dItem">Trung tu: 12 mths for 41PT-1007</div></div>
+            <div class="dgrid">
+              <div class="dblock"><div class="k">Trạng thái</div><div class="v" id="dStatus">Hoàn thành</div></div>
+              <div class="dblock"><div class="k">Priority</div><div class="v">P1</div></div>
+              <div class="dblock"><div class="k">Nhóm</div><div class="v">DK-AMLL</div></div>
+              <div class="dblock"><div class="k">Đơn vị</div><div class="v">UTILITY</div></div>
+              <div class="dblock"><div class="k">Section</div><div class="v" id="dSec">41000</div></div>
+              <div class="dblock"><div class="k">Finish</div><div class="v">2025-08-22</div></div>
+            </div>
+            <div class="dblock"><div class="k">Resource</div><div class="v" style="font-size:13px">AMLL · Cù Minh Thành</div><small style="font-size:11px;color:var(--ink-mute)">Nhóm trưởng: TB Đo · Nguyễn Thanh Hải</small></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function go(p){
+    document.getElementById('page-dash').classList.toggle('on',p==='dash');
+    document.getElementById('page-wo').classList.toggle('on',p==='wo');
+    document.getElementById('tDash').classList.toggle('on',p==='dash');
+    document.getElementById('tWo').classList.toggle('on',p==='wo');
+    document.querySelectorAll('.rail-ico[data-go]').forEach(e=>e.classList.toggle('on',e.dataset.go===p));
+    var t=document.getElementById('pgTitle'),s=document.getElementById('pgSub');
+    if(p==='wo'){t.textContent='WorkOrder';s.textContent='Tổ Thiết bị Đo lường & Điều khiển · Phạm vi: toàn bộ tổ';}
+    else{t.textContent='Dashboard giám sát';s.textContent='Tổ Thiết bị Đo lường & Điều khiển · Toàn bộ tổ · Báo cáo: T6, 22/08/2025';}
+  }
+  document.querySelectorAll('.rail-ico[data-go]').forEach(e=>e.addEventListener('click',()=>go(e.dataset.go)));
+
+  // workorder rows
+  const rows=[
+    ['41PT-1007','100000164156','Trung tu: 12 mths for 41PT-1007','41000',100,'Hoàn thành','b-done'],
+    ['41PT-1005','100000164154','Trung tu: 12 mths for 41PT-1005','41000',75,'Đang thực hiện','b-doing'],
+    ['29PXT-1001B','100000164063','Trung tu: 12 mths for 29PXT-1001B','29000',0,'Chưa thực hiện','b-todo'],
+    ['29PT-1004','100000164036','Trung tu: 12 mths for 29PT-1004','29000',0,'Chưa thực hiện','b-todo'],
+    ['29PT-1002','100000164033','Trung tu: 12 mths for 29PT-1002','29000',0,'Chưa thực hiện','b-todo'],
+    ['29FT-2001','100000164019','Trung tu: 12 mths for 29FT-2001','29000',0,'Chưa thực hiện','b-todo'],
+    ['21LT-1104','100000163998','Trung tu: 12 mths for 21LT-1104','21000',0,'Chưa thực hiện','b-todo'],
+    ['29PXT-1001C','100000163824','Trung tu: 12 mths for 29PXT-1001C','29000',0,'Chưa thực hiện','b-todo'],
+    ['29PXT-1001A','100000163821','Trung tu: 12 mths for 29PXT-1001A','29000',0,'Chưa thực hiện','b-todo'],
+    ['29PT-1003','100000163794','Trung tu: 12 mths for 29PT-1003','29000',0,'Chưa thực hiện','b-todo'],
+  ];
+  const tb=document.getElementById('woBody');
+  rows.forEach((r,i)=>{
+    const pc = r[4], color = pc===100?'var(--accent)':pc>0?'var(--amber)':'var(--ink-mute)';
+    const tr=document.createElement('tr');
+    if(i===0)tr.classList.add('sel');
+    tr.innerHTML=`<td class="tag">${r[0]}</td><td style="color:var(--ink-soft)">${r[1]}</td>
+      <td>${r[2]}</td><td>${r[3]}</td><td class="pri">P1</td>
+      <td><div class="pminip"><div class="pbar"><span style="width:${Math.max(pc,3)}%;background:${color}"></span></div><b style="color:${color}">${pc}%</b></div></td>
+      <td><span class="badge ${r[6]}">${r[5]}</span></td>`;
+    tr.addEventListener('click',()=>{
+      document.querySelectorAll('#woBody tr').forEach(x=>x.classList.remove('sel'));
+      tr.classList.add('sel');
+      dTag.textContent=r[0];dWo.textContent='WO '+r[1];dItem.textContent=r[2];
+      dSec.textContent=r[3];dStatus.textContent=r[5];
+      const dp=document.getElementById('dProg');dp.textContent=pc+'%';
+      dp.className='badge '+(pc===100?'b-done':pc>0?'b-doing':'b-todo');
+    });
+    tb.appendChild(tr);
+  });
+</script>
+</body>
+</html>

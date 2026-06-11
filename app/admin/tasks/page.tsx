@@ -6,7 +6,6 @@ import { useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { TasksTable } from "@/components/admin/TasksTable";
 import { useAppData } from "@/hooks/useAppData";
-import { BDTT_2026_SUBTITLE } from "@/lib/org2026";
 import { getOrgScopeLabel, getScopedAppData } from "@/lib/permissions";
 
 const AdminTasksPage = (): React.ReactElement => {
@@ -44,7 +43,7 @@ const AdminTasksPage = (): React.ReactElement => {
     <AdminShell
       account={currentAccount}
       onLogout={logout}
-      subtitle={`${BDTT_2026_SUBTITLE} · ${scopeLabel}`}
+      subtitle={`Tổ Thiết bị Đo lường & Điều khiển · ${scopeLabel}`}
       title="WorkOrder"
     >
       {scopedData ? (

@@ -102,7 +102,7 @@ export const TasksTable = ({
         units={units}
       />
 
-      <section className="soft-panel p-4 lg:p-5">
+      <section className="glass-card rounded-[1.65rem] p-4 lg:p-5">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="text-xl font-bold">Danh sách hạng mục</h2>

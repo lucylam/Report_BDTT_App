@@ -53,7 +53,7 @@ export type HistoryRow = {
 };
 
 const tabs: readonly { readonly key: MobileTab; readonly label: string }[] = [
-  { key: "tasks", label: "Việc của tôi" },
+  { key: "tasks", label: "Việc" },
   { key: "overview", label: "Tổng quan" },
   { key: "history", label: "Lịch sử" },
   { key: "account", label: "Tài khoản" }
@@ -185,7 +185,7 @@ export const WorkerMobileView = ({
           ) : null}
           <CountdownBanner />
 
-          <section className="sticky top-[calc(var(--mobile-topbar-height)+var(--safe-top))] z-10 space-y-2 border-b border-white/70 bg-[var(--background)]/92 px-4 py-2 backdrop-blur-xl">
+          <section className="sticky top-[calc(var(--mobile-topbar-height)+var(--safe-top))] z-10 space-y-2 border-b border-white/70 bg-white/72 px-4 py-2 backdrop-blur-xl">
             <SummaryPills percents={percents} />
             <div className="control-pill grid grid-cols-4 gap-1 rounded-full p-1.5">
               {filters.map((item) => (
@@ -261,7 +261,7 @@ export const WorkerMobileView = ({
             total={activeTasks.length}
           />
           <DailyCompletionChart rows={historyRows} />
-          <div className="soft-card rounded-3xl p-5">
+          <div className="glass-card rounded-[1.65rem] p-5">
             <h2 className="text-lg font-semibold">Tổng quan cá nhân</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
               Hạng mục P1 chưa xong: <strong>{p1Open}</strong>. Dữ liệu tính theo ngày báo cáo hiện tại.
@@ -275,7 +275,7 @@ export const WorkerMobileView = ({
           {historyRows.map((row) => {
             const isSelected = selectedHistoryDate === row.date;
             return (
-              <article className="soft-card overflow-hidden rounded-3xl" key={row.date}>
+              <article className="glass-card overflow-hidden rounded-[1.65rem]" key={row.date}>
                 <button
                   aria-expanded={isSelected}
                   className="focus-ring pressable flex min-h-24 w-full items-center justify-between gap-3 p-5 text-left"
@@ -311,7 +311,7 @@ export const WorkerMobileView = ({
 
       {tab === "account" ? (
         <section className="px-4 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+1rem)] pt-5">
-          <div className="soft-card rounded-3xl p-5">
+          <div className="glass-card rounded-[1.65rem] p-5">
             <h2 className="text-lg font-semibold">{worker.fullName}</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
             <p className="mt-1 text-sm text-[var(--text-muted)]">{worker.email}</p>
@@ -331,8 +331,8 @@ export const WorkerMobileView = ({
         </section>
       ) : null}
 
-      <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-30 px-3">
-        <div className="floating-pill grid grid-cols-4 gap-1 rounded-[2rem] p-2 text-center text-xs font-semibold">
+      <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-30 px-3 pb-[calc(var(--safe-bottom)+0.45rem)]">
+        <div className="floating-pill mx-auto grid max-w-[430px] grid-cols-4 gap-1 rounded-[2rem] p-2 text-center text-xs font-semibold">
           {tabs.map((item) => (
             <button
               className={`focus-ring pressable min-h-12 rounded-full px-1 ${
@@ -371,7 +371,7 @@ export const ProgressDonutChart = ({
   const offset = circumference * (1 - overallPercent / 100);
 
   return (
-    <section className="soft-card rounded-3xl p-5">
+    <section className="glass-card rounded-[1.65rem] p-5">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">
@@ -448,7 +448,7 @@ export const DailyCompletionChart = ({
   const scaleMax = Math.max(1, maxCompleted);
 
   return (
-    <section className="soft-card rounded-3xl p-5">
+    <section className="glass-card rounded-[1.65rem] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">
