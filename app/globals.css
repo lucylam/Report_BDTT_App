@@ -113,22 +113,6 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.soft-card {
-  border: 1px solid var(--border);
-  background: var(--surface-glass);
-  box-shadow: var(--shadow-soft-sm);
-  backdrop-filter: blur(18px);
-  border-radius: var(--radius-card) !important;
-}
-
-.soft-panel {
-  border: 1px solid var(--border);
-  background: rgba(247, 249, 252, 0.88);
-  box-shadow: var(--shadow-soft-md);
-  backdrop-filter: blur(20px);
-  border-radius: var(--radius-panel) !important;
-}
-
 .floating-pill {
   border: 1px solid var(--border-strong);
   background: rgba(255, 255, 255, 0.9);

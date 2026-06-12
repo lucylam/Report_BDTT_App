@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { Button, Icon, PageHeader } from "@/components/ui";
-import type { IconName } from "@/components/ui";
 import { isDataAdminAccount } from "@/lib/permissions";
 import type { AuthAccount } from "@/types/domain";
 
