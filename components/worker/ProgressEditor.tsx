@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { Alert, Textarea } from "@/components/ui";
 import { SaveStatus } from "@/components/worker/SaveStatus";
 import type { SaveState, WorkerProgressUpdate } from "@/components/worker/types";
 import { compressPhotoToDataUrl } from "@/lib/photo";
@@ -96,8 +97,8 @@ export const ProgressEditor = ({
       {showDetails ? (
         <label className="block">
           <span className="text-sm font-extrabold text-slate-800">Ghi chú</span>
-          <textarea
-            className="focus-ring mt-2 min-h-24 w-full resize-y rounded-[var(--radius-field)] border border-[var(--border)] bg-white/88 px-4 py-3 text-base font-medium leading-6 text-[var(--foreground)] shadow-sm placeholder:text-slate-500"
+          <Textarea
+            className="mt-2"
             onBlur={() => saveChange(percent)}
             onChange={(event) => setNote(event.target.value)}
             placeholder="Ghi chú vấn đề phát sinh..."
@@ -147,11 +148,7 @@ export const ProgressEditor = ({
               width={640}
             />
           ) : null}
-          {photoError ? (
-            <p className="mt-2 rounded-[var(--radius-field)] bg-[var(--danger-soft)] p-3 text-sm font-semibold text-[var(--danger)]">
-              {photoError}
-            </p>
-          ) : null}
+          {photoError ? <Alert className="mt-2">{photoError}</Alert> : null}
         </div>
       ) : null}
     </div>

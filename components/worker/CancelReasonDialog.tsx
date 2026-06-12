@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Alert, Button, Dialog, Textarea } from "@/components/ui";
 import type { Task } from "@/types/domain";
 
 interface CancelReasonDialogProps {
@@ -28,24 +29,19 @@ export const CancelReasonDialog = ({
   };
 
   return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-end bg-slate-950/45 p-4 backdrop-blur-sm sm:items-center sm:justify-center"
-      role="dialog"
+    <Dialog
+      description="Hạng mục này sẽ chuyển sang trạng thái Cancel và báo cho admin. Vui lòng nhập lý do trước khi xác nhận."
+      eyebrow="Hủy hạng mục"
+      eyebrowTone="danger"
+      onClose={onClose}
+      title={task.tagname}
     >
-      <form className="bottom-sheet w-full p-6 sm:max-w-lg" onSubmit={submit}>
-        <p className="text-sm font-bold uppercase tracking-wide text-[var(--danger)]">
-          Hủy hạng mục
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold">{task.tagname}</h2>
-        <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-          Hạng mục này sẽ chuyển sang trạng thái Cancel và báo cho admin. Vui lòng nhập lý do trước khi xác nhận.
-        </p>
+      <form onSubmit={submit}>
         <label className="mt-5 block">
-          <span className="text-sm font-semibold">Lý do hủy</span>
-          <textarea
+          <span className="text-sm font-extrabold">Lý do hủy</span>
+          <Textarea
             autoFocus
-            className="focus-ring mt-2 min-h-28 w-full resize-y rounded-[var(--radius-card)] border border-[var(--line)] bg-white/90 px-4 py-3 text-base leading-6"
+            className="mt-2"
             onChange={(event) => {
               setReason(event.target.value);
               setError("");
@@ -54,30 +50,16 @@ export const CancelReasonDialog = ({
             value={reason}
           />
         </label>
-        {error ? (
-          <p
-            aria-live="polite"
-            className="mt-3 rounded-2xl bg-[var(--danger-soft)] p-3 text-sm font-semibold text-[var(--danger)]"
-          >
-            {error}
-          </p>
-        ) : null}
+        {error ? <Alert className="mt-3">{error}</Alert> : null}
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
-          <button
-            className="focus-ring pressable min-h-12 rounded-full border border-[var(--line)] bg-white/80 px-4 text-sm font-semibold"
-            onClick={onClose}
-            type="button"
-          >
+          <Button onClick={onClose} variant="secondary">
             Không hủy
-          </button>
-          <button
-            className="focus-ring pressable min-h-12 rounded-full bg-[var(--danger)] px-4 text-sm font-semibold text-white"
-            type="submit"
-          >
+          </Button>
+          <Button type="submit" variant="danger">
             Xác nhận Cancel
-          </button>
+          </Button>
         </div>
       </form>
-    </div>
+    </Dialog>
   );
 };

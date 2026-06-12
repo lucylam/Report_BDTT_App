@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
+import { Badge, Button } from "@/components/ui";
 import { CountdownBanner } from "@/components/worker/CountdownBanner";
 import { SummaryPills } from "@/components/worker/SummaryPills";
 import { WorkerGroupedTaskList } from "@/components/worker/WorkerGroupedTaskList";
@@ -153,15 +154,9 @@ export const WorkerMobileView = ({
           <div className="text-right">
             <p className="text-sm font-semibold leading-tight">{worker.fullName}</p>
             <p className="text-xs text-[var(--text-muted)]">@{account.username}</p>
-            <p
-              className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                isOnline
-                  ? "bg-[var(--success-soft)] text-[var(--success)]"
-                  : "bg-[var(--warning-soft)] text-[var(--warning)]"
-              }`}
-            >
+            <Badge className="mt-2" tone={isOnline ? "success" : "warning"}>
               {isOnline ? "Online" : "Offline"}
-            </p>
+            </Badge>
           </div>
         </div>
         {isAdminAccount ? (
@@ -315,24 +310,20 @@ export const WorkerMobileView = ({
             <h2 className="text-lg font-semibold">{worker.fullName}</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
             <p className="mt-1 text-sm text-[var(--text-muted)]">{worker.email}</p>
-            <div className="mt-4 rounded-3xl bg-[var(--primary-pale)] p-4 ring-1 ring-[var(--border)]">
+            <div className="mt-4 rounded-[var(--radius-field)] bg-[var(--primary-pale)] p-4 ring-1 ring-[var(--border)]">
               <p className="text-sm font-bold text-[var(--primary-strong)]">{worker.orgTitle}</p>
               <p className="mt-2 text-sm leading-6 text-slate-700">{worker.orgAssignment}</p>
             </div>
             <PwaInstallButton className="mt-4" compact showHint variant="panel" />
-            <button
-              className="focus-ring pressable mt-4 min-h-12 w-full rounded-2xl border border-[var(--border)] bg-white/75 px-4 text-sm font-semibold shadow-sm"
-              onClick={onLogout}
-              type="button"
-            >
+            <Button className="mt-4" full onClick={onLogout} variant="secondary">
               Đăng xuất
-            </button>
+            </Button>
           </div>
         </section>
       ) : null}
 
       <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-30 px-3 pb-[calc(var(--safe-bottom)+0.45rem)]">
-        <div className="floating-pill mx-auto grid max-w-[430px] grid-cols-4 gap-1 rounded-[2rem] p-2 text-center text-xs font-semibold">
+        <div className="floating-pill mx-auto grid max-w-[430px] grid-cols-4 gap-1 rounded-[var(--radius-card)] p-2 text-center text-xs font-semibold">
           {tabs.map((item) => (
             <button
               className={`focus-ring pressable min-h-12 rounded-full px-1 ${
@@ -534,7 +525,7 @@ export const HistoryUpdateList = ({
             </span>
           </div>
           {record.note ? (
-            <p className="mt-3 rounded-[1rem] bg-[var(--primary-pale)] px-3 py-2 text-sm text-slate-700">
+            <p className="mt-3 rounded-[var(--radius-field)] bg-[var(--primary-pale)] px-3 py-2 text-sm text-slate-700">
               {record.note}
             </p>
           ) : null}

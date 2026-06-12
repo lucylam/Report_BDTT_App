@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { StatusBadge } from "@/components/StatusBadge";
+import { Badge } from "@/components/ui";
 import { ProgressEditor } from "@/components/worker/ProgressEditor";
 import type { SaveState, WorkerProgressUpdate } from "@/components/worker/types";
 import type { ProgressPercent, ProgressRecord, Task } from "@/types/domain";
@@ -52,11 +52,11 @@ export const TaskCard = ({
             </span>
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {task.isCancelled ? <StatusBadge label="Cancel" tone="danger" /> : null}
-            <StatusBadge label={`P${task.priority}`} tone={priorityTone(task.priority)} />
-            <StatusBadge label={task.donVi || "N/A"} tone="info" />
-            <StatusBadge label={task.duration || "N/A"} tone="neutral" />
-            {hasDetail ? <StatusBadge label="Có ghi nhận" tone="success" /> : null}
+            {task.isCancelled ? <Badge solid tone="danger">Cancel</Badge> : null}
+            <Badge solid tone={priorityTone(task.priority)}>P{task.priority}</Badge>
+            <Badge solid tone="info">{task.donVi || "N/A"}</Badge>
+            <Badge solid tone="neutral">{task.duration || "N/A"}</Badge>
+            {hasDetail ? <Badge solid tone="success">Có ghi nhận</Badge> : null}
           </div>
         </div>
       </div>

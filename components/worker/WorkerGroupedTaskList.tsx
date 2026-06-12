@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { EmptyState } from "@/components/EmptyState";
+import { EmptyState } from "@/components/ui";
 import { TaskCard } from "@/components/worker/TaskCard";
 import type { SaveState, WorkerProgressUpdate } from "@/components/worker/types";
 import { DEFAULT_REPORT_DATE } from "@/lib/date";

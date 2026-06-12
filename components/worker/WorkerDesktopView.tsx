@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
+import { Button } from "@/components/ui";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { SummaryPills } from "@/components/worker/SummaryPills";
@@ -158,7 +159,7 @@ export const WorkerDesktopView = ({
 
   return (
     <main className="hidden min-h-dvh w-full max-w-[100vw] p-2 sm:p-3 lg:block lg:p-5">
-      <div className="app-shell grid min-h-[calc(100dvh-2.5rem)] grid-cols-[300px_minmax(0,1fr)] overflow-clip rounded-[2rem]">
+      <div className="app-shell grid min-h-[calc(100dvh-2.5rem)] grid-cols-[300px_minmax(0,1fr)] overflow-clip rounded-[var(--radius-panel)]">
       <aside className="border-r border-[var(--line)] bg-white/88 p-5">
         <CompanyBrand variant="sidebar" />
         <p className="mt-5 text-xs font-extrabold uppercase text-[var(--primary-strong)]">
@@ -231,13 +232,9 @@ export const WorkerDesktopView = ({
           </div>
         ) : null}
 
-        <button
-          className="focus-ring pressable mt-6 min-h-12 w-full rounded-full border border-[var(--border)] bg-white/70 px-4 text-sm font-extrabold"
-          onClick={onLogout}
-          type="button"
-        >
+        <Button className="mt-6" full onClick={onLogout} variant="secondary">
           Đăng xuất
-        </button>
+        </Button>
       </aside>
 
       {tab === "tasks" ? (
@@ -416,13 +413,9 @@ export const WorkerDesktopView = ({
               <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
                 Tài khoản này đang dùng workspace worker để cập nhật tiến độ, ghi chú và ảnh theo từng hạng mục.
               </p>
-              <button
-                className="focus-ring pressable mt-5 min-h-12 rounded-full border border-[var(--border)] bg-white/80 px-5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
-                onClick={onLogout}
-                type="button"
-              >
+              <Button className="mt-5" onClick={onLogout} variant="secondary">
                 Đăng xuất
-              </button>
+              </Button>
             </div>
           </div>
         </section>

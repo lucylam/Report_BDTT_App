@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/EmptyState";
+import { EmptyState } from "@/components/ui";
 import { ProgressEditor } from "@/components/worker/ProgressEditor";
 import type {
   SaveState,
@@ -47,7 +47,7 @@ export const WorkerDesktopTaskDetail = ({
       </div>
       <div className="mt-5">
         {task.isCancelled ? (
-          <div className="rounded-[var(--radius-card)] border border-[var(--danger)] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
+          <div className="rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
             Hạng mục này đã được hủy và đã báo cho admin.
             {task.cancelReason ? (
               <span className="mt-2 block font-medium text-slate-700">

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { EmptyState } from "@/components/EmptyState";
+import { Badge, EmptyState } from "@/components/ui";
 import { DEFAULT_REPORT_DATE } from "@/lib/date";
 import { getTaskPercent } from "@/lib/progress";
 import type { ProgressRecord, Task } from "@/types/domain";
@@ -124,11 +124,11 @@ export const WorkerDesktopTaskList = ({
                           <p className="truncate text-sm font-semibold text-slate-700">
                             {task.taskName}
                           </p>
-                          <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-semibold">
-                            <Badge label={`P${task.priority}`} tone="danger" />
-                            <Badge label={task.donVi || "N/A"} tone="info" />
-                            <Badge label={task.section || "N/A"} tone="neutral" />
-                            {task.isCancelled ? <Badge label="Cancel" tone="danger" /> : null}
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            <Badge solid tone="danger">P{task.priority}</Badge>
+                            <Badge solid tone="info">{task.donVi || "N/A"}</Badge>
+                            <Badge solid tone="neutral">{task.section || "N/A"}</Badge>
+                            {task.isCancelled ? <Badge solid tone="danger">Cancel</Badge> : null}
                           </div>
                         </div>
                         <div>
@@ -153,20 +153,4 @@ export const WorkerDesktopTaskList = ({
       })}
     </div>
   );
-};
-
-const Badge = ({
-  label,
-  tone
-}: {
-  readonly label: string;
-  readonly tone: "danger" | "info" | "neutral";
-}): React.ReactElement => {
-  const className =
-    tone === "danger"
-      ? "bg-[var(--danger)] text-white"
-      : tone === "info"
-        ? "bg-[var(--info)] text-white"
-        : "bg-white text-slate-800 ring-1 ring-[var(--border-strong)]";
-  return <span className={`rounded px-2 py-1 font-bold ${className}`}>{label}</span>;
 };
