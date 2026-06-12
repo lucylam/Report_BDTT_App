@@ -99,8 +99,8 @@ export const PwaInstallButton = ({
   };
 
   const buttonClass = compact
-    ? "focus-ring pressable min-h-11 w-full rounded-full border border-[var(--border-strong)] bg-white/84 px-4 text-sm font-bold text-slate-800 shadow-sm hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-    : "focus-ring pressable min-h-11 rounded-full bg-[var(--primary-strong)] px-4 text-sm font-bold text-white shadow-sm";
+    ? "focus-ring pressable min-h-12 w-full rounded-full border border-[var(--border-strong)] bg-white/90 px-4 text-sm font-extrabold text-slate-800 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+    : "focus-ring pressable min-h-12 rounded-full bg-[var(--primary-strong)] px-4 text-sm font-extrabold text-white shadow-[var(--shadow-soft-sm)]";
 
   const button = deferredPrompt ? (
     <button
@@ -123,7 +123,7 @@ export const PwaInstallButton = ({
   if (variant === "panel") {
     return (
       <div
-        className={`rounded-[1.75rem] border border-[var(--border)] bg-white/82 p-4 shadow-sm ${className}`}
+        className={`rounded-[var(--radius-card)] border border-[var(--border)] bg-white/82 p-4 shadow-sm ${className}`}
       >
         <p className="text-sm font-bold text-[var(--foreground)]">Dùng như mobile app</p>
         <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
