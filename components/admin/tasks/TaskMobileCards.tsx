@@ -1,4 +1,4 @@
-import { StatusBadge } from "@/components/StatusBadge";
+import { Badge } from "@/components/ui";
 import {
   getProgressLabel,
   getStatusLabel,
@@ -28,10 +28,9 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
                   Sec {task.section || "N/A"} · {task.donVi || "N/A"}
                 </p>
               </div>
-              <StatusBadge
-                label={getProgressLabel(task, percent)}
-                tone={task.isCancelled ? "danger" : getStatusTone(status)}
-              />
+              <Badge solid tone={task.isCancelled ? "danger" : getStatusTone(status)}>
+                {getProgressLabel(task, percent)}
+              </Badge>
             </div>
 
             <p className="mt-3 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">
@@ -49,13 +48,13 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
             </div>
 
             {task.isCancelled ? (
-              <p className="mt-3 rounded-[1rem] bg-[var(--danger-soft)] p-3 text-sm font-bold text-[var(--danger)]">
+              <p className="mt-3 rounded-[var(--radius-field)] bg-[var(--danger-soft)] p-3 text-sm font-bold text-[var(--danger)]">
                 {task.cancelReason || "Chưa nhập lý do cancel"}
               </p>
             ) : null}
 
             {progress?.note ? (
-              <p className="mt-3 rounded-[1rem] bg-white p-3 text-sm font-medium leading-6 text-slate-800 ring-1 ring-[var(--border)]">
+              <p className="mt-3 rounded-[var(--radius-field)] bg-white p-3 text-sm font-medium leading-6 text-slate-800 ring-1 ring-[var(--border)]">
                 {progress.note}
               </p>
             ) : null}
@@ -112,7 +111,7 @@ const Info = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[1rem] bg-white/88 p-3 ring-1 ring-[var(--border)]">
+    <div className="rounded-[var(--radius-field)] bg-white/88 p-3 ring-1 ring-[var(--border)]">
       <p className="text-[11px] font-extrabold uppercase text-[var(--text-soft)]">{label}</p>
       <p className="mt-1 truncate font-bold text-slate-900">{value}</p>
     </div>

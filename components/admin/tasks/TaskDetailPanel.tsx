@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { StatusBadge } from "@/components/StatusBadge";
+import { Badge } from "@/components/ui";
 import {
   getProgressLabel,
   getStatusLabel,
@@ -37,10 +37,9 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
             WO {task.wo || "N/A"}
           </p>
         </div>
-        <StatusBadge
-          label={getProgressLabel(task, percent)}
-          tone={task.isCancelled ? "danger" : getStatusTone(status)}
-        />
+        <Badge solid tone={task.isCancelled ? "danger" : getStatusTone(status)}>
+          {getProgressLabel(task, percent)}
+        </Badge>
       </div>
 
       <div className="mt-4 rounded-[var(--radius-field)] bg-[var(--line-soft)] p-4">
@@ -68,7 +67,7 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
       </div>
 
       {task.isCancelled ? (
-        <div className="mt-4 rounded-2xl bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
+        <div className="mt-4 rounded-[var(--radius-field)] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
           Lý do cancel: {task.cancelReason || "Chưa nhập lý do"}
         </div>
       ) : null}
@@ -83,7 +82,7 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
       {canPreviewPhoto && photoPath ? (
         <Image
           alt={`Ảnh cập nhật cho ${task.tagname}`}
-          className="mt-4 h-56 w-full rounded-2xl border border-[var(--border-strong)] object-cover shadow-sm"
+          className="mt-4 h-56 w-full rounded-[var(--radius-field)] border border-[var(--border-strong)] object-cover shadow-sm"
           height={224}
           src={photoPath}
           unoptimized
@@ -102,7 +101,7 @@ const Info = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[1rem] bg-white/86 p-3 ring-1 ring-[var(--border)]">
+    <div className="rounded-[var(--radius-field)] bg-white/86 p-3 ring-1 ring-[var(--border)]">
       <p className="text-xs font-bold uppercase text-slate-600">{label}</p>
       <p className="mt-1 truncate font-semibold text-slate-900">{value}</p>
     </div>

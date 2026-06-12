@@ -1,5 +1,5 @@
-import { StatusBadge } from "@/components/StatusBadge";
 import { TaskDetailPanel } from "@/components/admin/tasks/TaskDetailPanel";
+import { Badge } from "@/components/ui";
 import {
   getProgressLabel,
   getStatusLabel,
@@ -80,13 +80,12 @@ export const TaskDesktopWorkspace = ({
                   <td className="py-3 pr-4 font-bold text-[var(--danger)]">P{task.priority}</td>
                   <td className="py-3 pr-4">{task.resourceName || "N/A"}</td>
                   <td className="py-3 pr-4">
-                    <StatusBadge
-                      label={getProgressLabel(task, percent)}
-                      tone={task.isCancelled ? "danger" : getStatusTone(status)}
-                    />
+                    <Badge solid tone={task.isCancelled ? "danger" : getStatusTone(status)}>
+                      {getProgressLabel(task, percent)}
+                    </Badge>
                   </td>
                   <td className="py-3 pr-4">
-                    <StatusBadge label={getStatusLabel(status)} tone={getStatusTone(status)} />
+                    <Badge solid tone={getStatusTone(status)}>{getStatusLabel(status)}</Badge>
                   </td>
                   <td className="py-3 pr-4">{task.finishDate || "N/A"}</td>
                 </tr>

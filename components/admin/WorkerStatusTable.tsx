@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { StatusBadge } from "@/components/StatusBadge";
+import { Badge, Input, Select } from "@/components/ui";
 import { REPORT_DATES, formatViDate } from "@/lib/date";
 import { getTaskPercent } from "@/lib/progress";
 import type {
@@ -41,12 +41,6 @@ interface WorkerRow {
 
 type SubmittedFilter = "all" | "submitted" | "missing";
 type DateFilter = "all-days" | string;
-
-const inputControlClass =
-  "focus-ring control-pill min-h-12 w-full rounded-full px-4 text-base font-semibold text-slate-800 placeholder:text-slate-500";
-
-const selectControlClass =
-  "focus-ring control-pill min-h-12 w-full rounded-full px-3 text-sm font-semibold text-slate-800";
 
 const getTaskPercentForFilter = (
   progress: readonly ProgressRecord[],
@@ -200,8 +194,7 @@ export const WorkerStatusTable = ({
           <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:w-[420px] lg:max-w-[42vw]">
             <label>
               <span className="sr-only">Tìm worker</span>
-              <input
-                className={inputControlClass}
+              <Input
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Tìm tên, nhóm..."
                 value={query}
@@ -209,15 +202,15 @@ export const WorkerStatusTable = ({
             </label>
             <label>
               <span className="sr-only">Lọc trạng thái gửi</span>
-              <select
-                className={selectControlClass}
+              <Select
+                className="text-sm"
                 onChange={(event) => setStatus(event.target.value as SubmittedFilter)}
                 value={status}
               >
                 <option value="all">Tất cả trạng thái</option>
                 <option value="submitted">Đã gửi đủ</option>
                 <option value="missing">Còn thiếu</option>
-              </select>
+              </Select>
             </label>
           </div>
         </div>
@@ -298,8 +291,8 @@ export const WorkerStatusTable = ({
                       <td className="py-3 pr-4">{row.cancelled}</td>
                       <td className="py-3 pr-4">{row.percent}%</td>
                       <td className="py-3 pr-4">
-                        <StatusBadge
-                          label={getWorkerSubmissionLabel(row, dateFilter)}
+                        <Badge
+                          solid
                           tone={
                             dateFilter === "all-days"
                               ? getSubmissionTone(row)
@@ -307,7 +300,9 @@ export const WorkerStatusTable = ({
                                 ? "success"
                                 : "danger"
                           }
-                        />
+                        >
+                          {getWorkerSubmissionLabel(row, dateFilter)}
+                        </Badge>
                       </td>
                     </tr>
                   );
@@ -379,7 +374,9 @@ const WorkerCard = ({
             {row.profile.orgAssignment}
           </p>
         </div>
-        <StatusBadge label={getWorkerSubmissionLabel(row, "all-days")} tone={getSubmissionTone(row)} />
+        <Badge solid tone={getSubmissionTone(row)}>
+          {getWorkerSubmissionLabel(row, "all-days")}
+        </Badge>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-center text-sm sm:grid-cols-4">
         <Metric label="Hạng mục" value={String(row.assigned)} />
@@ -428,8 +425,8 @@ const WorkerDetailPanel = ({
             </p>
           </div>
         </div>
-        <StatusBadge
-          label={getWorkerSubmissionLabel(row, dateFilter)}
+        <Badge
+          solid
           tone={
             dateFilter === "all-days"
               ? getSubmissionTone(row)
@@ -437,7 +434,9 @@ const WorkerDetailPanel = ({
                 ? "success"
                 : "danger"
           }
-        />
+        >
+          {getWorkerSubmissionLabel(row, dateFilter)}
+        </Badge>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-center text-sm sm:grid-cols-4">
@@ -463,10 +462,9 @@ const WorkerDetailPanel = ({
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="font-semibold">{formatViDate(day.date)}</p>
-                <StatusBadge
-                  label={day.submitted ? "Đã gửi" : "Chưa gửi"}
-                  tone={day.submitted ? "success" : "danger"}
-                />
+                <Badge solid tone={day.submitted ? "success" : "danger"}>
+                  {day.submitted ? "Đã gửi" : "Chưa gửi"}
+                </Badge>
               </div>
               <p className="mt-1 text-sm text-[var(--text-muted)]">
                 {day.updatedTasks} task có cập nhật · tiến độ {day.percent}%
@@ -503,12 +501,12 @@ const WorkerDetailPanel = ({
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  <StatusBadge label={`P${task.priority}`} tone="danger" />
-                  <StatusBadge label={task.donVi || "N/A"} tone="info" />
-                  <StatusBadge label={task.section || "N/A"} tone="neutral" />
+                  <Badge solid tone="danger">P{task.priority}</Badge>
+                  <Badge solid tone="info">{task.donVi || "N/A"}</Badge>
+                  <Badge solid tone="neutral">{task.section || "N/A"}</Badge>
                 </div>
                 {latestRecord?.note ? (
-                  <p className="mt-3 rounded-2xl bg-[var(--primary-pale)] px-3 py-2 text-sm text-slate-700">
+                  <p className="mt-3 rounded-[var(--radius-field)] bg-[var(--primary-pale)] px-3 py-2 text-sm text-slate-700">
                     {latestRecord.reportDate}: {latestRecord.note}
                   </p>
                 ) : null}

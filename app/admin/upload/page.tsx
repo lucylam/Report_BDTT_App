@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { Alert, Button } from "@/components/ui";
 import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
 import { downloadExportWorkbook } from "@/lib/excel/exporter";
 import { parseExcelFile } from "@/lib/excel/parser";
@@ -228,17 +229,17 @@ const AdminUploadPage = (): React.ReactElement => {
               type="file"
             />
           </label>
-          <div className="mt-4 rounded-[var(--radius-card)] bg-[var(--warning-soft)] p-4 text-sm leading-6 text-[var(--warning)]">
+          <Alert className="mt-4 p-4 leading-6" tone="warning">
             Khi xác nhận import, danh sách hạng mục hiện tại sẽ được ghi vào database và thay thế bằng file mới trên web.
-          </div>
-          <button
-            className="focus-ring pressable mt-4 min-h-12 w-full rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+          </Alert>
+          <Button
+            className="mt-4"
             disabled={!preview || preview.missingColumns.length > 0 || isImporting}
+            full
             onClick={() => void applyImport()}
-            type="button"
           >
             {isImporting ? "Đang import vào database..." : "Xác nhận thay danh sách hạng mục"}
-          </button>
+          </Button>
         </div>
 
         <div className="glass-card p-5 lg:p-6">
@@ -251,26 +252,21 @@ const AdminUploadPage = (): React.ReactElement => {
             <Metric label="Ngày báo cáo" value={formatViDate(DEFAULT_REPORT_DATE)} />
             <Metric label="Tổng hạng mục" value={String(data?.tasks.length ?? 0)} />
           </div>
-          <button
-            className="focus-ring pressable mt-4 min-h-12 w-full rounded-full border border-[var(--line)] bg-white/82 px-4 py-3 text-sm font-bold shadow-sm"
-            disabled={!data}
-            onClick={exportFile}
-            type="button"
-          >
+          <Button className="mt-4" disabled={!data} full onClick={exportFile} variant="secondary">
             Export DATA hoàn chỉnh
-          </button>
-          <button
-            className="focus-ring pressable mt-3 min-h-12 w-full rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+          </Button>
+          <Button
+            className="mt-3"
             disabled={!data || isSyncingSheet}
+            full
             onClick={() => void syncGoogleSheet()}
-            type="button"
           >
             {isSyncingSheet ? "Đang đẩy lên Google Sheet..." : "Đẩy lên Google Sheet DATA"}
-          </button>
+          </Button>
           {message ? (
             <p
               aria-live="polite"
-              className="mt-4 rounded-[var(--radius-card)] bg-white/82 p-3 text-sm text-slate-700 ring-1 ring-[var(--line)]"
+              className="mt-4 rounded-[var(--radius-field)] bg-white/82 p-3 text-sm text-slate-700 ring-1 ring-[var(--line)]"
             >
               {message}
             </p>

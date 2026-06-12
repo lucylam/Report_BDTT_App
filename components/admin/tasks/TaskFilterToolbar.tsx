@@ -3,6 +3,7 @@ import type {
   StatusFilter,
   TaskKpis
 } from "@/components/admin/tasks/taskTableModel";
+import { Input, Select } from "@/components/ui";
 
 interface TaskFilterToolbarProps {
   readonly query: string;
@@ -24,12 +25,6 @@ interface TaskFilterToolbarProps {
   readonly onStatusChange: (value: StatusFilter) => void;
   readonly onQuickFilterChange: (value: QuickFilter) => void;
 }
-
-const inputControlClass =
-  "focus-ring control-pill min-h-12 w-full rounded-full px-4 text-base font-semibold text-slate-800 placeholder:text-slate-500";
-
-const selectControlClass =
-  "focus-ring control-pill min-h-12 w-full rounded-full px-3 text-sm font-semibold text-slate-800";
 
 export const TaskFilterToolbar = ({
   query,
@@ -58,8 +53,7 @@ export const TaskFilterToolbar = ({
           <span className="mb-2 block text-xs font-extrabold uppercase text-[var(--primary-strong)]">
             Tìm nhanh
           </span>
-          <input
-            className={inputControlClass}
+          <Input
             onChange={(event) => onQueryChange(event.target.value)}
             placeholder="Tag, WO, hạng mục, resource, section..."
             value={query}
@@ -75,17 +69,21 @@ export const TaskFilterToolbar = ({
         />
         <label>
           <span className="mb-2 block text-xs font-bold uppercase text-slate-700">Priority</span>
-          <select className={selectControlClass} onChange={(event) => onPriorityChange(event.target.value)} value={priority}>
+          <Select
+            className="text-sm"
+            onChange={(event) => onPriorityChange(event.target.value)}
+            value={priority}
+          >
             <option value="all">Tất cả P</option>
             <option value="1">P1</option>
             <option value="2">P2</option>
             <option value="3">P3</option>
-          </select>
+          </Select>
         </label>
         <label>
           <span className="mb-2 block text-xs font-bold uppercase text-slate-700">Trạng thái</span>
-          <select
-            className={selectControlClass}
+          <Select
+            className="text-sm"
             onChange={(event) => onStatusChange(event.target.value as StatusFilter)}
             value={status}
           >
@@ -94,7 +92,7 @@ export const TaskFilterToolbar = ({
             <option value="inProgress">Đang thực hiện</option>
             <option value="notStarted">Chưa thực hiện</option>
             <option value="cancelled">Cancel</option>
-          </select>
+          </Select>
         </label>
       </div>
 
@@ -123,14 +121,14 @@ const FilterSelect = ({
   return (
     <label>
       <span className="mb-2 block text-xs font-bold uppercase text-slate-700">{label}</span>
-      <select className={selectControlClass} onChange={(event) => onChange(event.target.value)} value={value}>
+      <Select className="text-sm" onChange={(event) => onChange(event.target.value)} value={value}>
         <option value="all">{label}</option>
         {values.map((item) => (
           <option key={item} value={item}>
             {item}
           </option>
         ))}
-      </select>
+      </Select>
     </label>
   );
 };
