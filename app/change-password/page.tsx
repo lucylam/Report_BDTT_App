@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
+import { Alert, Button, Field, Input } from "@/components/ui";
 import { useAppData } from "@/hooks/useAppData";
 
 const ChangePasswordPage = (): React.ReactElement => {
   const router = useRouter();
-  const { changePassword, currentAccount, data } = useAppData();
+  const { changePassword, currentAccount, data, logout } = useAppData();
   const [nextPassword, setNextPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
@@ -58,16 +59,19 @@ const ChangePasswordPage = (): React.ReactElement => {
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-8">
-      <section className="app-shell w-full max-w-md overflow-hidden rounded-[2.2rem] p-4">
-        <div className="rounded-[1.8rem] bg-white/86 p-5 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl md:p-7">
-          <CompanyBrand className="rounded-[1.35rem] bg-white/78 p-4 ring-1 ring-[var(--border)]" variant="full" />
-          <div className="mt-6 rounded-[1.65rem] bg-[var(--primary-strong)] px-5 py-6 text-white shadow-[var(--shadow-floating)]">
-            <p className="text-xs font-extrabold uppercase text-white/72">First login</p>
+      <section className="app-shell w-full max-w-md overflow-hidden rounded-[var(--radius-panel)] p-4">
+        <div className="rounded-[var(--radius-card)] bg-white/86 p-5 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl md:p-7">
+          <CompanyBrand className="rounded-[var(--radius-field)] bg-white/78 p-4 ring-1 ring-[var(--border)]" variant="full" />
+          <div className="mt-6 rounded-[var(--radius-card)] bg-[var(--primary-strong)] px-5 py-6 text-white shadow-[var(--shadow-floating)]">
+            <p className="text-xs font-extrabold uppercase text-white/85">Đăng nhập lần đầu</p>
             <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal">
               Đổi mật khẩu
             </h1>
-            <p className="mt-3 text-sm font-semibold leading-6 text-white/78">
-              Tài khoản {currentAccount.username} cần đặt mật khẩu mới trước khi vào workspace.
+            <p className="mt-3 text-sm font-semibold leading-6 text-white/88">
+              Tài khoản {currentAccount.username} cần đặt mật khẩu mới trước khi tiếp tục.
+            </p>
+            <p className="mt-2 text-xs font-semibold leading-5 text-white/85">
+              Yêu cầu: tối thiểu 6 ký tự, khác mật khẩu mặc định và khác mật khẩu hiện tại.
             </p>
           </div>
 
@@ -84,28 +88,27 @@ const ChangePasswordPage = (): React.ReactElement => {
               showPassword={showPassword}
               value={confirmPassword}
             />
-            <button
-              className="focus-ring pressable min-h-11 rounded-full border border-[var(--border)] bg-white/84 px-4 py-3 text-sm font-extrabold text-[var(--primary-strong)] shadow-sm"
+            <Button
+              className="text-[var(--primary-strong)]"
               onClick={() => setShowPassword((current) => !current)}
-              type="button"
+              variant="secondary"
             >
               {showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-            </button>
-            {error ? (
-              <p
-                aria-live="polite"
-                className="rounded-[1.25rem] bg-[var(--danger-soft)] p-3 text-sm font-semibold text-[var(--danger)]"
-              >
-                {error}
-              </p>
-            ) : null}
-            <button
-              className="focus-ring pressable min-h-12 rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-extrabold text-white shadow-[var(--shadow-soft-sm)] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isSubmitting}
-              type="submit"
-            >
+            </Button>
+            {error ? <Alert>{error}</Alert> : null}
+            <Button disabled={isSubmitting} full type="submit">
               {isSubmitting ? "Đang lưu..." : "Lưu mật khẩu mới"}
-            </button>
+            </Button>
+            <Button
+              className="underline-offset-4 hover:underline"
+              onClick={() => {
+                logout();
+                router.replace("/login");
+              }}
+              variant="ghost"
+            >
+              Đăng xuất, quay lại màn hình đăng nhập
+            </Button>
           </form>
         </div>
       </section>
@@ -125,18 +128,16 @@ const PasswordField = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <label className="block">
-      <span className="text-sm font-extrabold">{label}</span>
-      <input
+    <Field label={label}>
+      <Input
         autoComplete="new-password"
-        className="focus-ring control-pill mt-2 min-h-12 w-full rounded-full px-4 text-base font-semibold"
         minLength={6}
         onChange={(event) => onChange(event.target.value)}
         required
         type={showPassword ? "text" : "password"}
         value={value}
       />
-    </label>
+    </Field>
   );
 };
 
