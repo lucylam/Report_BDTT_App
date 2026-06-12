@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "seed:supabase-users": "node scripts/seed-supabase-users.mjs",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
@@ -36,6 +37,7 @@
     "eslint-config-next": "16.2.7",
     "postcss": "8.5.15",
     "tailwindcss": "4.3.0",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vitest": "^4.1.8"
   }
 }

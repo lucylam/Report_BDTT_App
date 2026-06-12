@@ -1,6 +1,6 @@
 "use client";
 
-import { getLoginUsername } from "@/lib/accounts";
+import { DEFAULT_INITIAL_PASSWORD, getLoginUsername } from "@/lib/accounts";
 import { normalizeStoredAppData } from "@/lib/appDataMigration";
 import { createDemoData } from "@/lib/demoData";
 import type {
@@ -151,6 +151,13 @@ export const changeAccountPassword = (
 ): AppData => {
   if (nextPassword.length < 6) {
     throw new Error("Mật khẩu mới phải có ít nhất 6 ký tự.");
+  }
+  if (nextPassword === DEFAULT_INITIAL_PASSWORD) {
+    throw new Error("Không được dùng lại mật khẩu mặc định.");
+  }
+  const currentAccount = data.accounts.find((account) => account.id === accountId);
+  if (currentAccount && currentAccount.password === nextPassword) {
+    throw new Error("Mật khẩu mới phải khác mật khẩu hiện tại.");
   }
 
   const nextAccounts = data.accounts.map((account) => {
