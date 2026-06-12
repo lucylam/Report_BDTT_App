@@ -43,7 +43,7 @@ const SnapshotMetric = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[1.25rem] bg-white/82 p-3 shadow-sm ring-1 ring-[var(--border)]">
+    <div className="rounded-[var(--radius-field)] bg-white/82 p-3 shadow-sm ring-1 ring-[var(--border)]">
       <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
       <p className="mt-1 text-lg font-semibold">{value}</p>
     </div>

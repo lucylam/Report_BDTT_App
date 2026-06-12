@@ -16,7 +16,7 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
       {rows.map((row) => {
         const { task, percent, status, progress } = row;
         return (
-          <article className="glass-card rounded-[1.25rem] p-4" key={task.id}>
+          <article className="glass-card rounded-[var(--radius-card)] p-4" key={task.id}>
             <div className="flex items-center gap-3">
               <ProgressRing percent={task.isCancelled ? 0 : percent} />
               <div className="min-w-0 flex-1">

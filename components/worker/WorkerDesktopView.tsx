@@ -61,7 +61,7 @@ const filters: readonly { readonly key: WorkerFilter; readonly label: string }[]
   { key: "progress", label: "Đang làm" },
   { key: "done", label: "Hoàn thành" },
   { key: "p1", label: "P1 chưa xong" },
-  { key: "cancelled", label: "Cancel" }
+  { key: "cancelled", label: "Hủy" }
 ];
 
 const SEARCH_INPUT_ID = "worker-desktop-task-search";
@@ -157,28 +157,31 @@ export const WorkerDesktopView = ({
   }, [filteredTasks, selectedTaskId]);
 
   return (
-    <main className="hidden min-h-dvh bg-transparent lg:grid lg:grid-cols-[300px_minmax(0,1fr)]">
-      <aside className="m-5 mr-0 rounded-[2rem] border border-white/80 bg-white/82 p-5 shadow-[var(--shadow-soft-md)] backdrop-blur-xl">
+    <main className="hidden min-h-dvh w-full max-w-[100vw] p-2 sm:p-3 lg:block lg:p-5">
+      <div className="app-shell grid min-h-[calc(100dvh-2.5rem)] grid-cols-[300px_minmax(0,1fr)] overflow-clip rounded-[2rem]">
+      <aside className="border-r border-[var(--line)] bg-white/88 p-5">
         <CompanyBrand variant="sidebar" />
-        <p className="mt-5 text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
-          Worker workspace
+        <p className="mt-5 text-xs font-extrabold uppercase text-[var(--primary-strong)]">
+          Workspace · BDTT 2026
         </p>
-        <h1 className="mt-3 text-2xl font-semibold leading-tight">Báo cáo tiến độ</h1>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">
-          {formatViDate(DEFAULT_REPORT_DATE)}
+        <h1 className="mt-2 text-2xl font-extrabold leading-tight tracking-normal text-[var(--foreground)]">
+          Báo cáo tiến độ
+        </h1>
+        <p className="mt-2 text-sm font-semibold text-[var(--text-muted)]">
+          Ngày báo cáo: {formatViDate(DEFAULT_REPORT_DATE)}
         </p>
 
-        <div className="mt-6 rounded-[1.75rem] border border-white/20 bg-[var(--primary-strong)] p-4 text-white shadow-[var(--shadow-floating)]">
-          <p className="font-semibold">{worker.fullName}</p>
-          <p className="mt-1 text-sm text-white/70">@{account.username}</p>
+        <div className="mt-6 rounded-[var(--radius-card)] border border-white/20 bg-[var(--primary-strong)] p-4 text-white shadow-[var(--shadow-floating)]">
+          <p className="font-extrabold">{worker.fullName}</p>
+          <p className="mt-1 text-sm font-semibold text-white/85">@{account.username}</p>
           <p className="mt-3 text-sm font-bold leading-5 text-white">{worker.orgTitle}</p>
-          <p className="mt-2 text-sm leading-5 text-white/78">{worker.orgAssignment}</p>
+          <p className="mt-2 text-sm font-semibold leading-5 text-white/88">{worker.orgAssignment}</p>
           <p
-            className={`mt-3 text-sm font-semibold ${
+            className={`mt-3 text-sm font-bold ${
               isOnline ? "text-white" : "text-[var(--warning-soft)]"
             }`}
           >
-            {isOnline ? "Online" : "Offline - lưu tạm"}
+            {isOnline ? "Trực tuyến" : "Mất mạng - đang lưu tạm"}
           </p>
         </div>
 
@@ -186,10 +189,10 @@ export const WorkerDesktopView = ({
           <SummaryPills percents={percents} />
         </div>
 
-        <div className="mt-5 rounded-[1.5rem] border border-[var(--line)] bg-white/55 p-2">
+        <div className="mt-5 rounded-[var(--radius-card)] border border-[var(--line)] bg-white/55 p-2">
           {tabs.map((item) => (
             <button
-              className={`focus-ring pressable min-h-11 w-full rounded-full px-4 text-left text-sm font-semibold ${
+              className={`focus-ring pressable min-h-12 w-full rounded-full px-4 text-left text-sm font-semibold ${
                 item.key === tab
                   ? "bg-[var(--primary-strong)] text-white shadow-md"
                   : "text-slate-800 hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
@@ -210,7 +213,7 @@ export const WorkerDesktopView = ({
             </p>
             {filters.map((item) => (
               <button
-                className={`focus-ring pressable min-h-11 w-full rounded-full px-4 text-left text-sm font-semibold ${
+                className={`focus-ring pressable min-h-12 w-full rounded-full px-4 text-left text-sm font-semibold ${
                   item.key === filter
                     ? "bg-[var(--primary-strong)] text-white shadow-md ring-1 ring-[var(--primary)]"
                     : "border border-[var(--line)] bg-white/80 text-slate-800 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
@@ -229,7 +232,7 @@ export const WorkerDesktopView = ({
         ) : null}
 
         <button
-          className="focus-ring pressable mt-6 min-h-11 w-full rounded-full border border-[var(--border)] bg-white/70 px-4 text-sm font-semibold"
+          className="focus-ring pressable mt-6 min-h-12 w-full rounded-full border border-[var(--border)] bg-white/70 px-4 text-sm font-extrabold"
           onClick={onLogout}
           type="button"
         >
@@ -238,14 +241,14 @@ export const WorkerDesktopView = ({
       </aside>
 
       {tab === "tasks" ? (
-        <section className="grid min-h-dvh grid-cols-[minmax(0,1fr)_440px] gap-5 p-6">
+        <section className="grid min-h-full grid-cols-[minmax(0,1fr)_440px] gap-5 p-6">
           <div className="min-w-0">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-[var(--primary)]">
+                <p className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">
                   {filteredTasks.length}/{allTasks.length} hạng mục
                 </p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+                <h2 className="mt-1 text-2xl font-extrabold tracking-normal text-[var(--foreground)]">
                   Danh sách công việc
                 </h2>
               </div>
@@ -299,7 +302,7 @@ export const WorkerDesktopView = ({
       ) : null}
 
       {tab === "overview" ? (
-        <section className="min-h-dvh p-6">
+        <section className="min-h-full p-6">
           <DesktopPageHeader
             action={isAdminAccount ? <ModeSwitch activeMode="workspace" href="/admin" /> : null}
             eyebrow={`${allTasks.length} hạng mục`}
@@ -317,13 +320,13 @@ export const WorkerDesktopView = ({
             <DailyCompletionChart rows={historyRows} />
           </div>
           <div className="mt-5 grid gap-5 xl:grid-cols-3">
-            <div className="glass-card rounded-[1.65rem] p-5 xl:col-span-2">
-              <h2 className="text-xl font-semibold">Điểm cần chú ý</h2>
+            <div className="glass-card rounded-[var(--radius-card)] p-5 xl:col-span-2">
+              <h2 className="text-xl font-extrabold">Điểm cần chú ý</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
                 Hạng mục P1 chưa xong: <strong>{p1Open}</strong>. Dữ liệu tính theo ngày báo cáo hiện tại.
               </p>
             </div>
-            <div className="glass-card rounded-[1.65rem] p-5">
+            <div className="glass-card rounded-[var(--radius-card)] p-5">
               <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">
                 Báo cáo hôm nay
               </p>
@@ -337,7 +340,7 @@ export const WorkerDesktopView = ({
       ) : null}
 
       {tab === "history" ? (
-        <section className="min-h-dvh p-6">
+        <section className="min-h-full p-6">
           <DesktopPageHeader
             action={isAdminAccount ? <ModeSwitch activeMode="workspace" href="/admin" /> : null}
             eyebrow="7 ngày gần nhất"
@@ -348,7 +351,7 @@ export const WorkerDesktopView = ({
             {historyRows.map((row) => {
               const isSelected = selectedHistoryDate === row.date;
               return (
-                <article className="glass-card overflow-hidden rounded-[1.65rem]" key={row.date}>
+                <article className="glass-card overflow-hidden rounded-[var(--radius-card)]" key={row.date}>
                   <button
                     aria-expanded={isSelected}
                     className="focus-ring pressable flex min-h-20 w-full items-center justify-between gap-3 p-5 text-left"
@@ -386,19 +389,19 @@ export const WorkerDesktopView = ({
       ) : null}
 
       {tab === "account" ? (
-        <section className="min-h-dvh p-6">
+        <section className="min-h-full p-6">
           <DesktopPageHeader
             action={isAdminAccount ? <ModeSwitch activeMode="workspace" href="/admin" /> : null}
-            eyebrow="Worker account"
-            status={isOnline ? "Online" : "Offline"}
+            eyebrow="Hồ sơ cá nhân"
+            status={isOnline ? "Trực tuyến" : "Mất mạng"}
             title="Tài khoản"
           />
           <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
             <div className="glass-card p-6">
-              <h2 className="text-xl font-semibold">{worker.fullName}</h2>
+              <h2 className="text-xl font-extrabold">{worker.fullName}</h2>
               <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
               <p className="mt-1 text-sm text-[var(--text-muted)]">{worker.email}</p>
-              <div className="mt-4 rounded-[1.25rem] bg-[var(--primary-pale)] p-4 ring-1 ring-[var(--line)]">
+              <div className="mt-4 rounded-[var(--radius-field)] bg-[var(--primary-pale)] p-4 ring-1 ring-[var(--line)]">
                 <p className="text-sm font-bold text-[var(--primary-strong)]">{worker.orgTitle}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-700">{worker.orgAssignment}</p>
               </div>
@@ -409,12 +412,12 @@ export const WorkerDesktopView = ({
               <PwaInstallButton className="mt-5" showHint variant="panel" />
             </div>
             <div className="glass-card p-6">
-              <h2 className="text-xl font-semibold">Trạng thái phiên làm việc</h2>
+              <h2 className="text-xl font-extrabold">Trạng thái phiên làm việc</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
                 Tài khoản này đang dùng workspace worker để cập nhật tiến độ, ghi chú và ảnh theo từng hạng mục.
               </p>
               <button
-                className="focus-ring pressable mt-5 min-h-11 rounded-full border border-[var(--border)] bg-white/80 px-5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
+                className="focus-ring pressable mt-5 min-h-12 rounded-full border border-[var(--border)] bg-white/80 px-5 text-sm font-semibold text-slate-800 shadow-sm hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
                 onClick={onLogout}
                 type="button"
               >
@@ -424,6 +427,7 @@ export const WorkerDesktopView = ({
           </div>
         </section>
       ) : null}
+      </div>
     </main>
   );
 };
@@ -442,8 +446,8 @@ const DesktopPageHeader = ({
   return (
     <div className="flex items-end justify-between gap-4">
       <div>
-        <p className="text-sm font-semibold text-[var(--primary)]">{eyebrow}</p>
-        <h2 className="mt-1 text-2xl font-semibold tracking-tight">{title}</h2>
+        <p className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">{eyebrow}</p>
+        <h2 className="mt-1 text-2xl font-extrabold tracking-normal text-[var(--foreground)]">{title}</h2>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <p className="rounded-full bg-[var(--success-soft)] px-4 py-2 text-sm font-semibold text-[var(--success)] shadow-sm">
@@ -463,7 +467,7 @@ const InfoTile = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[1.35rem] bg-white/80 p-4 ring-1 ring-[var(--border)]">
+    <div className="rounded-[var(--radius-card)] bg-white/80 p-4 ring-1 ring-[var(--border)]">
       <p className="text-xs font-bold uppercase text-[var(--text-muted)]">{label}</p>
       <p className="mt-1 font-semibold">{value}</p>
     </div>

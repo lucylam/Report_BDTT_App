@@ -239,7 +239,7 @@ const ResourceGroupChart = ({
   if (group.rows.length === 0) {
     return (
       <ChartShell subtitle="Chưa có hạng mục thuộc nhóm này trong dữ liệu hiện tại" title={group.title}>
-        <div className="mt-4 rounded-[1.5rem] bg-white/82 p-4 text-sm text-[var(--text-muted)] ring-1 ring-[var(--border)]">
+        <div className="mt-4 rounded-[var(--radius-card)] bg-white/82 p-4 text-sm text-[var(--text-muted)] ring-1 ring-[var(--border)]">
           Không có dữ liệu để hiển thị.
         </div>
       </ChartShell>

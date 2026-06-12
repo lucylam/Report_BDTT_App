@@ -47,7 +47,7 @@ export const WorkerDesktopTaskDetail = ({
       </div>
       <div className="mt-5">
         {task.isCancelled ? (
-          <div className="rounded-[1.5rem] border border-[var(--danger)] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
+          <div className="rounded-[var(--radius-card)] border border-[var(--danger)] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
             Hạng mục này đã được hủy và đã báo cho admin.
             {task.cancelReason ? (
               <span className="mt-2 block font-medium text-slate-700">
@@ -65,7 +65,7 @@ export const WorkerDesktopTaskDetail = ({
               task={task}
             />
             <button
-              className="focus-ring pressable mt-4 min-h-11 w-full rounded-full border border-[var(--danger)] bg-white/80 px-4 text-sm font-semibold text-[var(--danger)]"
+              className="focus-ring pressable mt-4 min-h-12 w-full rounded-full border border-[var(--danger)] bg-white/80 px-4 text-sm font-semibold text-[var(--danger)]"
               onClick={() => onCancel(task.id)}
               type="button"
             >
@@ -86,7 +86,7 @@ const Info = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[1.25rem] bg-white/82 p-3 shadow-sm ring-1 ring-[var(--border)]">
+    <div className="rounded-[var(--radius-field)] bg-white/82 p-3 shadow-sm ring-1 ring-[var(--border)]">
       <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">{label}</p>
       <p className="mt-1 font-semibold">{value || "N/A"}</p>
     </div>

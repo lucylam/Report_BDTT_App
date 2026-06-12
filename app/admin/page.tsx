@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { Badge } from "@/components/ui";
 import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
 import {
   getOrgScopeLabel,
@@ -56,13 +57,13 @@ const AdminPage = (): React.ReactElement => {
   if (currentAccount.role !== "admin") {
     return (
       <main className="min-h-dvh px-4 py-8">
-        <section className="glass-card mx-auto max-w-md p-6">
+        <section className="glass-card mx-auto max-w-md rounded-[var(--radius-card)] p-6">
           <h1 className="text-xl font-extrabold">Không có quyền giám sát</h1>
           <p className="mt-2 text-sm font-semibold text-slate-600">
             Tài khoản worker chỉ được vào màn hình Việc của tôi.
           </p>
           <Link
-            className="focus-ring pressable mt-4 inline-flex min-h-11 items-center rounded-full bg-[var(--foreground)] px-4 text-sm font-extrabold text-white"
+            className="focus-ring pressable mt-4 inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--primary-strong)] px-5 text-sm font-extrabold text-white shadow-[var(--shadow-soft-sm)]"
             href="/worker"
           >
             Về Workspace
@@ -113,7 +114,7 @@ const ManagementDashboard = ({
 
   return (
     <section className="grid min-w-0 gap-5">
-      <section className="glass-card rounded-[1.65rem] p-5 lg:p-6">
+      <section className="glass-card rounded-[var(--radius-card)] p-5 lg:p-6">
         <p className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">
           Điều hành tiến độ
         </p>
@@ -219,7 +220,7 @@ const ManagementKpiStrip = ({
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       {cards.map((card) => (
         <article
-          className={`metric-card rounded-[1.35rem] p-5 ${toneText(card.tone)}`}
+          className={`metric-card rounded-[var(--radius-card)] p-5 ${toneText(card.tone)}`}
           key={card.label}
         >
           <p className="text-[11px] font-extrabold uppercase text-[var(--text-soft)]">
@@ -251,7 +252,7 @@ const ManagementTable = ({
   const isSuccess = tone === "success";
 
   return (
-    <section className="glass-card min-w-0 overflow-hidden rounded-[1.65rem]">
+    <section className="glass-card min-w-0 overflow-hidden rounded-[var(--radius-card)]">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4">
         <h3 className="text-lg font-extrabold text-[var(--foreground)]">{title}</h3>
         <span
@@ -307,10 +308,10 @@ const ManagementRow = ({
           </div>
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
-          <MiniTag className="bg-[var(--success-soft)] text-[var(--success)]" label={`HT ${row.completed}`} />
-          <MiniTag className="bg-[var(--warning-soft)] text-[var(--warning)]" label={`ĐTH ${row.inProgress}`} />
-          <MiniTag className="bg-[var(--danger-soft)] text-[var(--danger)]" label={`Trễ ${row.overdue}`} />
-          <MiniTag label={`Tổng ${row.tasks}`} />
+          <Badge tone="success">HT {row.completed}</Badge>
+          <Badge tone="warning">ĐTH {row.inProgress}</Badge>
+          <Badge tone="danger">Trễ {row.overdue}</Badge>
+          <Badge>Tổng {row.tasks}</Badge>
         </div>
       </div>
 
@@ -334,20 +335,8 @@ const ManagementRow = ({
   );
 };
 
-const MiniTag = ({
-  className = "bg-[var(--line-soft)] text-[var(--text-muted)]",
-  label
-}: {
-  readonly className?: string;
-  readonly label: string;
-}): React.ReactElement => (
-  <span className={`rounded-lg px-2.5 py-1 text-[11px] font-extrabold ${className}`}>
-    {label}
-  </span>
-);
-
 const StatusLegend = (): React.ReactElement => (
-  <section className="glass-card flex flex-wrap items-center justify-center gap-x-7 gap-y-3 rounded-[1.35rem] px-5 py-4 text-sm">
+  <section className="glass-card flex flex-wrap items-center justify-center gap-x-7 gap-y-3 rounded-[var(--radius-card)] px-5 py-4 text-sm">
     <LegendDot className="bg-[var(--success)]" label="Hoàn thành" />
     <LegendDot className="bg-[var(--warning)]" label="Đang thực hiện" />
     <LegendDot className="bg-[var(--danger)]" label="Trễ tiến độ" />

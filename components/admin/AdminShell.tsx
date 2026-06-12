@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { ModeSwitch } from "@/components/ModeSwitch";
+import { Button, Icon, PageHeader } from "@/components/ui";
+import type { IconName } from "@/components/ui";
 import { isDataAdminAccount } from "@/lib/permissions";
 import type { AuthAccount } from "@/types/domain";
 
@@ -14,15 +16,6 @@ interface AdminShellProps {
   readonly children: ReactNode;
   readonly onLogout: () => void;
 }
-
-type IconName =
-  | "dashboard"
-  | "people"
-  | "workorder"
-  | "data"
-  | "help"
-  | "settings"
-  | "search";
 
 const links = [
   { href: "/admin", label: "Dashboard", shortLabel: "Tổng quan", icon: "dashboard" },
@@ -62,14 +55,14 @@ export const AdminShell = ({
                   key={link.href}
                   title={link.label}
                 >
-                  <ShellIcon name={link.icon} />
+                  <Icon name={link.icon} />
                 </Link>
               );
             })}
           </nav>
           <div className="flex-1" />
           <button className="focus-ring icon-button" title="Trợ giúp" type="button">
-            <ShellIcon name="help" />
+            <Icon name="help" />
           </button>
           <button
             className="focus-ring icon-button"
@@ -77,28 +70,27 @@ export const AdminShell = ({
             title="Đăng xuất"
             type="button"
           >
-            <ShellIcon name="settings" />
+            <Icon name="settings" />
           </button>
         </aside>
 
         <section className="min-w-0">
           <header className="sticky top-0 z-30 border-b border-white/70 bg-white/82 px-4 py-4 backdrop-blur-2xl lg:static lg:border-b-0 lg:bg-transparent lg:px-7 lg:py-5">
             <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-center">
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">
-                  Giám sát · BDTT 2026
-                </p>
-                <h1 className="mt-1 truncate text-2xl font-extrabold leading-tight tracking-normal text-[var(--foreground)] lg:text-3xl">
-                  {title}
-                </h1>
-                <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-[var(--text-muted)]">
-                  {subtitle}
-                </p>
-              </div>
+              <PageHeader
+                className="min-w-0 flex-1"
+                description={subtitle}
+                eyebrow="Giám sát · BDTT 2026"
+                title={title}
+              />
 
               <div className="hidden min-w-[18rem] items-center gap-2 rounded-full border border-[var(--line)] bg-white/90 px-4 py-3 text-sm font-semibold text-[var(--text-soft)] shadow-[var(--shadow-soft-sm)] lg:flex xl:min-w-[26rem]">
-                <ShellIcon name="search" />
+                <Icon name="search" />
                 <span className="truncate">Tìm WorkOrder, hạng mục, đơn vị...</span>
+              </div>
+
+              <div className="hidden lg:block">
+                <ModeSwitch activeMode="supervision" href="/worker" />
               </div>
 
               <div className="hidden rounded-full border border-[var(--line)] bg-white/90 p-1 shadow-[var(--shadow-soft-sm)] lg:flex">
@@ -141,13 +133,9 @@ export const AdminShell = ({
 
             <div className="mt-3 flex items-center gap-2 lg:hidden">
               <ModeSwitch activeMode="supervision" className="max-w-none flex-1 text-xs" href="/worker" />
-              <button
-                className="focus-ring pressable min-h-11 shrink-0 rounded-full border border-[var(--border-strong)] bg-white px-4 text-xs font-extrabold text-slate-800 shadow-sm"
-                onClick={onLogout}
-                type="button"
-              >
+              <Button className="shrink-0" onClick={onLogout} size="sm" variant="secondary">
                 Đăng xuất
-              </button>
+              </Button>
             </div>
           </header>
 
@@ -159,14 +147,14 @@ export const AdminShell = ({
 
       <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 px-3 lg:hidden">
         <div
-          className="floating-pill grid gap-1 rounded-[1.65rem] p-2 text-center text-[11px] font-extrabold"
+          className="floating-pill grid gap-1 rounded-[var(--radius-card)] p-2 text-center text-[11px] font-extrabold"
           style={{ gridTemplateColumns: `repeat(${visibleLinks.length}, minmax(0, 1fr))` }}
         >
           {visibleLinks.map((link) => {
             const active = pathname === link.href;
             return (
               <Link
-                className={`focus-ring pressable flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-[1.25rem] px-1 leading-tight ${
+                className={`focus-ring pressable flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-[var(--radius-field)] px-1 leading-tight ${
                   active
                     ? "bg-[var(--primary-strong)] text-white shadow-md"
                     : "text-slate-700 hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
@@ -174,7 +162,7 @@ export const AdminShell = ({
                 href={link.href}
                 key={link.href}
               >
-                <ShellIcon name={link.icon} />
+                <Icon name={link.icon} />
                 <span>{link.shortLabel}</span>
               </Link>
             );
@@ -192,74 +180,3 @@ const getInitials = (name: string): string => {
   return `${first}${last}`.toUpperCase();
 };
 
-const ShellIcon = ({ name }: { readonly name: IconName }): React.ReactElement => {
-  const common = {
-    fill: "none",
-    stroke: "currentColor",
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    strokeWidth: 2,
-    viewBox: "0 0 24 24"
-  };
-
-  return (
-    <svg aria-hidden="true" className="h-5 w-5" {...common}>
-      {name === "dashboard" ? (
-        <>
-          <rect height="7" rx="1.5" width="7" x="3" y="3" />
-          <rect height="7" rx="1.5" width="7" x="14" y="3" />
-          <rect height="7" rx="1.5" width="7" x="3" y="14" />
-          <rect height="7" rx="1.5" width="7" x="14" y="14" />
-        </>
-      ) : null}
-      {name === "people" ? (
-        <>
-          <circle cx="9" cy="8" r="3.2" />
-          <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
-          <path d="M16 6a3 3 0 0 1 0 5.5" />
-          <path d="M16.5 20a5.5 5.5 0 0 0-2-4" />
-        </>
-      ) : null}
-      {name === "workorder" ? (
-        <>
-          <path d="M4 5h16" />
-          <path d="M4 12h16" />
-          <path d="M4 19h10" />
-        </>
-      ) : null}
-      {name === "data" ? (
-        <>
-          <ellipse cx="12" cy="6" rx="7" ry="3" />
-          <path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6" />
-          <path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" />
-        </>
-      ) : null}
-      {name === "help" ? (
-        <>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .8-1 1.7" />
-          <path d="M12 17h.01" />
-        </>
-      ) : null}
-      {name === "settings" ? (
-        <>
-          <circle cx="12" cy="12" r="3" />
-          <path d="M12 2v3" />
-          <path d="M12 19v3" />
-          <path d="M2 12h3" />
-          <path d="M19 12h3" />
-          <path d="m5 5 2 2" />
-          <path d="m17 17 2 2" />
-          <path d="m19 5-2 2" />
-          <path d="m7 17-2 2" />
-        </>
-      ) : null}
-      {name === "search" ? (
-        <>
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-3-3" />
-        </>
-      ) : null}
-    </svg>
-  );
-};

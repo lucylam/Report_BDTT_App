@@ -7,19 +7,19 @@ const statusMap: Record<SaveState, { readonly label: string; readonly className:
   },
   saving: {
     label: "Đang lưu",
-    className: "bg-[var(--info)] text-white"
+    className: "bg-[var(--info-strong)] text-white"
   },
   saved: {
     label: "Đã lưu",
     className: "bg-[var(--success)] text-white"
   },
   offline: {
-    label: "Lưu offline",
-    className: "bg-[var(--warning)] text-white"
+    label: "Chờ mạng, sẽ tự gửi",
+    className: "bg-[var(--warning-strong)] text-white"
   },
   error: {
     label: "Lỗi lưu",
-    className: "bg-[var(--danger)] text-white"
+    className: "bg-[var(--danger-strong)] text-white"
   }
 };
 

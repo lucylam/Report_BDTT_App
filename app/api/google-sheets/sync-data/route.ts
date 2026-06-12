@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { buildProgressSheetRangeValues } from "@/lib/excel/exporter";
 import { syncDataSheetValues } from "@/lib/google/sheets";
 import type { AppData } from "@/types/domain";
@@ -7,6 +8,10 @@ export const runtime = "nodejs";
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   try {
+    if (!isAllowedRequestOrigin(request)) {
+      return NextResponse.json({ error: forbiddenOriginMessage }, { status: 403 });
+    }
+
     const data = (await request.json()) as Partial<AppData>;
     if (!data.tasks || !data.progress) {
       return NextResponse.json(

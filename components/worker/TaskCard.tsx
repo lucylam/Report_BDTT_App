@@ -34,7 +34,7 @@ export const TaskCard = ({
   const hasDetail = Boolean(progress?.note || progress?.photoPath);
 
   return (
-    <article className="glass-card overflow-hidden rounded-[1.25rem]">
+    <article className="glass-card overflow-hidden rounded-[var(--radius-field)]">
       <div className="flex items-start gap-3 p-4">
         <ProgressRing cancelled={task.isCancelled} percent={percent} />
         <div className="min-w-0 flex-1">
@@ -78,7 +78,7 @@ export const TaskCard = ({
 
       <div className="p-4">
         {task.isCancelled ? (
-          <div className="rounded-[1.25rem] bg-[var(--danger-soft)] p-4 text-sm font-bold text-[var(--danger)]">
+          <div className="rounded-[var(--radius-field)] bg-[var(--danger-soft)] p-4 text-sm font-bold text-[var(--danger)]">
             Hạng mục này đã được hủy và đã báo cho admin.
             {task.cancelReason ? (
               <span className="mt-2 block font-semibold text-slate-700">
@@ -97,7 +97,7 @@ export const TaskCard = ({
               task={task}
             />
             <button
-              className="focus-ring pressable mt-3 min-h-11 w-full rounded-full border border-[var(--border)] bg-white/86 px-3 text-sm font-extrabold text-[var(--primary-strong)] shadow-sm"
+              className="focus-ring pressable mt-3 min-h-12 w-full rounded-full border border-[var(--border)] bg-white/86 px-3 text-sm font-extrabold text-[var(--primary-strong)] shadow-sm"
               onClick={() => setIsExpanded((current) => !current)}
               type="button"
             >
@@ -105,7 +105,7 @@ export const TaskCard = ({
             </button>
             {isExpanded ? (
               <button
-                className="focus-ring pressable mt-2 min-h-11 w-full rounded-full border border-[var(--danger)] bg-white/78 px-3 text-sm font-extrabold text-[var(--danger)]"
+                className="focus-ring pressable mt-2 min-h-12 w-full rounded-full border border-[var(--danger)] bg-white/78 px-3 text-sm font-extrabold text-[var(--danger)]"
                 onClick={onCancel}
                 type="button"
               >

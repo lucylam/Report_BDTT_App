@@ -44,7 +44,7 @@ export const WorkerDesktopTaskList = ({
   if (taskGroups.length === 0) {
     return (
       <EmptyState
-        description="Không có hạng mục phù hợp với tìm kiếm và bộ lọc hiện tại."
+        description="Thử chọn bộ lọc “Tất cả” hoặc xóa từ khóa tìm kiếm. Nếu vẫn trống, có thể bạn chưa được giao hạng mục nào — hãy liên hệ nhóm trưởng."
         title="Không có hạng mục"
       />
     );
@@ -58,7 +58,7 @@ export const WorkerDesktopTaskList = ({
           <section key={group.key}>
             <button
               aria-expanded={!isCollapsed}
-              className={`focus-ring pressable sticky top-0 z-10 mb-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-[1.5rem] border px-4 text-left text-sm font-bold shadow-[var(--shadow-soft-sm)] backdrop-blur-xl ${
+              className={`focus-ring pressable sticky top-0 z-10 mb-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-[var(--radius-card)] border px-4 text-left text-sm font-bold shadow-[var(--shadow-soft-sm)] backdrop-blur-xl ${
                 isCollapsed
                   ? "border-[var(--line)] bg-white/82 text-[var(--primary-strong)]"
                   : "border-[var(--primary)] bg-[var(--primary-strong)] text-white"
@@ -102,7 +102,7 @@ export const WorkerDesktopTaskList = ({
                   return (
                     <button
                       aria-pressed={selected}
-                      className={`focus-ring pressable w-full rounded-[1.35rem] border bg-white/88 p-3 text-left shadow-sm transition ${
+                      className={`focus-ring pressable w-full rounded-[var(--radius-card)] border bg-white/88 p-3 text-left shadow-sm transition ${
                         selected
                           ? "border-[var(--primary)] bg-white ring-4 ring-[var(--primary-soft)]"
                           : "border-[var(--border-strong)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)]"

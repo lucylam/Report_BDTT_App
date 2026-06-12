@@ -43,10 +43,10 @@ type SubmittedFilter = "all" | "submitted" | "missing";
 type DateFilter = "all-days" | string;
 
 const inputControlClass =
-  "focus-ring control-pill min-h-11 w-full rounded-full px-4 text-base font-semibold text-slate-800 placeholder:text-slate-500";
+  "focus-ring control-pill min-h-12 w-full rounded-full px-4 text-base font-semibold text-slate-800 placeholder:text-slate-500";
 
 const selectControlClass =
-  "focus-ring control-pill min-h-11 w-full rounded-full px-3 text-sm font-semibold text-slate-800";
+  "focus-ring control-pill min-h-12 w-full rounded-full px-3 text-sm font-semibold text-slate-800";
 
 const getTaskPercentForFilter = (
   progress: readonly ProgressRecord[],
@@ -419,7 +419,7 @@ const WorkerDetailPanel = ({
           <p className="mt-1 text-sm text-[var(--text-muted)]">
             @{row.profile.username} · {row.profile.nhom}
           </p>
-          <div className="mt-3 rounded-[1.25rem] bg-[var(--primary-pale)] p-3 ring-1 ring-[var(--line)]">
+          <div className="mt-3 rounded-[var(--radius-field)] bg-[var(--primary-pale)] p-3 ring-1 ring-[var(--line)]">
             <p className="text-sm font-bold text-[var(--primary-strong)]">
               {row.profile.orgTitle}
             </p>
@@ -454,7 +454,7 @@ const WorkerDetailPanel = ({
         <div className="mt-3 grid gap-2">
           {row.dayStatuses.map((day) => (
             <div
-              className={`rounded-[1.25rem] border p-3 ${
+              className={`rounded-[var(--radius-field)] border p-3 ${
                 dateFilter === day.date
                   ? "border-[var(--primary)] bg-[var(--primary-pale)]"
                   : "border-[var(--line)] bg-white/74"
@@ -482,13 +482,13 @@ const WorkerDetailPanel = ({
         </h3>
         <div className="mt-3 grid gap-2">
           {row.taskStatuses.length === 0 ? (
-            <p className="rounded-[1.25rem] bg-white/78 p-4 text-sm font-semibold text-[var(--text-muted)] ring-1 ring-[var(--line)]">
+            <p className="rounded-[var(--radius-field)] bg-white/78 p-4 text-sm font-semibold text-[var(--text-muted)] ring-1 ring-[var(--line)]">
               Worker này chưa có task được phân công.
             </p>
           ) : (
             row.taskStatuses.map(({ latestRecord, percent, task }) => (
               <article
-                className="rounded-[1.25rem] border border-[var(--line)] bg-white/78 p-3"
+                className="rounded-[var(--radius-field)] border border-[var(--line)] bg-white/78 p-3"
                 key={task.id}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -529,7 +529,7 @@ const Metric = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="flex min-h-14 flex-col items-center justify-center rounded-[1.25rem] bg-white/86 p-2 text-center text-slate-900 ring-1 ring-[var(--line)]">
+    <div className="flex min-h-14 flex-col items-center justify-center rounded-[var(--radius-field)] bg-white/86 p-2 text-center text-slate-900 ring-1 ring-[var(--line)]">
       <p className="text-xs font-bold text-slate-700">{label}</p>
       <p className="mt-1 text-sm font-bold">{value}</p>
     </div>

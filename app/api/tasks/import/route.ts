@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Task } from "@/types/domain";
 
@@ -126,6 +127,10 @@ const listExistingTasks = async (
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   try {
+    if (!isAllowedRequestOrigin(request)) {
+      return NextResponse.json({ error: forbiddenOriginMessage }, { status: 403 });
+    }
+
     const supabase = await createServerSupabaseClient();
     if (!supabase) {
       return NextResponse.json(

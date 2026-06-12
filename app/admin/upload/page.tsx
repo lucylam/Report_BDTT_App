@@ -191,7 +191,7 @@ const AdminUploadPage = (): React.ReactElement => {
             Chỉ tài khoản vinhlpp được import và export DATA. Các admin khác vẫn có thể xem dashboard và danh sách hạng mục.
           </p>
           <Link
-            className="focus-ring pressable mt-4 inline-flex min-h-11 items-center rounded-full bg-[var(--primary-strong)] px-4 text-sm font-bold text-white"
+            className="focus-ring pressable mt-4 inline-flex min-h-12 items-center rounded-full bg-[var(--primary-strong)] px-4 text-sm font-bold text-white"
             href={currentAccount.role === "admin" ? "/admin" : "/worker"}
           >
             Quay lại
@@ -228,11 +228,11 @@ const AdminUploadPage = (): React.ReactElement => {
               type="file"
             />
           </label>
-          <div className="mt-4 rounded-[1.5rem] bg-[var(--warning-soft)] p-4 text-sm leading-6 text-[var(--warning)]">
+          <div className="mt-4 rounded-[var(--radius-card)] bg-[var(--warning-soft)] p-4 text-sm leading-6 text-[var(--warning)]">
             Khi xác nhận import, danh sách hạng mục hiện tại sẽ được ghi vào database và thay thế bằng file mới trên web.
           </div>
           <button
-            className="focus-ring pressable mt-4 min-h-11 w-full rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+            className="focus-ring pressable mt-4 min-h-12 w-full rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!preview || preview.missingColumns.length > 0 || isImporting}
             onClick={() => void applyImport()}
             type="button"
@@ -252,7 +252,7 @@ const AdminUploadPage = (): React.ReactElement => {
             <Metric label="Tổng hạng mục" value={String(data?.tasks.length ?? 0)} />
           </div>
           <button
-            className="focus-ring pressable mt-4 min-h-11 w-full rounded-full border border-[var(--line)] bg-white/82 px-4 py-3 text-sm font-bold shadow-sm"
+            className="focus-ring pressable mt-4 min-h-12 w-full rounded-full border border-[var(--line)] bg-white/82 px-4 py-3 text-sm font-bold shadow-sm"
             disabled={!data}
             onClick={exportFile}
             type="button"
@@ -260,7 +260,7 @@ const AdminUploadPage = (): React.ReactElement => {
             Export DATA hoàn chỉnh
           </button>
           <button
-            className="focus-ring pressable mt-3 min-h-11 w-full rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+            className="focus-ring pressable mt-3 min-h-12 w-full rounded-full bg-[var(--primary-strong)] px-4 py-3 text-sm font-bold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
             disabled={!data || isSyncingSheet}
             onClick={() => void syncGoogleSheet()}
             type="button"
@@ -270,7 +270,7 @@ const AdminUploadPage = (): React.ReactElement => {
           {message ? (
             <p
               aria-live="polite"
-              className="mt-4 rounded-[1.5rem] bg-white/82 p-3 text-sm text-slate-700 ring-1 ring-[var(--line)]"
+              className="mt-4 rounded-[var(--radius-card)] bg-white/82 p-3 text-sm text-slate-700 ring-1 ring-[var(--line)]"
             >
               {message}
             </p>
@@ -318,7 +318,7 @@ const ImportPreviewPanel = ({
 
 const SampleTask = ({ task }: { readonly task: Task }): React.ReactElement => {
   return (
-    <div className="rounded-[1.25rem] border border-[var(--line)] bg-white/82 p-3 text-sm shadow-sm">
+    <div className="rounded-[var(--radius-field)] border border-[var(--line)] bg-white/82 p-3 text-sm shadow-sm">
       <p className="font-mono font-semibold">{task.tagname}</p>
       <p className="mt-1 text-slate-700">{task.taskName}</p>
       <p className="mt-1 text-xs text-[var(--text-muted)]">
@@ -362,7 +362,7 @@ const PreviewList = ({
       {values.length === 0 ? (
         <p className="mt-2 text-sm text-slate-600">Không có</p>
       ) : (
-        <ul className="mt-2 max-h-56 overflow-auto rounded-[1.5rem] border border-[var(--line)] bg-white/82 p-3 text-sm">
+        <ul className="mt-2 max-h-56 overflow-auto rounded-[var(--radius-card)] border border-[var(--line)] bg-white/82 p-3 text-sm">
           {values.map((value) => (
             <li className="border-b border-[var(--line)] py-2 last:border-b-0" key={value}>
               {value}

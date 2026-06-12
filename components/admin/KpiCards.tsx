@@ -50,7 +50,7 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
     <section className="grid grid-cols-2 gap-3 xl:grid-cols-6">
       {cards.map((card) => (
         <div
-          className={`min-h-28 rounded-[1.5rem] border p-4 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl sm:min-h-32 ${toneClass(card.emphasis)}`}
+          className={`min-h-28 rounded-[var(--radius-card)] border p-4 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl sm:min-h-32 ${toneClass(card.emphasis)}`}
           key={card.label}
         >
           <p className="text-xs font-bold uppercase opacity-70">{card.label}</p>

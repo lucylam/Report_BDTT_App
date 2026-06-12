@@ -23,7 +23,7 @@ export const TaskDesktopWorkspace = ({
 
   return (
     <section className="hidden gap-5 lg:grid xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="glass-card max-h-[680px] overflow-auto rounded-[1.65rem]">
+      <div className="glass-card max-h-[680px] overflow-auto rounded-[var(--radius-card)]">
         <table className="min-w-[1320px] text-left text-sm">
           <thead className="sticky top-0 z-20 border-b border-[var(--line)] bg-white/95 font-extrabold uppercase text-[11px] text-[var(--text-soft)] backdrop-blur-xl">
             <tr>

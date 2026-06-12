@@ -78,7 +78,7 @@ export const ProgressEditor = ({
           {percentOptions.map((option) => (
             <button
               aria-pressed={option === percent}
-              className={`focus-ring pressable min-h-11 rounded-full border text-sm font-extrabold tabular-nums ${
+              className={`focus-ring pressable min-h-12 rounded-full border text-sm font-extrabold tabular-nums ${
                 option === percent
                   ? "border-[var(--primary)] bg-[var(--primary-strong)] text-white shadow-md"
                   : "border-transparent bg-white/72 text-slate-800 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
@@ -97,7 +97,7 @@ export const ProgressEditor = ({
         <label className="block">
           <span className="text-sm font-extrabold text-slate-800">Ghi chú</span>
           <textarea
-            className="focus-ring mt-2 min-h-24 w-full resize-y rounded-[1.25rem] border border-[var(--border)] bg-white/88 px-4 py-3 text-base font-medium leading-6 text-[var(--foreground)] shadow-sm placeholder:text-slate-500"
+            className="focus-ring mt-2 min-h-24 w-full resize-y rounded-[var(--radius-field)] border border-[var(--border)] bg-white/88 px-4 py-3 text-base font-medium leading-6 text-[var(--foreground)] shadow-sm placeholder:text-slate-500"
             onBlur={() => saveChange(percent)}
             onChange={(event) => setNote(event.target.value)}
             placeholder="Ghi chú vấn đề phát sinh..."
@@ -109,7 +109,7 @@ export const ProgressEditor = ({
       {showDetails ? (
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <label className="focus-ring pressable inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border border-[var(--primary)] bg-white px-4 text-sm font-extrabold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]">
+            <label className="focus-ring pressable inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full border border-[var(--primary)] bg-white px-4 text-sm font-extrabold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]">
               {photoPath ? "Thay ảnh" : "Chọn / chụp ảnh"}
               <input
                 accept="image/*"
@@ -125,7 +125,7 @@ export const ProgressEditor = ({
             </label>
             {photoPath ? (
               <button
-                className="focus-ring pressable min-h-11 rounded-full border border-[var(--danger)] bg-white px-4 text-sm font-extrabold text-[var(--danger)] shadow-sm hover:bg-[var(--danger-soft)]"
+                className="focus-ring pressable min-h-12 rounded-full border border-[var(--danger)] bg-white px-4 text-sm font-extrabold text-[var(--danger)] shadow-sm hover:bg-[var(--danger-soft)]"
                 onClick={removePhoto}
                 type="button"
               >
@@ -140,7 +140,7 @@ export const ProgressEditor = ({
           {photoPath ? (
             <Image
               alt={`Ảnh ghi nhận cho ${task.tagname}`}
-              className="mt-3 h-36 w-full rounded-[1.25rem] border border-[var(--border)] object-cover shadow-sm lg:h-56"
+              className="mt-3 h-36 w-full rounded-[var(--radius-field)] border border-[var(--border)] object-cover shadow-sm lg:h-56"
               height={224}
               unoptimized
               src={photoPath}
@@ -148,7 +148,7 @@ export const ProgressEditor = ({
             />
           ) : null}
           {photoError ? (
-            <p className="mt-2 rounded-[1.25rem] bg-[var(--danger-soft)] p-3 text-sm font-semibold text-[var(--danger)]">
+            <p className="mt-2 rounded-[var(--radius-field)] bg-[var(--danger-soft)] p-3 text-sm font-semibold text-[var(--danger)]">
               {photoError}
             </p>
           ) : null}

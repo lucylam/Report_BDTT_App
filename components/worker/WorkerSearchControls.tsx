@@ -20,12 +20,12 @@ export const WorkerSearchControls = ({
   onGroupModeChange
 }: WorkerSearchControlsProps): React.ReactElement => {
   return (
-    <div className="glass-card rounded-[1.35rem] p-3">
+    <div className="glass-card rounded-[var(--radius-card)] p-3">
       <label className="block" htmlFor={inputId}>
         <span className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">
           Tìm nhanh tag / WO / khu vực
         </span>
-        <div className="control-pill mt-2 flex min-h-11 items-center gap-2 rounded-full px-3 focus-within:border-[var(--primary)] focus-within:ring-4 focus-within:ring-[var(--primary-soft)] md:min-h-12">
+        <div className="control-pill mt-2 flex min-h-12 items-center gap-2 rounded-full px-3 focus-within:border-[var(--primary)] focus-within:ring-4 focus-within:ring-[var(--primary-soft)] md:min-h-12">
           <span aria-hidden="true" className="text-sm font-extrabold text-[var(--primary)]">
             Tìm
           </span>

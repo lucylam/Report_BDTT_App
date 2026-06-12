@@ -15,7 +15,7 @@ export const CountdownBanner = (): React.ReactElement => {
 
   if (minutesLeft === 0) {
     return (
-      <div className="mx-4 mt-2 rounded-[1.35rem] border border-amber-200 bg-[var(--warning-soft)] px-3 py-2 text-sm font-semibold text-[var(--warning)] shadow-[var(--shadow-soft-sm)]">
+      <div className="mx-4 mt-2 rounded-[var(--radius-card)] border border-amber-200 bg-[var(--warning-soft)] px-3 py-2 text-sm font-semibold text-[var(--warning)] shadow-[var(--shadow-soft-sm)]">
         Đã qua mốc nhắc 12:00. Vẫn có thể cập nhật tiến độ, ghi chú và ảnh.
       </div>
     );
@@ -31,7 +31,7 @@ export const CountdownBanner = (): React.ReactElement => {
         : "border-emerald-200 bg-[var(--success-soft)] text-[var(--success)]";
 
   return (
-    <div className={`mx-4 mt-2 rounded-[1.35rem] border px-3 py-2 text-sm shadow-[var(--shadow-soft-sm)] ${urgentClass}`}>
+    <div className={`mx-4 mt-2 rounded-[var(--radius-card)] border px-3 py-2 text-sm shadow-[var(--shadow-soft-sm)] ${urgentClass}`}>
       Còn <span className="font-semibold">{hours} giờ {minutes} phút</span> để cập nhật trước mốc nhắc 12:00.
     </div>
   );

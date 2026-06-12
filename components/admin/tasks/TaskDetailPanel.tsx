@@ -14,7 +14,7 @@ interface TaskDetailPanelProps {
 export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactElement => {
   if (!row) {
     return (
-      <aside className="glass-card rounded-[1.65rem] p-5">
+      <aside className="glass-card rounded-[var(--radius-card)] p-5">
         <h2 className="text-lg font-bold">Chi tiết hạng mục</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
           Chọn một hạng mục trong bảng để xem task, WO, resource, ghi chú và ảnh cập nhật.
@@ -29,7 +29,7 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
     photoPath?.startsWith("data:") || photoPath?.startsWith("http://") || photoPath?.startsWith("https://");
 
   return (
-    <aside className="glass-card sticky top-24 max-h-[calc(100dvh-7rem)] overflow-auto rounded-[1.65rem] p-5">
+    <aside className="glass-card sticky top-24 max-h-[calc(100dvh-7rem)] overflow-auto rounded-[var(--radius-card)] p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-2xl font-bold leading-tight">{task.tagname}</p>
@@ -43,7 +43,7 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
         />
       </div>
 
-      <div className="mt-4 rounded-[1.25rem] bg-[var(--line-soft)] p-4">
+      <div className="mt-4 rounded-[var(--radius-field)] bg-[var(--line-soft)] p-4">
         <p className="text-xs font-bold uppercase text-slate-600">Hạng mục</p>
         <p className="mt-2 text-base font-semibold leading-6 text-[var(--foreground)]">
           {task.taskName || "Chưa có tên hạng mục"}
@@ -59,7 +59,7 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
         <Info label="Finish" value={task.finishDate || "N/A"} />
       </div>
 
-      <div className="mt-4 rounded-[1.25rem] border border-[var(--border)] bg-white/86 p-4">
+      <div className="mt-4 rounded-[var(--radius-field)] border border-[var(--border)] bg-white/86 p-4">
         <p className="text-xs font-bold uppercase text-slate-600">Resource</p>
         <p className="mt-2 text-sm font-semibold">{task.resourceName || "N/A"}</p>
         <p className="mt-1 text-xs text-[var(--text-muted)]">
@@ -73,7 +73,7 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-[1.25rem] border border-[var(--border)] bg-white/86 p-4">
+      <div className="mt-4 rounded-[var(--radius-field)] border border-[var(--border)] bg-white/86 p-4">
         <p className="text-xs font-bold uppercase text-slate-600">Ghi chú worker</p>
         <p className="mt-2 min-h-12 text-sm leading-6 text-slate-800">
           {progress?.note || "Chưa có ghi chú cho ngày báo cáo hiện tại."}

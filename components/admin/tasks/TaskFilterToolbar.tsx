@@ -29,7 +29,7 @@ const inputControlClass =
   "focus-ring control-pill min-h-12 w-full rounded-full px-4 text-base font-semibold text-slate-800 placeholder:text-slate-500";
 
 const selectControlClass =
-  "focus-ring control-pill min-h-11 w-full rounded-full px-3 text-sm font-semibold text-slate-800";
+  "focus-ring control-pill min-h-12 w-full rounded-full px-3 text-sm font-semibold text-slate-800";
 
 export const TaskFilterToolbar = ({
   query,
@@ -52,7 +52,7 @@ export const TaskFilterToolbar = ({
   onQuickFilterChange
 }: TaskFilterToolbarProps): React.ReactElement => {
   return (
-    <section className="glass-card rounded-[1.65rem] p-4">
+    <section className="glass-card rounded-[var(--radius-card)] p-4">
       <div className="grid gap-3 xl:grid-cols-[minmax(260px,1.4fr)_repeat(5,minmax(120px,1fr))]">
         <label>
           <span className="mb-2 block text-xs font-extrabold uppercase text-[var(--primary-strong)]">

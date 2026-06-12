@@ -102,7 +102,7 @@ export const TasksTable = ({
         units={units}
       />
 
-      <section className="glass-card rounded-[1.65rem] p-4 lg:p-5">
+      <section className="glass-card rounded-[var(--radius-card)] p-4 lg:p-5">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h2 className="text-xl font-bold">Danh sách hạng mục</h2>
@@ -126,7 +126,7 @@ export const TasksTable = ({
 
         {visibleCount < filteredRows.length ? (
           <button
-            className="focus-ring pressable mt-4 min-h-11 w-full rounded-full border border-[var(--primary)] bg-white px-4 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
+            className="focus-ring pressable mt-4 min-h-12 w-full rounded-full border border-[var(--primary)] bg-white px-4 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
             onClick={() => setVisibleCount((current) => current + limit)}
             type="button"
           >

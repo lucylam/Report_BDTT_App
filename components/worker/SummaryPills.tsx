@@ -35,7 +35,7 @@ const SummaryCard = ({
         : "text-[var(--text-muted)]";
 
   return (
-    <div className={`metric-card rounded-[1.25rem] p-3 text-center ${color}`}>
+    <div className={`metric-card rounded-[var(--radius-field)] p-3 text-center ${color}`}>
       <p className="text-2xl font-extrabold tabular-nums md:text-3xl">{value}</p>
       <p className="mt-1 text-[11px] font-extrabold text-[var(--text-muted)]">{label}</p>
     </div>

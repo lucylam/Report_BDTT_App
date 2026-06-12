@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CancelReasonDialog } from "@/components/worker/CancelReasonDialog";
 import { WorkerDesktopView } from "@/components/worker/WorkerDesktopView";
 import { WorkerMobileView } from "@/components/worker/WorkerMobileView";
@@ -92,6 +92,7 @@ const WorkerPage = (): React.ReactElement => {
   const [isOnline, setIsOnline] = useState<boolean>(() =>
     typeof navigator === "undefined" ? true : navigator.onLine
   );
+  const isSyncingQueueRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!data) return;
@@ -99,10 +100,48 @@ const WorkerPage = (): React.ReactElement => {
     if (currentAccount?.mustChangePassword) router.replace("/change-password");
   }, [currentAccount, data, router]);
 
+  const syncOfflineQueue = async (): Promise<void> => {
+    if (isSyncingQueueRef.current) return;
+    const queue = data?.offlineQueue ?? [];
+    const profile = currentProfile;
+    if (!data || !profile || queue.length === 0) return;
+
+    isSyncingQueueRef.current = true;
+    try {
+      for (const queued of queue) {
+        const task = data.tasks.find((item) => item.id === queued.taskId);
+        if (!task) continue;
+        await submitProgressToDatabase({
+          task,
+          update: {
+            taskId: queued.taskId,
+            userId: queued.userId,
+            reportDate: queued.reportDate,
+            percent: queued.percent,
+            note: queued.note,
+            photoPath: queued.photoPath
+          },
+          worker: {
+            username: profile.username,
+            fullName: profile.fullName,
+            resourceName: profile.resourceName
+          }
+        });
+      }
+      flushQueue();
+    } catch (error) {
+      // Giữ nguyên hàng đợi để thử lại ở lần online tiếp theo
+      // (server upsert idempotent nên item đã gửi không bị nhân đôi).
+      console.error("[WorkerPage.syncOfflineQueue]", error);
+    } finally {
+      isSyncingQueueRef.current = false;
+    }
+  };
+
   useEffect(() => {
     const online = (): void => {
       setIsOnline(true);
-      flushQueue();
+      void syncOfflineQueue();
     };
     const offline = (): void => setIsOnline(false);
     window.addEventListener("online", online);
@@ -111,7 +150,15 @@ const WorkerPage = (): React.ReactElement => {
       window.removeEventListener("online", online);
       window.removeEventListener("offline", offline);
     };
-  }, [flushQueue]);
+  });
+
+  const queueLength = data?.offlineQueue.length ?? 0;
+  useEffect(() => {
+    if (isOnline && queueLength > 0) {
+      void syncOfflineQueue();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, queueLength]);
 
   const worker = currentProfile;
   const allWorkerTasks = useMemo(() => {
@@ -178,7 +225,21 @@ const WorkerPage = (): React.ReactElement => {
       }
     } catch (error) {
       console.error("[WorkerPage.handleChange]", error);
-      setSaveStates((current) => ({ ...current, [taskId]: "error" }));
+      if (error instanceof TypeError) {
+        // fetch ném TypeError khi rớt mạng: xếp hàng đợi để tự gửi lại,
+        // dữ liệu đã được lưu cục bộ nên không mất.
+        queueProgress({
+          taskId,
+          userId: worker.id,
+          reportDate: DEFAULT_REPORT_DATE,
+          percent: update.percent,
+          note: update.note,
+          photoPath: update.photoPath
+        });
+        setSaveStates((current) => ({ ...current, [taskId]: "offline" }));
+      } else {
+        setSaveStates((current) => ({ ...current, [taskId]: "error" }));
+      }
     }
   };
 

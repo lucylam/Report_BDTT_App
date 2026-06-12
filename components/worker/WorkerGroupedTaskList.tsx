@@ -38,7 +38,7 @@ export const WorkerGroupedTaskList = ({
   if (taskGroups.length === 0) {
     return (
       <EmptyState
-        description="Không có hạng mục phù hợp với bộ lọc hiện tại."
+        description="Thử chọn bộ lọc “Tất cả” hoặc xóa từ khóa tìm kiếm. Nếu vẫn trống, có thể bạn chưa được giao hạng mục nào — hãy liên hệ nhóm trưởng."
         title="Không có hạng mục"
       />
     );
@@ -52,7 +52,7 @@ export const WorkerGroupedTaskList = ({
           <div className="space-y-2" key={group.key}>
             <button
               aria-expanded={!isCollapsed}
-              className={`focus-ring pressable flex min-h-12 w-full items-center justify-between gap-3 rounded-[1.5rem] border px-4 text-left shadow-[var(--shadow-soft-sm)] ${
+              className={`focus-ring pressable flex min-h-12 w-full items-center justify-between gap-3 rounded-[var(--radius-card)] border px-4 text-left shadow-[var(--shadow-soft-sm)] ${
                 isCollapsed
                   ? "border-[var(--line)] bg-white/82 text-[var(--primary-strong)]"
                   : "border-[var(--primary)] bg-[var(--primary-strong)] text-white"

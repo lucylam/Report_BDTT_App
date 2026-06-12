@@ -136,7 +136,7 @@ export const WorkerMobileView = ({
       <header className="mobile-topbar sticky top-0 z-20 border-b border-white/70 bg-white/88 px-4 pb-3 backdrop-blur-xl">
         <CompanyBrand className="mb-2" variant="compact" />
         <p className="text-xs font-semibold text-[var(--text-muted)]">
-          {formatViDate(DEFAULT_REPORT_DATE)}
+          Ngày báo cáo: {formatViDate(DEFAULT_REPORT_DATE)}
         </p>
         <div className="mt-1 flex items-start justify-between gap-3">
           <div>
@@ -190,7 +190,7 @@ export const WorkerMobileView = ({
             <div className="control-pill grid grid-cols-4 gap-1 rounded-full p-1.5">
               {filters.map((item) => (
                 <button
-                  className={`focus-ring pressable min-h-11 rounded-full px-1 text-xs font-semibold leading-tight sm:px-2 sm:text-sm ${
+                  className={`focus-ring pressable min-h-12 rounded-full px-1 text-xs font-semibold leading-tight sm:px-2 sm:text-sm ${
                     item.key === filter
                       ? "bg-[var(--primary-strong)] text-white shadow-md ring-1 ring-[var(--primary)]"
                       : "text-slate-800 ring-1 ring-transparent hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
@@ -224,7 +224,7 @@ export const WorkerMobileView = ({
                 onClick={() => onFilterChange(filter === "cancelled" ? "all" : "cancelled")}
                 type="button"
               >
-                Cancel: {cancelledCount}
+                Hủy: {cancelledCount}
               </button>
             </div>
             <WorkerSearchControls
@@ -261,7 +261,7 @@ export const WorkerMobileView = ({
             total={activeTasks.length}
           />
           <DailyCompletionChart rows={historyRows} />
-          <div className="glass-card rounded-[1.65rem] p-5">
+          <div className="glass-card rounded-[var(--radius-card)] p-5">
             <h2 className="text-lg font-semibold">Tổng quan cá nhân</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
               Hạng mục P1 chưa xong: <strong>{p1Open}</strong>. Dữ liệu tính theo ngày báo cáo hiện tại.
@@ -275,7 +275,7 @@ export const WorkerMobileView = ({
           {historyRows.map((row) => {
             const isSelected = selectedHistoryDate === row.date;
             return (
-              <article className="glass-card overflow-hidden rounded-[1.65rem]" key={row.date}>
+              <article className="glass-card overflow-hidden rounded-[var(--radius-card)]" key={row.date}>
                 <button
                   aria-expanded={isSelected}
                   className="focus-ring pressable flex min-h-24 w-full items-center justify-between gap-3 p-5 text-left"
@@ -311,7 +311,7 @@ export const WorkerMobileView = ({
 
       {tab === "account" ? (
         <section className="px-4 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+1rem)] pt-5">
-          <div className="glass-card rounded-[1.65rem] p-5">
+          <div className="glass-card rounded-[var(--radius-card)] p-5">
             <h2 className="text-lg font-semibold">{worker.fullName}</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
             <p className="mt-1 text-sm text-[var(--text-muted)]">{worker.email}</p>
@@ -321,7 +321,7 @@ export const WorkerMobileView = ({
             </div>
             <PwaInstallButton className="mt-4" compact showHint variant="panel" />
             <button
-              className="focus-ring pressable mt-4 min-h-11 w-full rounded-2xl border border-[var(--border)] bg-white/75 px-4 text-sm font-semibold shadow-sm"
+              className="focus-ring pressable mt-4 min-h-12 w-full rounded-2xl border border-[var(--border)] bg-white/75 px-4 text-sm font-semibold shadow-sm"
               onClick={onLogout}
               type="button"
             >
@@ -371,7 +371,7 @@ export const ProgressDonutChart = ({
   const offset = circumference * (1 - overallPercent / 100);
 
   return (
-    <section className="glass-card rounded-[1.65rem] p-5">
+    <section className="glass-card rounded-[var(--radius-card)] p-5">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">
@@ -448,7 +448,7 @@ export const DailyCompletionChart = ({
   const scaleMax = Math.max(1, maxCompleted);
 
   return (
-    <section className="glass-card rounded-[1.65rem] p-5">
+    <section className="glass-card rounded-[var(--radius-card)] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">
@@ -497,7 +497,7 @@ export const HistoryUpdateList = ({
   if (updates.length === 0) {
     return (
       <div className="border-t border-[var(--border)] px-5 pb-5 pt-1">
-        <div className="rounded-[1.5rem] bg-[var(--primary-pale)] p-4 text-sm font-semibold text-[var(--text-muted)]">
+        <div className="rounded-[var(--radius-card)] bg-[var(--primary-pale)] p-4 text-sm font-semibold text-[var(--text-muted)]">
           Không có cập nhật trong ngày này.
         </div>
       </div>
@@ -508,7 +508,7 @@ export const HistoryUpdateList = ({
     <div className="space-y-2 border-t border-[var(--border)] px-4 pb-4 pt-2">
       {updates.map(({ task, record }) => (
         <div
-          className="rounded-[1.35rem] border border-[var(--border)] bg-white/78 p-3"
+          className="rounded-[var(--radius-card)] border border-[var(--border)] bg-white/78 p-3"
           key={`${record.reportDate}-${task.id}`}
         >
           <div className="flex items-start justify-between gap-3">
@@ -561,7 +561,7 @@ const ChartStat = ({
         : "bg-white text-slate-700 ring-1 ring-[var(--border)]";
 
   return (
-    <div className={`rounded-[1.25rem] p-3 text-center ${toneClass}`}>
+    <div className={`rounded-[var(--radius-field)] p-3 text-center ${toneClass}`}>
       <p className="text-xl font-bold tabular-nums">{value}</p>
       <p className="mt-1 text-xs font-bold leading-tight">{label}</p>
     </div>
