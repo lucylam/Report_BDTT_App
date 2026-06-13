@@ -48,7 +48,7 @@ export const Dialog = ({
         {eyebrow ? (
           <p
             className={cn(
-              "text-sm font-bold uppercase tracking-wide",
+              "text-sm font-semibold uppercase tracking-wide",
               eyebrowTone === "danger"
                 ? "text-[var(--danger)]"
                 : "text-[var(--primary-strong)]"
@@ -57,7 +57,7 @@ export const Dialog = ({
             {eyebrow}
           </p>
         ) : null}
-        <h2 className="mt-2 text-2xl font-extrabold leading-tight">{title}</h2>
+        <h2 className="mt-2 text-2xl font-semibold leading-tight">{title}</h2>
         {description ? (
           <p className="mt-2 text-sm font-semibold leading-6 text-[var(--text-muted)]">
             {description}

@@ -15,7 +15,7 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
   if (!row) {
     return (
       <aside className="glass-card rounded-[var(--radius-card)] p-5">
-        <h2 className="text-lg font-bold">Chi tiết hạng mục</h2>
+        <h2 className="text-lg font-semibold">Chi tiết hạng mục</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
           Chọn một hạng mục trong bảng để xem task, WO, resource, ghi chú và ảnh cập nhật.
         </p>
@@ -32,7 +32,7 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
     <aside className="glass-card sticky top-24 max-h-[calc(100dvh-7rem)] overflow-auto rounded-[var(--radius-card)] p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-2xl font-bold leading-tight">{task.tagname}</p>
+          <p className="font-mono text-2xl font-semibold leading-tight">{task.tagname}</p>
           <p className="mt-1 text-sm font-semibold text-[var(--primary-strong)]">
             WO {task.wo || "N/A"}
           </p>
@@ -43,7 +43,7 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
       </div>
 
       <div className="mt-4 rounded-[var(--radius-field)] bg-[var(--line-soft)] p-4">
-        <p className="text-xs font-bold uppercase text-slate-600">Hạng mục</p>
+        <p className="text-xs font-semibold uppercase text-[var(--text-soft)]">Hạng mục</p>
         <p className="mt-2 text-base font-semibold leading-6 text-[var(--foreground)]">
           {task.taskName || "Chưa có tên hạng mục"}
         </p>
@@ -58,8 +58,8 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
         <Info label="Finish" value={task.finishDate || "N/A"} />
       </div>
 
-      <div className="mt-4 rounded-[var(--radius-field)] border border-[var(--border)] bg-white/86 p-4">
-        <p className="text-xs font-bold uppercase text-slate-600">Resource</p>
+      <div className="mt-4 rounded-[var(--radius-field)] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+        <p className="text-xs font-semibold uppercase text-[var(--text-soft)]">Resource</p>
         <p className="mt-2 text-sm font-semibold">{task.resourceName || "N/A"}</p>
         <p className="mt-1 text-xs text-[var(--text-muted)]">
           Nhóm trưởng: {task.nhomTruong || "N/A"}
@@ -72,9 +72,9 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-[var(--radius-field)] border border-[var(--border)] bg-white/86 p-4">
-        <p className="text-xs font-bold uppercase text-slate-600">Ghi chú worker</p>
-        <p className="mt-2 min-h-12 text-sm leading-6 text-slate-800">
+      <div className="mt-4 rounded-[var(--radius-field)] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
+        <p className="text-xs font-semibold uppercase text-[var(--text-soft)]">Ghi chú worker</p>
+        <p className="mt-2 min-h-12 text-sm leading-6 text-[var(--foreground)]">
           {progress?.note || "Chưa có ghi chú cho ngày báo cáo hiện tại."}
         </p>
       </div>
@@ -82,7 +82,7 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
       {canPreviewPhoto && photoPath ? (
         <Image
           alt={`Ảnh cập nhật cho ${task.tagname}`}
-          className="mt-4 h-56 w-full rounded-[var(--radius-field)] border border-[var(--border-strong)] object-cover shadow-sm"
+          className="mt-4 h-56 w-full rounded-[var(--radius-field)] border border-[var(--border-strong)] object-cover shadow-[var(--shadow-soft-sm)]"
           height={224}
           src={photoPath}
           unoptimized
@@ -101,9 +101,9 @@ const Info = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[var(--radius-field)] bg-white/86 p-3 ring-1 ring-[var(--border)]">
-      <p className="text-xs font-bold uppercase text-slate-600">{label}</p>
-      <p className="mt-1 truncate font-semibold text-slate-900">{value}</p>
+    <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
+      <p className="text-xs font-semibold uppercase text-[var(--text-soft)]">{label}</p>
+      <p className="mt-1 truncate font-semibold text-[var(--foreground)]">{value}</p>
     </div>
   );
 };

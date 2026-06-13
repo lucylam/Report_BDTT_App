@@ -12,7 +12,7 @@ export const Select = ({
     <span className="relative block">
       <select
         className={cn(
-          "focus-ring control-pill min-h-12 w-full appearance-none rounded-full px-4 pr-10 text-base font-semibold",
+          "focus-ring control-pill min-h-12 w-full appearance-none rounded-[var(--radius-field)] px-4 pr-10 text-base font-semibold",
           className
         )}
         {...props}

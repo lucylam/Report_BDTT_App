@@ -42,7 +42,7 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
       label: "Đang làm",
       value: String(metrics.inProgress),
       helper: "0 < % < 100",
-      emphasis: "warning"
+      emphasis: "accent"
     }
   ];
 
@@ -50,10 +50,10 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
     <section className="grid grid-cols-2 gap-3 xl:grid-cols-6">
       {cards.map((card) => (
         <div
-          className={`min-h-28 rounded-[var(--radius-card)] border p-4 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl sm:min-h-32 ${toneClass(card.emphasis)}`}
+          className={`min-h-28 rounded-[var(--radius-card)] border p-4 shadow-[var(--shadow-soft-sm)] sm:min-h-32 ${toneClass(card.emphasis)}`}
           key={card.label}
         >
-          <p className="text-xs font-bold uppercase opacity-70">{card.label}</p>
+          <p className="text-xs font-semibold uppercase opacity-70">{card.label}</p>
           <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">{card.value}</p>
           <p className="mt-2 text-xs font-semibold leading-5 opacity-70">{card.helper}</p>
         </div>
@@ -70,10 +70,13 @@ const toneClass = (emphasis: string): string => {
     return "border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)]";
   }
   if (emphasis === "warning") {
-    return "border-[var(--warning)] bg-[var(--warning-soft)] text-[var(--warning)]";
+    return "border-[var(--warning)] bg-[var(--warning-soft)] text-[var(--warning-strong)]";
+  }
+  if (emphasis === "accent") {
+    return "border-[var(--accent)] bg-[var(--surface-warm)] text-[var(--accent-strong)]";
   }
   if (emphasis === "success") {
     return "border-[var(--success)] bg-[var(--success-soft)] text-[var(--success)]";
   }
-  return "border-white/80 bg-white/82 text-slate-900";
+  return "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)]";
 };

@@ -66,23 +66,23 @@ export const ProgressEditor = ({
     <div className={density === "compact" ? "space-y-3" : "space-y-4"}>
       <div>
         <div className="mb-2 flex items-center justify-between gap-3">
-          <span className="text-sm font-extrabold text-[var(--primary-strong)]">
+          <span className="text-sm font-semibold text-[var(--primary-strong)]">
             Cập nhật tiến độ
           </span>
           <SaveStatus state={saveState} />
         </div>
         <div
           aria-label={`Chọn phần trăm hoàn thành cho ${task.tagname}`}
-          className="control-pill grid grid-cols-5 gap-1 rounded-full p-1"
+          className="control-pill grid grid-cols-5 gap-1 rounded-[var(--radius-field)] p-1"
           role="group"
         >
           {percentOptions.map((option) => (
             <button
               aria-pressed={option === percent}
-              className={`focus-ring pressable min-h-12 rounded-full border text-sm font-extrabold tabular-nums ${
+              className={`focus-ring pressable min-h-12 rounded-[calc(var(--radius-field)-0.25rem)] border text-sm font-semibold tabular-nums ${
                 option === percent
                   ? "border-[var(--primary)] bg-[var(--primary-strong)] text-white shadow-md"
-                  : "border-transparent bg-white/72 text-slate-800 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+                  : "border-transparent bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
               }`}
               key={option}
               onClick={() => saveChange(option)}
@@ -96,7 +96,7 @@ export const ProgressEditor = ({
 
       {showDetails ? (
         <label className="block">
-          <span className="text-sm font-extrabold text-slate-800">Ghi chú</span>
+          <span className="text-sm font-semibold text-[var(--foreground)]">Ghi chú</span>
           <Textarea
             className="mt-2"
             onBlur={() => saveChange(percent)}
@@ -110,7 +110,7 @@ export const ProgressEditor = ({
       {showDetails ? (
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <label className="focus-ring pressable inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full border border-[var(--primary)] bg-white px-4 text-sm font-extrabold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]">
+            <label className="focus-ring pressable inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[var(--radius-field)] border border-[var(--primary)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--primary-strong)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary-soft)]">
               {photoPath ? "Thay ảnh" : "Chọn / chụp ảnh"}
               <input
                 accept="image/*"
@@ -126,7 +126,7 @@ export const ProgressEditor = ({
             </label>
             {photoPath ? (
               <button
-                className="focus-ring pressable min-h-12 rounded-full border border-[var(--danger)] bg-white px-4 text-sm font-extrabold text-[var(--danger)] shadow-sm hover:bg-[var(--danger-soft)]"
+                className="focus-ring pressable min-h-12 rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--danger)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--danger-soft)]"
                 onClick={removePhoto}
                 type="button"
               >
@@ -134,7 +134,7 @@ export const ProgressEditor = ({
               </button>
             ) : null}
             {isProcessingPhoto ? (
-              <span className="text-sm font-bold text-[var(--info)]">Đang xử lý ảnh...</span>
+              <span className="text-sm font-semibold text-[var(--info)]">Đang xử lý ảnh...</span>
             ) : null}
           </div>
 

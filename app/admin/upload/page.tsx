@@ -176,7 +176,7 @@ const AdminUploadPage = (): React.ReactElement => {
   if (!currentAccount || currentAccount.mustChangePassword) {
     return (
       <main className="min-h-dvh p-6">
-        <p className="text-sm text-slate-600">Đang kiểm tra đăng nhập...</p>
+        <p className="text-sm text-[var(--text-muted)]">Đang kiểm tra đăng nhập...</p>
       </main>
     );
   }
@@ -192,7 +192,7 @@ const AdminUploadPage = (): React.ReactElement => {
             Chỉ tài khoản vinhlpp được import và export DATA. Các admin khác vẫn có thể xem dashboard và danh sách hạng mục.
           </p>
           <Link
-            className="focus-ring pressable mt-4 inline-flex min-h-12 items-center rounded-full bg-[var(--primary-strong)] px-4 text-sm font-bold text-white"
+            className="focus-ring pressable mt-4 inline-flex min-h-12 items-center rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 text-sm font-semibold text-white hover:bg-[var(--primary)]"
             href={currentAccount.role === "admin" ? "/admin" : "/worker"}
           >
             Quay lại
@@ -220,7 +220,7 @@ const AdminUploadPage = (): React.ReactElement => {
             <span className="text-sm font-semibold">Chọn file .xlsx</span>
             <input
               accept=".xlsx"
-              className="focus-ring control-pill mt-2 block w-full rounded-full p-3 text-base"
+              className="focus-ring control-pill mt-2 block w-full rounded-[var(--radius-field)] p-3 text-base"
               disabled={!data || isParsing}
               onChange={(event) => {
                 const file = event.target.files?.[0];
@@ -266,7 +266,7 @@ const AdminUploadPage = (): React.ReactElement => {
           {message ? (
             <p
               aria-live="polite"
-              className="mt-4 rounded-[var(--radius-field)] bg-white/82 p-3 text-sm text-slate-700 ring-1 ring-[var(--line)]"
+              className="mt-4 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 text-sm text-[var(--text-muted)] ring-1 ring-[var(--line)]"
             >
               {message}
             </p>
@@ -301,7 +301,7 @@ const ImportPreviewPanel = ({
         />
       </div>
       <div className="mt-5">
-        <h3 className="text-sm font-semibold text-slate-700">Sample 5 dòng đầu</h3>
+        <h3 className="text-sm font-semibold text-[var(--foreground)]">Sample 5 dòng đầu</h3>
         <div className="mt-2 grid gap-2">
           {preview.tasks.slice(0, 5).map((task) => (
             <SampleTask key={task.id} task={task} />
@@ -314,9 +314,9 @@ const ImportPreviewPanel = ({
 
 const SampleTask = ({ task }: { readonly task: Task }): React.ReactElement => {
   return (
-    <div className="rounded-[var(--radius-field)] border border-[var(--line)] bg-white/82 p-3 text-sm shadow-sm">
+    <div className="rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] p-3 text-sm">
       <p className="font-mono font-semibold">{task.tagname}</p>
-      <p className="mt-1 text-slate-700">{task.taskName}</p>
+      <p className="mt-1 text-[var(--text-muted)]">{task.taskName}</p>
       <p className="mt-1 text-xs text-[var(--text-muted)]">
         {task.donVi || "N/A"} · {task.resourceName || "N/A"}
       </p>
@@ -340,7 +340,7 @@ const Metric = ({
 };
 
 const CardEyebrow = ({ label }: { readonly label: string }): React.ReactElement => (
-  <p className="text-xs font-bold uppercase tracking-wide text-[var(--primary-strong)]">
+  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--primary-strong)]">
     {label}
   </p>
 );
@@ -354,11 +354,11 @@ const PreviewList = ({
 }): React.ReactElement => {
   return (
     <div>
-      <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
+      <h3 className="text-sm font-semibold text-[var(--foreground)]">{title}</h3>
       {values.length === 0 ? (
-        <p className="mt-2 text-sm text-slate-600">Không có</p>
+        <p className="mt-2 text-sm text-[var(--text-muted)]">Không có</p>
       ) : (
-        <ul className="mt-2 max-h-56 overflow-auto rounded-[var(--radius-card)] border border-[var(--line)] bg-white/82 p-3 text-sm">
+        <ul className="mt-2 max-h-56 overflow-auto rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3 text-sm">
           {values.map((value) => (
             <li className="border-b border-[var(--line)] py-2 last:border-b-0" key={value}>
               {value}

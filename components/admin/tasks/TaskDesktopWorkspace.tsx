@@ -25,9 +25,9 @@ export const TaskDesktopWorkspace = ({
     <section className="hidden gap-5 lg:grid xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="glass-card max-h-[680px] overflow-auto rounded-[var(--radius-card)]">
         <table className="min-w-[1320px] text-left text-sm">
-          <thead className="sticky top-0 z-20 border-b border-[var(--line)] bg-white/95 font-extrabold uppercase text-[11px] text-[var(--text-soft)] backdrop-blur-xl">
+          <thead className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)] font-semibold uppercase text-[11px] text-[var(--text-soft)]">
             <tr>
-              <th className="sticky left-0 z-30 bg-white py-3 pl-4 pr-4">Tagname</th>
+              <th className="sticky left-0 z-30 bg-[var(--surface)] py-3 pl-4 pr-4">Tagname</th>
               <th className="py-3 pr-4">WO</th>
               <th className="min-w-[280px] py-3 pr-4">Hạng mục</th>
               <th className="py-3 pr-4">Section</th>
@@ -62,22 +62,22 @@ export const TaskDesktopWorkspace = ({
                   tabIndex={0}
                 >
                   <td
-                    className={`sticky left-0 z-10 py-3 pl-4 pr-4 font-mono font-bold backdrop-blur ${
-                    selected ? "bg-[var(--primary-soft)]" : "bg-white/95"
+                    className={`sticky left-0 z-10 py-3 pl-4 pr-4 font-mono font-semibold ${
+                    selected ? "bg-[var(--primary-soft)]" : "bg-[var(--surface)]"
                     }`}
                   >
                     {task.tagname}
                   </td>
                   <td className="py-3 pr-4 font-semibold">{task.wo || "N/A"}</td>
                   <td className="py-3 pr-4">
-                    <p className="line-clamp-2 font-semibold leading-5 text-slate-800">
+                    <p className="line-clamp-2 font-semibold leading-5 text-[var(--foreground)]">
                       {task.taskName || "N/A"}
                     </p>
                   </td>
                   <td className="py-3 pr-4">{task.section || "N/A"}</td>
                   <td className="py-3 pr-4">{task.nhom || "N/A"}</td>
                   <td className="py-3 pr-4">{task.donVi || "N/A"}</td>
-                  <td className="py-3 pr-4 font-bold text-[var(--danger)]">P{task.priority}</td>
+                  <td className="py-3 pr-4 font-semibold text-[var(--danger)]">P{task.priority}</td>
                   <td className="py-3 pr-4">{task.resourceName || "N/A"}</td>
                   <td className="py-3 pr-4">
                     <Badge solid tone={task.isCancelled ? "danger" : getStatusTone(status)}>

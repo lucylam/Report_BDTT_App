@@ -15,7 +15,7 @@ export const SnapshotPanel = ({
     return (
       <section className="glass-card border-dashed p-5">
         <h2 className="text-lg font-semibold">Snapshot ngày</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-[var(--text-muted)]">
           Chưa có snapshot. Worker hoặc admin có thể ghi nhận snapshot báo cáo ngày.
         </p>
       </section>
@@ -43,8 +43,8 @@ const SnapshotMetric = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[var(--radius-field)] bg-white/82 p-3 shadow-sm ring-1 ring-[var(--border)]">
-      <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
+    <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
+      <p className="text-xs font-semibold uppercase text-[var(--text-soft)]">{label}</p>
       <p className="mt-1 text-lg font-semibold">{value}</p>
     </div>
   );

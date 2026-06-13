@@ -54,19 +54,19 @@ export const WorkerGroupedTaskList = ({
               aria-expanded={!isCollapsed}
               className={`focus-ring pressable flex min-h-12 w-full items-center justify-between gap-3 rounded-[var(--radius-card)] border px-4 text-left shadow-[var(--shadow-soft-sm)] ${
                 isCollapsed
-                  ? "border-[var(--line)] bg-white/82 text-[var(--primary-strong)]"
+                  ? "border-[var(--line)] bg-[var(--surface)] text-[var(--primary-strong)]"
                   : "border-[var(--primary)] bg-[var(--primary-strong)] text-white"
               }`}
               onClick={() => toggleGroup(group.key)}
               type="button"
             >
               <span className="min-w-0">
-                <span className="block truncate font-bold">{group.label}</span>
+                <span className="block truncate font-semibold">{group.label}</span>
                 <span className={`mt-0.5 block text-xs font-semibold ${isCollapsed ? "text-[var(--text-muted)]" : "text-white/75"}`}>
                   {group.tasks.length} hạng mục
                 </span>
               </span>
-              <span className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-bold ${
+              <span className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
                 isCollapsed
                   ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-1 ring-[var(--line)]"
                   : "bg-white/16 text-white"

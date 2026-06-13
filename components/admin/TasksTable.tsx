@@ -105,12 +105,12 @@ export const TasksTable = ({
       <section className="glass-card rounded-[var(--radius-card)] p-4 lg:p-5">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h2 className="text-xl font-bold">Danh sách hạng mục</h2>
+            <h2 className="text-xl font-semibold">Danh sách hạng mục</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
               Hiển thị {rows.length}/{filteredRows.length} dòng phù hợp.
             </p>
           </div>
-          <p className="rounded-full bg-white/82 px-3 py-2 text-sm font-bold text-slate-800 ring-1 ring-[var(--border-strong)]">
+          <p className="rounded-full bg-[var(--surface-muted)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] ring-1 ring-[var(--border-strong)]">
             Tổng dữ liệu: {allRows.length} hạng mục
           </p>
         </div>
@@ -126,7 +126,7 @@ export const TasksTable = ({
 
         {visibleCount < filteredRows.length ? (
           <button
-            className="focus-ring pressable mt-4 min-h-12 w-full rounded-full border border-[var(--primary)] bg-white px-4 text-sm font-bold text-[var(--primary-strong)] shadow-sm hover:bg-[var(--primary-soft)]"
+            className="focus-ring pressable mt-4 min-h-12 w-full rounded-[var(--radius-field)] border border-[var(--primary)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--primary-strong)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary-soft)]"
             onClick={() => setVisibleCount((current) => current + limit)}
             type="button"
           >

@@ -20,11 +20,11 @@ export const PageHeader = ({
     <div className={cn("flex min-w-0 flex-wrap items-center gap-3", className)}>
       <div className="min-w-0 flex-1">
         {eyebrow ? (
-          <p className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">
+          <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="mt-1 truncate text-2xl font-extrabold leading-tight tracking-normal text-[var(--foreground)] lg:text-3xl">
+        <h1 className="mt-1 truncate text-2xl font-semibold leading-tight tracking-normal text-[var(--foreground)] lg:text-3xl">
           {title}
         </h1>
         {description ? (

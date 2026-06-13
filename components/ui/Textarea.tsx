@@ -10,7 +10,7 @@ export const Textarea = ({
   return (
     <textarea
       className={cn(
-        "focus-ring min-h-28 w-full resize-y rounded-[var(--radius-field)] border border-[var(--line)] bg-white/90 px-4 py-3 text-base leading-6",
+        "focus-ring min-h-28 w-full resize-y rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-base leading-6",
         className
       )}
       {...props}

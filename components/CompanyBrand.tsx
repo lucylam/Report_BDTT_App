@@ -28,24 +28,24 @@ export const CompanyBrand = ({
       {isCompact ? null : (
         <div className={`min-w-0 ${isFull ? "" : "flex-1"}`}>
           <p
-            className={`font-extrabold leading-tight text-[var(--foreground)] ${
+            className={`font-semibold leading-tight text-[var(--foreground)] ${
               isFull ? "text-base md:text-lg" : "text-sm"
             }`}
           >
             Tổng Công Ty Phân Bón Dầu Khí Cà Mau
           </p>
           <p
-            className={`mt-1 font-extrabold uppercase text-[var(--primary-strong)] ${
+            className={`mt-1 font-semibold uppercase text-[var(--primary-strong)] ${
               isFull ? "text-sm" : "text-xs"
             }`}
           >
             Nhà máy Đạm Cà Mau
           </p>
-          <p className={`${isFull ? "text-sm" : "text-xs"} mt-1 font-bold text-[var(--text-muted)]`}>
+          <p className={`${isFull ? "text-sm" : "text-xs"} mt-1 font-semibold text-[var(--text-muted)]`}>
             Xưởng Điều khiển
           </p>
           {isFull ? (
-            <p className="mt-3 text-sm font-semibold text-slate-700">
+            <p className="mt-3 text-sm font-semibold text-[var(--text-muted)]">
               Chung một niềm tin - Vươn mình phát triển
             </p>
           ) : null}

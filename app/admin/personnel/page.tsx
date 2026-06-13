@@ -21,7 +21,7 @@ const AdminPersonnelPage = (): React.ReactElement => {
   if (!currentAccount || currentAccount.mustChangePassword) {
     return (
       <main className="min-h-dvh p-6">
-        <p className="text-sm text-slate-600">Đang kiểm tra đăng nhập...</p>
+        <p className="text-sm text-[var(--text-muted)]">Đang kiểm tra đăng nhập...</p>
       </main>
     );
   }
@@ -49,7 +49,7 @@ const AdminPersonnelPage = (): React.ReactElement => {
       {scopedData ? (
         <WorkerStatusTable data={scopedData} />
       ) : (
-        <p className="text-sm text-slate-600">Đang tải dữ liệu nhân sự...</p>
+        <p className="text-sm text-[var(--text-muted)]">Đang tải dữ liệu nhân sự...</p>
       )}
     </AdminShell>
   );

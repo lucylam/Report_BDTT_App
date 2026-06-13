@@ -38,7 +38,7 @@ export const CancelReasonDialog = ({
     >
       <form onSubmit={submit}>
         <label className="mt-5 block">
-          <span className="text-sm font-extrabold">Lý do hủy</span>
+          <span className="text-sm font-semibold">Lý do hủy</span>
           <Textarea
             autoFocus
             className="mt-2"

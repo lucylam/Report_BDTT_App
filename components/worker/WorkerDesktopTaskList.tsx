@@ -15,8 +15,8 @@ interface WorkerDesktopTaskListProps {
 const percentTone = (percent: number): string => {
   if (percent === 100) return "bg-[var(--success)]";
   if (percent >= 75) return "bg-[var(--info)]";
-  if (percent > 0) return "bg-[var(--warning)]";
-  return "bg-slate-300";
+  if (percent > 0) return "bg-[var(--accent)]";
+  return "bg-[var(--line)]";
 };
 
 export const WorkerDesktopTaskList = ({
@@ -58,9 +58,9 @@ export const WorkerDesktopTaskList = ({
           <section key={group.key}>
             <button
               aria-expanded={!isCollapsed}
-              className={`focus-ring pressable sticky top-0 z-10 mb-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-[var(--radius-card)] border px-4 text-left text-sm font-bold shadow-[var(--shadow-soft-sm)] backdrop-blur-xl ${
+              className={`focus-ring pressable sticky top-0 z-10 mb-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-[var(--radius-card)] border px-4 text-left text-sm font-semibold shadow-[var(--shadow-soft-sm)] ${
                 isCollapsed
-                  ? "border-[var(--line)] bg-white/82 text-[var(--primary-strong)]"
+                  ? "border-[var(--line)] bg-[var(--surface)] text-[var(--primary-strong)]"
                   : "border-[var(--primary)] bg-[var(--primary-strong)] text-white"
               }`}
               onClick={() => toggleGroup(group.key)}
@@ -77,7 +77,7 @@ export const WorkerDesktopTaskList = ({
                 </span>
               </span>
               <span
-                className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-bold ${
+                className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
                   isCollapsed
                     ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-1 ring-[var(--line)]"
                     : "bg-white/16 text-white"
@@ -102,9 +102,9 @@ export const WorkerDesktopTaskList = ({
                   return (
                     <button
                       aria-pressed={selected}
-                      className={`focus-ring pressable w-full rounded-[var(--radius-card)] border bg-white/88 p-3 text-left shadow-sm transition ${
+                      className={`focus-ring pressable w-full rounded-[var(--radius-card)] border bg-[var(--surface)] p-3 text-left shadow-[var(--shadow-soft-sm)] transition ${
                         selected
-                          ? "border-[var(--primary)] bg-white ring-4 ring-[var(--primary-soft)]"
+                          ? "border-[var(--primary)] ring-4 ring-[var(--primary-soft)]"
                           : "border-[var(--border-strong)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)]"
                       }`}
                       key={task.id}
@@ -121,7 +121,7 @@ export const WorkerDesktopTaskList = ({
                           </p>
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-slate-700">
+                          <p className="truncate text-sm font-semibold text-[var(--foreground)]">
                             {task.taskName}
                           </p>
                           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -135,7 +135,7 @@ export const WorkerDesktopTaskList = ({
                           <p className="text-right text-base font-semibold tabular-nums">
                             {task.isCancelled ? "NA" : `${percent}%`}
                           </p>
-                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white ring-1 ring-[var(--border)]">
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-muted)] ring-1 ring-[var(--border)]">
                             <div
                               className={`h-full rounded-full ${percentTone(percent)}`}
                               style={{ width: `${task.isCancelled ? 0 : percent}%` }}

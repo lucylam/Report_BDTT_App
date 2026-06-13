@@ -24,7 +24,7 @@ export const EmptyState = ({
       )}
     >
       {icon ? <div className="mb-3 flex justify-center text-[var(--text-soft)]">{icon}</div> : null}
-      <h2 className="text-lg font-extrabold text-[var(--foreground)]">{title}</h2>
+      <h2 className="text-lg font-semibold text-[var(--foreground)]">{title}</h2>
       <p className="mt-2 text-sm font-semibold leading-6 text-[var(--text-muted)]">
         {description}
       </p>

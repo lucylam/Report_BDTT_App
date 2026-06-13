@@ -99,8 +99,8 @@ export const PwaInstallButton = ({
   };
 
   const buttonClass = compact
-    ? "focus-ring pressable min-h-12 w-full rounded-full border border-[var(--border-strong)] bg-white/90 px-4 text-sm font-extrabold text-slate-800 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-    : "focus-ring pressable min-h-12 rounded-full bg-[var(--primary-strong)] px-4 text-sm font-extrabold text-white shadow-[var(--shadow-soft-sm)]";
+    ? "focus-ring pressable min-h-12 w-full rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+    : "focus-ring pressable min-h-12 rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 text-sm font-semibold text-white shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary)]";
 
   const button = deferredPrompt ? (
     <button
@@ -123,9 +123,9 @@ export const PwaInstallButton = ({
   if (variant === "panel") {
     return (
       <div
-        className={`rounded-[var(--radius-card)] border border-[var(--border)] bg-white/82 p-4 shadow-sm ${className}`}
+        className={`rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-muted)] p-4 shadow-[var(--shadow-soft-sm)] ${className}`}
       >
-        <p className="text-sm font-bold text-[var(--foreground)]">Dùng như mobile app</p>
+        <p className="text-sm font-semibold text-[var(--foreground)]">Dùng như mobile app</p>
         <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
           Cài BDTT lên màn hình chính để mở nhanh như ứng dụng nội bộ.
         </p>

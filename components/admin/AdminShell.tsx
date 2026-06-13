@@ -39,8 +39,8 @@ export const AdminShell = ({
   return (
     <main className="min-h-dvh w-full max-w-[100vw] overflow-x-hidden p-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] sm:p-3 lg:p-5 lg:pb-5">
       <div className="app-shell min-h-[calc(100dvh-1rem)] overflow-hidden rounded-[2rem] lg:grid lg:min-h-[calc(100dvh-2.5rem)] lg:grid-cols-[74px_minmax(0,1fr)]">
-        <aside className="hidden border-r border-[var(--line)] bg-white/88 px-4 py-5 lg:flex lg:flex-col lg:items-center lg:gap-1">
-          <div className="mb-5 grid h-11 w-11 place-items-center rounded-[0.9rem] bg-[linear-gradient(135deg,#0b6b4f,#15a06f)] text-[11px] font-extrabold tracking-wide text-white shadow-[var(--shadow-soft-sm)]">
+        <aside className="hidden border-r border-[var(--line)] bg-[var(--surface)] px-4 py-5 lg:flex lg:flex-col lg:items-center lg:gap-1">
+          <div className="mb-5 grid h-11 w-11 place-items-center rounded-[0.9rem] bg-[var(--primary-strong)] text-[11px] font-semibold tracking-wide text-white shadow-[var(--shadow-soft-sm)]">
             PVCFC
           </div>
           <nav className="flex flex-col gap-1" aria-label="Admin navigation">
@@ -74,7 +74,7 @@ export const AdminShell = ({
         </aside>
 
         <section className="min-w-0">
-          <header className="sticky top-0 z-30 border-b border-white/70 bg-white/82 px-4 py-4 backdrop-blur-2xl lg:static lg:border-b-0 lg:bg-transparent lg:px-7 lg:py-5">
+          <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)] px-4 py-4 lg:static lg:border-b-0 lg:bg-transparent lg:px-7 lg:py-5">
             <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-center">
               <PageHeader
                 className="min-w-0 flex-1"
@@ -83,7 +83,7 @@ export const AdminShell = ({
                 title={title}
               />
 
-              <div className="hidden min-w-[18rem] items-center gap-2 rounded-full border border-[var(--line)] bg-white/90 px-4 py-3 text-sm font-semibold text-[var(--text-soft)] shadow-[var(--shadow-soft-sm)] lg:flex xl:min-w-[26rem]">
+              <div className="hidden min-w-[18rem] items-center gap-2 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold text-[var(--text-soft)] shadow-[var(--shadow-soft-sm)] lg:flex xl:min-w-[26rem]">
                 <Icon name="search" />
                 <span className="truncate">Tìm WorkOrder, hạng mục, đơn vị...</span>
               </div>
@@ -92,9 +92,9 @@ export const AdminShell = ({
                 <ModeSwitch activeMode="supervision" href="/worker" />
               </div>
 
-              <div className="hidden rounded-full border border-[var(--line)] bg-white/90 p-1 shadow-[var(--shadow-soft-sm)] lg:flex">
+              <div className="hidden rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-1 shadow-[var(--shadow-soft-sm)] lg:flex">
                 <Link
-                  className={`focus-ring min-h-10 rounded-full px-5 text-sm font-bold leading-10 ${
+                  className={`focus-ring min-h-10 rounded-[calc(var(--radius-field)-0.25rem)] px-5 text-sm font-semibold leading-10 ${
                     pathname === "/admin"
                       ? "bg-[var(--foreground)] text-white"
                       : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
@@ -104,7 +104,7 @@ export const AdminShell = ({
                   Dashboard
                 </Link>
                 <Link
-                  className={`focus-ring min-h-10 rounded-full px-5 text-sm font-bold leading-10 ${
+                  className={`focus-ring min-h-10 rounded-[calc(var(--radius-field)-0.25rem)] px-5 text-sm font-semibold leading-10 ${
                     pathname === "/admin/tasks"
                       ? "bg-[var(--foreground)] text-white"
                       : "text-[var(--text-muted)] hover:text-[var(--foreground)]"
@@ -116,11 +116,11 @@ export const AdminShell = ({
               </div>
 
               <div className="flex min-w-0 items-center gap-2 lg:min-w-[15rem]">
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,#f08a3c,#f2b463)] text-sm font-extrabold text-white shadow-[var(--shadow-soft-sm)]">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-sm font-semibold text-white shadow-[var(--shadow-soft-sm)]">
                   {getInitials(account.fullName)}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-extrabold text-[var(--foreground)]">
+                  <p className="truncate text-sm font-semibold text-[var(--foreground)]">
                     {account.fullName}
                   </p>
                   <p className="truncate text-xs font-semibold text-[var(--text-muted)]">
@@ -146,7 +146,7 @@ export const AdminShell = ({
 
       <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 px-3 lg:hidden">
         <div
-          className="floating-pill grid gap-1 rounded-[var(--radius-card)] p-2 text-center text-[11px] font-extrabold"
+          className="floating-pill grid gap-1 rounded-[var(--radius-card)] p-2 text-center text-[11px] font-semibold"
           style={{ gridTemplateColumns: `repeat(${visibleLinks.length}, minmax(0, 1fr))` }}
         >
           {visibleLinks.map((link) => {
@@ -156,7 +156,7 @@ export const AdminShell = ({
                 className={`focus-ring pressable flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-[var(--radius-field)] px-1 leading-tight ${
                   active
                     ? "bg-[var(--primary-strong)] text-white shadow-md"
-                    : "text-slate-700 hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+                    : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
                 }`}
                 href={link.href}
                 key={link.href}

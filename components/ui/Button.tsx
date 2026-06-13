@@ -6,13 +6,13 @@ export type ButtonSize = "md" | "sm";
 
 const variantClass: Record<ButtonVariant, string> = {
   primary:
-    "bg-[var(--primary-strong)] text-white shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary)]",
+    "bg-[var(--primary-strong)] text-white shadow-[var(--shadow-soft-sm)] hover:bg-[var(--success-strong)]",
   secondary:
-    "border border-[var(--border-strong)] bg-white/90 text-slate-800 hover:bg-white",
+    "border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-muted)]",
   danger:
     "bg-[var(--danger)] text-white shadow-[var(--shadow-soft-sm)] hover:bg-[var(--danger-strong)]",
   ghost:
-    "text-[var(--text-muted)] hover:bg-[var(--line-soft)] hover:text-[var(--foreground)]"
+    "text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
 };
 
 const sizeClass: Record<ButtonSize, string> = {
@@ -37,7 +37,7 @@ export const Button = ({
   return (
     <button
       className={cn(
-        "focus-ring pressable inline-flex items-center justify-center gap-2 rounded-full font-extrabold disabled:cursor-not-allowed disabled:opacity-60",
+        "focus-ring pressable inline-flex items-center justify-center gap-2 rounded-[var(--radius-field)] font-semibold disabled:cursor-not-allowed disabled:opacity-60",
         variantClass[variant],
         sizeClass[size],
         full && "w-full",

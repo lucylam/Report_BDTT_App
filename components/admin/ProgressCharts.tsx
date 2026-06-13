@@ -22,13 +22,14 @@ import type {
   UnitLeadRow
 } from "@/lib/dashboard";
 
-const colors = ["#0f5d56", "#356d8d", "#f3bd5b", "#a93a3a"];
+const colors = ["#6fa51f", "#4a90d9", "#f2a24a", "#df5b3a"];
 const statusColors = {
-  completed: "#287342",
-  inProgress: "#a86512",
-  cancelled: "#a93a3a",
-  notStarted: "#94a3b8"
+  completed: "#6fa51f",
+  inProgress: "#e0852f",
+  cancelled: "#df5b3a",
+  notStarted: "#a6a69e"
 } as const;
+const pieRemainingFill = "#e6e6e2";
 
 export const ProgressCharts = ({
   dashboard,
@@ -128,8 +129,8 @@ const OverallPie = ({ row }: { readonly row: CompletionRow }): React.ReactElemen
               outerRadius={118}
               paddingAngle={2}
             >
-              <Cell fill="#0f5d56" />
-              <Cell fill="#e8ddca" />
+              <Cell fill="#6fa51f" />
+              <Cell fill={pieRemainingFill} />
             </Pie>
             <Tooltip formatter={(value) => [formatNumber(Number(value)), "Hạng mục"]} />
             <Legend />
@@ -160,8 +161,8 @@ const CompletionChart = ({
             <YAxis dataKey="name" tick={{ fontSize: 12 }} type="category" width={130} />
             <Tooltip formatter={(value) => [formatNumber(Number(value)), ""]} />
             <Legend />
-            <Bar dataKey="done" fill="#0f5d56" name="Đã thực hiện" stackId="a" />
-            <Bar dataKey="remaining" fill="#e8ddca" name="Còn lại" stackId="a" />
+            <Bar dataKey="done" fill="#6fa51f" name="Đã thực hiện" stackId="a" />
+            <Bar dataKey="remaining" fill={pieRemainingFill} name="Còn lại" stackId="a" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -239,7 +240,7 @@ const ResourceGroupChart = ({
   if (group.rows.length === 0) {
     return (
       <ChartShell subtitle="Chưa có hạng mục thuộc nhóm này trong dữ liệu hiện tại" title={group.title}>
-        <div className="mt-4 rounded-[var(--radius-card)] bg-white/82 p-4 text-sm text-[var(--text-muted)] ring-1 ring-[var(--border)]">
+        <div className="mt-4 rounded-[var(--radius-card)] bg-[var(--surface-muted)] p-4 text-sm text-[var(--text-muted)] ring-1 ring-[var(--border)]">
           Không có dữ liệu để hiển thị.
         </div>
       </ChartShell>
@@ -264,7 +265,7 @@ const DeferredDashboardNotice = (): React.ReactElement => {
       <div className="mt-3 flex flex-wrap gap-2">
         {items.map((item) => (
           <span
-            className="rounded-full bg-white/82 px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-[var(--border)]"
+            className="rounded-full bg-[var(--surface-muted)] px-3 py-2 text-sm font-semibold text-[var(--text-muted)] ring-1 ring-[var(--border)]"
             key={item}
           >
             {item}

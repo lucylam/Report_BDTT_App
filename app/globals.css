@@ -3,44 +3,71 @@
 :root {
   --font-sans: var(--font-plus-jakarta), "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --background: #eef1f7;
-  --foreground: #101828;
-  --text-muted: #667085;
-  --text-soft: #98a2b3;
-  --surface: #f7f9fc;
-  --surface-muted: #eef3f7;
-  --surface-glass: rgba(255, 255, 255, 0.86);
-  --surface-warm: #fff4e7;
+
+  /* Base — nền xám phẳng "earthy" (clone family-budget) */
+  --background: #f2f2f0;
+  --foreground: #111111;
+  --text-muted: #8b8b85;
+  --text-soft: #a6a69e;
+  --surface: #ffffff;
+  --surface-muted: #f7f7f4;
+  --surface-glass: #ffffff;
+  --surface-warm: #fff0dc;
   --card: #ffffff;
-  --line: #eef1f6;
-  --line-soft: #f3f5f9;
-  --border: rgba(16, 24, 40, 0.075);
-  --border-strong: rgba(16, 24, 40, 0.13);
-  --primary: #0f8f6a;
-  --primary-strong: #0b6b4f;
-  --primary-soft: #e7f3ee;
-  --primary-pale: #f0faf6;
-  --accent: #f08a3c;
-  --accent-soft: #fdefe2;
-  --warning: #b7791f;
-  --warning-strong: #8a5a16;
-  --warning-soft: #fff3d8;
-  --danger: #d94f3d;
-  --danger-strong: #c23b2a;
-  --danger-soft: #fdeae6;
-  --success: #0b7a55;
-  --success-soft: #e7f3ee;
-  --info: #3e7bfa;
-  --info-strong: #2b5fd9;
-  --info-soft: #e9f0ff;
+  --line: #ececea;
+  --line-soft: #f1f1ee;
+  --border: rgba(17, 17, 17, 0.07);
+  --border-strong: rgba(17, 17, 17, 0.12);
+
+  /* Primary — lime / teal */
+  --primary: #9bd13b;
+  --primary-strong: #6fa51f;
+  --primary-soft: #edf8d5;
+  --primary-pale: #f5fbe8;
+
+  /* Accent — cam */
+  --accent: #f2a24a;
+  --accent-strong: #d76635;
+  --accent-soft: #fff0dc;
+
+  /* Warning — vàng */
+  --warning: #b18416;
+  --warning-strong: #8a6510;
+  --warning-soft: #fff7c7;
+
+  /* Danger — đỏ ấm (giữ phân biệt "trễ / P1") */
+  --danger: #df5b3a;
+  --danger-strong: #c2452a;
+  --danger-soft: #fde7e0;
+
+  /* Success — teal / lime */
+  --success: #6fa51f;
+  --success-strong: #5a8718;
+  --success-soft: #edf8d5;
+
+  /* Info — xanh dịu (giữ cho badge "đơn vị") */
+  --info: #4a90d9;
+  --info-strong: #2f6fb5;
+  --info-soft: #e7f0fb;
+
+  /* Yellow — cho SegmentBar / thanh phân bổ */
+  --yellow: #e7e94a;
+  --yellow-strong: #c9b735;
+  --yellow-soft: #fff7c7;
+
   --purple: #7c5cff;
   --purple-soft: #f0edff;
-  --shadow-soft-sm: 0 8px 22px -16px rgba(16, 24, 40, 0.35);
-  --shadow-soft-md: 0 18px 42px -26px rgba(16, 24, 40, 0.32);
-  --shadow-floating: 0 24px 56px -30px rgba(16, 24, 40, 0.45);
-  --radius-card: 1.5rem;
-  --radius-field: 1.25rem;
-  --radius-panel: 2rem;
+
+  /* Bóng phẳng theo finance-card */
+  --shadow-soft-sm: 0 12px 30px rgb(16 24 40 / 0.05);
+  --shadow-soft-md: 0 16px 36px -8px rgb(16 24 40 / 0.08);
+  --shadow-floating: 0 24px 50px -16px rgb(16 24 40 / 0.18);
+
+  /* Bo góc nhỏ lại (clone) */
+  --radius-card: 1rem;
+  --radius-field: 0.75rem;
+  --radius-panel: 1.25rem;
+
   --mobile-topbar-height: 4.35rem;
   --mobile-bottom-nav-height: 5.5rem;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -63,11 +90,7 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  background:
-    radial-gradient(880px 500px at 0% 0%, rgba(251, 232, 211, 0.95) 0%, transparent 58%),
-    radial-gradient(1000px 620px at 100% 0%, rgba(232, 238, 249, 0.95) 0%, transparent 58%),
-    radial-gradient(900px 680px at 82% 100%, rgba(223, 238, 230, 0.9) 0%, transparent 54%),
-    #eef1f7;
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 16px;
@@ -115,15 +138,14 @@ button:disabled {
 
 .floating-pill {
   border: 1px solid var(--border-strong);
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--surface);
   box-shadow: var(--shadow-floating);
-  backdrop-filter: blur(20px);
 }
 
 .control-pill {
   border: 1px solid var(--border-strong);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: var(--shadow-soft-sm);
+  background: var(--surface);
+  box-shadow: none;
 }
 
 .pressable {
@@ -148,32 +170,27 @@ button:disabled {
 }
 
 .focus-ring:focus-visible {
-  outline: 3px solid rgba(15, 143, 106, 0.28);
+  outline: 3px solid rgba(111, 165, 31, 0.35);
   outline-offset: 2px;
 }
 
 .app-shell {
-  background:
-    radial-gradient(760px 440px at 0% 0%, rgba(251, 232, 211, 0.92), transparent 58%),
-    radial-gradient(760px 440px at 100% 0%, rgba(232, 238, 249, 0.95), transparent 60%),
-    radial-gradient(640px 520px at 80% 100%, rgba(223, 238, 230, 0.92), transparent 58%),
-    var(--surface);
-  border: 1px solid rgba(255, 255, 255, 0.66);
-  box-shadow: 0 40px 90px -50px rgba(16, 24, 40, 0.45);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft-md);
 }
 
 .glass-card {
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--line);
+  background: var(--surface);
   box-shadow: var(--shadow-soft-sm);
-  backdrop-filter: blur(18px);
 }
 
 .metric-card {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  background: var(--surface);
   box-shadow: var(--shadow-soft-sm);
 }
 
@@ -191,11 +208,12 @@ button:disabled {
 
 .icon-button {
   display: grid;
-  min-height: 2.625rem;
-  min-width: 2.625rem;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
   place-items: center;
-  border-radius: 0.875rem;
-  border: 1px solid transparent;
+  border-radius: var(--radius-field);
+  border: 1px solid var(--line);
+  background: var(--surface);
   color: var(--text-soft);
   transition:
     background-color 180ms ease,
@@ -206,7 +224,7 @@ button:disabled {
 }
 
 .icon-button:hover {
-  background: var(--line-soft);
+  background: var(--surface-muted);
   color: var(--foreground);
   transform: translateY(-1px);
 }
@@ -230,10 +248,9 @@ button:disabled {
 }
 
 .bottom-sheet {
-  border-radius: 1.75rem 1.75rem 0 0;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 -22px 48px -24px rgba(16, 24, 40, 0.4);
-  backdrop-filter: blur(20px);
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  background: var(--surface);
+  box-shadow: 0 -18px 44px -22px rgb(16 24 40 / 0.22);
 }
 
 .mobile-app-page {
@@ -253,6 +270,75 @@ button:disabled {
 
 .mobile-scroll-section {
   scroll-margin-top: calc(var(--mobile-topbar-height) + var(--safe-top));
+}
+
+/* Thanh tiến độ sọc chéo 45° (clone family-budget) — dùng cho ProgressBar striped */
+.progress-stripe-primary {
+  background-image: repeating-linear-gradient(45deg, var(--primary) 0, var(--primary) 4px, var(--primary-strong) 4px, var(--primary-strong) 7px);
+}
+.progress-stripe-success {
+  background-image: repeating-linear-gradient(45deg, var(--success) 0, var(--success) 4px, var(--success-strong) 4px, var(--success-strong) 7px);
+}
+.progress-stripe-accent {
+  background-image: repeating-linear-gradient(45deg, var(--accent) 0, var(--accent) 4px, var(--accent-strong) 4px, var(--accent-strong) 7px);
+}
+.progress-stripe-warning {
+  background-image: repeating-linear-gradient(45deg, var(--warning) 0, var(--warning) 4px, var(--warning-strong) 4px, var(--warning-strong) 7px);
+}
+.progress-stripe-danger {
+  background-image: repeating-linear-gradient(45deg, var(--danger) 0, var(--danger) 4px, var(--danger-strong) 4px, var(--danger-strong) 7px);
+}
+.progress-stripe-info {
+  background-image: repeating-linear-gradient(45deg, var(--info) 0, var(--info) 4px, var(--info-strong) 4px, var(--info-strong) 7px);
+}
+.progress-stripe-yellow {
+  background-image: repeating-linear-gradient(45deg, var(--yellow) 0, var(--yellow) 4px, var(--yellow-strong) 4px, var(--yellow-strong) 7px);
+}
+
+/* Hiệu ứng vào trang / skeleton (clone family-budget) */
+.page-enter {
+  animation: page-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger-load {
+  animation: page-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger-load:nth-child(2) {
+  animation-delay: 35ms;
+}
+.stagger-load:nth-child(3) {
+  animation-delay: 70ms;
+}
+.stagger-load:nth-child(4) {
+  animation-delay: 105ms;
+}
+.stagger-load:nth-child(5) {
+  animation-delay: 140ms;
+}
+
+.shimmer-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(110deg, rgb(226 232 240 / 0.58) 8%, rgb(241 245 249 / 0.95) 18%, rgb(226 232 240 / 0.58) 33%);
+  background-size: 220% 100%;
+  animation: shimmer-skeleton 1.25s linear infinite;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shimmer-skeleton {
+  to {
+    background-position-x: -220%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

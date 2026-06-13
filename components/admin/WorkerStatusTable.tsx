@@ -183,7 +183,7 @@ export const WorkerStatusTable = ({
       <div className="glass-card min-w-0 max-w-full overflow-hidden p-4 lg:p-5">
         <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
-            <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">
+            <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
               Worker report
             </p>
             <h2 className="mt-1 text-xl font-semibold">Theo dõi báo cáo worker</h2>
@@ -247,7 +247,7 @@ export const WorkerStatusTable = ({
 
           <div className="hidden max-w-full overflow-x-auto lg:block">
             <table className="min-w-[1040px] text-left text-sm">
-              <thead className="sticky top-0 border-b border-[var(--line)] bg-white/95 font-bold text-slate-800 backdrop-blur">
+              <thead className="sticky top-0 border-b border-[var(--line)] bg-[var(--surface)] font-semibold text-[var(--foreground)]">
                 <tr>
                   <th className="py-3 pr-4">Tên</th>
                   <th className="py-3 pr-4">Nhóm</th>
@@ -265,13 +265,13 @@ export const WorkerStatusTable = ({
                   return (
                     <tr
                       className={`border-b border-[var(--line)] ${
-                        active ? "bg-[var(--primary-pale)]" : "hover:bg-white/50"
+                        active ? "bg-[var(--primary-pale)]" : "hover:bg-[var(--surface-muted)]"
                       }`}
                       key={row.profile.id}
                     >
                       <td className="py-3 pr-4">
                         <button
-                          className="focus-ring text-left font-bold text-[var(--primary-strong)] hover:underline"
+                          className="focus-ring text-left font-semibold text-[var(--primary-strong)] hover:underline"
                           onClick={() => setSelectedWorkerId(row.profile.id)}
                           type="button"
                         >
@@ -280,7 +280,7 @@ export const WorkerStatusTable = ({
                         <p className="mt-1 text-xs font-semibold text-[var(--text-muted)]">
                           @{row.profile.username}
                         </p>
-                        <p className="mt-1 max-w-56 text-xs font-semibold leading-4 text-slate-700">
+                        <p className="mt-1 max-w-56 text-xs font-semibold leading-4 text-[var(--text-muted)]">
                           {row.profile.orgTitle}
                         </p>
                       </td>
@@ -334,10 +334,10 @@ const DateButton = ({
 }): React.ReactElement => {
   return (
     <button
-      className={`focus-ring pressable min-h-10 shrink-0 rounded-full border px-4 text-sm font-bold ${
+      className={`focus-ring pressable min-h-10 shrink-0 rounded-[var(--radius-field)] border px-4 text-sm font-semibold ${
         active
           ? "border-[var(--primary)] bg-[var(--primary-strong)] text-white shadow-md"
-          : "border-[var(--line)] bg-white/86 text-slate-800 shadow-sm hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+          : "border-[var(--line)] bg-[var(--surface)] text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
       }`}
       onClick={onClick}
       type="button"
@@ -409,7 +409,7 @@ const WorkerDetailPanel = ({
     <aside className="glass-card min-w-0 max-w-full self-start overflow-hidden p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">
+          <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
             Chi tiết worker
           </p>
           <h2 className="mt-1 text-xl font-semibold">{row.profile.fullName}</h2>
@@ -417,10 +417,10 @@ const WorkerDetailPanel = ({
             @{row.profile.username} · {row.profile.nhom}
           </p>
           <div className="mt-3 rounded-[var(--radius-field)] bg-[var(--primary-pale)] p-3 ring-1 ring-[var(--line)]">
-            <p className="text-sm font-bold text-[var(--primary-strong)]">
+            <p className="text-sm font-semibold text-[var(--primary-strong)]">
               {row.profile.orgTitle}
             </p>
-            <p className="mt-1 text-sm leading-5 text-slate-700">
+            <p className="mt-1 text-sm leading-5 text-[var(--text-muted)]">
               {row.profile.orgAssignment}
             </p>
           </div>
@@ -447,7 +447,7 @@ const WorkerDetailPanel = ({
       </div>
 
       <section className="mt-5">
-        <h3 className="text-sm font-bold uppercase text-[var(--text-muted)]">
+        <h3 className="text-sm font-semibold uppercase text-[var(--text-muted)]">
           Tình trạng gửi theo ngày
         </h3>
         <div className="mt-3 grid gap-2">
@@ -456,7 +456,7 @@ const WorkerDetailPanel = ({
               className={`rounded-[var(--radius-field)] border p-3 ${
                 dateFilter === day.date
                   ? "border-[var(--primary)] bg-[var(--primary-pale)]"
-                  : "border-[var(--line)] bg-white/74"
+                  : "border-[var(--line)] bg-[var(--surface-muted)]"
               }`}
               key={day.date}
             >
@@ -475,28 +475,28 @@ const WorkerDetailPanel = ({
       </section>
 
       <section className="mt-5">
-        <h3 className="text-sm font-bold uppercase text-[var(--text-muted)]">
+        <h3 className="text-sm font-semibold uppercase text-[var(--text-muted)]">
           Danh sách task - {getDateLabel(dateFilter)}
         </h3>
         <div className="mt-3 grid gap-2">
           {row.taskStatuses.length === 0 ? (
-            <p className="rounded-[var(--radius-field)] bg-white/78 p-4 text-sm font-semibold text-[var(--text-muted)] ring-1 ring-[var(--line)]">
+            <p className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-4 text-sm font-semibold text-[var(--text-muted)] ring-1 ring-[var(--line)]">
               Worker này chưa có task được phân công.
             </p>
           ) : (
             row.taskStatuses.map(({ latestRecord, percent, task }) => (
               <article
-                className="rounded-[var(--radius-field)] border border-[var(--line)] bg-white/78 p-3"
+                className="rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] p-3"
                 key={task.id}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-mono text-base font-bold">{task.tagname}</p>
-                    <p className="mt-1 line-clamp-2 text-sm leading-5 text-slate-700">
+                    <p className="truncate font-mono text-base font-semibold">{task.tagname}</p>
+                    <p className="mt-1 line-clamp-2 text-sm leading-5 text-[var(--text-muted)]">
                       {task.taskName}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-[var(--primary-strong)] px-3 py-1.5 text-sm font-bold text-white tabular-nums">
+                  <span className="shrink-0 rounded-full bg-[var(--primary-strong)] px-3 py-1.5 text-sm font-semibold text-white tabular-nums">
                     {percent}%
                   </span>
                 </div>
@@ -506,7 +506,7 @@ const WorkerDetailPanel = ({
                   <Badge solid tone="neutral">{task.section || "N/A"}</Badge>
                 </div>
                 {latestRecord?.note ? (
-                  <p className="mt-3 rounded-[var(--radius-field)] bg-[var(--primary-pale)] px-3 py-2 text-sm text-slate-700">
+                  <p className="mt-3 rounded-[var(--radius-field)] bg-[var(--primary-pale)] px-3 py-2 text-sm text-[var(--text-muted)]">
                     {latestRecord.reportDate}: {latestRecord.note}
                   </p>
                 ) : null}
@@ -527,9 +527,9 @@ const Metric = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="flex min-h-14 flex-col items-center justify-center rounded-[var(--radius-field)] bg-white/86 p-2 text-center text-slate-900 ring-1 ring-[var(--line)]">
-      <p className="text-xs font-bold text-slate-700">{label}</p>
-      <p className="mt-1 text-sm font-bold">{value}</p>
+    <div className="flex min-h-14 flex-col items-center justify-center rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-2 text-center text-[var(--foreground)] ring-1 ring-[var(--line)]">
+      <p className="text-xs font-semibold text-[var(--text-muted)]">{label}</p>
+      <p className="mt-1 text-sm font-semibold">{value}</p>
     </div>
   );
 };

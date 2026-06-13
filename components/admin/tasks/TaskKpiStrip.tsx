@@ -7,8 +7,8 @@ interface TaskKpiStripProps {
 const kpiItems = [
   { key: "total", label: "Tổng hạng mục", tone: "text-[var(--foreground)]" },
   { key: "p1Open", label: "P1 chưa xong", tone: "text-[var(--danger)]" },
-  { key: "notStarted", label: "Chưa thực hiện", tone: "text-slate-700" },
-  { key: "inProgress", label: "Đang thực hiện", tone: "text-[var(--warning)]" },
+  { key: "notStarted", label: "Chưa thực hiện", tone: "text-[var(--text-muted)]" },
+  { key: "inProgress", label: "Đang thực hiện", tone: "text-[var(--accent-strong)]" },
   { key: "cancelled", label: "Cancel", tone: "text-[var(--danger)]" },
   { key: "completed", label: "Hoàn thành", tone: "text-[var(--success)]" }
 ] as const;
@@ -21,10 +21,10 @@ export const TaskKpiStrip = ({ kpis }: TaskKpiStripProps): React.ReactElement =>
           className={`metric-card rounded-[var(--radius-card)] p-4 ${item.tone}`}
           key={item.key}
         >
-          <p className="text-[11px] font-extrabold uppercase text-[var(--text-soft)]">
+          <p className="text-[11px] font-semibold uppercase text-[var(--text-soft)]">
             {item.label}
           </p>
-          <p className="mt-2 text-3xl font-extrabold tabular-nums">
+          <p className="mt-2 text-3xl font-semibold tabular-nums">
             {kpis[item.key]}
           </p>
         </div>

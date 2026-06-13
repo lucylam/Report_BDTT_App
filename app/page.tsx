@@ -18,13 +18,13 @@ const HomePage = (): React.ReactElement => {
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-6">
       <section className="app-shell w-full max-w-5xl overflow-hidden rounded-[var(--radius-panel)] p-4 md:grid md:grid-cols-[1.05fr_0.95fr] md:p-5">
-        <div className="rounded-[var(--radius-card)] bg-white/82 p-5 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl md:p-7">
-          <CompanyBrand className="rounded-[var(--radius-field)] bg-white/78 p-4 ring-1 ring-[var(--border)]" variant="full" />
+        <div className="rounded-[var(--radius-card)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft-sm)] md:p-7">
+          <CompanyBrand className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--border)]" variant="full" />
           <div className="mt-6">
-            <p className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">
+            <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
               Tổ Thiết bị Đo lường & Điều khiển
             </p>
-            <h1 className="mt-3 text-4xl font-extrabold leading-tight tracking-normal text-[var(--foreground)] md:text-5xl">
+            <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-normal text-[var(--foreground)] md:text-5xl">
               Tiến độ BDTT 2026
             </h1>
             <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-[var(--text-muted)]">
@@ -33,7 +33,7 @@ const HomePage = (): React.ReactElement => {
             </p>
           </div>
           <Link
-            className="focus-ring pressable mt-7 inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--primary-strong)] px-6 text-sm font-extrabold text-white shadow-[var(--shadow-soft-sm)]"
+            className="focus-ring pressable mt-7 inline-flex min-h-12 items-center justify-center rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-6 text-sm font-semibold text-white shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary)]"
             href="/login"
           >
             Vào màn hình đăng nhập
@@ -41,9 +41,9 @@ const HomePage = (): React.ReactElement => {
         </div>
 
         <div className="mt-4 grid gap-4 md:mt-0 md:p-4">
-          <div className="rounded-[var(--radius-card)] bg-[var(--primary-strong)] p-5 text-white shadow-[var(--shadow-floating)]">
-            <p className="text-xs font-extrabold uppercase text-white/85">Trạng thái</p>
-            <p className="mt-3 text-5xl font-extrabold leading-none">Sẵn sàng</p>
+          <div className="rounded-[var(--radius-card)] bg-[var(--primary-strong)] p-5 text-white shadow-[var(--shadow-soft-md)]">
+            <p className="text-xs font-semibold uppercase text-white/85">Trạng thái</p>
+            <p className="mt-3 text-5xl font-semibold leading-none">Sẵn sàng</p>
             <p className="mt-3 text-sm font-semibold leading-6 text-white/88">
               Cập nhật được cả khi mất mạng — dữ liệu tự gửi lại khi có kết nối.
               Nhớ báo cáo tiến độ trước mốc 12:00 mỗi ngày.
@@ -70,8 +70,8 @@ const Metric = ({
 }): React.ReactElement => {
   return (
     <div className="metric-card rounded-[var(--radius-card)] p-4 text-[var(--primary-strong)]">
-      <p className="text-xs font-extrabold uppercase text-[var(--text-muted)]">{label}</p>
-      <p className="mt-2 text-lg font-extrabold leading-tight text-[var(--foreground)]">
+      <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">{label}</p>
+      <p className="mt-2 text-lg font-semibold leading-tight text-[var(--foreground)]">
         {value}
       </p>
     </div>

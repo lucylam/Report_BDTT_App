@@ -38,7 +38,7 @@ export const WorkerDesktopTaskDetail = ({
         Hạng mục đang chọn
       </p>
       <h2 className="mt-2 font-mono text-2xl font-semibold">{task.tagname}</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-700">{task.taskName}</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">{task.taskName}</p>
       <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
         <Info label="Đơn vị" value={task.donVi} />
         <Info label="Section" value={task.section} />
@@ -50,7 +50,7 @@ export const WorkerDesktopTaskDetail = ({
           <div className="rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
             Hạng mục này đã được hủy và đã báo cho admin.
             {task.cancelReason ? (
-              <span className="mt-2 block font-medium text-slate-700">
+              <span className="mt-2 block font-medium text-[var(--text-muted)]">
                 Lý do: {task.cancelReason}
               </span>
             ) : null}
@@ -65,7 +65,7 @@ export const WorkerDesktopTaskDetail = ({
               task={task}
             />
             <button
-              className="focus-ring pressable mt-4 min-h-12 w-full rounded-full border border-[var(--danger)] bg-white/80 px-4 text-sm font-semibold text-[var(--danger)]"
+              className="focus-ring pressable mt-4 min-h-12 w-full rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)]"
               onClick={() => onCancel(task.id)}
               type="button"
             >
@@ -86,7 +86,7 @@ const Info = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[var(--radius-field)] bg-white/82 p-3 shadow-sm ring-1 ring-[var(--border)]">
+    <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
       <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">{label}</p>
       <p className="mt-1 font-semibold">{value || "N/A"}</p>
     </div>

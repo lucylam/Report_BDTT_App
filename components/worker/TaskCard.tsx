@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Badge } from "@/components/ui";
+import { Badge, ProgressBar } from "@/components/ui";
+import type { ProgressTone } from "@/components/ui";
 import { ProgressEditor } from "@/components/worker/ProgressEditor";
 import type { SaveState, WorkerProgressUpdate } from "@/components/worker/types";
 import type { ProgressPercent, ProgressRecord, Task } from "@/types/domain";
@@ -20,6 +21,12 @@ const priorityTone = (priority: 1 | 2 | 3): "danger" | "warning" | "neutral" => 
   return "neutral";
 };
 
+const progressTone = (percent: number): ProgressTone => {
+  if (percent >= 100) return "success";
+  if (percent > 0) return "accent";
+  return "primary";
+};
+
 export const TaskCard = ({
   task,
   progress,
@@ -34,20 +41,20 @@ export const TaskCard = ({
   const hasDetail = Boolean(progress?.note || progress?.photoPath);
 
   return (
-    <article className="glass-card overflow-hidden rounded-[var(--radius-field)]">
+    <article className="glass-card overflow-hidden rounded-[var(--radius-card)]">
       <div className="flex items-start gap-3 p-4">
         <ProgressRing cancelled={task.isCancelled} percent={percent} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="font-mono text-base font-extrabold leading-tight text-[var(--foreground)]">
+              <h2 className="font-mono text-base font-semibold leading-tight text-[var(--foreground)]">
                 {task.tagname}
               </h2>
-              <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-slate-700">
+              <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-[var(--text-muted)]">
                 {task.taskName}
               </p>
             </div>
-            <span className="shrink-0 rounded-full bg-white/92 px-3 py-2 text-sm font-extrabold tabular-nums shadow-sm ring-1 ring-[var(--border)]">
+            <span className="shrink-0 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-2 text-sm font-semibold tabular-nums ring-1 ring-[var(--border)]">
               {task.isCancelled ? "NA" : `${percent}%`}
             </span>
           </div>
@@ -61,27 +68,19 @@ export const TaskCard = ({
         </div>
       </div>
 
-      <div className="mx-4 progress-track">
-        <div
-          className="progress-fill"
-          style={{
-            background:
-              percent === 100
-                ? "var(--success)"
-                : percent > 0
-                  ? "var(--warning)"
-                  : "var(--text-soft)",
-            width: `${task.isCancelled ? 0 : percent}%`
-          }}
-        />
-      </div>
+      <ProgressBar
+        className="mx-4"
+        striped
+        tone={progressTone(percent)}
+        value={task.isCancelled ? 0 : percent}
+      />
 
       <div className="p-4">
         {task.isCancelled ? (
-          <div className="rounded-[var(--radius-field)] bg-[var(--danger-soft)] p-4 text-sm font-bold text-[var(--danger)]">
+          <div className="rounded-[var(--radius-field)] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
             Hạng mục này đã được hủy và đã báo cho admin.
             {task.cancelReason ? (
-              <span className="mt-2 block font-semibold text-slate-700">
+              <span className="mt-2 block font-semibold text-[var(--text-muted)]">
                 Lý do: {task.cancelReason}
               </span>
             ) : null}
@@ -97,7 +96,7 @@ export const TaskCard = ({
               task={task}
             />
             <button
-              className="focus-ring pressable mt-3 min-h-12 w-full rounded-full border border-[var(--border)] bg-white/86 px-3 text-sm font-extrabold text-[var(--primary-strong)] shadow-sm"
+              className="focus-ring pressable mt-3 min-h-12 w-full rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--primary-strong)] hover:bg-[var(--surface-muted)]"
               onClick={() => setIsExpanded((current) => !current)}
               type="button"
             >
@@ -105,7 +104,7 @@ export const TaskCard = ({
             </button>
             {isExpanded ? (
               <button
-                className="focus-ring pressable mt-2 min-h-12 w-full rounded-full border border-[var(--danger)] bg-white/78 px-3 text-sm font-extrabold text-[var(--danger)]"
+                className="focus-ring pressable mt-2 min-h-12 w-full rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)]"
                 onClick={onCancel}
                 type="button"
               >
@@ -132,7 +131,7 @@ const ProgressRing = ({
       ? "var(--text-soft)"
       : safePercent === 100
         ? "var(--success)"
-        : "var(--warning)";
+        : "var(--accent)";
   const dash = Math.max(safePercent, 2);
 
   return (
@@ -151,7 +150,7 @@ const ProgressRing = ({
         />
       </svg>
       <span
-        className="absolute inset-0 grid place-items-center text-[10px] font-extrabold"
+        className="absolute inset-0 grid place-items-center text-[10px] font-semibold"
         style={{ color }}
       >
         {cancelled ? "NA" : `${safePercent}%`}

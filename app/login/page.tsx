@@ -48,12 +48,12 @@ const LoginPage = (): React.ReactElement => {
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-5 md:py-8">
       <section className="app-shell grid w-full max-w-5xl overflow-hidden rounded-[var(--radius-panel)] p-4 md:grid-cols-[0.95fr_1.05fr] md:p-5">
-        <div className="hidden rounded-[var(--radius-card)] bg-[var(--primary-strong)] p-7 text-white shadow-[var(--shadow-floating)] md:flex md:flex-col md:justify-between">
+        <div className="hidden rounded-[var(--radius-card)] bg-[var(--primary-strong)] p-7 text-white shadow-[var(--shadow-soft-md)] md:flex md:flex-col md:justify-between">
           <div>
-            <p className="text-xs font-extrabold uppercase text-white/85">
+            <p className="text-xs font-semibold uppercase text-white/85">
               Tiến độ BDTT 2026
             </p>
-            <h1 className="mt-4 text-5xl font-extrabold leading-tight tracking-normal">
+            <h1 className="mt-4 text-5xl font-semibold leading-tight tracking-normal">
               Theo dõi tiến độ BDTT
             </h1>
             <p className="mt-4 max-w-md text-sm font-semibold leading-7 text-white/88">
@@ -66,13 +66,13 @@ const LoginPage = (): React.ReactElement => {
           </div>
         </div>
 
-        <div className="rounded-[var(--radius-card)] bg-white/86 p-5 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl md:p-7">
-          <CompanyBrand className="rounded-[var(--radius-field)] bg-white/78 p-4 ring-1 ring-[var(--border)]" variant="full" />
+        <div className="rounded-[var(--radius-card)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft-sm)] md:p-7">
+          <CompanyBrand className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--border)]" variant="full" />
           <div className="mt-6">
-            <p className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">
+            <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
               Đăng nhập nội bộ
             </p>
-            <h1 className="mt-2 text-3xl font-extrabold leading-tight tracking-normal md:text-4xl">
+            <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-normal md:text-4xl">
               Đăng nhập
             </h1>
             <p className="mt-2 text-sm font-semibold leading-6 text-[var(--text-muted)]">
@@ -97,7 +97,7 @@ const LoginPage = (): React.ReactElement => {
                 required
                 trailing={
                   <button
-                    className="focus-ring min-h-12 rounded-r-full border-l border-[var(--border)] px-4 text-sm font-extrabold text-[var(--primary-strong)]"
+                    className="focus-ring min-h-12 rounded-r-[var(--radius-field)] border-l border-[var(--border)] px-4 text-sm font-semibold text-[var(--primary-strong)]"
                     onClick={() => setShowPassword((current) => !current)}
                     type="button"
                   >
@@ -108,7 +108,7 @@ const LoginPage = (): React.ReactElement => {
                 value={password}
               />
             </Field>
-            <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-[var(--radius-field)] bg-white/78 px-4 py-3 text-sm font-bold text-slate-800 ring-1 ring-[var(--border)]">
+            <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-4 py-3 text-sm font-semibold text-[var(--foreground)] ring-1 ring-[var(--border)]">
               <input
                 checked={rememberLogin}
                 className="h-5 w-5 accent-[var(--primary-strong)]"
@@ -138,8 +138,8 @@ const LoginMetric = ({
 }): React.ReactElement => {
   return (
     <div className="rounded-[var(--radius-field)] bg-white/12 p-4 ring-1 ring-white/16">
-      <p className="text-xs font-extrabold uppercase text-white/85">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold">{value}</p>
+      <p className="text-xs font-semibold uppercase text-white/85">{label}</p>
+      <p className="mt-2 text-2xl font-semibold">{value}</p>
     </div>
   );
 };

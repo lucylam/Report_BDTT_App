@@ -39,7 +39,7 @@ const ChangePasswordPage = (): React.ReactElement => {
   if (!data) {
     return (
       <main className="flex min-h-dvh items-center justify-center px-4">
-        <p className="text-sm font-semibold text-slate-600">Đang kiểm tra đăng nhập...</p>
+        <p className="text-sm font-semibold text-[var(--text-muted)]">Đang kiểm tra đăng nhập...</p>
       </main>
     );
   }
@@ -48,7 +48,7 @@ const ChangePasswordPage = (): React.ReactElement => {
     return (
       <main className="flex min-h-dvh items-center justify-center px-4">
         <Link
-          className="focus-ring pressable rounded-full bg-[var(--foreground)] px-5 py-3 text-sm font-extrabold text-white"
+          className="focus-ring pressable rounded-[var(--radius-field)] bg-[var(--foreground)] px-5 py-3 text-sm font-semibold text-white"
           href="/login"
         >
           Đăng nhập
@@ -60,11 +60,11 @@ const ChangePasswordPage = (): React.ReactElement => {
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-8">
       <section className="app-shell w-full max-w-md overflow-hidden rounded-[var(--radius-panel)] p-4">
-        <div className="rounded-[var(--radius-card)] bg-white/86 p-5 shadow-[var(--shadow-soft-sm)] backdrop-blur-xl md:p-7">
-          <CompanyBrand className="rounded-[var(--radius-field)] bg-white/78 p-4 ring-1 ring-[var(--border)]" variant="full" />
-          <div className="mt-6 rounded-[var(--radius-card)] bg-[var(--primary-strong)] px-5 py-6 text-white shadow-[var(--shadow-floating)]">
-            <p className="text-xs font-extrabold uppercase text-white/85">Đăng nhập lần đầu</p>
-            <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal">
+        <div className="rounded-[var(--radius-card)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft-sm)] md:p-7">
+          <CompanyBrand className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--border)]" variant="full" />
+          <div className="mt-6 rounded-[var(--radius-card)] bg-[var(--primary-strong)] px-5 py-6 text-white shadow-[var(--shadow-soft-md)]">
+            <p className="text-xs font-semibold uppercase text-white/85">Đăng nhập lần đầu</p>
+            <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-normal">
               Đổi mật khẩu
             </h1>
             <p className="mt-3 text-sm font-semibold leading-6 text-white/88">

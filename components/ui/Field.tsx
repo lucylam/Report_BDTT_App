@@ -18,13 +18,13 @@ export const Field = ({
 }: FieldProps): React.ReactElement => {
   return (
     <label className={cn("block", className)}>
-      <span className="text-sm font-extrabold">{label}</span>
+      <span className="text-sm font-semibold">{label}</span>
       <div className="mt-2">{children}</div>
       {hint ? (
         <p className="mt-1.5 text-xs font-semibold text-[var(--text-muted)]">{hint}</p>
       ) : null}
       {error ? (
-        <p aria-live="polite" className="mt-1.5 text-xs font-bold text-[var(--danger)]">
+        <p aria-live="polite" className="mt-1.5 text-xs font-semibold text-[var(--danger)]">
           {error}
         </p>
       ) : null}

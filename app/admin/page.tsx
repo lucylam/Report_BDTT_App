@@ -49,7 +49,7 @@ const AdminPage = (): React.ReactElement => {
   if (!data || !currentAccount || currentAccount.mustChangePassword) {
     return (
       <main className="min-h-dvh p-6">
-        <p className="text-sm font-semibold text-slate-600">Đang tải dashboard...</p>
+        <p className="text-sm font-semibold text-[var(--text-muted)]">Đang tải dashboard...</p>
       </main>
     );
   }
@@ -58,12 +58,12 @@ const AdminPage = (): React.ReactElement => {
     return (
       <main className="min-h-dvh px-4 py-8">
         <section className="glass-card mx-auto max-w-md rounded-[var(--radius-card)] p-6">
-          <h1 className="text-xl font-extrabold">Không có quyền giám sát</h1>
-          <p className="mt-2 text-sm font-semibold text-slate-600">
+          <h1 className="text-xl font-semibold">Không có quyền giám sát</h1>
+          <p className="mt-2 text-sm font-semibold text-[var(--text-muted)]">
             Tài khoản worker chỉ được vào màn hình Việc của tôi.
           </p>
           <Link
-            className="focus-ring pressable mt-4 inline-flex min-h-12 items-center justify-center rounded-full bg-[var(--primary-strong)] px-5 text-sm font-extrabold text-white shadow-[var(--shadow-soft-sm)]"
+            className="focus-ring pressable mt-4 inline-flex min-h-12 items-center justify-center rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-5 text-sm font-semibold text-white shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary)]"
             href="/worker"
           >
             Về Workspace
@@ -115,12 +115,12 @@ const ManagementDashboard = ({
   return (
     <section className="grid min-w-0 gap-5">
       <section className="glass-card rounded-[var(--radius-card)] p-5 lg:p-6">
-        <p className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">
+        <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
           Điều hành tiến độ
         </p>
         <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
-            <h2 className="text-2xl font-extrabold tracking-normal text-[var(--foreground)]">
+            <h2 className="text-2xl font-semibold tracking-normal text-[var(--foreground)]">
               Theo dõi theo {isFullScope ? "nhóm và phân nhóm" : "phân nhóm"}
             </h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-[var(--text-muted)]">
@@ -128,7 +128,7 @@ const ManagementDashboard = ({
               và mức báo cáo của worker trong ngày.
             </p>
           </div>
-          <div className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-extrabold text-[var(--text-muted)] shadow-[var(--shadow-soft-sm)]">
+          <div className="rounded-full border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)] shadow-[var(--shadow-soft-sm)]">
             Mốc đạt: {PLAN_TARGET_PERCENT}% · {formatViDate(DEFAULT_REPORT_DATE)}
           </div>
         </div>
@@ -223,10 +223,10 @@ const ManagementKpiStrip = ({
           className={`metric-card rounded-[var(--radius-card)] p-5 ${toneText(card.tone)}`}
           key={card.label}
         >
-          <p className="text-[11px] font-extrabold uppercase text-[var(--text-soft)]">
+          <p className="text-[11px] font-semibold uppercase text-[var(--text-soft)]">
             {card.label}
           </p>
-          <p className="mt-3 text-4xl font-extrabold leading-none tabular-nums">
+          <p className="mt-3 text-4xl font-semibold leading-none tabular-nums">
             {card.value}
           </p>
           <p className="mt-3 text-sm font-semibold text-[var(--text-muted)]">{card.helper}</p>
@@ -254,9 +254,9 @@ const ManagementTable = ({
   return (
     <section className="glass-card min-w-0 overflow-hidden rounded-[var(--radius-card)]">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4">
-        <h3 className="text-lg font-extrabold text-[var(--foreground)]">{title}</h3>
+        <h3 className="text-lg font-semibold text-[var(--foreground)]">{title}</h3>
         <span
-          className={`rounded-full px-3 py-1 text-sm font-extrabold ${
+          className={`rounded-full px-3 py-1 text-sm font-semibold ${
             isSuccess
               ? "bg-[var(--success-soft)] text-[var(--success)]"
               : "bg-[var(--accent-soft)] text-[var(--accent)]"
@@ -293,13 +293,13 @@ const ManagementRow = ({
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-3">
           <div
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-[0.8rem] text-sm font-extrabold text-white"
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-[0.8rem] text-sm font-semibold text-white"
             style={{ background: rowAvatarColor(row.shortName) }}
           >
             {getInitials(row.shortName)}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-base font-extrabold text-[var(--foreground)]">
+            <p className="truncate text-base font-semibold text-[var(--foreground)]">
               {row.shortName}
             </p>
             <p className="truncate text-xs font-semibold text-[var(--text-muted)]">
@@ -323,7 +323,7 @@ const ManagementRow = ({
               style={{ backgroundColor: barColor, width: `${Math.min(row.percent, 100)}%` }}
             />
           </div>
-          <span className="w-12 text-right text-sm font-extrabold" style={{ color: barColor }}>
+          <span className="w-12 text-right text-sm font-semibold" style={{ color: barColor }}>
             {row.percent}%
           </span>
         </div>
@@ -351,7 +351,7 @@ const LegendDot = ({
   readonly className: string;
   readonly label: string;
 }): React.ReactElement => (
-  <span className="inline-flex items-center gap-2 font-bold text-[var(--text-muted)]">
+  <span className="inline-flex items-center gap-2 font-semibold text-[var(--text-muted)]">
     <span className={`h-2.5 w-2.5 rounded ${className}`} />
     {label}
   </span>
@@ -471,11 +471,11 @@ const getInitials = (value: string): string => {
 };
 
 const rowAvatarColor = (value: string): string => {
-  if (value.includes("Đo")) return "linear-gradient(135deg,#f08a3c,#f4ab5e)";
-  if (value.includes("Chấp")) return "linear-gradient(135deg,#3e7bfa,#6fa0ff)";
-  if (value.includes("HT")) return "linear-gradient(135deg,#7c5cff,#a48bff)";
-  if (value.includes("Tháo")) return "linear-gradient(135deg,#0b6b4f,#15a06f)";
-  return "linear-gradient(135deg,#98a2b3,#c0c7d4)";
+  if (value.includes("Đo")) return "var(--accent)";
+  if (value.includes("Chấp")) return "var(--info)";
+  if (value.includes("HT")) return "var(--primary-strong)";
+  if (value.includes("Tháo")) return "var(--success)";
+  return "var(--text-soft)";
 };
 
 const formatNumber = (value: number): string =>

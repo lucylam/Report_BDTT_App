@@ -20,8 +20,8 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
             <div className="flex items-center gap-3">
               <ProgressRing percent={task.isCancelled ? 0 : percent} />
               <div className="min-w-0 flex-1">
-                <p className="font-mono text-base font-extrabold leading-tight">{task.tagname}</p>
-                <p className="mt-1 truncate text-xs font-bold uppercase text-[var(--primary-strong)]">
+                <p className="font-mono text-base font-semibold leading-tight">{task.tagname}</p>
+                <p className="mt-1 truncate text-xs font-semibold uppercase text-[var(--primary-strong)]">
                   WO {task.wo || "N/A"} · P{task.priority}
                 </p>
                 <p className="mt-1 truncate text-xs font-semibold text-[var(--text-muted)]">
@@ -33,11 +33,11 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
               </Badge>
             </div>
 
-            <p className="mt-3 line-clamp-2 text-sm font-semibold leading-5 text-slate-800">
+            <p className="mt-3 line-clamp-2 text-sm font-semibold leading-5 text-[var(--foreground)]">
               {task.taskName || "N/A"}
             </p>
 
-            <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
               <Chip label={task.nhom || "N/A"} />
               <Chip label={task.resourceName || "N/A"} />
             </div>
@@ -48,13 +48,13 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
             </div>
 
             {task.isCancelled ? (
-              <p className="mt-3 rounded-[var(--radius-field)] bg-[var(--danger-soft)] p-3 text-sm font-bold text-[var(--danger)]">
+              <p className="mt-3 rounded-[var(--radius-field)] bg-[var(--danger-soft)] p-3 text-sm font-semibold text-[var(--danger)]">
                 {task.cancelReason || "Chưa nhập lý do cancel"}
               </p>
             ) : null}
 
             {progress?.note ? (
-              <p className="mt-3 rounded-[var(--radius-field)] bg-white p-3 text-sm font-medium leading-6 text-slate-800 ring-1 ring-[var(--border)]">
+              <p className="mt-3 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 text-sm font-medium leading-6 text-[var(--foreground)] ring-1 ring-[var(--border)]">
                 {progress.note}
               </p>
             ) : null}
@@ -67,7 +67,7 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
 
 const ProgressRing = ({ percent }: { readonly percent: number }): React.ReactElement => {
   const color =
-    percent === 100 ? "var(--success)" : percent > 0 ? "var(--warning)" : "var(--text-soft)";
+    percent === 100 ? "var(--success)" : percent > 0 ? "var(--accent)" : "var(--text-soft)";
   const dash = Math.max(percent, 2);
 
   return (
@@ -86,7 +86,7 @@ const ProgressRing = ({ percent }: { readonly percent: number }): React.ReactEle
         />
       </svg>
       <span
-        className="absolute inset-0 grid place-items-center text-[11px] font-extrabold"
+        className="absolute inset-0 grid place-items-center text-[11px] font-semibold"
         style={{ color }}
       >
         {percent}%
@@ -97,7 +97,7 @@ const ProgressRing = ({ percent }: { readonly percent: number }): React.ReactEle
 
 const Chip = ({ label }: { readonly label: string }): React.ReactElement => {
   return (
-    <span className="rounded-full bg-white/88 px-2.5 py-1 text-slate-800 ring-1 ring-[var(--border)]">
+    <span className="rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-[var(--foreground)] ring-1 ring-[var(--border)]">
       {label}
     </span>
   );
@@ -111,9 +111,9 @@ const Info = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[var(--radius-field)] bg-white/88 p-3 ring-1 ring-[var(--border)]">
-      <p className="text-[11px] font-extrabold uppercase text-[var(--text-soft)]">{label}</p>
-      <p className="mt-1 truncate font-bold text-slate-900">{value}</p>
+    <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
+      <p className="text-[11px] font-semibold uppercase text-[var(--text-soft)]">{label}</p>
+      <p className="mt-1 truncate font-semibold text-[var(--foreground)]">{value}</p>
     </div>
   );
 };

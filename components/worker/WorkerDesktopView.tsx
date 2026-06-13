@@ -160,25 +160,25 @@ export const WorkerDesktopView = ({
   return (
     <main className="hidden min-h-dvh w-full max-w-[100vw] p-2 sm:p-3 lg:block lg:p-5">
       <div className="app-shell grid min-h-[calc(100dvh-2.5rem)] grid-cols-[300px_minmax(0,1fr)] overflow-clip rounded-[var(--radius-panel)]">
-      <aside className="border-r border-[var(--line)] bg-white/88 p-5">
+      <aside className="border-r border-[var(--line)] bg-[var(--surface)] p-5">
         <CompanyBrand variant="sidebar" />
-        <p className="mt-5 text-xs font-extrabold uppercase text-[var(--primary-strong)]">
+        <p className="mt-5 text-xs font-semibold uppercase text-[var(--primary-strong)]">
           Workspace · BDTT 2026
         </p>
-        <h1 className="mt-2 text-2xl font-extrabold leading-tight tracking-normal text-[var(--foreground)]">
+        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-normal text-[var(--foreground)]">
           Báo cáo tiến độ
         </h1>
         <p className="mt-2 text-sm font-semibold text-[var(--text-muted)]">
           Ngày báo cáo: {formatViDate(DEFAULT_REPORT_DATE)}
         </p>
 
-        <div className="mt-6 rounded-[var(--radius-card)] border border-white/20 bg-[var(--primary-strong)] p-4 text-white shadow-[var(--shadow-floating)]">
-          <p className="font-extrabold">{worker.fullName}</p>
+        <div className="mt-6 rounded-[var(--radius-card)] bg-[var(--primary-strong)] p-4 text-white shadow-[var(--shadow-soft-md)]">
+          <p className="font-semibold">{worker.fullName}</p>
           <p className="mt-1 text-sm font-semibold text-white/85">@{account.username}</p>
-          <p className="mt-3 text-sm font-bold leading-5 text-white">{worker.orgTitle}</p>
+          <p className="mt-3 text-sm font-semibold leading-5 text-white">{worker.orgTitle}</p>
           <p className="mt-2 text-sm font-semibold leading-5 text-white/88">{worker.orgAssignment}</p>
           <p
-            className={`mt-3 text-sm font-bold ${
+            className={`mt-3 text-sm font-semibold ${
               isOnline ? "text-white" : "text-[var(--warning-soft)]"
             }`}
           >
@@ -190,13 +190,13 @@ export const WorkerDesktopView = ({
           <SummaryPills percents={percents} />
         </div>
 
-        <div className="mt-5 rounded-[var(--radius-card)] border border-[var(--line)] bg-white/55 p-2">
+        <div className="mt-5 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-2">
           {tabs.map((item) => (
             <button
-              className={`focus-ring pressable min-h-12 w-full rounded-full px-4 text-left text-sm font-semibold ${
+              className={`focus-ring pressable min-h-12 w-full rounded-[var(--radius-field)] px-4 text-left text-sm font-semibold ${
                 item.key === tab
                   ? "bg-[var(--primary-strong)] text-white shadow-md"
-                  : "text-slate-800 hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+                  : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
               }`}
               key={item.key}
               onClick={() => setTab(item.key)}
@@ -209,15 +209,15 @@ export const WorkerDesktopView = ({
 
         {tab === "tasks" ? (
           <div className="mt-5 space-y-2">
-            <p className="px-2 text-xs font-bold uppercase text-[var(--text-muted)]">
+            <p className="px-2 text-xs font-semibold uppercase text-[var(--text-muted)]">
               Bộ lọc hạng mục
             </p>
             {filters.map((item) => (
               <button
-                className={`focus-ring pressable min-h-12 w-full rounded-full px-4 text-left text-sm font-semibold ${
+                className={`focus-ring pressable min-h-12 w-full rounded-[var(--radius-field)] px-4 text-left text-sm font-semibold ${
                   item.key === filter
                     ? "bg-[var(--primary-strong)] text-white shadow-md ring-1 ring-[var(--primary)]"
-                    : "border border-[var(--line)] bg-white/80 text-slate-800 hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+                    : "border border-[var(--line)] bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
                 }`}
                 key={item.key}
                 onClick={() => {
@@ -242,10 +242,10 @@ export const WorkerDesktopView = ({
           <div className="min-w-0">
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
-                <p className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">
+                <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
                   {filteredTasks.length}/{allTasks.length} hạng mục
                 </p>
-                <h2 className="mt-1 text-2xl font-extrabold tracking-normal text-[var(--foreground)]">
+                <h2 className="mt-1 text-2xl font-semibold tracking-normal text-[var(--foreground)]">
                   Danh sách công việc
                 </h2>
               </div>
@@ -318,16 +318,16 @@ export const WorkerDesktopView = ({
           </div>
           <div className="mt-5 grid gap-5 xl:grid-cols-3">
             <div className="glass-card rounded-[var(--radius-card)] p-5 xl:col-span-2">
-              <h2 className="text-xl font-extrabold">Điểm cần chú ý</h2>
+              <h2 className="text-xl font-semibold">Điểm cần chú ý</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
                 Hạng mục P1 chưa xong: <strong>{p1Open}</strong>. Dữ liệu tính theo ngày báo cáo hiện tại.
               </p>
             </div>
             <div className="glass-card rounded-[var(--radius-card)] p-5">
-              <p className="text-xs font-bold uppercase text-[var(--primary-strong)]">
+              <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
                 Báo cáo hôm nay
               </p>
-              <p className="mt-2 text-3xl font-bold tabular-nums">{overallPercent}%</p>
+              <p className="mt-2 text-3xl font-semibold tabular-nums">{overallPercent}%</p>
               <p className="mt-1 text-sm text-[var(--text-muted)]">
                 Tiến độ trung bình của các hạng mục chưa cancel.
               </p>
@@ -368,10 +368,10 @@ export const WorkerDesktopView = ({
                       </span>
                     </span>
                     <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-bold ${
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
                         isSelected
                           ? "border-[var(--primary)] bg-[var(--primary-strong)] text-white"
-                          : "border-[var(--border-strong)] bg-white/86 text-[var(--primary-strong)]"
+                          : "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--primary-strong)]"
                       }`}
                     >
                       {isSelected ? "−" : "+"}
@@ -395,12 +395,12 @@ export const WorkerDesktopView = ({
           />
           <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
             <div className="glass-card p-6">
-              <h2 className="text-xl font-extrabold">{worker.fullName}</h2>
+              <h2 className="text-xl font-semibold">{worker.fullName}</h2>
               <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
               <p className="mt-1 text-sm text-[var(--text-muted)]">{worker.email}</p>
               <div className="mt-4 rounded-[var(--radius-field)] bg-[var(--primary-pale)] p-4 ring-1 ring-[var(--line)]">
-                <p className="text-sm font-bold text-[var(--primary-strong)]">{worker.orgTitle}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{worker.orgAssignment}</p>
+                <p className="text-sm font-semibold text-[var(--primary-strong)]">{worker.orgTitle}</p>
+                <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">{worker.orgAssignment}</p>
               </div>
               <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
                 <InfoTile label="Mã NV" value={worker.employeeCode} />
@@ -409,7 +409,7 @@ export const WorkerDesktopView = ({
               <PwaInstallButton className="mt-5" showHint variant="panel" />
             </div>
             <div className="glass-card p-6">
-              <h2 className="text-xl font-extrabold">Trạng thái phiên làm việc</h2>
+              <h2 className="text-xl font-semibold">Trạng thái phiên làm việc</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
                 Tài khoản này đang dùng workspace worker để cập nhật tiến độ, ghi chú và ảnh theo từng hạng mục.
               </p>
@@ -439,8 +439,8 @@ const DesktopPageHeader = ({
   return (
     <div className="flex items-end justify-between gap-4">
       <div>
-        <p className="text-xs font-extrabold uppercase text-[var(--primary-strong)]">{eyebrow}</p>
-        <h2 className="mt-1 text-2xl font-extrabold tracking-normal text-[var(--foreground)]">{title}</h2>
+        <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">{eyebrow}</p>
+        <h2 className="mt-1 text-2xl font-semibold tracking-normal text-[var(--foreground)]">{title}</h2>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <p className="rounded-full bg-[var(--success-soft)] px-4 py-2 text-sm font-semibold text-[var(--success)] shadow-sm">
@@ -460,8 +460,8 @@ const InfoTile = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[var(--radius-card)] bg-white/80 p-4 ring-1 ring-[var(--border)]">
-      <p className="text-xs font-bold uppercase text-[var(--text-muted)]">{label}</p>
+    <div className="rounded-[var(--radius-card)] bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--border)]">
+      <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">{label}</p>
       <p className="mt-1 font-semibold">{value}</p>
     </div>
   );

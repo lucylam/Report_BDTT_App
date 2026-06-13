@@ -4,7 +4,7 @@ import type { AppData, ProgressPercent, ProgressRecord, Task } from "@/types/dom
 
 export type StatusFilter = "all" | "completed" | "inProgress" | "notStarted" | "cancelled";
 export type QuickFilter = "all" | "p1Open" | "cancelled" | "notStarted" | "inProgress";
-export type BadgeTone = "success" | "warning" | "danger" | "info" | "neutral";
+export type BadgeTone = "success" | "warning" | "accent" | "danger" | "info" | "neutral";
 
 export interface TaskRow {
   readonly task: Task;
@@ -39,7 +39,7 @@ export const getStatusLabel = (status: StatusFilter): string => {
 
 export const getStatusTone = (status: StatusFilter): BadgeTone => {
   if (status === "completed") return "success";
-  if (status === "inProgress") return "warning";
+  if (status === "inProgress") return "accent";
   if (status === "cancelled") return "danger";
   return "neutral";
 };

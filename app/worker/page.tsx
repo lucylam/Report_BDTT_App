@@ -184,7 +184,7 @@ const WorkerPage = (): React.ReactElement => {
   if (!data || !currentAccount || !worker || currentAccount.mustChangePassword) {
     return (
       <main className="min-h-dvh p-4">
-        <p className="text-sm text-slate-600">Đang chuyển đến đăng nhập...</p>
+        <p className="text-sm text-[var(--text-muted)]">Đang chuyển đến đăng nhập...</p>
       </main>
     );
   }
