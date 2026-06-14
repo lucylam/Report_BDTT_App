@@ -17,7 +17,7 @@ const solidClass: Record<BadgeTone, string> = {
   danger: "bg-[var(--danger)] text-white shadow-sm",
   info: "bg-[var(--info)] text-white shadow-sm",
   neutral: "bg-[var(--surface)] text-[var(--foreground)] shadow-sm ring-1 ring-[var(--border-strong)]",
-  primary: "bg-[var(--primary-strong)] text-white shadow-sm"
+  primary: "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-sm"
 };
 
 const softClass: Record<BadgeTone, string> = {

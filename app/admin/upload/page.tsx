@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Alert, Button } from "@/components/ui";
+import { Alert, Button, Icon, Widget, WidgetHeader } from "@/components/ui";
 import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
 import { downloadExportWorkbook } from "@/lib/excel/exporter";
 import { parseExcelFile } from "@/lib/excel/parser";
@@ -186,13 +186,13 @@ const AdminUploadPage = (): React.ReactElement => {
   if (currentAccount.role !== "admin" || !canManageData) {
     return (
       <main className="min-h-dvh px-4 py-8">
-        <section className="glass-card mx-auto max-w-md p-6">
+        <section className="glass-card mx-auto max-w-md rounded-[var(--radius-card)] p-6">
           <h1 className="text-xl font-semibold">Không có quyền import/export DATA</h1>
           <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-            Chỉ tài khoản vinhlpp được import và export DATA. Các admin khác vẫn có thể xem dashboard và danh sách hạng mục.
+            Chỉ tài khoản được phân quyền DATA admin mới được import và export DATA.
           </p>
           <Link
-            className="focus-ring pressable mt-4 inline-flex min-h-12 items-center rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 text-sm font-semibold text-white hover:bg-[var(--primary)]"
+            className="focus-ring pressable mt-4 inline-flex min-h-12 items-center rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 text-sm font-semibold text-[var(--primary-contrast)] hover:bg-[var(--primary)]"
             href={currentAccount.role === "admin" ? "/admin" : "/worker"}
           >
             Quay lại
@@ -207,20 +207,20 @@ const AdminUploadPage = (): React.ReactElement => {
       account={currentAccount}
       onLogout={logout}
       subtitle="Import DATA A:M, export tiến độ worker và đồng bộ Google Sheets."
-      title="Import / Export Excel"
+      title="Import / Export DATA"
     >
-      <section className="grid gap-4 lg:grid-cols-2">
-        <div className="glass-card p-5 lg:p-6">
-          <CardEyebrow label="Excel input" />
-          <h2 className="mt-2 text-xl font-semibold">Import hạng mục từ Excel</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-            Chỉ đọc sheet DATA cột A:M. Các cột tiến độ sau M được tạo từ dữ liệu worker nhập trong app.
-          </p>
+      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.82fr)]">
+        <Widget className="p-5 lg:p-6">
+          <WidgetHeader
+            action={<Icon className="text-[var(--primary-strong)]" name="upload" />}
+            subtitle="Bước 1: chọn file, kiểm tra preview, sau đó mới ghi database"
+            title="Import hạng mục từ Excel"
+          />
           <label className="mt-5 block">
             <span className="text-sm font-semibold">Chọn file .xlsx</span>
             <input
               accept=".xlsx"
-              className="focus-ring control-pill mt-2 block w-full rounded-[var(--radius-field)] p-3 text-base"
+              className="focus-ring mt-2 block w-full rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-3 text-base text-[var(--foreground)] shadow-[var(--shadow-soft-sm)]"
               disabled={!data || isParsing}
               onChange={(event) => {
                 const file = event.target.files?.[0];
@@ -230,7 +230,8 @@ const AdminUploadPage = (): React.ReactElement => {
             />
           </label>
           <Alert className="mt-4 p-4 leading-6" tone="warning">
-            Khi xác nhận import, danh sách hạng mục hiện tại sẽ được ghi vào database và thay thế bằng file mới trên web.
+            Khi xác nhận import, danh sách hạng mục hiện tại sẽ được ghi vào database và thay
+            thế bằng file mới trên web.
           </Alert>
           <Button
             className="mt-4"
@@ -238,21 +239,32 @@ const AdminUploadPage = (): React.ReactElement => {
             full
             onClick={() => void applyImport()}
           >
-            {isImporting ? "Đang import vào database..." : "Xác nhận thay danh sách hạng mục"}
+            {isImporting ? (
+              <>
+                <Icon className="animate-spin" name="loading" />
+                Đang import vào database...
+              </>
+            ) : (
+              <>
+                <Icon name="database" />
+                Xác nhận thay danh sách hạng mục
+              </>
+            )}
           </Button>
-        </div>
+        </Widget>
 
-        <div className="glass-card p-5 lg:p-6">
-          <CardEyebrow label="Export output" />
-          <h2 className="mt-2 text-xl font-semibold">Export DATA hoàn chỉnh</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-            File export lấy danh sách hạng mục hiện tại và điền tiến độ, ghi chú mới nhất từ worker trong app.
-          </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <Widget className="p-5 lg:p-6">
+          <WidgetHeader
+            action={<Icon className="text-[var(--accent-strong)]" name="download" />}
+            subtitle={`Dữ liệu ngày báo cáo ${formatViDate(DEFAULT_REPORT_DATE)}`}
+            title="Export và đồng bộ"
+          />
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 2xl:grid-cols-2">
             <Metric label="Ngày báo cáo" value={formatViDate(DEFAULT_REPORT_DATE)} />
             <Metric label="Tổng hạng mục" value={String(data?.tasks.length ?? 0)} />
           </div>
           <Button className="mt-4" disabled={!data} full onClick={exportFile} variant="secondary">
+            <Icon name="download" />
             Export DATA hoàn chỉnh
           </Button>
           <Button
@@ -261,7 +273,17 @@ const AdminUploadPage = (): React.ReactElement => {
             full
             onClick={() => void syncGoogleSheet()}
           >
-            {isSyncingSheet ? "Đang đẩy lên Google Sheet..." : "Đẩy lên Google Sheet DATA"}
+            {isSyncingSheet ? (
+              <>
+                <Icon className="animate-spin" name="loading" />
+                Đang đẩy lên Google Sheet...
+              </>
+            ) : (
+              <>
+                <Icon name="spreadsheet" />
+                Đẩy lên Google Sheet DATA
+              </>
+            )}
           </Button>
           {message ? (
             <p
@@ -271,7 +293,7 @@ const AdminUploadPage = (): React.ReactElement => {
               {message}
             </p>
           ) : null}
-        </div>
+        </Widget>
       </section>
 
       {preview ? <ImportPreviewPanel preview={preview} /> : null}
@@ -283,46 +305,44 @@ const ImportPreviewPanel = ({
   preview
 }: {
   readonly preview: ImportPreview;
-}): React.ReactElement => {
-  return (
-    <section className="glass-card p-5 lg:p-6">
-      <CardEyebrow label="Import preview" />
-      <h2 className="mt-2 text-xl font-semibold">Xem trước dữ liệu import</h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <Metric label="Dòng hạng mục" value={String(preview.rowCount)} />
-        <Metric label="Thiếu cột" value={String(preview.missingColumns.length)} />
-        <Metric label="Worker chưa map" value={String(preview.unmappedResourceNames.length)} />
-      </div>
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <PreviewList title="Missing columns" values={preview.missingColumns} />
-        <PreviewList
-          title="Unmapped Resource Names"
-          values={preview.unmappedResourceNames.slice(0, 30)}
-        />
-      </div>
-      <div className="mt-5">
-        <h3 className="text-sm font-semibold text-[var(--foreground)]">Sample 5 dòng đầu</h3>
-        <div className="mt-2 grid gap-2">
-          {preview.tasks.slice(0, 5).map((task) => (
-            <SampleTask key={task.id} task={task} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const SampleTask = ({ task }: { readonly task: Task }): React.ReactElement => {
-  return (
-    <div className="rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] p-3 text-sm">
-      <p className="font-mono font-semibold">{task.tagname}</p>
-      <p className="mt-1 text-[var(--text-muted)]">{task.taskName}</p>
-      <p className="mt-1 text-xs text-[var(--text-muted)]">
-        {task.donVi || "N/A"} · {task.resourceName || "N/A"}
-      </p>
+}): React.ReactElement => (
+  <Widget className="p-5 lg:p-6">
+    <WidgetHeader
+      subtitle="Chỉ khi preview hợp lệ mới cho phép import"
+      title="Xem trước dữ liệu import"
+    />
+    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      <Metric label="Dòng hạng mục" value={String(preview.rowCount)} />
+      <Metric label="Thiếu cột" value={String(preview.missingColumns.length)} />
+      <Metric label="Worker chưa map" value={String(preview.unmappedResourceNames.length)} />
     </div>
-  );
-};
+    <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <PreviewList title="Cột thiếu" values={preview.missingColumns} />
+      <PreviewList
+        title="Resource chưa map"
+        values={preview.unmappedResourceNames.slice(0, 30)}
+      />
+    </div>
+    <div className="mt-5">
+      <h3 className="text-sm font-semibold text-[var(--foreground)]">Sample 5 dòng đầu</h3>
+      <div className="mt-2 grid gap-2">
+        {preview.tasks.slice(0, 5).map((task) => (
+          <SampleTask key={task.id} task={task} />
+        ))}
+      </div>
+    </div>
+  </Widget>
+);
+
+const SampleTask = ({ task }: { readonly task: Task }): React.ReactElement => (
+  <div className="rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] p-3 text-sm">
+    <p className="font-mono font-semibold">{task.tagname}</p>
+    <p className="mt-1 text-[var(--text-muted)]">{task.taskName}</p>
+    <p className="mt-1 text-xs text-[var(--text-muted)]">
+      {task.donVi || "N/A"} · {task.resourceName || "N/A"}
+    </p>
+  </div>
+);
 
 const Metric = ({
   label,
@@ -330,19 +350,11 @@ const Metric = ({
 }: {
   readonly label: string;
   readonly value: string;
-}): React.ReactElement => {
-  return (
-    <div className="metric-card">
-      <p className="text-sm text-[var(--text-muted)]">{label}</p>
-      <p className="mt-1 text-2xl font-semibold">{value}</p>
-    </div>
-  );
-};
-
-const CardEyebrow = ({ label }: { readonly label: string }): React.ReactElement => (
-  <p className="text-xs font-semibold uppercase tracking-wide text-[var(--primary-strong)]">
-    {label}
-  </p>
+}): React.ReactElement => (
+  <div className="metric-card rounded-[var(--radius-card)] p-4">
+    <p className="text-sm text-[var(--text-muted)]">{label}</p>
+    <p className="mt-1 text-2xl font-semibold">{value}</p>
+  </div>
 );
 
 const PreviewList = ({
@@ -351,23 +363,21 @@ const PreviewList = ({
 }: {
   readonly title: string;
   readonly values: readonly string[];
-}): React.ReactElement => {
-  return (
-    <div>
-      <h3 className="text-sm font-semibold text-[var(--foreground)]">{title}</h3>
-      {values.length === 0 ? (
-        <p className="mt-2 text-sm text-[var(--text-muted)]">Không có</p>
-      ) : (
-        <ul className="mt-2 max-h-56 overflow-auto rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3 text-sm">
-          {values.map((value) => (
-            <li className="border-b border-[var(--line)] py-2 last:border-b-0" key={value}>
-              {value}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
+}): React.ReactElement => (
+  <div>
+    <h3 className="text-sm font-semibold text-[var(--foreground)]">{title}</h3>
+    {values.length === 0 ? (
+      <p className="mt-2 text-sm text-[var(--text-muted)]">Không có</p>
+    ) : (
+      <ul className="mt-2 max-h-56 overflow-auto rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3 text-sm">
+        {values.map((value) => (
+          <li className="border-b border-[var(--line)] py-2 last:border-b-0" key={value}>
+            {value}
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
 
 export default AdminUploadPage;

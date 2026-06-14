@@ -58,7 +58,7 @@ export const WorkerSearchControls = ({
             <button
               className={`focus-ring pressable min-h-9 rounded-full border px-3 text-xs font-semibold ${
                 active
-                  ? "border-[var(--primary)] bg-[var(--primary)] text-white shadow-sm"
+                  ? "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-sm"
                   : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
               }`}
               key={unit}
@@ -100,7 +100,7 @@ const GroupButton = ({
     <button
       className={`focus-ring pressable min-h-10 rounded-[var(--radius-field)] px-2 text-xs font-semibold ${
         active
-          ? "bg-[var(--primary-strong)] text-white shadow-md"
+          ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
           : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
       }`}
       onClick={onClick}

@@ -6,7 +6,7 @@ export type ButtonSize = "md" | "sm";
 
 const variantClass: Record<ButtonVariant, string> = {
   primary:
-    "bg-[var(--primary-strong)] text-white shadow-[var(--shadow-soft-sm)] hover:bg-[var(--success-strong)]",
+    "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--success-strong)]",
   secondary:
     "border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-muted)]",
   danger:
@@ -37,7 +37,7 @@ export const Button = ({
   return (
     <button
       className={cn(
-        "focus-ring pressable inline-flex items-center justify-center gap-2 rounded-[var(--radius-field)] font-semibold disabled:cursor-not-allowed disabled:opacity-60",
+        "focus-ring pressable inline-flex items-center justify-center gap-2 rounded-[var(--radius-field)] font-semibold disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-soft)] disabled:shadow-none",
         variantClass[variant],
         sizeClass[size],
         full && "w-full",

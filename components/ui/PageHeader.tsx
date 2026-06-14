@@ -24,7 +24,7 @@ export const PageHeader = ({
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="mt-1 truncate text-2xl font-semibold leading-tight tracking-normal text-[var(--foreground)] lg:text-3xl">
+        <h1 className="mt-1 max-w-full text-balance break-words text-2xl font-semibold leading-tight tracking-normal text-[var(--foreground)] lg:text-3xl">
           {title}
         </h1>
         {description ? (

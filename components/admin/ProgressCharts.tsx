@@ -22,14 +22,20 @@ import type {
   UnitLeadRow
 } from "@/lib/dashboard";
 
-const colors = ["#6fa51f", "#4a90d9", "#f2a24a", "#df5b3a"];
+const colors = [
+  "var(--chart-primary)",
+  "var(--chart-info)",
+  "var(--chart-accent)",
+  "var(--chart-danger)"
+];
 const statusColors = {
-  completed: "#6fa51f",
-  inProgress: "#e0852f",
-  cancelled: "#df5b3a",
-  notStarted: "#a6a69e"
+  completed: "var(--chart-primary)",
+  inProgress: "var(--chart-accent)",
+  cancelled: "var(--chart-danger)",
+  notStarted: "var(--chart-muted)"
 } as const;
-const pieRemainingFill = "#e6e6e2";
+const pieRemainingFill = "var(--chart-primary-soft)";
+const gridStroke = "var(--chart-grid)";
 
 export const ProgressCharts = ({
   dashboard,
@@ -129,7 +135,7 @@ const OverallPie = ({ row }: { readonly row: CompletionRow }): React.ReactElemen
               outerRadius={118}
               paddingAngle={2}
             >
-              <Cell fill="#6fa51f" />
+              <Cell fill="var(--chart-primary)" />
               <Cell fill={pieRemainingFill} />
             </Pie>
             <Tooltip formatter={(value) => [formatNumber(Number(value)), "Hạng mục"]} />
@@ -156,12 +162,12 @@ const CompletionChart = ({
       <div className="h-[420px]">
         <ResponsiveContainer height="100%" width="100%">
           <BarChart data={[...data].slice(0, 12)} layout="vertical" margin={{ left: 10 }}>
-            <CartesianGrid stroke="rgba(24,24,24,0.06)" strokeDasharray="3 3" />
+            <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" />
             <XAxis type="number" />
             <YAxis dataKey="name" tick={{ fontSize: 12 }} type="category" width={130} />
             <Tooltip formatter={(value) => [formatNumber(Number(value)), ""]} />
             <Legend />
-            <Bar dataKey="done" fill="#6fa51f" name="Đã thực hiện" stackId="a" />
+            <Bar dataKey="done" fill="var(--chart-primary)" name="Đã thực hiện" stackId="a" />
             <Bar dataKey="remaining" fill={pieRemainingFill} name="Còn lại" stackId="a" />
           </BarChart>
         </ResponsiveContainer>
@@ -188,7 +194,7 @@ const UnitLeadChart = ({
       <div className="h-[520px]">
         <ResponsiveContainer height="100%" width="100%">
           <BarChart data={rows} layout="vertical" margin={{ left: 10 }}>
-            <CartesianGrid stroke="rgba(24,24,24,0.06)" strokeDasharray="3 3" />
+            <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" />
             <XAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} type="number" />
             <YAxis dataKey="name" tick={{ fontSize: 12 }} type="category" width={130} />
             <Tooltip formatter={(value) => [`${value}%`, ""]} />
@@ -216,7 +222,7 @@ const LeadStatusChart = ({
       <div className="h-[420px]">
         <ResponsiveContainer height="100%" width="100%">
           <BarChart data={data} layout="vertical" margin={{ left: 10 }}>
-            <CartesianGrid stroke="rgba(24,24,24,0.06)" strokeDasharray="3 3" />
+            <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" />
             <XAxis type="number" />
             <YAxis dataKey="name" tick={{ fontSize: 12 }} type="category" width={170} />
             <Tooltip />

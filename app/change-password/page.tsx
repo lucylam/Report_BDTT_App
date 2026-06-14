@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
-import { Alert, Button, Field, Input } from "@/components/ui";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Alert, Button, Field, Icon, Input } from "@/components/ui";
 import { useAppData } from "@/hooks/useAppData";
 
 const ChangePasswordPage = (): React.ReactElement => {
@@ -39,7 +40,9 @@ const ChangePasswordPage = (): React.ReactElement => {
   if (!data) {
     return (
       <main className="flex min-h-dvh items-center justify-center px-4">
-        <p className="text-sm font-semibold text-[var(--text-muted)]">Đang kiểm tra đăng nhập...</p>
+        <p className="text-sm font-semibold text-[var(--text-muted)]">
+          Đang kiểm tra đăng nhập...
+        </p>
       </main>
     );
   }
@@ -48,9 +51,10 @@ const ChangePasswordPage = (): React.ReactElement => {
     return (
       <main className="flex min-h-dvh items-center justify-center px-4">
         <Link
-          className="focus-ring pressable rounded-[var(--radius-field)] bg-[var(--foreground)] px-5 py-3 text-sm font-semibold text-white"
+          className="focus-ring pressable inline-flex min-h-12 items-center gap-2 rounded-[var(--radius-field)] bg-[var(--foreground)] px-5 text-sm font-semibold text-[var(--surface)]"
           href="/login"
         >
+          <Icon name="account" />
           Đăng nhập
         </Link>
       </main>
@@ -59,18 +63,23 @@ const ChangePasswordPage = (): React.ReactElement => {
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-8">
-      <section className="app-shell w-full max-w-md overflow-hidden rounded-[var(--radius-panel)] p-4">
+      <section className="app-shell w-full max-w-lg overflow-hidden rounded-[22px] p-4">
         <div className="rounded-[var(--radius-card)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft-sm)] md:p-7">
-          <CompanyBrand className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--border)]" variant="full" />
-          <div className="mt-6 rounded-[var(--radius-card)] bg-[var(--primary-strong)] px-5 py-6 text-white shadow-[var(--shadow-soft-md)]">
-            <p className="text-xs font-semibold uppercase text-white/85">Đăng nhập lần đầu</p>
-            <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-normal">
-              Đổi mật khẩu
-            </h1>
-            <p className="mt-3 text-sm font-semibold leading-6 text-white/88">
+          <div className="flex items-start justify-between gap-4">
+            <CompanyBrand
+              className="min-w-0 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--border)]"
+              variant="full"
+            />
+            <ThemeToggle className="shrink-0" />
+          </div>
+
+          <div className="mt-6 rounded-[var(--radius-card)] bg-[var(--foreground)] px-5 py-6 text-[var(--surface)] shadow-[var(--shadow-soft-md)]">
+            <p className="text-xs font-semibold uppercase opacity-75">Đăng nhập lần đầu</p>
+            <h1 className="mt-3 text-3xl font-semibold leading-tight">Đổi mật khẩu</h1>
+            <p className="mt-3 text-sm font-semibold leading-6 opacity-85">
               Tài khoản {currentAccount.username} cần đặt mật khẩu mới trước khi tiếp tục.
             </p>
-            <p className="mt-2 text-xs font-semibold leading-5 text-white/85">
+            <p className="mt-2 text-xs font-semibold leading-5 opacity-75">
               Yêu cầu: tối thiểu 6 ký tự, khác mật khẩu mặc định và khác mật khẩu hiện tại.
             </p>
           </div>
@@ -97,7 +106,17 @@ const ChangePasswordPage = (): React.ReactElement => {
             </Button>
             {error ? <Alert>{error}</Alert> : null}
             <Button disabled={isSubmitting} full type="submit">
-              {isSubmitting ? "Đang lưu..." : "Lưu mật khẩu mới"}
+              {isSubmitting ? (
+                <>
+                  <Icon className="animate-spin" name="loading" />
+                  Đang lưu...
+                </>
+              ) : (
+                <>
+                  <Icon name="check" />
+                  Lưu mật khẩu mới
+                </>
+              )}
             </Button>
             <Button
               className="underline-offset-4 hover:underline"
@@ -126,19 +145,17 @@ const PasswordField = ({
   readonly onChange: (value: string) => void;
   readonly showPassword: boolean;
   readonly value: string;
-}): React.ReactElement => {
-  return (
-    <Field label={label}>
-      <Input
-        autoComplete="new-password"
-        minLength={6}
-        onChange={(event) => onChange(event.target.value)}
-        required
-        type={showPassword ? "text" : "password"}
-        value={value}
-      />
-    </Field>
-  );
-};
+}): React.ReactElement => (
+  <Field label={label}>
+    <Input
+      autoComplete="new-password"
+      minLength={6}
+      onChange={(event) => onChange(event.target.value)}
+      required
+      type={showPassword ? "text" : "password"}
+      value={value}
+    />
+  </Field>
+);
 
 export default ChangePasswordPage;

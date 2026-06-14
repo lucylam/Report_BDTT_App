@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { PwaRuntime } from "@/components/PwaRuntime";
+import { getInitialTheme } from "@/lib/theme.server";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -41,9 +42,16 @@ interface RootLayoutProps {
   readonly children: React.ReactNode;
 }
 
-const RootLayout = ({ children }: RootLayoutProps): React.ReactElement => {
+const RootLayout = async ({ children }: RootLayoutProps): Promise<React.ReactElement> => {
+  const initialTheme = await getInitialTheme();
+
   return (
-    <html className={plusJakartaSans.variable} lang="vi">
+    <html
+      className={`${plusJakartaSans.variable} ${initialTheme === "dark" ? "dark" : ""}`}
+      lang="vi"
+      style={{ colorScheme: initialTheme }}
+      suppressHydrationWarning
+    >
       <body>
         <PwaRuntime />
         {children}

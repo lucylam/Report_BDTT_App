@@ -3,7 +3,7 @@ import type {
   StatusFilter,
   TaskKpis
 } from "@/components/admin/tasks/taskTableModel";
-import { Input, Select } from "@/components/ui";
+import { Icon, Input, Select, Widget, WidgetHeader } from "@/components/ui";
 
 interface TaskFilterToolbarProps {
   readonly query: string;
@@ -47,7 +47,13 @@ export const TaskFilterToolbar = ({
   onQuickFilterChange
 }: TaskFilterToolbarProps): React.ReactElement => {
   return (
-    <section className="glass-card rounded-[var(--radius-card)] p-4">
+    <Widget className="p-4">
+      <WidgetHeader
+        action={<Icon className="text-[var(--primary-strong)]" name="search" />}
+        subtitle="Lọc theo nhóm, đơn vị, section, ưu tiên và trạng thái"
+        title="Bộ lọc WorkOrder"
+      />
+
       <div className="grid gap-3 xl:grid-cols-[minmax(260px,1.4fr)_repeat(5,minmax(120px,1fr))]">
         <label>
           <span className="mb-2 block text-xs font-semibold uppercase text-[var(--primary-strong)]">
@@ -103,7 +109,7 @@ export const TaskFilterToolbar = ({
         <QuickChip count={kpis.notStarted} label="Chưa thực hiện" selected={quickFilter === "notStarted"} onClick={() => onQuickFilterChange("notStarted")} />
         <QuickChip count={kpis.inProgress} label="Đang thực hiện" selected={quickFilter === "inProgress"} onClick={() => onQuickFilterChange("inProgress")} />
       </div>
-    </section>
+    </Widget>
   );
 };
 
@@ -117,21 +123,19 @@ const FilterSelect = ({
   readonly onChange: (value: string) => void;
   readonly value: string;
   readonly values: readonly string[];
-}): React.ReactElement => {
-  return (
-    <label>
-      <span className="mb-2 block text-xs font-semibold uppercase text-[var(--text-soft)]">{label}</span>
-      <Select className="text-sm" onChange={(event) => onChange(event.target.value)} value={value}>
-        <option value="all">{label}</option>
-        {values.map((item) => (
-          <option key={item} value={item}>
-            {item}
-          </option>
-        ))}
-      </Select>
-    </label>
-  );
-};
+}): React.ReactElement => (
+  <label>
+    <span className="mb-2 block text-xs font-semibold uppercase text-[var(--text-soft)]">{label}</span>
+    <Select className="text-sm" onChange={(event) => onChange(event.target.value)} value={value}>
+      <option value="all">{label}</option>
+      {values.map((item) => (
+        <option key={item} value={item}>
+          {item}
+        </option>
+      ))}
+    </Select>
+  </label>
+);
 
 const QuickChip = ({
   count,
@@ -143,18 +147,16 @@ const QuickChip = ({
   readonly label: string;
   readonly selected: boolean;
   readonly onClick: () => void;
-}): React.ReactElement => {
-  return (
-    <button
-      className={`focus-ring pressable min-h-10 rounded-full border px-4 text-sm font-semibold ${
-        selected
-          ? "border-[var(--primary-strong)] bg-[var(--primary-strong)] text-white shadow-md"
-          : "border-[var(--line)] bg-[var(--surface)] text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-      }`}
-      onClick={onClick}
-      type="button"
-    >
-      {label}: {count}
-    </button>
-  );
-};
+}): React.ReactElement => (
+  <button
+    className={`focus-ring pressable min-h-10 rounded-full border px-4 text-sm font-semibold ${
+      selected
+        ? "border-[var(--primary-strong)] bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
+        : "border-[var(--line)] bg-[var(--surface)] text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+    }`}
+    onClick={onClick}
+    type="button"
+  >
+    {label}: {count}
+  </button>
+);

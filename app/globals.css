@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 :root {
   --font-sans: var(--font-plus-jakarta), "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -22,6 +24,7 @@
   /* Primary — lime / teal */
   --primary: #9bd13b;
   --primary-strong: #6fa51f;
+  --primary-contrast: #ffffff;
   --primary-soft: #edf8d5;
   --primary-pale: #f5fbe8;
 
@@ -58,6 +61,15 @@
   --purple: #7c5cff;
   --purple-soft: #f0edff;
 
+  --chart-primary: #6fa51f;
+  --chart-primary-soft: #dfeec4;
+  --chart-accent: #f2a24a;
+  --chart-warning: #b18416;
+  --chart-danger: #df5b3a;
+  --chart-info: #4a90d9;
+  --chart-muted: #a6a69e;
+  --chart-grid: rgba(17, 17, 17, 0.08);
+
   /* Bóng phẳng theo finance-card */
   --shadow-soft-sm: 0 12px 30px rgb(16 24 40 / 0.05);
   --shadow-soft-md: 0 16px 36px -8px rgb(16 24 40 / 0.08);
@@ -72,6 +84,68 @@
   --mobile-bottom-nav-height: 5.5rem;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.dark {
+  --background: #151612;
+  --foreground: #f6f7ef;
+  --text-muted: #a4a69b;
+  --text-soft: #7f8377;
+  --surface: #20211c;
+  --surface-muted: #2b2d25;
+  --surface-glass: #20211c;
+  --surface-warm: rgb(255 183 102 / 0.14);
+  --card: #20211c;
+  --line: rgb(255 255 255 / 0.12);
+  --line-soft: rgb(255 255 255 / 0.08);
+  --border: rgb(255 255 255 / 0.1);
+  --border-strong: rgb(255 255 255 / 0.16);
+
+  --primary: #b7e35a;
+  --primary-strong: #b7e35a;
+  --primary-contrast: #111111;
+  --primary-soft: rgb(183 227 90 / 0.14);
+  --primary-pale: rgb(183 227 90 / 0.09);
+
+  --accent: #ffb766;
+  --accent-strong: #ff9f43;
+  --accent-soft: rgb(255 183 102 / 0.15);
+
+  --warning: #f4d35e;
+  --warning-strong: #ffda6b;
+  --warning-soft: rgb(244 211 94 / 0.16);
+
+  --danger: #ff8a6b;
+  --danger-strong: #ff7354;
+  --danger-soft: rgb(255 138 107 / 0.15);
+
+  --success: #b7e35a;
+  --success-strong: #d5ff7d;
+  --success-soft: rgb(183 227 90 / 0.14);
+
+  --info: #8cc7ff;
+  --info-strong: #b4dcff;
+  --info-soft: rgb(140 199 255 / 0.14);
+
+  --yellow: #eff26d;
+  --yellow-strong: #f7f992;
+  --yellow-soft: rgb(239 242 109 / 0.14);
+
+  --purple: #b3a2ff;
+  --purple-soft: rgb(179 162 255 / 0.14);
+
+  --chart-primary: #b7e35a;
+  --chart-primary-soft: rgb(183 227 90 / 0.2);
+  --chart-accent: #ffb766;
+  --chart-warning: #f4d35e;
+  --chart-danger: #ff8a6b;
+  --chart-info: #8cc7ff;
+  --chart-muted: #7f8377;
+  --chart-grid: rgb(255 255 255 / 0.1);
+
+  --shadow-soft-sm: 0 12px 30px rgb(0 0 0 / 0.18);
+  --shadow-soft-md: 0 16px 36px -8px rgb(0 0 0 / 0.28);
+  --shadow-floating: 0 24px 50px -16px rgb(0 0 0 / 0.42);
 }
 
 * {

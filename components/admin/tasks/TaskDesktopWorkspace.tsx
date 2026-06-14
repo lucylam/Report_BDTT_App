@@ -23,7 +23,7 @@ export const TaskDesktopWorkspace = ({
 
   return (
     <section className="hidden gap-5 lg:grid xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="glass-card max-h-[680px] overflow-auto rounded-[var(--radius-card)]">
+      <div className="max-h-[680px] overflow-auto rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)]">
         <table className="min-w-[1320px] text-left text-sm">
           <thead className="sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)] font-semibold uppercase text-[11px] text-[var(--text-soft)]">
             <tr>
@@ -63,7 +63,7 @@ export const TaskDesktopWorkspace = ({
                 >
                   <td
                     className={`sticky left-0 z-10 py-3 pl-4 pr-4 font-mono font-semibold ${
-                    selected ? "bg-[var(--primary-soft)]" : "bg-[var(--surface)]"
+                      selected ? "bg-[var(--primary-soft)]" : "bg-[var(--surface)]"
                     }`}
                   >
                     {task.tagname}

@@ -64,7 +64,7 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
 
 const toneClass = (emphasis: string): string => {
   if (emphasis === "primary") {
-    return "border-[var(--primary-strong)] bg-[var(--primary-strong)] text-white";
+    return "border-[var(--primary-strong)] bg-[var(--primary-strong)] text-[var(--primary-contrast)]";
   }
   if (emphasis === "danger") {
     return "border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)]";

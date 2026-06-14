@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
-import { Button } from "@/components/ui";
+import { Button, Icon, type IconName } from "@/components/ui";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { SummaryPills } from "@/components/worker/SummaryPills";
 import {
   DailyCompletionChart,
@@ -49,11 +50,11 @@ interface WorkerDesktopViewProps {
 
 type DesktopTab = "tasks" | "overview" | "history" | "account";
 
-const tabs: readonly { readonly key: DesktopTab; readonly label: string }[] = [
-  { key: "tasks", label: "Việc của tôi" },
-  { key: "overview", label: "Tổng quan" },
-  { key: "history", label: "Lịch sử" },
-  { key: "account", label: "Tài khoản" }
+const tabs: readonly { readonly key: DesktopTab; readonly label: string; readonly icon: IconName }[] = [
+  { key: "tasks", label: "Việc của tôi", icon: "list" },
+  { key: "overview", label: "Tổng quan", icon: "chart" },
+  { key: "history", label: "Lịch sử", icon: "history" },
+  { key: "account", label: "Tài khoản", icon: "account" }
 ];
 
 const filters: readonly { readonly key: WorkerFilter; readonly label: string }[] = [
@@ -159,9 +160,12 @@ export const WorkerDesktopView = ({
 
   return (
     <main className="hidden min-h-dvh w-full max-w-[100vw] p-2 sm:p-3 lg:block lg:p-5">
-      <div className="app-shell grid min-h-[calc(100dvh-2.5rem)] grid-cols-[300px_minmax(0,1fr)] overflow-clip rounded-[var(--radius-panel)]">
+      <div className="app-shell grid min-h-[calc(100dvh-2.5rem)] grid-cols-[300px_minmax(0,1fr)] overflow-clip rounded-[22px]">
       <aside className="border-r border-[var(--line)] bg-[var(--surface)] p-5">
-        <CompanyBrand variant="sidebar" />
+        <div className="flex items-start justify-between gap-3">
+          <CompanyBrand variant="sidebar" />
+          <ThemeToggle className="shrink-0" />
+        </div>
         <p className="mt-5 text-xs font-semibold uppercase text-[var(--primary-strong)]">
           Workspace · BDTT 2026
         </p>
@@ -172,14 +176,14 @@ export const WorkerDesktopView = ({
           Ngày báo cáo: {formatViDate(DEFAULT_REPORT_DATE)}
         </p>
 
-        <div className="mt-6 rounded-[var(--radius-card)] bg-[var(--primary-strong)] p-4 text-white shadow-[var(--shadow-soft-md)]">
+        <div className="mt-6 rounded-[var(--radius-card)] bg-[var(--foreground)] p-4 text-[var(--surface)] shadow-[var(--shadow-soft-md)]">
           <p className="font-semibold">{worker.fullName}</p>
-          <p className="mt-1 text-sm font-semibold text-white/85">@{account.username}</p>
-          <p className="mt-3 text-sm font-semibold leading-5 text-white">{worker.orgTitle}</p>
-          <p className="mt-2 text-sm font-semibold leading-5 text-white/88">{worker.orgAssignment}</p>
+          <p className="mt-1 text-sm font-semibold opacity-85">@{account.username}</p>
+          <p className="mt-3 text-sm font-semibold leading-5">{worker.orgTitle}</p>
+          <p className="mt-2 text-sm font-semibold leading-5 opacity-85">{worker.orgAssignment}</p>
           <p
             className={`mt-3 text-sm font-semibold ${
-              isOnline ? "text-white" : "text-[var(--warning-soft)]"
+              isOnline ? "" : "text-[var(--warning)]"
             }`}
           >
             {isOnline ? "Trực tuyến" : "Mất mạng - đang lưu tạm"}
@@ -193,15 +197,16 @@ export const WorkerDesktopView = ({
         <div className="mt-5 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-2">
           {tabs.map((item) => (
             <button
-              className={`focus-ring pressable min-h-12 w-full rounded-[var(--radius-field)] px-4 text-left text-sm font-semibold ${
+              className={`focus-ring pressable flex min-h-12 w-full items-center gap-2 rounded-[var(--radius-field)] px-4 text-left text-sm font-semibold ${
                 item.key === tab
-                  ? "bg-[var(--primary-strong)] text-white shadow-md"
+                  ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
                   : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
               }`}
               key={item.key}
               onClick={() => setTab(item.key)}
               type="button"
             >
+              <Icon name={item.icon} />
               {item.label}
             </button>
           ))}
@@ -216,7 +221,7 @@ export const WorkerDesktopView = ({
               <button
                 className={`focus-ring pressable min-h-12 w-full rounded-[var(--radius-field)] px-4 text-left text-sm font-semibold ${
                   item.key === filter
-                    ? "bg-[var(--primary-strong)] text-white shadow-md ring-1 ring-[var(--primary)]"
+                    ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md ring-1 ring-[var(--primary)]"
                     : "border border-[var(--line)] bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
                 }`}
                 key={item.key}
@@ -233,6 +238,7 @@ export const WorkerDesktopView = ({
         ) : null}
 
         <Button className="mt-6" full onClick={onLogout} variant="secondary">
+          <Icon name="logout" />
           Đăng xuất
         </Button>
       </aside>
@@ -370,7 +376,7 @@ export const WorkerDesktopView = ({
                     <span
                       className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
                         isSelected
-                          ? "border-[var(--primary)] bg-[var(--primary-strong)] text-white"
+                          ? "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)]"
                           : "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--primary-strong)]"
                       }`}
                     >

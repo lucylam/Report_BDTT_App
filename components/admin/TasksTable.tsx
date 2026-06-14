@@ -14,6 +14,7 @@ import {
   type StatusFilter,
   type TaskRow
 } from "@/components/admin/tasks/taskTableModel";
+import { Widget, WidgetHeader } from "@/components/ui";
 import type { AppData } from "@/types/domain";
 
 interface TasksTableProps {
@@ -102,14 +103,13 @@ export const TasksTable = ({
         units={units}
       />
 
-      <section className="glass-card rounded-[var(--radius-card)] p-4 lg:p-5">
+      <Widget className="p-4 lg:p-5">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">Danh sách hạng mục</h2>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
-              Hiển thị {rows.length}/{filteredRows.length} dòng phù hợp.
-            </p>
-          </div>
+          <WidgetHeader
+            className="mb-0"
+            subtitle={`Hiển thị ${rows.length}/${filteredRows.length} dòng phù hợp`}
+            title="Danh sách hạng mục"
+          />
           <p className="rounded-full bg-[var(--surface-muted)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] ring-1 ring-[var(--border-strong)]">
             Tổng dữ liệu: {allRows.length} hạng mục
           </p>
@@ -133,7 +133,7 @@ export const TasksTable = ({
             Hiển thị thêm {Math.min(limit, filteredRows.length - visibleCount)} dòng
           </button>
         ) : null}
-      </section>
+      </Widget>
     </section>
   );
 };

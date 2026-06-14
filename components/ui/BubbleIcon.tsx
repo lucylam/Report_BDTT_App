@@ -23,7 +23,7 @@ const softClass: Record<BubbleTone, string> = {
 };
 
 const solidClass: Record<BubbleTone, string> = {
-  primary: "bg-[var(--primary-strong)] text-white",
+  primary: "bg-[var(--primary-strong)] text-[var(--primary-contrast)]",
   success: "bg-[var(--success)] text-white",
   accent: "bg-[var(--accent-strong)] text-white",
   warning: "bg-[var(--warning)] text-white",

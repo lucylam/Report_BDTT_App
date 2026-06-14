@@ -61,7 +61,7 @@ export const WorkerDesktopTaskList = ({
               className={`focus-ring pressable sticky top-0 z-10 mb-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-[var(--radius-card)] border px-4 text-left text-sm font-semibold shadow-[var(--shadow-soft-sm)] ${
                 isCollapsed
                   ? "border-[var(--line)] bg-[var(--surface)] text-[var(--primary-strong)]"
-                  : "border-[var(--primary)] bg-[var(--primary-strong)] text-white"
+                  : "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)]"
               }`}
               onClick={() => toggleGroup(group.key)}
               type="button"
@@ -70,7 +70,7 @@ export const WorkerDesktopTaskList = ({
                 <span className="block truncate">{group.label}</span>
                 <span
                   className={`mt-0.5 block text-xs font-semibold ${
-                    isCollapsed ? "text-[var(--text-muted)]" : "text-white/75"
+                    isCollapsed ? "text-[var(--text-muted)]" : "text-[var(--primary-contrast)] opacity-75"
                   }`}
                 >
                   {group.tasks.length} hạng mục
@@ -80,7 +80,7 @@ export const WorkerDesktopTaskList = ({
                 className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
                   isCollapsed
                     ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-1 ring-[var(--line)]"
-                    : "bg-white/16 text-white"
+                    : "bg-black/10 text-[var(--primary-contrast)]"
                 }`}
               >
                 {isCollapsed ? "Mở" : "Đóng"}
@@ -89,7 +89,7 @@ export const WorkerDesktopTaskList = ({
                   className={`h-2 w-2 border-b-2 border-r-2 transition-transform ${
                     isCollapsed
                       ? "translate-y-[-1px] rotate-45 border-[var(--primary-strong)]"
-                      : "translate-y-[1px] rotate-[225deg] border-white"
+                      : "translate-y-[1px] rotate-[225deg] border-[var(--primary-contrast)]"
                   }`}
                 />
               </span>

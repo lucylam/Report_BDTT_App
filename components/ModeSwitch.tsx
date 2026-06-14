@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Icon } from "@/components/ui";
+import { cn } from "@/lib/ui";
 
 interface ModeSwitchProps {
   readonly activeMode: "workspace" | "supervision";
@@ -9,7 +11,7 @@ interface ModeSwitchProps {
 export const ModeSwitch = ({
   activeMode,
   href,
-  className = ""
+  className
 }: ModeSwitchProps): React.ReactElement => {
   const isWorkspace = activeMode === "workspace";
   const targetLabel = isWorkspace ? "Giám sát" : "Workspace";
@@ -17,27 +19,35 @@ export const ModeSwitch = ({
   return (
     <Link
       aria-label={`Chuyển sang ${targetLabel}`}
-      className={`focus-ring group inline-flex min-h-12 w-full max-w-[18rem] items-center rounded-[var(--radius-field)] border border-[var(--primary)] bg-[var(--surface)] p-1 text-sm font-semibold text-[var(--primary-strong)] shadow-[var(--shadow-soft-sm)] transition duration-200 hover:bg-[var(--primary-soft)] hover:shadow-md sm:w-auto ${className}`}
+      className={cn(
+        "focus-ring group inline-flex min-h-11 w-full max-w-[18rem] items-center rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-1 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] transition hover:bg-[var(--surface-muted)] sm:w-auto",
+        className
+      )}
       href={href}
     >
-      <span className="relative grid w-full min-w-[13rem] grid-cols-2 rounded-[calc(var(--radius-field)-0.25rem)]">
+      <span className="relative grid w-full min-w-[12.5rem] grid-cols-2 rounded-[calc(var(--radius-field)-0.25rem)]">
         <span
-          className={`absolute inset-y-0 left-0 w-1/2 rounded-[calc(var(--radius-field)-0.25rem)] bg-[var(--primary-strong)] shadow-md transition-transform duration-300 ease-out ${
+          className={cn(
+            "absolute inset-y-0 left-0 w-1/2 rounded-[calc(var(--radius-field)-0.25rem)] bg-[var(--foreground)] shadow-md transition-transform duration-300 ease-out",
             isWorkspace ? "translate-x-0" : "translate-x-full"
-          }`}
+          )}
         />
         <span
-          className={`relative z-10 flex min-h-10 items-center justify-center rounded-[calc(var(--radius-field)-0.25rem)] px-4 transition-colors duration-200 ${
-            isWorkspace ? "text-white" : "text-[var(--primary-strong)]"
-          }`}
+          className={cn(
+            "relative z-10 flex min-h-9 items-center justify-center gap-1.5 rounded-[calc(var(--radius-field)-0.25rem)] px-3 transition-colors duration-200",
+            isWorkspace ? "text-[var(--surface)]" : "text-[var(--text-muted)]"
+          )}
         >
+          <Icon className="h-4 w-4" name="list" />
           Workspace
         </span>
         <span
-          className={`relative z-10 flex min-h-10 items-center justify-center rounded-[calc(var(--radius-field)-0.25rem)] px-4 transition-colors duration-200 ${
-            isWorkspace ? "text-[var(--primary-strong)]" : "text-white"
-          }`}
+          className={cn(
+            "relative z-10 flex min-h-9 items-center justify-center gap-1.5 rounded-[calc(var(--radius-field)-0.25rem)] px-3 transition-colors duration-200",
+            isWorkspace ? "text-[var(--text-muted)]" : "text-[var(--surface)]"
+          )}
         >
+          <Icon className="h-4 w-4" name="dashboard" />
           Giám sát
         </span>
       </span>

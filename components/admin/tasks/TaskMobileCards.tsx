@@ -16,7 +16,7 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
       {rows.map((row) => {
         const { task, percent, status, progress } = row;
         return (
-          <article className="glass-card rounded-[var(--radius-card)] p-4" key={task.id}>
+          <article className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft-sm)]" key={task.id}>
             <div className="flex items-center gap-3">
               <ProgressRing percent={task.isCancelled ? 0 : percent} />
               <div className="min-w-0 flex-1">
@@ -95,13 +95,11 @@ const ProgressRing = ({ percent }: { readonly percent: number }): React.ReactEle
   );
 };
 
-const Chip = ({ label }: { readonly label: string }): React.ReactElement => {
-  return (
-    <span className="rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-[var(--foreground)] ring-1 ring-[var(--border)]">
-      {label}
-    </span>
-  );
-};
+const Chip = ({ label }: { readonly label: string }): React.ReactElement => (
+  <span className="rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-[var(--foreground)] ring-1 ring-[var(--border)]">
+    {label}
+  </span>
+);
 
 const Info = ({
   label,
@@ -109,11 +107,9 @@ const Info = ({
 }: {
   readonly label: string;
   readonly value: string;
-}): React.ReactElement => {
-  return (
-    <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
-      <p className="text-[11px] font-semibold uppercase text-[var(--text-soft)]">{label}</p>
-      <p className="mt-1 truncate font-semibold text-[var(--foreground)]">{value}</p>
-    </div>
-  );
-};
+}): React.ReactElement => (
+  <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
+    <p className="text-[11px] font-semibold uppercase text-[var(--text-soft)]">{label}</p>
+    <p className="mt-1 truncate font-semibold text-[var(--foreground)]">{value}</p>
+  </div>
+);

@@ -81,7 +81,7 @@ export const ProgressEditor = ({
               aria-pressed={option === percent}
               className={`focus-ring pressable min-h-12 rounded-[calc(var(--radius-field)-0.25rem)] border text-sm font-semibold tabular-nums ${
                 option === percent
-                  ? "border-[var(--primary)] bg-[var(--primary-strong)] text-white shadow-md"
+                  ? "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
                   : "border-transparent bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
               }`}
               key={option}

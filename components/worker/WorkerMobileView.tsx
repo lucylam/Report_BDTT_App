@@ -4,7 +4,8 @@ import { useState } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
-import { Badge, Button } from "@/components/ui";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Badge, Button, Icon, type IconName } from "@/components/ui";
 import { CountdownBanner } from "@/components/worker/CountdownBanner";
 import { SummaryPills } from "@/components/worker/SummaryPills";
 import { WorkerGroupedTaskList } from "@/components/worker/WorkerGroupedTaskList";
@@ -53,11 +54,11 @@ export type HistoryRow = {
   readonly updates: readonly HistoryTaskUpdate[];
 };
 
-const tabs: readonly { readonly key: MobileTab; readonly label: string }[] = [
-  { key: "tasks", label: "Việc" },
-  { key: "overview", label: "Tổng quan" },
-  { key: "history", label: "Lịch sử" },
-  { key: "account", label: "Tài khoản" }
+const tabs: readonly { readonly key: MobileTab; readonly label: string; readonly icon: IconName }[] = [
+  { key: "tasks", label: "Việc", icon: "list" },
+  { key: "overview", label: "Tổng quan", icon: "chart" },
+  { key: "history", label: "Lịch sử", icon: "history" },
+  { key: "account", label: "Tài khoản", icon: "account" }
 ];
 
 const filters: readonly { readonly key: WorkerFilter; readonly label: string }[] = [
@@ -133,32 +134,49 @@ export const WorkerMobileView = ({
     });
 
   return (
-    <main className="mobile-app-page bg-transparent lg:hidden">
-      <header className="mobile-topbar sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--surface)] px-4 pb-3">
-        <CompanyBrand className="mb-2" variant="compact" />
-        <p className="text-xs font-semibold text-[var(--text-muted)]">
-          Ngày báo cáo: {formatViDate(DEFAULT_REPORT_DATE)}
-        </p>
-        <div className="mt-1 flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold leading-tight text-[var(--foreground)]">
-              Việc của tôi
-            </h1>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">
-              {worker.orgTitle}
+    <main
+      className="mobile-app-page bg-transparent lg:hidden"
+      style={{ "--mobile-topbar-height": isAdminAccount ? "13.25rem" : "10.75rem" } as React.CSSProperties}
+    >
+      <header className="mobile-topbar sticky top-0 z-20 rounded-b-[28px] border-b border-[var(--line)] bg-[var(--surface)] px-4 pb-4 shadow-[0_10px_26px_rgb(17_17_17/0.06)]">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-[3rem]">
+            <CompanyBrand variant="compact" />
+          </div>
+
+          <div className="min-w-0 text-center">
+            <p className="text-[13px] font-semibold text-[var(--text-muted)]">
+              {formatViDate(DEFAULT_REPORT_DATE)}
             </p>
-            <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-[var(--primary-strong)]">
+            <h1 className="mt-1 truncate text-[32px] font-semibold leading-none text-[var(--foreground)]">
+              {overallPercent}%
+            </h1>
+            <p className="mt-1 truncate text-xs font-semibold text-[var(--primary-strong)]">
+              Việc của tôi
+            </p>
+          </div>
+
+          <ThemeToggle className="shrink-0 rounded-full" />
+        </div>
+
+        <div className="mt-4 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-[var(--foreground)]">
+              {worker.fullName}
+            </p>
+            <p className="mt-1 truncate text-xs text-[var(--text-muted)]">@{account.username}</p>
+            <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-[var(--text-muted)]">
               {worker.orgAssignment}
             </p>
           </div>
-          <div className="text-right">
-            <p className="text-sm font-semibold leading-tight">{worker.fullName}</p>
-            <p className="text-xs text-[var(--text-muted)]">@{account.username}</p>
-            <Badge className="mt-2" tone={isOnline ? "success" : "warning"}>
+          <Badge className="shrink-0" tone={isOnline ? "success" : "warning"}>
+            <span className="inline-flex items-center gap-1">
+              <Icon className="h-3.5 w-3.5" name={isOnline ? "wifi" : "wifiOff"} />
               {isOnline ? "Online" : "Offline"}
-            </Badge>
-          </div>
+            </span>
+          </Badge>
         </div>
+
         {isAdminAccount ? (
           <ModeSwitch
             activeMode="workspace"
@@ -187,7 +205,7 @@ export const WorkerMobileView = ({
                 <button
                   className={`focus-ring pressable min-h-12 rounded-[calc(var(--radius-field)-0.25rem)] px-1 text-xs font-semibold leading-tight sm:px-2 sm:text-sm ${
                     item.key === filter
-                      ? "bg-[var(--primary-strong)] text-white shadow-md ring-1 ring-[var(--primary)]"
+                      ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md ring-1 ring-[var(--primary)]"
                       : "text-[var(--foreground)] ring-1 ring-transparent hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
                   }`}
                   key={item.key}
@@ -233,7 +251,7 @@ export const WorkerMobileView = ({
             />
           </section>
 
-          <section className="space-y-3 px-4 py-3 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+1rem)]">
+          <section className="space-y-3 px-4 py-3 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+4rem)]">
             <WorkerGroupedTaskList
               onCancel={onCancel}
               onChange={onChange}
@@ -246,7 +264,7 @@ export const WorkerMobileView = ({
       ) : null}
 
       {tab === "overview" ? (
-        <section className="space-y-4 px-4 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+1rem)] pt-5">
+        <section className="space-y-4 px-4 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+4rem)] pt-5">
           <SummaryPills percents={percents} />
           <ProgressDonutChart
             completed={completedCount}
@@ -266,7 +284,7 @@ export const WorkerMobileView = ({
       ) : null}
 
       {tab === "history" ? (
-        <section className="space-y-3 px-4 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+1rem)] pt-5">
+        <section className="space-y-3 px-4 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+4rem)] pt-5">
           {historyRows.map((row) => {
             const isSelected = selectedHistoryDate === row.date;
             return (
@@ -290,7 +308,7 @@ export const WorkerMobileView = ({
                   <span
                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
                       isSelected
-                        ? "border-[var(--primary)] bg-[var(--primary-strong)] text-white"
+                        ? "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)]"
                         : "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--primary-strong)]"
                     }`}
                   >
@@ -305,7 +323,7 @@ export const WorkerMobileView = ({
       ) : null}
 
       {tab === "account" ? (
-        <section className="px-4 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+1rem)] pt-5">
+        <section className="px-4 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+4rem)] pt-5">
           <div className="glass-card rounded-[var(--radius-card)] p-5">
             <h2 className="text-lg font-semibold">{worker.fullName}</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
@@ -316,6 +334,7 @@ export const WorkerMobileView = ({
             </div>
             <PwaInstallButton className="mt-4" compact showHint variant="panel" />
             <Button className="mt-4" full onClick={onLogout} variant="secondary">
+              <Icon name="logout" />
               Đăng xuất
             </Button>
           </div>
@@ -326,15 +345,16 @@ export const WorkerMobileView = ({
         <div className="floating-pill mx-auto grid max-w-[430px] grid-cols-4 gap-1 rounded-[var(--radius-card)] p-2 text-center text-xs font-semibold">
           {tabs.map((item) => (
             <button
-              className={`focus-ring pressable min-h-12 rounded-[var(--radius-field)] px-1 ${
+              className={`focus-ring pressable flex min-h-12 flex-col items-center justify-center gap-1 rounded-[var(--radius-field)] px-1 ${
                 item.key === tab
-                  ? "bg-[var(--primary-strong)] text-white shadow-md"
+                  ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
                   : "text-[var(--foreground)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
               }`}
               key={item.key}
               onClick={() => setTab(item.key)}
               type="button"
             >
+              <Icon name={item.icon} />
               {item.label}
             </button>
           ))}
@@ -520,7 +540,7 @@ export const HistoryUpdateList = ({
                 </span>
               </div>
             </div>
-            <span className="shrink-0 rounded-full bg-[var(--primary-strong)] px-3 py-2 text-sm font-semibold text-white tabular-nums">
+            <span className="shrink-0 rounded-full bg-[var(--primary-strong)] px-3 py-2 text-sm font-semibold text-[var(--primary-contrast)] tabular-nums">
               {record.percent}%
             </span>
           </div>

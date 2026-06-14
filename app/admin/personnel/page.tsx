@@ -44,7 +44,7 @@ const AdminPersonnelPage = (): React.ReactElement => {
       account={currentAccount}
       onLogout={logout}
       subtitle={`Tổ Thiết bị Đo lường & Điều khiển · ${scopeLabel}`}
-      title="Thành viên"
+      title="Nhân sự"
     >
       {scopedData ? (
         <WorkerStatusTable data={scopedData} />

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Badge } from "@/components/ui";
+import { Badge, Icon, Widget, WidgetHeader } from "@/components/ui";
 import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
 import {
   getOrgScopeLabel,
@@ -63,7 +63,7 @@ const AdminPage = (): React.ReactElement => {
             Tài khoản worker chỉ được vào màn hình Việc của tôi.
           </p>
           <Link
-            className="focus-ring pressable mt-4 inline-flex min-h-12 items-center justify-center rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-5 text-sm font-semibold text-white shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary)]"
+            className="focus-ring pressable mt-4 inline-flex min-h-12 items-center justify-center rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-5 text-sm font-semibold text-[var(--primary-contrast)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary)]"
             href="/worker"
           >
             Về Workspace
@@ -113,27 +113,7 @@ const ManagementDashboard = ({
     });
 
   return (
-    <section className="grid min-w-0 gap-5">
-      <section className="glass-card rounded-[var(--radius-card)] p-5 lg:p-6">
-        <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
-          Điều hành tiến độ
-        </p>
-        <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0">
-            <h2 className="text-2xl font-semibold tracking-normal text-[var(--foreground)]">
-              Theo dõi theo {isFullScope ? "nhóm và phân nhóm" : "phân nhóm"}
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-[var(--text-muted)]">
-              Tập trung vào đơn vị đạt kế hoạch, đơn vị cần tăng cường, WorkOrder trễ
-              và mức báo cáo của worker trong ngày.
-            </p>
-          </div>
-          <div className="rounded-full border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-2 text-sm font-semibold text-[var(--text-muted)] shadow-[var(--shadow-soft-sm)]">
-            Mốc đạt: {PLAN_TARGET_PERCENT}% · {formatViDate(DEFAULT_REPORT_DATE)}
-          </div>
-        </div>
-      </section>
-
+    <section className="grid min-w-0 gap-4">
       <ManagementKpiStrip
         attentionCount={attentionRows.length}
         metrics={metrics}
@@ -141,7 +121,12 @@ const ManagementDashboard = ({
         rows={rows}
       />
 
-      <section className="grid min-w-0 gap-5 2xl:grid-cols-[0.9fr_1.1fr]">
+      <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
+        <ProgressOverview rows={rows} />
+        <ReportCoverage metrics={metrics} rows={rows} />
+      </section>
+
+      <section className="grid min-w-0 gap-4 2xl:grid-cols-2">
         <ManagementTable
           emptyText="Chưa có đơn vị nào đạt mốc kế hoạch trong phạm vi hiện tại."
           rows={onTrackRows}
@@ -179,39 +164,45 @@ const ManagementKpiStrip = ({
   ).length;
   const overdueUnits = rows.filter((row) => row.overdue > 0).length;
   const cards: Array<{
+    readonly icon: "chart" | "check" | "people" | "workorder";
     readonly label: string;
     readonly value: string;
     readonly helper: string;
     readonly tone: Tone;
   }> = [
     {
+      icon: "people",
       label: "Đơn vị báo cáo",
       value: formatNumber(rows.length),
       helper: `${fullyReported}/${rows.length} đơn vị đủ báo cáo`,
       tone: "info"
     },
     {
+      icon: "check",
       label: "Đáp ứng kế hoạch",
       value: formatNumber(onTrackCount),
-      helper: "Đạt mốc tiến độ",
+      helper: `Mốc đạt ${PLAN_TARGET_PERCENT}%`,
       tone: "success"
     },
     {
+      icon: "chart",
       label: "Cần tăng cường",
       value: formatNumber(attentionCount),
-      helper: "Cần theo dõi",
+      helper: "Cần theo dõi trong ca",
       tone: "warning"
     },
     {
+      icon: "workorder",
       label: "WorkOrder trễ",
       value: formatNumber(metrics.overdue),
       helper: `${overdueUnits} đơn vị có WO trễ`,
       tone: "danger"
     },
     {
+      icon: "chart",
       label: "Tỷ lệ đạt TB",
       value: `${metrics.overallPercent}%`,
-      helper: `Mốc đạt ${PLAN_TARGET_PERCENT}%`,
+      helper: `${metrics.completed}/${metrics.totalTasks} hạng mục hoàn thành`,
       tone: metrics.overallPercent >= PLAN_TARGET_PERCENT ? "success" : "warning"
     }
   ];
@@ -220,13 +211,14 @@ const ManagementKpiStrip = ({
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       {cards.map((card) => (
         <article
-          className={`metric-card rounded-[var(--radius-card)] p-5 ${toneText(card.tone)}`}
+          className={`metric-card rounded-[var(--radius-card)] p-4 ${toneText(card.tone)}`}
           key={card.label}
         >
-          <p className="text-[11px] font-semibold uppercase text-[var(--text-soft)]">
+          <Icon name={card.icon} />
+          <p className="mt-4 text-[11px] font-semibold uppercase text-[var(--text-soft)]">
             {card.label}
           </p>
-          <p className="mt-3 text-4xl font-semibold leading-none tabular-nums">
+          <p className="mt-2 text-4xl font-semibold leading-none tabular-nums">
             {card.value}
           </p>
           <p className="mt-3 text-sm font-semibold text-[var(--text-muted)]">{card.helper}</p>
@@ -235,6 +227,99 @@ const ManagementKpiStrip = ({
     </section>
   );
 };
+
+const ProgressOverview = ({ rows }: { readonly rows: readonly OrgUnitRow[] }): React.ReactElement => {
+  const chartRows = [...rows].sort((left, right) => right.tasks - left.tasks).slice(0, 10);
+
+  return (
+    <Widget className="p-5">
+      <WidgetHeader
+        action={
+          <span className="rounded-full bg-[var(--primary-soft)] px-3 py-1 text-xs font-semibold text-[var(--primary-strong)]">
+            Top {chartRows.length}
+          </span>
+        }
+        subtitle="Theo % hoàn thành trung bình và số WorkOrder trễ"
+        title="Tổng quan tiến độ theo đơn vị"
+      />
+      <div className="mt-4 grid gap-3">
+        {chartRows.map((row) => {
+          const tone = row.overdue > 0 ? "danger" : row.percent >= PLAN_TARGET_PERCENT ? "success" : "warning";
+          return (
+            <div className="grid gap-2" key={row.key}>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-[var(--foreground)]">{row.shortName}</p>
+                  <p className="truncate text-xs font-semibold text-[var(--text-muted)]">
+                    {row.context} · {row.tasks} WorkOrder
+                  </p>
+                </div>
+                <span className={`shrink-0 font-semibold tabular-nums ${toneText(tone)}`}>
+                  {row.percent}%
+                </span>
+              </div>
+              <div className="progress-track">
+                <div
+                  className={`progress-fill progress-stripe-${tone}`}
+                  style={{ width: `${Math.min(row.percent, 100)}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Widget>
+  );
+};
+
+const ReportCoverage = ({
+  metrics,
+  rows
+}: {
+  readonly metrics: DashboardMetrics;
+  readonly rows: readonly OrgUnitRow[];
+}): React.ReactElement => {
+  const members = rows.reduce((total, row) => total + row.members, 0);
+  const submitted = rows.reduce((total, row) => total + row.submitted, 0);
+  const coveragePercent = members === 0 ? 0 : Math.round((submitted / members) * 100);
+
+  return (
+    <Widget className="p-5">
+      <WidgetHeader
+        subtitle={formatViDate(DEFAULT_REPORT_DATE)}
+        title="Báo cáo worker trong ngày"
+      />
+      <div className="rounded-[var(--radius-card)] bg-[var(--foreground)] p-5 text-[var(--surface)]">
+        <p className="text-sm font-semibold opacity-75">Tỷ lệ đã gửi báo cáo</p>
+        <p className="mt-3 text-5xl font-semibold leading-none tabular-nums">{coveragePercent}%</p>
+        <p className="mt-3 text-sm font-semibold opacity-80">
+          {submitted}/{members} worker có cập nhật trong ngày.
+        </p>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <MiniStat label="Hoàn thành" tone="success" value={metrics.completed} />
+        <MiniStat label="Đang làm" tone="warning" value={metrics.inProgress} />
+        <MiniStat label="Chưa làm" tone="info" value={metrics.notStarted} />
+        <MiniStat label="Đã hủy" tone="danger" value={metrics.cancelled} />
+      </div>
+    </Widget>
+  );
+};
+
+const MiniStat = ({
+  label,
+  tone,
+  value
+}: {
+  readonly label: string;
+  readonly tone: Tone;
+  readonly value: number;
+}): React.ReactElement => (
+  <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
+    <p className={`text-2xl font-semibold tabular-nums ${toneText(tone)}`}>{formatNumber(value)}</p>
+    <p className="mt-1 text-xs font-semibold text-[var(--text-muted)]">{label}</p>
+  </div>
+);
 
 const ManagementTable = ({
   emptyText,
@@ -252,14 +337,18 @@ const ManagementTable = ({
   const isSuccess = tone === "success";
 
   return (
-    <section className="glass-card min-w-0 overflow-hidden rounded-[var(--radius-card)]">
+    <Widget className="min-w-0 p-0">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4">
-        <h3 className="text-lg font-semibold text-[var(--foreground)]">{title}</h3>
+        <WidgetHeader
+          className="mb-0"
+          subtitle={isSuccess ? "Đơn vị đang đi đúng nhịp" : "Ưu tiên kiểm tra trong ngày"}
+          title={title}
+        />
         <span
           className={`rounded-full px-3 py-1 text-sm font-semibold ${
             isSuccess
               ? "bg-[var(--success-soft)] text-[var(--success)]"
-              : "bg-[var(--accent-soft)] text-[var(--accent)]"
+              : "bg-[var(--accent-soft)] text-[var(--accent-strong)]"
           }`}
         >
           {subtitle}
@@ -270,12 +359,12 @@ const ManagementTable = ({
         <div className="p-5 text-sm font-semibold text-[var(--text-muted)]">{emptyText}</div>
       ) : (
         <div className="divide-y divide-[var(--line-soft)]">
-          {rows.map((row) => (
+          {rows.slice(0, 8).map((row) => (
             <ManagementRow isSuccess={isSuccess} key={row.key} row={row} />
           ))}
         </div>
       )}
-    </section>
+    </Widget>
   );
 };
 
@@ -286,7 +375,7 @@ const ManagementRow = ({
   readonly isSuccess: boolean;
   readonly row: OrgUnitRow;
 }): React.ReactElement => {
-  const barColor = row.overdue > 0 ? "var(--danger)" : isSuccess ? "var(--success)" : "var(--accent)";
+  const tone = row.overdue > 0 ? "danger" : isSuccess ? "success" : "warning";
 
   return (
     <article className="grid gap-3 px-5 py-4 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center">
@@ -319,11 +408,11 @@ const ManagementRow = ({
         <div className="flex items-center gap-3">
           <div className="progress-track min-w-0 flex-1">
             <div
-              className="progress-fill"
-              style={{ backgroundColor: barColor, width: `${Math.min(row.percent, 100)}%` }}
+              className={`progress-fill progress-stripe-${tone}`}
+              style={{ width: `${Math.min(row.percent, 100)}%` }}
             />
           </div>
-          <span className="w-12 text-right text-sm font-semibold" style={{ color: barColor }}>
+          <span className={`w-12 text-right text-sm font-semibold tabular-nums ${toneText(tone)}`}>
             {row.percent}%
           </span>
         </div>
@@ -336,12 +425,12 @@ const ManagementRow = ({
 };
 
 const StatusLegend = (): React.ReactElement => (
-  <section className="glass-card flex flex-wrap items-center justify-center gap-x-7 gap-y-3 rounded-[var(--radius-card)] px-5 py-4 text-sm">
+  <Widget className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3 px-5 py-4 text-sm">
     <LegendDot className="bg-[var(--success)]" label="Hoàn thành" />
     <LegendDot className="bg-[var(--warning)]" label="Đang thực hiện" />
     <LegendDot className="bg-[var(--danger)]" label="Trễ tiến độ" />
     <LegendDot className="bg-[var(--text-soft)]" label="Chưa triển khai" />
-  </section>
+  </Widget>
 );
 
 const LegendDot = ({
@@ -483,7 +572,7 @@ const formatNumber = (value: number): string =>
 
 const toneText = (tone: Tone): string => {
   if (tone === "success") return "text-[var(--success)]";
-  if (tone === "warning") return "text-[var(--accent)]";
+  if (tone === "warning") return "text-[var(--accent-strong)]";
   if (tone === "danger") return "text-[var(--danger)]";
   return "text-[var(--info)]";
 };

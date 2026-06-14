@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { cn } from "@/lib/ui";
 
 interface CompanyBrandProps {
   readonly className?: string;
@@ -6,7 +7,7 @@ interface CompanyBrandProps {
 }
 
 export const CompanyBrand = ({
-  className = "",
+  className,
   variant = "sidebar"
 }: CompanyBrandProps): React.ReactElement => {
   const isCompact = variant === "compact";
@@ -16,32 +17,35 @@ export const CompanyBrand = ({
   return (
     <div
       aria-label="Tổng Công Ty Phân Bón Dầu Khí Cà Mau - Nhà máy Đạm Cà Mau"
-      className={`flex min-w-0 items-center gap-4 ${className}`}
+      className={cn("flex min-w-0 items-center gap-4", className)}
     >
       <Image
         alt="PETROVIETNAM PVCFC"
-        className={`shrink-0 object-contain ${logoSize}`}
+        className={cn("shrink-0 object-contain", logoSize)}
         height={115}
+        priority={isFull}
         src="/brand/pvcfc-logo.png"
         width={109}
       />
       {isCompact ? null : (
-        <div className={`min-w-0 ${isFull ? "" : "flex-1"}`}>
+        <div className={cn("min-w-0", isFull ? "" : "flex-1")}>
           <p
-            className={`font-semibold leading-tight text-[var(--foreground)] ${
+            className={cn(
+              "font-semibold leading-tight text-[var(--foreground)]",
               isFull ? "text-base md:text-lg" : "text-sm"
-            }`}
+            )}
           >
             Tổng Công Ty Phân Bón Dầu Khí Cà Mau
           </p>
           <p
-            className={`mt-1 font-semibold uppercase text-[var(--primary-strong)] ${
+            className={cn(
+              "mt-1 font-semibold uppercase text-[var(--primary-strong)]",
               isFull ? "text-sm" : "text-xs"
-            }`}
+            )}
           >
             Nhà máy Đạm Cà Mau
           </p>
-          <p className={`${isFull ? "text-sm" : "text-xs"} mt-1 font-semibold text-[var(--text-muted)]`}>
+          <p className={cn("mt-1 font-semibold text-[var(--text-muted)]", isFull ? "text-sm" : "text-xs")}>
             Xưởng Điều khiển
           </p>
           {isFull ? (
