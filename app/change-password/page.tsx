@@ -29,7 +29,6 @@ const ChangePasswordPage = (): React.ReactElement => {
       changePassword(nextPassword);
       router.replace(currentAccount?.role === "admin" ? "/admin" : "/worker");
     } catch (changeError) {
-      console.error("[ChangePasswordPage.submitChange]", changeError);
       setError(
         changeError instanceof Error ? changeError.message : "Không đổi được mật khẩu."
       );
@@ -74,10 +73,10 @@ const ChangePasswordPage = (): React.ReactElement => {
           </div>
 
           <div className="mt-6 rounded-[var(--radius-card)] bg-[var(--foreground)] px-5 py-6 text-[var(--surface)] shadow-[var(--shadow-soft-md)]">
-            <p className="text-xs font-semibold uppercase opacity-75">Đăng nhập lần đầu</p>
+            <p className="text-xs font-semibold uppercase opacity-75">Bảo mật tài khoản</p>
             <h1 className="mt-3 text-3xl font-semibold leading-tight">Đổi mật khẩu</h1>
             <p className="mt-3 text-sm font-semibold leading-6 opacity-85">
-              Tài khoản {currentAccount.username} cần đặt mật khẩu mới trước khi tiếp tục.
+              Tài khoản {currentAccount.username} cần dùng mật khẩu riêng trước khi tiếp tục.
             </p>
             <p className="mt-2 text-xs font-semibold leading-5 opacity-75">
               Yêu cầu: tối thiểu 6 ký tự, khác mật khẩu mặc định và khác mật khẩu hiện tại.
@@ -104,7 +103,7 @@ const ChangePasswordPage = (): React.ReactElement => {
             >
               {showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
             </Button>
-            {error ? <Alert>{error}</Alert> : null}
+            {error ? <Alert tone="warning">{error}</Alert> : null}
             <Button disabled={isSubmitting} full type="submit">
               {isSubmitting ? (
                 <>

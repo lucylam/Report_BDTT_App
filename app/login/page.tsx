@@ -11,7 +11,7 @@ import { loadRememberLoginPreference } from "@/lib/storage";
 
 const LoginPage = (): React.ReactElement => {
   const router = useRouter();
-  const { login } = useAppData();
+  const { currentAccount, data, login } = useAppData();
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [rememberLogin, setRememberLogin] = useState<boolean>(true);
@@ -25,6 +25,15 @@ const LoginPage = (): React.ReactElement => {
     }, 0);
     return () => window.clearTimeout(timerId);
   }, []);
+
+  useEffect(() => {
+    if (!data || !currentAccount) return;
+    if (currentAccount.mustChangePassword) {
+      router.replace("/change-password");
+      return;
+    }
+    router.replace(currentAccount.role === "admin" ? "/admin" : "/worker");
+  }, [currentAccount, data, router]);
 
   const submitLogin = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();

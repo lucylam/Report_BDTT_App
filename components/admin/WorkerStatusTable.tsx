@@ -225,61 +225,45 @@ export const WorkerStatusTable = ({
           </div>
         </div>
 
-        <div className="mt-4 flex max-w-full gap-2 overflow-x-auto pb-2">
-          <DateButton
-            active={dateFilter === "all-days"}
-            label="Tổng các ngày"
-            onClick={() => setDateFilter("all-days")}
-          />
-          {REPORT_DATES.map((date) => (
-            <DateButton
-              active={dateFilter === date}
-              key={date}
-              label={formatViDate(date)}
-              onClick={() => setDateFilter(date)}
-            />
-          ))}
+        <div className="mt-4 grid gap-2 sm:max-w-xs">
+          <label>
+            <span className="mb-1 block text-xs font-semibold uppercase text-[var(--text-soft)]">
+              Ngày báo cáo
+            </span>
+            <Select
+              aria-label="Chọn ngày báo cáo"
+              className="text-sm"
+              onChange={(event) => setDateFilter(event.target.value as DateFilter)}
+              value={dateFilter}
+            >
+              <option value="all-days">Tổng các ngày</option>
+              {REPORT_DATES.map((date) => (
+                <option key={date} value={date}>
+                  {formatViDate(date)}
+                </option>
+              ))}
+            </Select>
+          </label>
         </div>
       </Widget>
 
       <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.82fr)]">
         <Widget className="min-w-0 p-4 lg:p-5">
-          <div className="grid gap-3 lg:hidden">
+          <div className="grid min-w-0 gap-2">
+            <div className="hidden rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] px-4 py-3 text-xs font-semibold uppercase text-[var(--text-soft)] lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.8fr)_minmax(0,1.35fr)_minmax(0,0.75fr)] lg:gap-4">
+              <span className="truncate">Worker</span>
+              <span className="truncate">Nhóm</span>
+              <span className="truncate">Số liệu</span>
+              <span className="truncate">Tiến độ</span>
+            </div>
             {filteredRows.map((row) => (
-              <WorkerCard
+              <WorkerStatusRow
                 active={selectedRow?.profile.id === row.profile.id}
                 key={row.profile.id}
                 onSelect={() => setSelectedWorkerId(row.profile.id)}
                 row={row}
               />
             ))}
-          </div>
-
-          <div className="hidden max-w-full overflow-x-auto lg:block">
-            <table className="min-w-[1040px] text-left text-sm">
-              <thead className="sticky top-0 border-b border-[var(--line)] bg-[var(--surface)] font-semibold text-[var(--foreground)]">
-                <tr>
-                  <th className="py-3 pr-4">Tên</th>
-                  <th className="py-3 pr-4">Nhóm</th>
-                  <th className="py-3 pr-4">Hạng mục</th>
-                  <th className="py-3 pr-4">Có cập nhật</th>
-                  <th className="py-3 pr-4">Xong</th>
-                  <th className="py-3 pr-4">Cancel</th>
-                  <th className="py-3 pr-4">Tiến độ</th>
-                  <th className="py-3 pr-4">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRows.map((row) => (
-                  <WorkerTableRow
-                    active={selectedRow?.profile.id === row.profile.id}
-                    key={row.profile.id}
-                    onSelect={() => setSelectedWorkerId(row.profile.id)}
-                    row={row}
-                  />
-                ))}
-              </tbody>
-            </table>
           </div>
         </Widget>
 
@@ -312,62 +296,7 @@ const PersonnelMetric = ({
   </div>
 );
 
-const DateButton = ({
-  active,
-  label,
-  onClick
-}: {
-  readonly active: boolean;
-  readonly label: string;
-  readonly onClick: () => void;
-}): React.ReactElement => (
-  <button
-    className={`focus-ring pressable min-h-10 shrink-0 rounded-full border px-4 text-sm font-semibold ${
-      active
-        ? "border-[var(--primary-strong)] bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
-        : "border-[var(--line)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-    }`}
-    onClick={onClick}
-    type="button"
-  >
-    {label}
-  </button>
-);
-
-const WorkerTableRow = ({
-  active,
-  onSelect,
-  row
-}: {
-  readonly active: boolean;
-  readonly onSelect: () => void;
-  readonly row: WorkerRow;
-}): React.ReactElement => (
-  <tr
-    className={`cursor-pointer border-b border-[var(--border)] ${active ? "bg-[var(--primary-soft)]" : "hover:bg-[var(--line-soft)]"}`}
-    onClick={onSelect}
-  >
-    <td className="py-3 pr-4">
-      <p className="font-semibold">{row.profile.fullName}</p>
-      <p className="text-xs text-[var(--text-muted)]">@{row.profile.username}</p>
-    </td>
-    <td className="py-3 pr-4">{row.profile.nhom || row.profile.subgroup || "N/A"}</td>
-    <td className="py-3 pr-4 tabular-nums">{row.assigned}</td>
-    <td className="py-3 pr-4 tabular-nums">{row.updatedTasks}</td>
-    <td className="py-3 pr-4 tabular-nums">{row.done}</td>
-    <td className="py-3 pr-4 tabular-nums">{row.cancelled}</td>
-    <td className="py-3 pr-4">
-      <ProgressInline percent={row.percent} />
-    </td>
-    <td className="py-3 pr-4">
-      <Badge tone={getSubmissionTone(row)}>
-        {row.submitted ? "Đã gửi" : "Còn thiếu"}
-      </Badge>
-    </td>
-  </tr>
-);
-
-const WorkerCard = ({
+const WorkerStatusRow = ({
   active,
   onSelect,
   row
@@ -377,28 +306,45 @@ const WorkerCard = ({
   readonly row: WorkerRow;
 }): React.ReactElement => (
   <button
-    className={`focus-ring pressable rounded-[var(--radius-card)] border p-4 text-left shadow-[var(--shadow-soft-sm)] ${
+    className={`focus-ring pressable grid min-w-0 gap-3 rounded-[var(--radius-card)] border p-4 text-left shadow-[var(--shadow-soft-sm)] transition lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.8fr)_minmax(0,1.35fr)_minmax(0,0.75fr)] lg:items-center lg:gap-4 ${
       active
         ? "border-[var(--primary)] bg-[var(--primary-soft)]"
-        : "border-[var(--line)] bg-[var(--surface)]"
+        : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--primary)] hover:bg-[var(--line-soft)]"
     }`}
     onClick={onSelect}
     type="button"
   >
-    <div className="flex items-start justify-between gap-3">
+    <div className="flex min-w-0 items-start justify-between gap-3 lg:block">
       <div className="min-w-0">
         <p className="truncate font-semibold">{row.profile.fullName}</p>
         <p className="mt-1 truncate text-xs text-[var(--text-muted)]">@{row.profile.username}</p>
       </div>
-      <Badge tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
+      <span className="lg:hidden">
+        <Badge tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
+      </span>
     </div>
-    <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
-      <InfoMini label="WO" value={row.assigned} />
-      <InfoMini label="Xong" value={row.done} />
+
+    <div className="min-w-0">
+      <p className="text-sm font-semibold leading-5 text-[var(--foreground)]">
+        {row.profile.nhom || row.profile.subgroup || "N/A"}
+      </p>
+      <p className="mt-1 text-xs font-semibold text-[var(--text-soft)]">
+        {row.submittedDays}/{row.totalDays} ngày có báo cáo
+      </p>
+    </div>
+
+    <div className="grid min-w-0 grid-cols-2 gap-2">
+      <InfoMini label="Hạng mục" value={row.assigned} />
       <InfoMini label="Cập nhật" value={row.updatedTasks} />
+      <InfoMini label="Xong" value={row.done} />
+      <InfoMini label="Cancel" value={row.cancelled} />
     </div>
-    <div className="mt-3">
+
+    <div className="min-w-0">
       <ProgressInline percent={row.percent} />
+      <div className="mt-2 hidden lg:block">
+        <Badge tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
+      </div>
     </div>
   </button>
 );
@@ -510,8 +456,13 @@ const InfoMini = ({
   readonly label: string;
   readonly value: number;
 }): React.ReactElement => (
-  <span className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-2 py-1 ring-1 ring-[var(--border)]">
-    {label}: {value}
+  <span className="min-w-0 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-2 py-1.5 text-center leading-tight ring-1 ring-[var(--border)]">
+    <span className="block truncate text-[10px] font-semibold uppercase text-[var(--text-soft)]">
+      {label}
+    </span>
+    <span className="mt-0.5 block text-sm font-semibold tabular-nums text-[var(--foreground)]">
+      {value}
+    </span>
   </span>
 );
 

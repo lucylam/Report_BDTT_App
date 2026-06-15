@@ -3,6 +3,7 @@ import type { SaveState } from "@/components/worker/types";
 
 const statusMap: Record<SaveState, { readonly label: string; readonly tone: BadgeTone }> = {
   idle: { label: "Sẵn sàng", tone: "neutral" },
+  draft: { label: "Chờ cập nhật", tone: "warning" },
   saving: { label: "Đang lưu", tone: "info" },
   saved: { label: "Đã lưu", tone: "success" },
   offline: { label: "Chờ mạng, sẽ tự gửi", tone: "warning" },

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/ui";
 
 interface DialogProps {
@@ -22,7 +23,15 @@ export const Dialog = ({
   onClose,
   className,
   children
-}: DialogProps): React.ReactElement => {
+}: DialogProps): React.ReactElement | null => {
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key === "Escape") {
@@ -33,10 +42,15 @@ export const Dialog = ({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  return (
+  const dialog = (
     <div
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-end bg-slate-950/45 p-4 backdrop-blur-sm sm:items-center sm:justify-center"
+      className="fixed inset-0 z-[1000] flex items-end overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm sm:items-center sm:justify-center"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
       role="dialog"
     >
       <div
@@ -67,4 +81,6 @@ export const Dialog = ({
       </div>
     </div>
   );
+
+  return typeof document === "undefined" ? null : createPortal(dialog, document.body);
 };

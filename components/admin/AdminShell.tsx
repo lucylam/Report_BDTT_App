@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { AccountMenu } from "@/components/AccountMenu";
 import { CompanyBrand } from "@/components/CompanyBrand";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Button, Icon, PageHeader } from "@/components/ui";
+import { Icon, PageHeader } from "@/components/ui";
 import { isDataAdminAccount } from "@/lib/permissions";
 import type { AuthAccount } from "@/types/domain";
 
@@ -24,6 +25,13 @@ const links = [
   { href: "/admin/personnel", label: "Nhân sự", shortLabel: "Nhân sự", icon: "people" },
   { href: "/admin/upload", label: "DATA", shortLabel: "DATA", icon: "database", dataAdminOnly: true }
 ] as const;
+
+const sidebarNavTypographyStyle = {
+  fontFamily: "var(--font-sans)",
+  fontSize: "0.875rem",
+  fontWeight: 600,
+  lineHeight: "1.25rem"
+};
 
 export const AdminShell = ({
   account,
@@ -46,7 +54,7 @@ export const AdminShell = ({
             <CompanyBrand variant="sidebar" />
           </Link>
 
-          <nav className="mt-6 flex-1 space-y-5" aria-label="Admin navigation">
+          <nav className="mt-6 flex-1 space-y-1" aria-label="Giám sát navigation">
             <div className="space-y-1">
               {visibleLinks.map((link) => (
                 <DesktopNavLink
@@ -62,15 +70,6 @@ export const AdminShell = ({
                 />
               ))}
             </div>
-
-            <div className="space-y-1 border-t border-[var(--line)] pt-5">
-              <DesktopNavLink
-                active={false}
-                href="/worker"
-                icon="list"
-                label="Workspace"
-              />
-            </div>
           </nav>
 
           <div className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3">
@@ -83,10 +82,6 @@ export const AdminShell = ({
             <p className="mt-0.5 truncate text-xs font-semibold text-[var(--text-muted)]">
               {account.orgTitle}
             </p>
-            <Button className="mt-3" full onClick={onLogout} size="sm" variant="secondary">
-              <Icon name="logout" />
-              Đăng xuất
-            </Button>
           </div>
         </aside>
 
@@ -101,38 +96,27 @@ export const AdminShell = ({
               />
 
               <div className="hidden min-w-0 items-center gap-2 lg:flex">
-                <Link
-                  className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] transition hover:bg-[var(--surface-muted)]"
-                  href="/admin/tasks"
-                >
-                  <Icon name="search" />
-                  Mở WorkOrder
-                </Link>
                 <ThemeToggle />
                 <ModeSwitch activeMode="supervision" href="/worker" />
               </div>
 
-              <div className="hidden min-w-[14rem] items-center gap-2 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] px-3 py-2 shadow-[var(--shadow-soft-sm)] lg:flex">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-sm font-semibold text-white">
-                  {getInitials(account.fullName)}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[var(--foreground)]">
-                    {account.fullName}
-                  </p>
-                  <p className="truncate text-xs font-semibold text-[var(--text-muted)]">
-                    {account.orgTitle}
-                  </p>
-                </div>
+              <div className="hidden lg:block">
+                <AccountMenu
+                  account={account}
+                  onLogout={onLogout}
+                  statusLabel="Phiên giám sát"
+                />
               </div>
             </div>
 
             <div className="mt-3 flex items-center gap-2 lg:hidden">
               <ModeSwitch activeMode="supervision" className="max-w-none flex-1 text-xs" href="/worker" />
-              <ThemeToggle />
-              <Button className="shrink-0" onClick={onLogout} size="sm" variant="secondary">
-                <Icon name="logout" />
-              </Button>
+              <ThemeToggle className="shrink-0" />
+              <AccountMenu
+                account={account}
+                onLogout={onLogout}
+                statusLabel="Phiên giám sát"
+              />
             </div>
           </header>
 
@@ -181,25 +165,19 @@ const DesktopNavLink = ({
 }: {
   readonly active: boolean;
   readonly href: string;
-  readonly icon: (typeof links)[number]["icon"] | "list";
+  readonly icon: (typeof links)[number]["icon"];
   readonly label: string;
 }): React.ReactElement => (
   <Link
-    className={`focus-ring flex min-h-10 items-center gap-2 rounded-xl px-3 text-[13px] font-semibold transition ${
+    className={`focus-ring flex min-h-11 w-full items-center gap-2 rounded-xl border-0 bg-transparent px-3 text-left text-sm font-semibold leading-5 tracking-normal no-underline transition ${
       active
         ? "bg-[var(--primary-soft)] text-[var(--foreground)]"
         : "text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
     }`}
     href={href}
+    style={sidebarNavTypographyStyle}
   >
     <Icon className={active ? "text-[var(--primary-strong)]" : ""} name={icon} />
     <span className="truncate">{label}</span>
   </Link>
 );
-
-const getInitials = (name: string): string => {
-  const words = name.trim().split(/\s+/);
-  const first = words[0]?.[0] ?? "B";
-  const last = words[words.length - 1]?.[0] ?? "D";
-  return `${first}${last}`.toUpperCase();
-};

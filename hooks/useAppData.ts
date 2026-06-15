@@ -79,9 +79,8 @@ export const useAppData = (): UseAppDataResult => {
     if (!currentAccount) {
       throw new Error("Bạn cần đăng nhập trước khi đổi mật khẩu.");
     }
-    setData((current) =>
-      changeAccountPassword(current ?? loadAppData(), currentAccount.id, nextPassword)
-    );
+    const nextData = changeAccountPassword(data ?? loadAppData(), currentAccount.id, nextPassword);
+    setData(nextData);
   };
 
   const setImportedTasks = (tasks: readonly Task[]): void => {

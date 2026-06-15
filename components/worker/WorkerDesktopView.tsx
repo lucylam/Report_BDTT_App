@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { AccountMenu } from "@/components/AccountMenu";
 import { CompanyBrand } from "@/components/CompanyBrand";
-import { Button, Icon, type IconName } from "@/components/ui";
 import { ModeSwitch } from "@/components/ModeSwitch";
-import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Icon, PageHeader, Widget, WidgetHeader, type IconName } from "@/components/ui";
 import { SummaryPills } from "@/components/worker/SummaryPills";
 import {
   DailyCompletionChart,
@@ -16,6 +17,7 @@ import {
 } from "@/components/worker/WorkerMobileView";
 import { WorkerDesktopTaskDetail } from "@/components/worker/WorkerDesktopTaskDetail";
 import { WorkerDesktopTaskList } from "@/components/worker/WorkerDesktopTaskList";
+import { WorkerPendingUpdateBar } from "@/components/worker/WorkerPendingUpdateBar";
 import { WorkerSearchControls } from "@/components/worker/WorkerSearchControls";
 import {
   getTaskUnitChips,
@@ -29,7 +31,7 @@ import type {
 } from "@/components/worker/types";
 import { DEFAULT_REPORT_DATE, REPORT_DATES, formatViDate } from "@/lib/date";
 import { getTaskPercent, getTaskProgress } from "@/lib/progress";
-import type { AuthAccount, Profile, ProgressRecord, Task } from "@/types/domain";
+import type { AuthAccount, Profile, ProgressPercent, ProgressRecord, Task } from "@/types/domain";
 
 interface WorkerDesktopViewProps {
   readonly account: AuthAccount;
@@ -37,24 +39,32 @@ interface WorkerDesktopViewProps {
   readonly allTasks: readonly Task[];
   readonly filteredTasks: readonly Task[];
   readonly progress: readonly ProgressRecord[];
+  readonly displayProgress: readonly ProgressRecord[];
   readonly filter: WorkerFilter;
   readonly searchQuery: string;
   readonly isOnline: boolean;
+  readonly pendingUpdateCount: number;
+  readonly isSubmittingUpdates: boolean;
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly onFilterChange: (filter: WorkerFilter) => void;
   readonly onSearchChange: (query: string) => void;
   readonly onChange: (taskId: string, update: WorkerProgressUpdate) => void;
   readonly onCancel: (taskId: string) => void;
+  readonly onDiscardUpdates: () => void;
+  readonly onSubmitUpdates: () => void;
   readonly onLogout: () => void;
 }
 
-type DesktopTab = "tasks" | "overview" | "history" | "account";
+type DesktopTab = "tasks" | "overview" | "history";
 
-const tabs: readonly { readonly key: DesktopTab; readonly label: string; readonly icon: IconName }[] = [
+const tabs: readonly {
+  readonly key: DesktopTab;
+  readonly label: string;
+  readonly icon: IconName;
+}[] = [
   { key: "tasks", label: "Việc của tôi", icon: "list" },
   { key: "overview", label: "Tổng quan", icon: "chart" },
-  { key: "history", label: "Lịch sử", icon: "history" },
-  { key: "account", label: "Tài khoản", icon: "account" }
+  { key: "history", label: "Lịch sử", icon: "history" }
 ];
 
 const filters: readonly { readonly key: WorkerFilter; readonly label: string }[] = [
@@ -66,6 +76,13 @@ const filters: readonly { readonly key: WorkerFilter; readonly label: string }[]
   { key: "cancelled", label: "Hủy" }
 ];
 
+const sidebarNavTypographyStyle = {
+  fontFamily: "var(--font-sans)",
+  fontSize: "0.875rem",
+  fontWeight: 600,
+  lineHeight: "1.25rem"
+};
+
 const SEARCH_INPUT_ID = "worker-desktop-task-search";
 
 export const WorkerDesktopView = ({
@@ -74,14 +91,19 @@ export const WorkerDesktopView = ({
   allTasks,
   filteredTasks,
   progress,
+  displayProgress,
   filter,
   searchQuery,
   isOnline,
+  pendingUpdateCount,
+  isSubmittingUpdates,
   saveStates,
   onFilterChange,
   onSearchChange,
   onChange,
   onCancel,
+  onDiscardUpdates,
+  onSubmitUpdates,
   onLogout
 }: WorkerDesktopViewProps): React.ReactElement => {
   const isAdminAccount = account.role === "admin";
@@ -109,7 +131,7 @@ export const WorkerDesktopView = ({
   }, []);
 
   const activeTasks = allTasks.filter((task) => !task.isCancelled);
-  const percents = activeTasks.map((task) =>
+  const percents: readonly ProgressPercent[] = activeTasks.map((task) =>
     getTaskPercent(progress, task.id, DEFAULT_REPORT_DATE)
   );
   const completedCount = percents.filter((percent) => percent === 100).length;
@@ -159,316 +181,429 @@ export const WorkerDesktopView = ({
   }, [filteredTasks, selectedTaskId]);
 
   return (
-    <main className="hidden min-h-dvh w-full max-w-[100vw] p-2 sm:p-3 lg:block lg:p-5">
-      <div className="app-shell grid min-h-[calc(100dvh-2.5rem)] grid-cols-[300px_minmax(0,1fr)] overflow-clip rounded-[22px]">
-      <aside className="border-r border-[var(--line)] bg-[var(--surface)] p-5">
-        <div className="flex items-start justify-between gap-3">
-          <CompanyBrand variant="sidebar" />
-          <ThemeToggle className="shrink-0" />
-        </div>
-        <p className="mt-5 text-xs font-semibold uppercase text-[var(--primary-strong)]">
-          Workspace · BDTT 2026
-        </p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight tracking-normal text-[var(--foreground)]">
-          Báo cáo tiến độ
-        </h1>
-        <p className="mt-2 text-sm font-semibold text-[var(--text-muted)]">
-          Ngày báo cáo: {formatViDate(DEFAULT_REPORT_DATE)}
-        </p>
-
-        <div className="mt-6 rounded-[var(--radius-card)] bg-[var(--foreground)] p-4 text-[var(--surface)] shadow-[var(--shadow-soft-md)]">
-          <p className="font-semibold">{worker.fullName}</p>
-          <p className="mt-1 text-sm font-semibold opacity-85">@{account.username}</p>
-          <p className="mt-3 text-sm font-semibold leading-5">{worker.orgTitle}</p>
-          <p className="mt-2 text-sm font-semibold leading-5 opacity-85">{worker.orgAssignment}</p>
-          <p
-            className={`mt-3 text-sm font-semibold ${
-              isOnline ? "" : "text-[var(--warning)]"
-            }`}
-          >
-            {isOnline ? "Trực tuyến" : "Mất mạng - đang lưu tạm"}
-          </p>
-        </div>
-
-        <div className="mt-5">
-          <SummaryPills percents={percents} />
-        </div>
-
-        <div className="mt-5 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-2">
-          {tabs.map((item) => (
-            <button
-              className={`focus-ring pressable flex min-h-12 w-full items-center gap-2 rounded-[var(--radius-field)] px-4 text-left text-sm font-semibold ${
-                item.key === tab
-                  ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
-                  : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-              }`}
-              key={item.key}
-              onClick={() => setTab(item.key)}
-              type="button"
+    <main className="hidden min-h-dvh w-full max-w-[100vw] overflow-x-hidden p-2 sm:p-3 lg:block lg:p-5">
+      <div className="app-shell mx-auto grid min-h-[calc(100dvh-2.5rem)] max-w-[1700px] grid-cols-[218px_minmax(0,1fr)] overflow-hidden rounded-[22px]">
+        <aside className="flex border-r border-[var(--line)] bg-[var(--surface)] p-4">
+          <div className="flex min-h-full w-full flex-col">
+            <Link
+              className="focus-ring rounded-[var(--radius-card)] p-1"
+              href={isAdminAccount ? "/admin" : "/worker"}
             >
-              <Icon name={item.icon} />
-              {item.label}
-            </button>
-          ))}
-        </div>
+              <CompanyBrand variant="sidebar" />
+            </Link>
 
-        {tab === "tasks" ? (
-          <div className="mt-5 space-y-2">
-            <p className="px-2 text-xs font-semibold uppercase text-[var(--text-muted)]">
-              Bộ lọc hạng mục
-            </p>
-            {filters.map((item) => (
-              <button
-                className={`focus-ring pressable min-h-12 w-full rounded-[var(--radius-field)] px-4 text-left text-sm font-semibold ${
-                  item.key === filter
-                    ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md ring-1 ring-[var(--primary)]"
-                    : "border border-[var(--line)] bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-                }`}
-                key={item.key}
-                onClick={() => {
-                  setTab("tasks");
-                  onFilterChange(item.key);
-                }}
-                type="button"
-              >
-                {item.label}
-              </button>
-            ))}
+            <nav className="mt-6 flex-1 space-y-1" aria-label="Workspace navigation">
+              {tabs.map((item) => (
+                <DesktopNavButton
+                  active={item.key === tab}
+                  icon={item.icon}
+                  key={item.key}
+                  label={item.label}
+                  onClick={() => setTab(item.key)}
+                />
+              ))}
+            </nav>
+
+            <div className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3">
+              <p className="text-[11px] font-semibold uppercase text-[var(--text-soft)]">
+                Phiên làm việc
+              </p>
+              <p className="mt-2 truncate text-sm font-semibold text-[var(--foreground)]">
+                {account.fullName}
+              </p>
+              <p className="mt-0.5 line-clamp-2 text-xs font-semibold leading-4 text-[var(--text-muted)]">
+                {worker.orgTitle}
+              </p>
+            </div>
           </div>
-        ) : null}
+        </aside>
 
-        <Button className="mt-6" full onClick={onLogout} variant="secondary">
-          <Icon name="logout" />
-          Đăng xuất
-        </Button>
-      </aside>
+        <section className="min-w-0">
+          <header className="bg-transparent px-5 py-5">
+            <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-center">
+              <PageHeader
+                className="min-w-0 flex-1"
+                description={`Ngày báo cáo: ${formatViDate(DEFAULT_REPORT_DATE)} · ${worker.orgTitle}`}
+                eyebrow="Workspace · BDTT 2026"
+                title="Báo cáo tiến độ"
+              />
 
-      {tab === "tasks" ? (
-        <section className="grid min-h-full grid-cols-[minmax(0,1fr)_440px] gap-5 p-6">
-          <div className="min-w-0">
-            <div className="mb-4 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
-                  {filteredTasks.length}/{allTasks.length} hạng mục
-                </p>
-                <h2 className="mt-1 text-2xl font-semibold tracking-normal text-[var(--foreground)]">
-                  Danh sách công việc
-                </h2>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <p
                   aria-live="polite"
-                  className={`rounded-full px-4 py-2 text-sm font-semibold shadow-sm ${
+                  className={`inline-flex min-h-11 items-center rounded-[var(--radius-field)] px-4 text-sm font-semibold shadow-[var(--shadow-soft-sm)] ${
                     isOnline
                       ? "bg-[var(--success-soft)] text-[var(--success)]"
                       : "bg-[var(--warning-soft)] text-[var(--warning)]"
                   }`}
                 >
-                  {isOnline ? "Cập nhật trực tiếp" : "Đang offline"}
+                  {isOnline ? "Online" : "Đang offline"}
                 </p>
-                {isAdminAccount ? (
-                  <ModeSwitch activeMode="workspace" href="/admin" />
-                ) : null}
+                <ThemeToggle />
+                {isAdminAccount ? <ModeSwitch activeMode="workspace" href="/admin" /> : null}
               </div>
-            </div>
 
-            <div className="mb-4">
-              <WorkerSearchControls
-                groupMode={groupMode}
-                inputId={SEARCH_INPUT_ID}
-                onGroupModeChange={setGroupMode}
-                onSearchChange={onSearchChange}
-                resultLabel={`${filteredTasks.length}/${allTasks.length} hạng mục, nhấn / để tìm`}
-                searchQuery={searchQuery}
-                unitChips={unitChips}
+              <AccountMenu
+                account={account}
+                onLogout={onLogout}
+                showInstallButton
+                statusLabel={isOnline ? "Online" : "Đang offline"}
+                statusTone={isOnline ? "success" : "warning"}
               />
             </div>
+          </header>
 
-            <WorkerDesktopTaskList
-              onSelectTask={setSelectedTaskId}
-              progress={progress}
-              selectedTask={selectedTask}
-              taskGroups={taskGroups}
-            />
-          </div>
+          <div className="min-w-0 px-5 pb-6 pt-0">
+            <div className="mx-auto flex w-full max-w-[1400px] min-w-0 flex-col gap-4 pt-5 lg:gap-5">
+              {tab === "tasks" ? (
+                <TasksWorkspace
+                  allTasks={allTasks}
+                  completedCount={completedCount}
+                  displayProgress={displayProgress}
+                  filter={filter}
+                  filteredTasks={filteredTasks}
+                  groupMode={groupMode}
+                  inProgressCount={inProgressCount}
+                  isOnline={isOnline}
+                  isSubmittingUpdates={isSubmittingUpdates}
+                  notStartedCount={notStartedCount}
+                  onCancel={onCancel}
+                  onChange={onChange}
+                  onDiscardUpdates={onDiscardUpdates}
+                  onFilterChange={onFilterChange}
+                  onGroupModeChange={setGroupMode}
+                  onSearchChange={onSearchChange}
+                  onSelectTask={setSelectedTaskId}
+                  onSubmitUpdates={onSubmitUpdates}
+                  p1Open={p1Open}
+                  pendingUpdateCount={pendingUpdateCount}
+                  saveStates={saveStates}
+                  searchQuery={searchQuery}
+                  selectedTask={selectedTask}
+                  taskGroups={taskGroups}
+                  unitChips={unitChips}
+                />
+              ) : null}
 
-          <aside className="glass-card sticky top-6 h-[calc(100dvh-3rem)] overflow-auto p-6">
-            <WorkerDesktopTaskDetail
-              onCancel={onCancel}
-              onChange={onChange}
-              progress={progress}
-              saveStates={saveStates}
-              task={selectedTask}
-            />
-          </aside>
-        </section>
-      ) : null}
+              {tab === "overview" ? (
+                <OverviewWorkspace
+                  activeTasks={activeTasks}
+                  completedCount={completedCount}
+                  historyRows={historyRows}
+                  inProgressCount={inProgressCount}
+                  notStartedCount={notStartedCount}
+                  overallPercent={overallPercent}
+                  p1Open={p1Open}
+                  percents={percents}
+                />
+              ) : null}
 
-      {tab === "overview" ? (
-        <section className="min-h-full p-6">
-          <DesktopPageHeader
-            action={isAdminAccount ? <ModeSwitch activeMode="workspace" href="/admin" /> : null}
-            eyebrow={`${allTasks.length} hạng mục`}
-            status={isOnline ? "Cập nhật trực tiếp" : "Đang offline"}
-            title="Tổng quan cá nhân"
-          />
-          <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <ProgressDonutChart
-              completed={completedCount}
-              inProgress={inProgressCount}
-              notStarted={notStartedCount}
-              overallPercent={overallPercent}
-              total={activeTasks.length}
-            />
-            <DailyCompletionChart rows={historyRows} />
-          </div>
-          <div className="mt-5 grid gap-5 xl:grid-cols-3">
-            <div className="glass-card rounded-[var(--radius-card)] p-5 xl:col-span-2">
-              <h2 className="text-xl font-semibold">Điểm cần chú ý</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-                Hạng mục P1 chưa xong: <strong>{p1Open}</strong>. Dữ liệu tính theo ngày báo cáo hiện tại.
-              </p>
-            </div>
-            <div className="glass-card rounded-[var(--radius-card)] p-5">
-              <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
-                Báo cáo hôm nay
-              </p>
-              <p className="mt-2 text-3xl font-semibold tabular-nums">{overallPercent}%</p>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
-                Tiến độ trung bình của các hạng mục chưa cancel.
-              </p>
-            </div>
-          </div>
-        </section>
-      ) : null}
+              {tab === "history" ? (
+                <HistoryWorkspace
+                  historyRows={historyRows}
+                  selectedHistoryDate={selectedHistoryDate}
+                  onSelectedHistoryDateChange={setSelectedHistoryDate}
+                />
+              ) : null}
 
-      {tab === "history" ? (
-        <section className="min-h-full p-6">
-          <DesktopPageHeader
-            action={isAdminAccount ? <ModeSwitch activeMode="workspace" href="/admin" /> : null}
-            eyebrow="7 ngày gần nhất"
-            status={`${historyRows.reduce((total, row) => total + row.updates.length, 0)} cập nhật`}
-            title="Lịch sử cập nhật"
-          />
-          <div className="mt-5 grid gap-4 xl:grid-cols-2">
-            {historyRows.map((row) => {
-              const isSelected = selectedHistoryDate === row.date;
-              return (
-                <article className="glass-card overflow-hidden rounded-[var(--radius-card)]" key={row.date}>
-                  <button
-                    aria-expanded={isSelected}
-                    className="focus-ring pressable flex min-h-20 w-full items-center justify-between gap-3 p-5 text-left"
-                    onClick={() =>
-                      setSelectedHistoryDate((current) =>
-                        current === row.date ? null : row.date
-                      )
-                    }
-                    type="button"
-                  >
-                    <span>
-                      <span className="block text-lg font-semibold">
-                        {formatViDate(row.date)}
-                      </span>
-                      <span className="mt-1 block text-sm text-[var(--text-muted)]">
-                        {row.updates.length} hạng mục có cập nhật
-                      </span>
-                    </span>
-                    <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
-                        isSelected
-                          ? "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)]"
-                          : "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--primary-strong)]"
-                      }`}
-                    >
-                      {isSelected ? "−" : "+"}
-                    </span>
-                  </button>
-                  {isSelected ? <HistoryUpdateList updates={row.updates} /> : null}
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      ) : null}
-
-      {tab === "account" ? (
-        <section className="min-h-full p-6">
-          <DesktopPageHeader
-            action={isAdminAccount ? <ModeSwitch activeMode="workspace" href="/admin" /> : null}
-            eyebrow="Hồ sơ cá nhân"
-            status={isOnline ? "Trực tuyến" : "Mất mạng"}
-            title="Tài khoản"
-          />
-          <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-            <div className="glass-card p-6">
-              <h2 className="text-xl font-semibold">{worker.fullName}</h2>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">{worker.email}</p>
-              <div className="mt-4 rounded-[var(--radius-field)] bg-[var(--primary-pale)] p-4 ring-1 ring-[var(--line)]">
-                <p className="text-sm font-semibold text-[var(--primary-strong)]">{worker.orgTitle}</p>
-                <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">{worker.orgAssignment}</p>
-              </div>
-              <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                <InfoTile label="Mã NV" value={worker.employeeCode} />
-                <InfoTile label="Nhóm" value={worker.nhom || "Chưa phân nhóm"} />
-              </div>
-              <PwaInstallButton className="mt-5" showHint variant="panel" />
-            </div>
-            <div className="glass-card p-6">
-              <h2 className="text-xl font-semibold">Trạng thái phiên làm việc</h2>
-              <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-                Tài khoản này đang dùng workspace worker để cập nhật tiến độ, ghi chú và ảnh theo từng hạng mục.
-              </p>
-              <Button className="mt-5" onClick={onLogout} variant="secondary">
-                Đăng xuất
-              </Button>
             </div>
           </div>
         </section>
-      ) : null}
       </div>
     </main>
   );
 };
 
-const DesktopPageHeader = ({
-  action,
-  eyebrow,
-  status,
-  title
+const TasksWorkspace = ({
+  allTasks,
+  completedCount,
+  displayProgress,
+  filter,
+  filteredTasks,
+  groupMode,
+  inProgressCount,
+  isOnline,
+  isSubmittingUpdates,
+  notStartedCount,
+  onCancel,
+  onChange,
+  onDiscardUpdates,
+  onFilterChange,
+  onGroupModeChange,
+  onSearchChange,
+  onSelectTask,
+  onSubmitUpdates,
+  p1Open,
+  pendingUpdateCount,
+  saveStates,
+  searchQuery,
+  selectedTask,
+  taskGroups,
+  unitChips
 }: {
-  readonly action?: ReactNode;
-  readonly eyebrow: string;
-  readonly status: string;
-  readonly title: string;
+  readonly allTasks: readonly Task[];
+  readonly completedCount: number;
+  readonly displayProgress: readonly ProgressRecord[];
+  readonly filter: WorkerFilter;
+  readonly filteredTasks: readonly Task[];
+  readonly groupMode: WorkerGroupMode;
+  readonly inProgressCount: number;
+  readonly isOnline: boolean;
+  readonly isSubmittingUpdates: boolean;
+  readonly notStartedCount: number;
+  readonly onCancel: (taskId: string) => void;
+  readonly onChange: (taskId: string, update: WorkerProgressUpdate) => void;
+  readonly onDiscardUpdates: () => void;
+  readonly onFilterChange: (filter: WorkerFilter) => void;
+  readonly onGroupModeChange: (groupMode: WorkerGroupMode) => void;
+  readonly onSearchChange: (query: string) => void;
+  readonly onSelectTask: (taskId: string) => void;
+  readonly onSubmitUpdates: () => void;
+  readonly p1Open: number;
+  readonly pendingUpdateCount: number;
+  readonly saveStates: Readonly<Record<string, SaveState>>;
+  readonly searchQuery: string;
+  readonly selectedTask: Task | null;
+  readonly taskGroups: ReturnType<typeof groupWorkerTasks>;
+  readonly unitChips: readonly string[];
 }): React.ReactElement => {
   return (
-    <div className="flex items-end justify-between gap-4">
-      <div>
-        <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">{eyebrow}</p>
-        <h2 className="mt-1 text-2xl font-semibold tracking-normal text-[var(--foreground)]">{title}</h2>
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <p className="rounded-full bg-[var(--success-soft)] px-4 py-2 text-sm font-semibold text-[var(--success)] shadow-sm">
-          {status}
-        </p>
-        {action}
-      </div>
-    </div>
+    <section className="grid min-w-0 gap-4">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <WorkspaceMetric label="Tổng hạng mục" value={allTasks.length} tone="neutral" />
+        <WorkspaceMetric label="Chưa làm" value={notStartedCount} tone="info" />
+        <WorkspaceMetric label="Đang làm" value={inProgressCount} tone="warning" />
+        <WorkspaceMetric label="Hoàn thành" value={completedCount} tone="success" />
+        <WorkspaceMetric label="P1 chưa xong" value={p1Open} tone="danger" />
+      </section>
+
+      <WorkerPendingUpdateBar
+        isOnline={isOnline}
+        isSubmitting={isSubmittingUpdates}
+        onDiscard={onDiscardUpdates}
+        onSubmit={onSubmitUpdates}
+        pendingCount={pendingUpdateCount}
+      />
+
+      <Widget>
+        <WidgetHeader
+          action={<Icon className="text-[var(--primary-strong)]" name="search" />}
+          subtitle="Tìm theo tag, WorkOrder, hạng mục hoặc khu vực"
+          title="Bộ lọc công việc"
+        />
+        <WorkerSearchControls
+          groupMode={groupMode}
+          inputId={SEARCH_INPUT_ID}
+          onGroupModeChange={onGroupModeChange}
+          onSearchChange={onSearchChange}
+          resultLabel={`${filteredTasks.length}/${allTasks.length} hạng mục, nhấn / để tìm`}
+          searchQuery={searchQuery}
+          unitChips={unitChips}
+        />
+        <div className="mt-3 flex flex-wrap gap-2">
+          {filters.map((item) => (
+            <button
+              className={`focus-ring pressable min-h-10 rounded-[var(--radius-field)] border px-4 text-sm font-semibold ${
+                item.key === filter
+                  ? "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
+                  : "border-[var(--line)] bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+              }`}
+              key={item.key}
+              onClick={() => onFilterChange(item.key)}
+              type="button"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </Widget>
+
+      <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <Widget className="min-w-0 p-4">
+          <WidgetHeader
+            subtitle={`Hiển thị ${filteredTasks.length}/${allTasks.length} dòng phù hợp`}
+            title="Danh sách công việc"
+          />
+          <div className="max-h-[calc(100dvh-26rem)] min-h-[340px] overflow-auto pr-1">
+            <WorkerDesktopTaskList
+              onSelectTask={onSelectTask}
+              progress={displayProgress}
+              selectedTask={selectedTask}
+              taskGroups={taskGroups}
+            />
+          </div>
+        </Widget>
+
+        <Widget className="sticky top-5 max-h-[calc(100dvh-8rem)] min-h-[340px] overflow-auto p-5">
+          <WorkerDesktopTaskDetail
+            onCancel={onCancel}
+            onChange={onChange}
+            progress={displayProgress}
+            saveStates={saveStates}
+            task={selectedTask}
+          />
+        </Widget>
+      </section>
+    </section>
   );
 };
 
-const InfoTile = ({
+const OverviewWorkspace = ({
+  activeTasks,
+  completedCount,
+  historyRows,
+  inProgressCount,
+  notStartedCount,
+  overallPercent,
+  p1Open,
+  percents
+}: {
+  readonly activeTasks: readonly Task[];
+  readonly completedCount: number;
+  readonly historyRows: readonly HistoryRow[];
+  readonly inProgressCount: number;
+  readonly notStartedCount: number;
+  readonly overallPercent: number;
+  readonly p1Open: number;
+  readonly percents: readonly ProgressPercent[];
+}): React.ReactElement => (
+  <section className="grid gap-4">
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <WorkspaceMetric label="Tiến độ trung bình" value={`${overallPercent}%`} tone="success" />
+      <WorkspaceMetric label="Hoàn thành" value={completedCount} tone="success" />
+      <WorkspaceMetric label="Đang làm" value={inProgressCount} tone="warning" />
+      <WorkspaceMetric label="Chưa làm" value={notStartedCount} tone="info" />
+    </section>
+
+    <section className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <ProgressDonutChart
+        completed={completedCount}
+        inProgress={inProgressCount}
+        notStarted={notStartedCount}
+        overallPercent={overallPercent}
+        total={activeTasks.length}
+      />
+      <DailyCompletionChart rows={historyRows} />
+    </section>
+
+    <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
+      <Widget className="p-5">
+        <WidgetHeader title="Điểm cần chú ý" subtitle="Theo ngày báo cáo hiện tại" />
+        <p className="text-sm leading-6 text-[var(--text-muted)]">
+          Hạng mục P1 chưa xong: <strong>{p1Open}</strong>. Dữ liệu tính theo ngày báo cáo hiện tại.
+        </p>
+      </Widget>
+      <Widget className="p-5">
+        <WidgetHeader title="Cơ cấu tiến độ" subtitle={`${activeTasks.length} hạng mục chưa cancel`} />
+        <SummaryPills percents={percents} />
+      </Widget>
+    </section>
+  </section>
+);
+
+const HistoryWorkspace = ({
+  historyRows,
+  selectedHistoryDate,
+  onSelectedHistoryDateChange
+}: {
+  readonly historyRows: readonly HistoryRow[];
+  readonly selectedHistoryDate: string | null;
+  readonly onSelectedHistoryDateChange: (date: string | null) => void;
+}): React.ReactElement => (
+  <section className="grid gap-4">
+    <Widget className="p-5">
+      <WidgetHeader
+        subtitle={`${historyRows.reduce((total, row) => total + row.updates.length, 0)} cập nhật`}
+        title="Lịch sử 7 ngày gần nhất"
+      />
+      <div className="grid gap-3 xl:grid-cols-2">
+        {historyRows.map((row) => {
+          const isSelected = selectedHistoryDate === row.date;
+          return (
+            <article className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)]" key={row.date}>
+              <button
+                aria-expanded={isSelected}
+                className="focus-ring pressable flex min-h-20 w-full items-center justify-between gap-3 p-4 text-left"
+                onClick={() =>
+                  onSelectedHistoryDateChange(isSelected ? null : row.date)
+                }
+                type="button"
+              >
+                <span>
+                  <span className="block font-semibold">{formatViDate(row.date)}</span>
+                  <span className="mt-1 block text-sm text-[var(--text-muted)]">
+                    {row.updates.length} hạng mục có cập nhật
+                  </span>
+                </span>
+                <span
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
+                    isSelected
+                      ? "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)]"
+                      : "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--primary-strong)]"
+                  }`}
+                >
+                  {isSelected ? "-" : "+"}
+                </span>
+              </button>
+              {isSelected ? <HistoryUpdateList updates={row.updates} /> : null}
+            </article>
+          );
+        })}
+      </div>
+    </Widget>
+  </section>
+);
+
+const DesktopNavButton = ({
+  active,
+  icon,
   label,
+  onClick
+}: {
+  readonly active: boolean;
+  readonly icon: IconName;
+  readonly label: string;
+  readonly onClick: () => void;
+}): React.ReactElement => (
+  <button
+    aria-pressed={active}
+    className={`focus-ring flex min-h-11 w-full items-center gap-2 rounded-xl border-0 bg-transparent px-3 text-left text-sm font-semibold leading-5 tracking-normal no-underline transition ${
+      active
+        ? "bg-[var(--primary-soft)] text-[var(--foreground)]"
+        : "text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
+    }`}
+    onClick={onClick}
+    style={sidebarNavTypographyStyle}
+    type="button"
+  >
+    <Icon className={active ? "text-[var(--primary-strong)]" : ""} name={icon} />
+    <span className="truncate">{label}</span>
+  </button>
+);
+
+const WorkspaceMetric = ({
+  label,
+  tone,
   value
 }: {
   readonly label: string;
-  readonly value: string;
+  readonly tone: "neutral" | "info" | "success" | "warning" | "danger";
+  readonly value: number | string;
 }): React.ReactElement => {
+  const colorClass: Record<typeof tone, string> = {
+    neutral: "text-[var(--text-muted)]",
+    info: "text-[var(--info)]",
+    success: "text-[var(--success)]",
+    warning: "text-[var(--accent)]",
+    danger: "text-[var(--danger)]"
+  };
+
   return (
-    <div className="rounded-[var(--radius-card)] bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--border)]">
-      <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">{label}</p>
-      <p className="mt-1 font-semibold">{value}</p>
-    </div>
+    <article className={`metric-card rounded-[var(--radius-card)] p-4 ${colorClass[tone]}`}>
+      <p className="text-[11px] font-semibold uppercase text-[var(--text-soft)]">
+        {label}
+      </p>
+      <p className="mt-3 text-3xl font-semibold tabular-nums text-current">{value}</p>
+    </article>
   );
 };

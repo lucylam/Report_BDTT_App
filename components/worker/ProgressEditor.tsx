@@ -26,13 +26,13 @@ export const ProgressEditor = ({
   density = "comfortable",
   showDetails = true
 }: ProgressEditorProps): React.ReactElement => {
-  const [note, setNote] = useState<string>(progress?.note ?? "");
-  const [photoPath, setPhotoPath] = useState<string | undefined>(progress?.photoPath);
   const [photoError, setPhotoError] = useState<string>("");
   const [isProcessingPhoto, setIsProcessingPhoto] = useState<boolean>(false);
   const percent = progress?.percent ?? 0;
+  const note = progress?.note ?? "";
+  const photoPath = progress?.photoPath;
 
-  const saveChange = (
+  const stageChange = (
     nextPercent: ProgressPercent,
     nextNote = note,
     nextPhotoPath = photoPath
@@ -45,8 +45,7 @@ export const ProgressEditor = ({
     setIsProcessingPhoto(true);
     void compressPhotoToDataUrl(file)
       .then((dataUrl) => {
-        setPhotoPath(dataUrl);
-        saveChange(percent, note, dataUrl);
+        stageChange(percent, note, dataUrl);
       })
       .catch((error: unknown) => {
         console.error("[ProgressEditor.handlePhoto]", error);
@@ -58,8 +57,7 @@ export const ProgressEditor = ({
   };
 
   const removePhoto = (): void => {
-    setPhotoPath(undefined);
-    saveChange(percent, note, undefined);
+    stageChange(percent, note, undefined);
   };
 
   return (
@@ -67,7 +65,7 @@ export const ProgressEditor = ({
       <div>
         <div className="mb-2 flex items-center justify-between gap-3">
           <span className="text-sm font-semibold text-[var(--primary-strong)]">
-            Cập nhật tiến độ
+            Chọn tiến độ
           </span>
           <SaveStatus state={saveState} />
         </div>
@@ -85,7 +83,7 @@ export const ProgressEditor = ({
                   : "border-transparent bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
               }`}
               key={option}
-              onClick={() => saveChange(option)}
+              onClick={() => stageChange(option)}
               type="button"
             >
               {option}%
@@ -99,8 +97,10 @@ export const ProgressEditor = ({
           <span className="text-sm font-semibold text-[var(--foreground)]">Ghi chú</span>
           <Textarea
             className="mt-2"
-            onBlur={() => saveChange(percent)}
-            onChange={(event) => setNote(event.target.value)}
+            onChange={(event) => {
+              const nextNote = event.target.value;
+              stageChange(percent, nextNote);
+            }}
             placeholder="Ghi chú vấn đề phát sinh..."
             value={note}
           />

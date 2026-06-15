@@ -6,16 +6,22 @@ import { CancelReasonDialog } from "@/components/worker/CancelReasonDialog";
 import { WorkerDesktopView } from "@/components/worker/WorkerDesktopView";
 import { WorkerMobileView } from "@/components/worker/WorkerMobileView";
 import {
+  isSameProgressUpdate,
+  isSameWorkerProgressUpdate,
+  mergeProgressWithDrafts
+} from "@/components/worker/progressDrafts";
+import {
   matchesWorkerTaskQuery,
   sortWorkerTasks
 } from "@/components/worker/taskView";
 import type {
   SaveState,
   WorkerFilter,
+  WorkerProgressDraftMap,
   WorkerProgressUpdate
 } from "@/components/worker/types";
 import { DEFAULT_REPORT_DATE } from "@/lib/date";
-import { getTaskPercent } from "@/lib/progress";
+import { getTaskPercent, getTaskProgress } from "@/lib/progress";
 import { useAppData } from "@/hooks/useAppData";
 import type { ProgressPercent, Task } from "@/types/domain";
 
@@ -88,6 +94,8 @@ const WorkerPage = (): React.ReactElement => {
   const [filter, setFilter] = useState<WorkerFilter>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [cancelTaskId, setCancelTaskId] = useState<string | null>(null);
+  const [draftUpdates, setDraftUpdates] = useState<WorkerProgressDraftMap>({});
+  const [isSubmittingUpdates, setIsSubmittingUpdates] = useState<boolean>(false);
   const [saveStates, setSaveStates] = useState<Record<string, SaveState>>({});
   const [isOnline, setIsOnline] = useState<boolean>(() =>
     typeof navigator === "undefined" ? true : navigator.onLine
@@ -130,8 +138,6 @@ const WorkerPage = (): React.ReactElement => {
       }
       flushQueue();
     } catch (error) {
-      // Giữ nguyên hàng đợi để thử lại ở lần online tiếp theo
-      // (server upsert idempotent nên item đã gửi không bị nhân đôi).
       console.error("[WorkerPage.syncOfflineQueue]", error);
     } finally {
       isSyncingQueueRef.current = false;
@@ -161,6 +167,17 @@ const WorkerPage = (): React.ReactElement => {
   }, [isOnline, queueLength]);
 
   const worker = currentProfile;
+  const pendingUpdateCount = Object.keys(draftUpdates).length;
+  const displayProgress = useMemo(() => {
+    if (!data || !worker) return [];
+    return mergeProgressWithDrafts(
+      data.progress,
+      draftUpdates,
+      worker.id,
+      DEFAULT_REPORT_DATE
+    );
+  }, [data, draftUpdates, worker]);
+
   const allWorkerTasks = useMemo(() => {
     if (!data || !worker) return [];
     return data.tasks.filter((task) => task.assignedTo === worker.id);
@@ -189,57 +206,129 @@ const WorkerPage = (): React.ReactElement => {
     );
   }
 
-  const handleChange = async (
+  const handleChange = (
     taskId: string,
     update: WorkerProgressUpdate
-  ): Promise<void> => {
+  ): void => {
     const task = data.tasks.find((item) => item.id === taskId);
-    if (!task || task.isCancelled) return;
+    if (!task || task.isCancelled || isSubmittingUpdates) return;
+
+    const committedProgress = getTaskProgress(
+      data.progress,
+      taskId,
+      DEFAULT_REPORT_DATE
+    );
+    const matchesCommitted = isSameProgressUpdate(committedProgress, update);
+
+    setDraftUpdates((current) => {
+      const next = { ...current };
+      if (matchesCommitted) {
+        delete next[taskId];
+      } else {
+        next[taskId] = update;
+      }
+      return next;
+    });
     setSaveStates((current) => ({
       ...current,
-      [taskId]: isOnline ? "saving" : "offline"
+      [taskId]: matchesCommitted ? "idle" : "draft"
     }));
+  };
+
+  const discardDraftUpdates = (): void => {
+    const taskIds = Object.keys(draftUpdates);
+    if (taskIds.length === 0 || isSubmittingUpdates) return;
+
+    setDraftUpdates({});
+    setSaveStates((current) => {
+      const next = { ...current };
+      taskIds.forEach((taskId) => {
+        next[taskId] = "idle";
+      });
+      return next;
+    });
+  };
+
+  const submitDraftUpdates = async (): Promise<void> => {
+    const entries = Object.entries(draftUpdates);
+    if (entries.length === 0 || isSubmittingUpdates) return;
+
+    const submittedUpdates = new Map<string, WorkerProgressUpdate>();
+    setIsSubmittingUpdates(true);
+    setSaveStates((current) => {
+      const next = { ...current };
+      entries.forEach(([taskId]) => {
+        next[taskId] = "saving";
+      });
+      return next;
+    });
+
     try {
-      const payload = {
-        taskId,
-        userId: worker.id,
-        reportDate: DEFAULT_REPORT_DATE,
-        percent: update.percent,
-        note: update.note,
-        photoPath: update.photoPath
-      };
-      if (isOnline) {
-        updateProgress(payload);
-        await submitProgressToDatabase({
-          task,
-          update: payload,
-          worker: {
-            username: worker.username,
-            fullName: worker.fullName,
-            resourceName: worker.resourceName
-          }
-        });
-        setSaveStates((current) => ({ ...current, [taskId]: "saved" }));
-      } else {
-        queueProgress(payload);
-      }
-    } catch (error) {
-      console.error("[WorkerPage.handleChange]", error);
-      if (error instanceof TypeError) {
-        // fetch ném TypeError khi rớt mạng: xếp hàng đợi để tự gửi lại,
-        // dữ liệu đã được lưu cục bộ nên không mất.
-        queueProgress({
+      for (const [taskId, update] of entries) {
+        const task = data.tasks.find((item) => item.id === taskId);
+        if (!task || task.isCancelled) {
+          submittedUpdates.set(taskId, update);
+          continue;
+        }
+
+        const payload = {
           taskId,
           userId: worker.id,
           reportDate: DEFAULT_REPORT_DATE,
           percent: update.percent,
           note: update.note,
           photoPath: update.photoPath
-        });
-        setSaveStates((current) => ({ ...current, [taskId]: "offline" }));
-      } else {
-        setSaveStates((current) => ({ ...current, [taskId]: "error" }));
+        };
+
+        try {
+          if (isOnline) {
+            await submitProgressToDatabase({
+              task,
+              update: payload,
+              worker: {
+                username: worker.username,
+                fullName: worker.fullName,
+                resourceName: worker.resourceName
+              }
+            });
+            updateProgress(payload);
+            setSaveStates((current) => ({ ...current, [taskId]: "saved" }));
+          } else {
+            updateProgress(payload);
+            queueProgress(payload);
+            setSaveStates((current) => ({ ...current, [taskId]: "offline" }));
+          }
+          submittedUpdates.set(taskId, update);
+        } catch (error) {
+          console.error("[WorkerPage.submitDraftUpdates]", error);
+          if (error instanceof TypeError) {
+            updateProgress(payload);
+            queueProgress(payload);
+            setSaveStates((current) => ({ ...current, [taskId]: "offline" }));
+            submittedUpdates.set(taskId, update);
+          } else {
+            setSaveStates((current) => ({ ...current, [taskId]: "error" }));
+          }
+        }
       }
+
+      if (submittedUpdates.size > 0) {
+        setDraftUpdates((current) => {
+          const next = { ...current };
+          submittedUpdates.forEach((submittedUpdate, taskId) => {
+            const currentUpdate = next[taskId];
+            if (
+              currentUpdate &&
+              isSameWorkerProgressUpdate(currentUpdate, submittedUpdate)
+            ) {
+              delete next[taskId];
+            }
+          });
+          return next;
+        });
+      }
+    } finally {
+      setIsSubmittingUpdates(false);
     }
   };
 
@@ -269,14 +358,21 @@ const WorkerPage = (): React.ReactElement => {
       <WorkerMobileView
         account={currentAccount}
         allTasks={allWorkerTasks}
+        displayProgress={displayProgress}
         filter={filter}
         filteredTasks={filteredTasks}
         isOnline={isOnline}
-        onChange={handleChange}
+        isSubmittingUpdates={isSubmittingUpdates}
         onCancel={handleCancel}
+        onChange={handleChange}
+        onDiscardUpdates={discardDraftUpdates}
         onFilterChange={setFilter}
         onLogout={logout}
         onSearchChange={setSearchQuery}
+        onSubmitUpdates={() => {
+          void submitDraftUpdates();
+        }}
+        pendingUpdateCount={pendingUpdateCount}
         progress={data.progress}
         saveStates={saveStates}
         searchQuery={searchQuery}
@@ -285,14 +381,21 @@ const WorkerPage = (): React.ReactElement => {
       <WorkerDesktopView
         account={currentAccount}
         allTasks={allWorkerTasks}
+        displayProgress={displayProgress}
         filter={filter}
         filteredTasks={filteredTasks}
         isOnline={isOnline}
-        onChange={handleChange}
+        isSubmittingUpdates={isSubmittingUpdates}
         onCancel={handleCancel}
+        onChange={handleChange}
+        onDiscardUpdates={discardDraftUpdates}
         onFilterChange={setFilter}
         onLogout={logout}
         onSearchChange={setSearchQuery}
+        onSubmitUpdates={() => {
+          void submitDraftUpdates();
+        }}
+        pendingUpdateCount={pendingUpdateCount}
         progress={data.progress}
         saveStates={saveStates}
         searchQuery={searchQuery}

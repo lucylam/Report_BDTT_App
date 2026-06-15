@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { CompanyBrand } from "@/components/CompanyBrand";
+import { AccountMenu } from "@/components/AccountMenu";
 import { ModeSwitch } from "@/components/ModeSwitch";
-import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Badge, Button, Icon, type IconName } from "@/components/ui";
+import { Badge, Icon, PageHeader, type IconName } from "@/components/ui";
 import { CountdownBanner } from "@/components/worker/CountdownBanner";
 import { SummaryPills } from "@/components/worker/SummaryPills";
 import { WorkerGroupedTaskList } from "@/components/worker/WorkerGroupedTaskList";
+import { WorkerPendingUpdateBar } from "@/components/worker/WorkerPendingUpdateBar";
 import { WorkerSearchControls } from "@/components/worker/WorkerSearchControls";
 import {
   getTaskUnitChips,
@@ -30,18 +30,23 @@ interface WorkerMobileViewProps {
   readonly allTasks: readonly Task[];
   readonly filteredTasks: readonly Task[];
   readonly progress: readonly ProgressRecord[];
+  readonly displayProgress: readonly ProgressRecord[];
   readonly filter: WorkerFilter;
   readonly searchQuery: string;
   readonly isOnline: boolean;
+  readonly pendingUpdateCount: number;
+  readonly isSubmittingUpdates: boolean;
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly onFilterChange: (filter: WorkerFilter) => void;
   readonly onSearchChange: (query: string) => void;
   readonly onChange: (taskId: string, update: WorkerProgressUpdate) => void;
   readonly onCancel: (taskId: string) => void;
+  readonly onDiscardUpdates: () => void;
+  readonly onSubmitUpdates: () => void;
   readonly onLogout: () => void;
 }
 
-type MobileTab = "tasks" | "overview" | "history" | "account";
+type MobileTab = "tasks" | "overview" | "history";
 
 export type HistoryTaskUpdate = {
   readonly task: Task;
@@ -57,8 +62,7 @@ export type HistoryRow = {
 const tabs: readonly { readonly key: MobileTab; readonly label: string; readonly icon: IconName }[] = [
   { key: "tasks", label: "Việc", icon: "list" },
   { key: "overview", label: "Tổng quan", icon: "chart" },
-  { key: "history", label: "Lịch sử", icon: "history" },
-  { key: "account", label: "Tài khoản", icon: "account" }
+  { key: "history", label: "Lịch sử", icon: "history" }
 ];
 
 const filters: readonly { readonly key: WorkerFilter; readonly label: string }[] = [
@@ -74,14 +78,19 @@ export const WorkerMobileView = ({
   allTasks,
   filteredTasks,
   progress,
+  displayProgress,
   filter,
   searchQuery,
   isOnline,
+  pendingUpdateCount,
+  isSubmittingUpdates,
   saveStates,
   onFilterChange,
   onSearchChange,
   onChange,
   onCancel,
+  onDiscardUpdates,
+  onSubmitUpdates,
   onLogout
 }: WorkerMobileViewProps): React.ReactElement => {
   const isAdminAccount = account.role === "admin";
@@ -135,55 +144,63 @@ export const WorkerMobileView = ({
 
   return (
     <main
-      className="mobile-app-page bg-transparent lg:hidden"
-      style={{ "--mobile-topbar-height": isAdminAccount ? "13.25rem" : "10.75rem" } as React.CSSProperties}
+      className="min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 sm:pt-3 lg:hidden"
+      style={{ "--mobile-topbar-height": "15rem" } as React.CSSProperties}
     >
-      <header className="mobile-topbar sticky top-0 z-20 rounded-b-[28px] border-b border-[var(--line)] bg-[var(--surface)] px-4 pb-4 shadow-[0_10px_26px_rgb(17_17_17/0.06)]">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-[3rem]">
-            <CompanyBrand variant="compact" />
-          </div>
+      <div className="app-shell mx-auto min-h-[calc(100dvh-1rem)] max-w-[1700px] overflow-hidden rounded-[22px]">
+      <header className="mobile-topbar sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)]/96 px-4 pb-4 backdrop-blur-xl">
+        <PageHeader
+          description={`Ngày báo cáo: ${formatViDate(DEFAULT_REPORT_DATE)} · ${worker.orgTitle}`}
+          eyebrow="Workspace · BDTT 2026"
+          title="Báo cáo tiến độ"
+        />
 
-          <div className="min-w-0 text-center">
-            <p className="text-[13px] font-semibold text-[var(--text-muted)]">
-              {formatViDate(DEFAULT_REPORT_DATE)}
-            </p>
-            <h1 className="mt-1 truncate text-[32px] font-semibold leading-none text-[var(--foreground)]">
-              {overallPercent}%
-            </h1>
-            <p className="mt-1 truncate text-xs font-semibold text-[var(--primary-strong)]">
-              Việc của tôi
-            </p>
-          </div>
-
-          <ThemeToggle className="shrink-0 rounded-full" />
+        <div className="mt-3 flex items-center gap-2">
+          {isAdminAccount ? (
+            <ModeSwitch
+              activeMode="workspace"
+              className="max-w-none flex-1 text-xs"
+              href="/admin"
+            />
+          ) : (
+            <div className="inline-flex min-h-11 flex-1 items-center rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-soft-sm)]">
+              Workspace
+            </div>
+          )}
+          <ThemeToggle className="shrink-0" />
+          <AccountMenu
+            account={account}
+            onLogout={onLogout}
+            showInstallButton
+            statusLabel={isOnline ? "Online" : "Offline"}
+            statusTone={isOnline ? "success" : "warning"}
+          />
         </div>
 
-        <div className="mt-4 flex items-start justify-between gap-3">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-2 ring-1 ring-[var(--border)]">
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[var(--foreground)]">
               {worker.fullName}
             </p>
-            <p className="mt-1 truncate text-xs text-[var(--text-muted)]">@{account.username}</p>
-            <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-[var(--text-muted)]">
-              {worker.orgAssignment}
-            </p>
+            <p className="mt-0.5 truncate text-xs text-[var(--text-muted)]">@{account.username}</p>
           </div>
-          <Badge className="shrink-0" tone={isOnline ? "success" : "warning"}>
-            <span className="inline-flex items-center gap-1">
-              <Icon className="h-3.5 w-3.5" name={isOnline ? "wifi" : "wifiOff"} />
-              {isOnline ? "Online" : "Offline"}
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-right">
+              <span className="block text-xl font-semibold leading-none tabular-nums text-[var(--foreground)]">
+                {overallPercent}%
+              </span>
+              <span className="block text-[10px] font-semibold uppercase text-[var(--text-soft)]">
+                Tiến độ
+              </span>
             </span>
-          </Badge>
+            <Badge tone={isOnline ? "success" : "warning"}>
+              <span className="inline-flex items-center gap-1">
+                <Icon className="h-3.5 w-3.5" name={isOnline ? "wifi" : "wifiOff"} />
+                {isOnline ? "Online" : "Offline"}
+              </span>
+            </Badge>
+          </div>
         </div>
-
-        {isAdminAccount ? (
-          <ModeSwitch
-            activeMode="workspace"
-            className="mt-3 max-w-none text-xs"
-            href="/admin"
-          />
-        ) : null}
       </header>
 
       {tab === "tasks" ? (
@@ -255,7 +272,7 @@ export const WorkerMobileView = ({
             <WorkerGroupedTaskList
               onCancel={onCancel}
               onChange={onChange}
-              progress={progress}
+              progress={displayProgress}
               saveStates={saveStates}
               taskGroups={taskGroups}
             />
@@ -322,33 +339,25 @@ export const WorkerMobileView = ({
         </section>
       ) : null}
 
-      {tab === "account" ? (
-        <section className="px-4 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+4rem)] pt-5">
-          <div className="glass-card rounded-[var(--radius-card)] p-5">
-            <h2 className="text-lg font-semibold">{worker.fullName}</h2>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">@{account.username}</p>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">{worker.email}</p>
-            <div className="mt-4 rounded-[var(--radius-field)] bg-[var(--primary-pale)] p-4 ring-1 ring-[var(--border)]">
-              <p className="text-sm font-semibold text-[var(--primary-strong)]">{worker.orgTitle}</p>
-              <p className="mt-2 text-sm leading-6 text-[var(--foreground)]">{worker.orgAssignment}</p>
-            </div>
-            <PwaInstallButton className="mt-4" compact showHint variant="panel" />
-            <Button className="mt-4" full onClick={onLogout} variant="secondary">
-              <Icon name="logout" />
-              Đăng xuất
-            </Button>
-          </div>
-        </section>
-      ) : null}
+      </div>
 
-      <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-30 px-3 pb-[calc(var(--safe-bottom)+0.45rem)]">
-        <div className="floating-pill mx-auto grid max-w-[430px] grid-cols-4 gap-1 rounded-[var(--radius-card)] p-2 text-center text-xs font-semibold">
+      <WorkerPendingUpdateBar
+        className="fixed inset-x-3 bottom-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] z-50 mx-auto max-w-[520px]"
+        isOnline={isOnline}
+        isSubmitting={isSubmittingUpdates}
+        onDiscard={onDiscardUpdates}
+        onSubmit={onSubmitUpdates}
+        pendingCount={pendingUpdateCount}
+      />
+
+      <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 px-3">
+        <div className="floating-pill mx-auto grid max-w-[520px] grid-cols-3 gap-1 rounded-[var(--radius-card)] p-2 text-center text-[11px] font-semibold">
           {tabs.map((item) => (
             <button
-              className={`focus-ring pressable flex min-h-12 flex-col items-center justify-center gap-1 rounded-[var(--radius-field)] px-1 ${
+              className={`focus-ring pressable flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--radius-field)] px-1 leading-tight ${
                 item.key === tab
                   ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
-                  : "text-[var(--foreground)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+                  : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
               }`}
               key={item.key}
               onClick={() => setTab(item.key)}
