@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
+import { DeveloperMark } from "@/components/DeveloperMark";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Alert, Button, Field, Icon, Input } from "@/components/ui";
@@ -78,11 +79,12 @@ const LoginPage = (): React.ReactElement => {
         <div className="rounded-[var(--radius-card)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft-sm)] md:p-7">
           <div className="flex items-start justify-between gap-4">
             <CompanyBrand
-              className="min-w-0 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--border)]"
+              className="min-w-0"
               variant="full"
             />
             <ThemeToggle className="shrink-0" />
           </div>
+          <DeveloperMark className="mt-3" variant="inline" />
 
           <div className="mt-7">
             <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">

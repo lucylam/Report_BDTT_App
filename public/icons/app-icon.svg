@@ -1,5 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#0f5d56"/>
-  <path d="M128 154h256v52H128zM128 238h256v52H128zM128 322h168v52H128z" fill="#fff"/>
-  <path d="M356 314l30 30 58-68 28 24-84 98-58-58z" fill="#a7f3d0"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BDTT 2026">
+  <rect width="512" height="512" rx="112" fill="#171a14"/>
+  <rect x="44" y="44" width="424" height="424" rx="88" fill="#f7f7f4"/>
+  <rect x="78" y="78" width="356" height="356" rx="64" fill="#1f231b"/>
+  <path d="M132 132h248a22 22 0 0 1 22 22v18H110v-18a22 22 0 0 1 22-22Z" fill="#b7e35a"/>
+  <path d="M126 318h198a18 18 0 0 1 0 36H126a18 18 0 0 1 0-36Zm0-60h260a18 18 0 0 1 0 36H126a18 18 0 0 1 0-36Z" fill="#f7f7f4" opacity=".92"/>
+  <path d="M346 350l32 32 70-84 28 24-96 114-60-60Z" fill="#b7e35a"/>
+  <text x="256" y="236" fill="#f7f7f4" font-family="Segoe UI, Arial, sans-serif" font-size="88" font-weight="800" letter-spacing="0" text-anchor="middle">BDTT</text>
+  <circle cx="384" cy="154" r="9" fill="#f2a24a"/>
 </svg>

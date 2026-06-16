@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Badge, Icon, Widget, WidgetHeader } from "@/components/ui";
+import { ProgressCharts } from "@/components/admin/ProgressCharts";
+import { Badge, Icon, Widget, WidgetHeader, type IconName } from "@/components/ui";
+import { buildExcelDashboard } from "@/lib/dashboard";
 import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
 import {
   getOrgScopeLabel,
@@ -19,6 +21,7 @@ const PLAN_TARGET_PERCENT = 50;
 
 type OrgUnitLevel = "group" | "subgroup";
 type Tone = "info" | "success" | "warning" | "danger";
+type DashboardView = "excel" | "overview";
 
 interface OrgUnitRow {
   readonly key: string;
@@ -99,6 +102,11 @@ const ManagementDashboard = ({
   readonly isFullScope: boolean;
   readonly metrics: DashboardMetrics;
 }): React.ReactElement => {
+  const [dashboardView, setDashboardView] = useState<DashboardView>("excel");
+  const excelDashboard = useMemo(
+    () => buildExcelDashboard(data, DEFAULT_REPORT_DATE),
+    [data]
+  );
   const level: OrgUnitLevel = isFullScope ? "group" : "subgroup";
   const rows = buildOrgUnitRows(data, level);
   const onTrackRows = rows
@@ -114,6 +122,15 @@ const ManagementDashboard = ({
 
   return (
     <section className="grid min-w-0 gap-4">
+      <DashboardViewTabs onChange={setDashboardView} value={dashboardView} />
+
+      {dashboardView === "excel" ? (
+        <ProgressCharts
+          dashboard={excelDashboard}
+          reportDateLabel={formatViDate(DEFAULT_REPORT_DATE)}
+        />
+      ) : (
+        <>
       <ManagementKpiStrip
         attentionCount={attentionRows.length}
         metrics={metrics}
@@ -144,7 +161,44 @@ const ManagementDashboard = ({
       </section>
 
       <StatusLegend />
+        </>
+      )}
     </section>
+  );
+};
+
+const DashboardViewTabs = ({
+  onChange,
+  value
+}: {
+  readonly onChange: (value: DashboardView) => void;
+  readonly value: DashboardView;
+}): React.ReactElement => {
+  const tabs: Array<{ readonly label: string; readonly value: DashboardView }> = [
+    { label: "DASH BOARD Excel", value: "excel" },
+    { label: "Tổng quan", value: "overview" }
+  ];
+
+  return (
+    <div className="glass-card flex w-full max-w-xl rounded-[var(--radius-card)] p-1">
+      {tabs.map((tab) => {
+        const active = value === tab.value;
+        return (
+          <button
+            className={`focus-ring pressable min-h-11 flex-1 rounded-[calc(var(--radius-card)-0.35rem)] px-4 text-sm font-semibold transition ${
+              active
+                ? "bg-[var(--foreground)] text-[var(--surface)] shadow-[var(--shadow-soft-sm)]"
+                : "text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
+            }`}
+            key={tab.value}
+            onClick={() => onChange(tab.value)}
+            type="button"
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
   );
 };
 
@@ -208,20 +262,29 @@ const ManagementKpiStrip = ({
   ];
 
   return (
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    <section className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-5">
       {cards.map((card) => (
         <article
-          className={`metric-card rounded-[var(--radius-card)] p-4 ${toneText(card.tone)}`}
+          className={`metric-card rounded-[var(--radius-card)] p-3 ${toneText(card.tone)}`}
           key={card.label}
         >
-          <Icon name={card.icon} />
-          <p className="mt-4 text-[11px] font-semibold uppercase text-[var(--text-soft)]">
-            {card.label}
-          </p>
-          <p className="mt-2 text-4xl font-semibold leading-none tabular-nums">
-            {card.value}
-          </p>
-          <p className="mt-3 text-sm font-semibold text-[var(--text-muted)]">{card.helper}</p>
+          <div className="flex items-start justify-between gap-3">
+            <Icon className="h-4 w-4" name={card.icon} />
+            <span className="mt-1 h-2 w-2 rounded-full bg-current opacity-55" />
+          </div>
+          <div className="mt-3 flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase leading-tight text-[var(--text-soft)]">
+                {card.label}
+              </p>
+              <p className="mt-1.5 truncate text-xs font-semibold leading-4 text-[var(--text-muted)]">
+                {card.helper}
+              </p>
+            </div>
+            <p className="shrink-0 text-2xl font-semibold leading-none tabular-nums sm:text-3xl">
+              {card.value}
+            </p>
+          </div>
         </article>
       ))}
     </section>
@@ -382,10 +445,9 @@ const ManagementRow = ({
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-3">
           <div
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-[0.8rem] text-sm font-semibold text-white"
-            style={{ background: rowAvatarColor(row.shortName) }}
+            className={`grid h-10 w-10 shrink-0 place-items-center rounded-[var(--radius-field)] bg-[var(--surface-muted)] ring-1 ring-[var(--border)] ${groupIconTone(row)}`}
           >
-            {getInitials(row.shortName)}
+            <Icon className="h-5 w-5" name={groupIconName(row)} />
           </div>
           <div className="min-w-0">
             <p className="truncate text-base font-semibold text-[var(--foreground)]">
@@ -398,7 +460,7 @@ const ManagementRow = ({
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
           <Badge tone="success">HT {row.completed}</Badge>
-          <Badge tone="warning">ĐTH {row.inProgress}</Badge>
+          <Badge tone="accent">ĐTH {row.inProgress}</Badge>
           <Badge tone="danger">Trễ {row.overdue}</Badge>
           <Badge>Tổng {row.tasks}</Badge>
         </div>
@@ -549,22 +611,22 @@ const shortenName = (name: string): string =>
     .replace("Đo lường", "Đo lường")
     .trim();
 
-const getInitials = (value: string): string => {
-  const letters = value
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((item) => item[0] ?? "")
-    .join("");
-  return (letters || "?").toUpperCase();
+const groupIconName = (row: OrgUnitRow): IconName => {
+  const value = `${row.name} ${row.shortName}`.toLowerCase();
+  if (value.includes("chấp")) return "workorder";
+  if (value.includes("đo") || value.includes("áp") || value.includes("mức") || value.includes("lưu")) return "chart";
+  if (value.includes("ht") || value.includes("hệ thống") || value.includes("điều khiển")) return "shield";
+  if (value.includes("tháo") || value.includes("lắp")) return "settings";
+  return "people";
 };
 
-const rowAvatarColor = (value: string): string => {
-  if (value.includes("Đo")) return "var(--accent)";
-  if (value.includes("Chấp")) return "var(--info)";
-  if (value.includes("HT")) return "var(--primary-strong)";
-  if (value.includes("Tháo")) return "var(--success)";
-  return "var(--text-soft)";
+const groupIconTone = (row: OrgUnitRow): string => {
+  const value = `${row.name} ${row.shortName}`.toLowerCase();
+  if (value.includes("chấp")) return "text-[var(--info)]";
+  if (value.includes("đo") || value.includes("áp") || value.includes("mức") || value.includes("lưu")) return "text-[var(--accent-strong)]";
+  if (value.includes("ht") || value.includes("hệ thống") || value.includes("điều khiển")) return "text-[var(--primary-strong)]";
+  if (value.includes("tháo") || value.includes("lắp")) return "text-[var(--success)]";
+  return "text-[var(--text-muted)]";
 };
 
 const formatNumber = (value: number): string =>

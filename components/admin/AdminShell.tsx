@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { AccountMenu } from "@/components/AccountMenu";
 import { CompanyBrand } from "@/components/CompanyBrand";
+import { DeveloperMark } from "@/components/DeveloperMark";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Icon, PageHeader } from "@/components/ui";
@@ -83,6 +84,7 @@ export const AdminShell = ({
               {account.orgTitle}
             </p>
           </div>
+          <DeveloperMark className="mt-3" compact />
         </aside>
 
         <section className="min-w-0">

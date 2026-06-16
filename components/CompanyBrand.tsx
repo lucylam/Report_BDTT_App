@@ -12,12 +12,12 @@ export const CompanyBrand = ({
 }: CompanyBrandProps): React.ReactElement => {
   const isCompact = variant === "compact";
   const isFull = variant === "full";
-  const logoSize = isCompact ? "h-10 w-10" : isFull ? "h-16 w-16" : "h-14 w-14";
+  const logoSize = isCompact ? "h-12 w-12" : isFull ? "h-20 w-20" : "h-16 w-16";
 
   return (
     <div
       aria-label="Tổng Công Ty Phân Bón Dầu Khí Cà Mau - Nhà máy Đạm Cà Mau"
-      className={cn("flex min-w-0 items-center gap-4", className)}
+      className={cn("flex min-w-0 items-center gap-3", className)}
     >
       <Image
         alt="PETROVIETNAM PVCFC"
@@ -31,7 +31,15 @@ export const CompanyBrand = ({
         <div className={cn("min-w-0", isFull ? "" : "flex-1")}>
           <p
             className={cn(
-              "font-semibold leading-tight text-[var(--foreground)]",
+              "font-semibold uppercase leading-none text-[var(--primary-strong)]",
+              isFull ? "text-xs" : "text-[10px]"
+            )}
+          >
+            BDTT 2026
+          </p>
+          <p
+            className={cn(
+              "mt-1 font-semibold leading-tight text-[var(--foreground)]",
               isFull ? "text-base md:text-lg" : "text-sm"
             )}
           >
@@ -50,7 +58,7 @@ export const CompanyBrand = ({
           </p>
           {isFull ? (
             <p className="mt-3 text-sm font-semibold text-[var(--text-muted)]">
-              Chung một niềm tin - Vươn mình phát triển
+              Tiến độ bảo dưỡng, giám sát WorkOrder và tổng hợp báo cáo nội bộ
             </p>
           ) : null}
         </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { DeveloperMark } from "@/components/DeveloperMark";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { Button, Dialog, Icon } from "@/components/ui";
 import type { AuthAccount } from "@/types/domain";
@@ -83,6 +84,8 @@ export const AccountMenu = ({
             {showInstallButton ? (
               <PwaInstallButton compact showHint variant="panel" />
             ) : null}
+
+            <DeveloperMark compact />
 
             <div className="grid gap-2">
               <Link

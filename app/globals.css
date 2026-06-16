@@ -63,6 +63,9 @@
 
   --chart-primary: #6fa51f;
   --chart-primary-soft: #dfeec4;
+  --chart-done-strong: #6fa51f;
+  --chart-remaining-strong: #b8b8af;
+  --chart-remaining-soft: #e8e8e2;
   --chart-accent: #f2a24a;
   --chart-warning: #b18416;
   --chart-danger: #df5b3a;
@@ -136,6 +139,9 @@
 
   --chart-primary: #b7e35a;
   --chart-primary-soft: rgb(183 227 90 / 0.2);
+  --chart-done-strong: #b7e35a;
+  --chart-remaining-strong: #7f8377;
+  --chart-remaining-soft: rgb(127 131 119 / 0.28);
   --chart-accent: #ffb766;
   --chart-warning: #f4d35e;
   --chart-danger: #ff8a6b;

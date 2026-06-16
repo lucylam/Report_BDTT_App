@@ -23,7 +23,7 @@ const HomePage = (): React.ReactElement => {
         <div className="rounded-[var(--radius-card)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft-sm)] md:p-7">
           <div className="flex items-start justify-between gap-4">
             <CompanyBrand
-              className="min-w-0 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--border)]"
+              className="min-w-0"
               variant="full"
             />
             <ThemeToggle className="shrink-0" />

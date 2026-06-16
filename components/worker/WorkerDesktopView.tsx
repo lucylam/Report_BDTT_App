@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AccountMenu } from "@/components/AccountMenu";
 import { CompanyBrand } from "@/components/CompanyBrand";
+import { DeveloperMark } from "@/components/DeveloperMark";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Icon, PageHeader, Widget, WidgetHeader, type IconName } from "@/components/ui";
@@ -215,6 +216,7 @@ export const WorkerDesktopView = ({
                 {worker.orgTitle}
               </p>
             </div>
+            <DeveloperMark className="mt-3" compact />
           </div>
         </aside>
 
