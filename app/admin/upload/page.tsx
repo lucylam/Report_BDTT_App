@@ -6,6 +6,11 @@ import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Alert, Button, Icon, Widget, WidgetHeader } from "@/components/ui";
 import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
+import {
+  OFFICIAL_DEMO_NOTE,
+  OFFICIAL_DEMO_NOTE_PREFIX,
+  isOfficialDemoProgress
+} from "@/lib/demoProgress";
 import { downloadExportWorkbook } from "@/lib/excel/exporter";
 import { parseExcelFile } from "@/lib/excel/parser";
 import { isDataAdminAccount } from "@/lib/permissions";
@@ -31,7 +36,14 @@ const readApiResult = async <T extends { readonly error?: string }>(
 
 const AdminUploadPage = (): React.ReactElement => {
   const router = useRouter();
-  const { currentAccount, data, logout, setImportedTasks } = useAppData();
+  const {
+    clearDemoProgress,
+    createDemoProgress,
+    currentAccount,
+    data,
+    logout,
+    setImportedTasks
+  } = useAppData();
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [message, setMessage] = useState<string>("");
   const [isParsing, setIsParsing] = useState<boolean>(false);
@@ -167,13 +179,35 @@ const AdminUploadPage = (): React.ReactElement => {
     }
   };
 
+  const createDemo = (): void => {
+    if (!data) return;
+    const result = createDemoProgress();
+    if (result.created === 0) {
+      setMessage(
+        `Không tạo thêm record demo mới. Hiện có ${result.totalDemo} record demo; các task phù hợp đã có progress.`
+      );
+      return;
+    }
+    setMessage(
+      `Đã tạo thêm ${result.created} record demo cho ${formatViDate(
+        DEFAULT_REPORT_DATE
+      )}. Tổng demo hiện có: ${result.totalDemo}.`
+    );
+  };
+
+  const clearDemo = (): void => {
+    if (!data) return;
+    const result = clearDemoProgress();
+    setMessage(`Đã xóa ${result.cleared} record demo. Dữ liệu thật được giữ nguyên.`);
+  };
+
   useEffect(() => {
     if (!data) return;
     if (!currentAccount) router.replace("/login");
     if (currentAccount?.mustChangePassword) router.replace("/change-password");
   }, [currentAccount, data, router]);
 
-  if (!currentAccount || currentAccount.mustChangePassword) {
+  if (!data || !currentAccount || currentAccount.mustChangePassword) {
     return (
       <main className="min-h-dvh p-6">
         <p className="text-sm text-[var(--text-muted)]">Đang kiểm tra đăng nhập...</p>
@@ -182,6 +216,7 @@ const AdminUploadPage = (): React.ReactElement => {
   }
 
   const canManageData = isDataAdminAccount(currentAccount);
+  const demoCount = data.progress.filter(isOfficialDemoProgress).length;
 
   if (currentAccount.role !== "admin" || !canManageData) {
     return (
@@ -293,6 +328,43 @@ const AdminUploadPage = (): React.ReactElement => {
               {message}
             </p>
           ) : null}
+        </Widget>
+
+        <Widget className="p-5 lg:col-span-2 lg:p-6">
+          <WidgetHeader
+            action={<Icon className="text-[var(--primary-strong)]" name="shield" />}
+            subtitle="Chỉ tạo/xóa các progress có marker [DEMO], không thay task thật hoặc record thật"
+            title="Chế độ demo trình bày"
+          />
+          <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Metric label="Record demo hiện có" value={String(demoCount)} />
+              <Metric label="Ngày demo" value={formatViDate(DEFAULT_REPORT_DATE)} />
+              <Metric label="Marker an toàn" value={OFFICIAL_DEMO_NOTE_PREFIX} />
+            </div>
+            <div className="grid gap-3">
+              <Button disabled={!data} full onClick={createDemo}>
+                <Icon name="chart" />
+                Tạo dữ liệu demo
+              </Button>
+              <Button
+                disabled={!data || demoCount === 0}
+                full
+                onClick={clearDemo}
+                variant="danger"
+              >
+                <Icon name="database" />
+                Clear demo
+              </Button>
+            </div>
+          </div>
+          <Alert className="mt-4 p-4 leading-6" tone="info">
+            Demo mode dùng cho trình bày nhanh dashboard. Mỗi record được ghi chú
+            {" "}
+            <span className="font-semibold">{OFFICIAL_DEMO_NOTE}</span>
+            {" "}
+            để có thể xóa sạch bằng nút Clear mà không ảnh hưởng tiến độ worker thật.
+          </Alert>
         </Widget>
       </section>
 

@@ -5,16 +5,19 @@ import { createDemoData } from "@/lib/demoData";
 import {
   changeAccountPassword,
   createDailySnapshot,
+  createOfficialDemoProgress,
   flushOfflineQueue,
   loadAppData,
   loginAccount,
   logoutAccount,
   queueProgressUpdate,
+  removeOfficialDemoProgress,
   replaceTasks,
   saveAppData,
   setTaskCancelled,
   upsertProgress
 } from "@/lib/storage";
+import type { DemoProgressMutationResult } from "@/lib/demoProgress";
 import type { AppData, AuthAccount, Profile, ProgressPercent, Task } from "@/types/domain";
 
 interface ProgressUpdate {
@@ -43,6 +46,8 @@ interface UseAppDataResult {
   readonly queueProgress: (update: ProgressUpdate) => void;
   readonly flushQueue: () => void;
   readonly createSnapshot: (reportDate: string) => void;
+  readonly createDemoProgress: () => DemoProgressMutationResult;
+  readonly clearDemoProgress: () => DemoProgressMutationResult;
   readonly resetDemo: () => void;
 }
 
@@ -119,6 +124,18 @@ export const useAppData = (): UseAppDataResult => {
     setData((current) => createDailySnapshot(current ?? loadAppData(), reportDate));
   };
 
+  const createDemoProgress = (): DemoProgressMutationResult => {
+    const result = createOfficialDemoProgress(data ?? loadAppData());
+    setData(result.data);
+    return result;
+  };
+
+  const clearDemoProgress = (): DemoProgressMutationResult => {
+    const result = removeOfficialDemoProgress(data ?? loadAppData());
+    setData(result.data);
+    return result;
+  };
+
   const resetDemo = (): void => {
     const nextData = createDemoData();
     saveAppData(nextData);
@@ -138,6 +155,8 @@ export const useAppData = (): UseAppDataResult => {
     queueProgress,
     flushQueue,
     createSnapshot,
+    createDemoProgress,
+    clearDemoProgress,
     resetDemo
   };
 };
