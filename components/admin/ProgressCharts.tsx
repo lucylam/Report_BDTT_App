@@ -541,18 +541,23 @@ const UnitLeadChart = ({
       />
     );
   }
+  const visibleRows = rows.slice(0, 10);
+  const visibleLeads = leadNames.slice(0, 4);
+  const chartHeight = Math.max(340, visibleRows.length * 42 + visibleLeads.length * 14);
+
   return (
     <ChartShell
       subtitle="Average %Complete theo Đơn vị chủ quản và Nhóm trưởng, dùng để nhìn nhóm nào đang kéo tiến độ."
       title={title}
     >
-      <div className="mt-3 h-[245px] sm:h-[275px]">
+      <div className="mt-3" style={{ height: chartHeight }}>
         <ResponsiveContainer height="100%" width="100%">
           <BarChart
-            barCategoryGap={8}
-            data={rows.slice(0, 10)}
+            barCategoryGap={18}
+            barGap={7}
+            data={visibleRows}
             layout="vertical"
-            margin={{ bottom: 2, left: 0, right: 8, top: 4 }}
+            margin={{ bottom: 2, left: 0, right: 8, top: 8 }}
           >
             <CartesianGrid {...softGridProps} />
             <XAxis
@@ -564,15 +569,15 @@ const UnitLeadChart = ({
             <YAxis {...softAxisProps} dataKey="name" type="category" width={112} />
             <Tooltip contentStyle={tooltipStyle} formatter={(value) => [`${value}%`, ""]} />
             <Legend iconType="circle" wrapperStyle={{ fontSize: 10, lineHeight: "16px" }} />
-            {leadNames.slice(0, 4).map((lead, index) => (
+            {visibleLeads.map((lead, index) => (
               <Bar
-                barSize={10}
+                barSize={7}
                 dataKey={lead}
                 fill={seriesColors[index % seriesColors.length]}
-                fillOpacity={0.9}
+                fillOpacity={0.92}
                 key={lead}
                 name={lead}
-                radius={[5, 5, 5, 5]}
+                radius={[4, 4, 4, 4]}
               />
             ))}
           </BarChart>

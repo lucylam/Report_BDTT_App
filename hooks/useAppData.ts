@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { normalizeStoredAppData } from "@/lib/appDataMigration";
 import { createDemoData } from "@/lib/demoData";
 import {
   changeAccountPassword,
@@ -18,7 +19,14 @@ import {
   upsertProgress
 } from "@/lib/storage";
 import type { DemoProgressMutationResult } from "@/lib/demoProgress";
-import type { AppData, AuthAccount, Profile, ProgressPercent, Task } from "@/types/domain";
+import type {
+  AppData,
+  AuthAccount,
+  Profile,
+  ProgressPercent,
+  ProgressRecord,
+  Task
+} from "@/types/domain";
 
 interface ProgressUpdate {
   readonly taskId: string;
@@ -51,6 +59,65 @@ interface UseAppDataResult {
   readonly resetDemo: () => void;
 }
 
+interface RemoteAppDataResponse {
+  readonly ok?: boolean;
+  readonly data?: AppData;
+  readonly meta?: {
+    readonly source?: string;
+    readonly taskCount?: number;
+    readonly progressCount?: number;
+  };
+}
+
+const DEMO_NOTE_PREFIX = "[DEMO]";
+
+const getProgressKey = (record: ProgressRecord): string =>
+  `${record.taskId}|${record.userId}|${record.reportDate}`;
+
+const mergeProgressWithLocalDemo = (
+  remoteProgress: readonly ProgressRecord[],
+  localProgress: readonly ProgressRecord[]
+): ProgressRecord[] => {
+  const remoteKeys = new Set(remoteProgress.map(getProgressKey));
+  const localDemoProgress = localProgress.filter(
+    (record) =>
+      record.note.trim().startsWith(DEMO_NOTE_PREFIX) &&
+      !remoteKeys.has(getProgressKey(record))
+  );
+  return [...remoteProgress, ...localDemoProgress];
+};
+
+const shouldUseRemoteData = (localData: AppData, remoteData: AppData): boolean => {
+  if (remoteData.tasks.length === 0) return false;
+  if (remoteData.tasks.length >= localData.tasks.length) return true;
+  return localData.tasks.length <= 50;
+};
+
+const mergeRemoteAppData = (localData: AppData, remoteData: AppData): AppData => {
+  return normalizeStoredAppData({
+    ...remoteData,
+    accounts: localData.accounts,
+    profiles: localData.profiles,
+    progress: mergeProgressWithLocalDemo(remoteData.progress, localData.progress),
+    dailySnapshots: localData.dailySnapshots,
+    offlineQueue: localData.offlineQueue,
+    activeUserId: localData.activeUserId
+  });
+};
+
+const fetchRemoteAppData = async (): Promise<AppData | null> => {
+  try {
+    const response = await fetch("/api/app-data", { cache: "no-store" });
+    if (!response.ok) return null;
+
+    const payload = (await response.json()) as RemoteAppDataResponse;
+    return payload.ok && payload.data ? payload.data : null;
+  } catch (error) {
+    console.warn("[useAppData.fetchRemoteAppData]", error);
+    return null;
+  }
+};
+
 export const useAppData = (): UseAppDataResult => {
   const [data, setData] = useState<AppData | null>(null);
   const currentAccount =
@@ -59,10 +126,28 @@ export const useAppData = (): UseAppDataResult => {
     data?.profiles.find((profile) => profile.id === data.activeUserId) ?? null;
 
   useEffect(() => {
+    let cancelled = false;
     const timerId = window.setTimeout(() => {
-      setData(loadAppData());
+      const localData = loadAppData();
+      if (cancelled) return;
+
+      setData(localData);
+      void fetchRemoteAppData().then((remoteData) => {
+        if (!remoteData || cancelled) return;
+        setData((current) => {
+          const base = current ?? localData;
+          if (!shouldUseRemoteData(base, remoteData)) return base;
+
+          const nextData = mergeRemoteAppData(base, remoteData);
+          saveAppData(nextData);
+          return nextData;
+        });
+      });
     }, 0);
-    return () => window.clearTimeout(timerId);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timerId);
+    };
   }, []);
 
   const login = (

@@ -48,8 +48,8 @@ export const AdminShell = ({
   );
 
   return (
-    <main className="min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 sm:pt-3 lg:p-5">
-      <div className="app-shell mx-auto min-h-[calc(100dvh-1rem)] max-w-[1700px] overflow-hidden rounded-[22px] lg:grid lg:min-h-[calc(100dvh-2.5rem)] lg:grid-cols-[218px_minmax(0,1fr)]">
+    <main className="min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 sm:pt-3 lg:p-3 2xl:p-4">
+      <div className="app-shell mx-auto min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[22px] lg:grid lg:min-h-[calc(100dvh-1.5rem)] lg:grid-cols-[218px_minmax(0,1fr)] 2xl:min-h-[calc(100dvh-2rem)]">
         <aside className="hidden border-r border-[var(--line)] bg-[var(--surface)] p-4 lg:flex lg:flex-col">
           <Link className="focus-ring rounded-[var(--radius-card)] p-1" href="/admin">
             <CompanyBrand variant="sidebar" />
@@ -123,7 +123,7 @@ export const AdminShell = ({
           </header>
 
           <div className="min-w-0 px-4 py-4 lg:px-5 lg:pb-6 lg:pt-0">
-            <div className="mx-auto flex w-full max-w-[1400px] min-w-0 flex-col gap-4 lg:gap-5">
+            <div className="mx-auto flex w-full max-w-none min-w-0 flex-col gap-4 lg:gap-5">
               {children}
             </div>
           </div>
