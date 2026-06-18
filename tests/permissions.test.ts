@@ -3,10 +3,19 @@ import { getOrgScopeKey } from "@/lib/org2026";
 import {
   canViewProfile,
   canViewTask,
+  getScopedAppData,
   hasFullOrgScope,
   isDataAdminAccount
 } from "@/lib/permissions";
-import type { AuthAccount, OrgRole, Profile, Task, UserRole } from "@/types/domain";
+import type {
+  AppData,
+  AuthAccount,
+  OrgRole,
+  Profile,
+  ProgressRecord,
+  Task,
+  UserRole
+} from "@/types/domain";
 
 const makeAccount = (
   overrides: Partial<AuthAccount> & { readonly username: string }
@@ -110,6 +119,40 @@ describe("canViewProfile", () => {
     expect(canViewProfile(admin, outGroup)).toBe(false);
   });
 
+  it("nhóm trưởng xem được PNT/admin trong nhóm mình quản lý", () => {
+    const groupLead = makeAccount({
+      username: "lead-a",
+      role: "admin",
+      orgRole: "nhomTruong",
+      managedGroups: ["Nhóm A"]
+    });
+    const pnt = makeProfile({
+      id: "user-pnt-a",
+      role: "admin",
+      orgGroup: "Nhóm A",
+      orgRole: "pnt",
+      subgroup: "PN1"
+    });
+    const member = makeProfile({
+      id: "user-member-a",
+      role: "worker",
+      orgGroup: "Nhóm A",
+      orgRole: "member",
+      subgroup: "PN1"
+    });
+    const outsidePnt = makeProfile({
+      id: "user-pnt-b",
+      role: "admin",
+      orgGroup: "Nhóm B",
+      orgRole: "pnt",
+      subgroup: "PN1"
+    });
+
+    expect(canViewProfile(groupLead, pnt)).toBe(true);
+    expect(canViewProfile(groupLead, member)).toBe(true);
+    expect(canViewProfile(groupLead, outsidePnt)).toBe(false);
+  });
+
   it("admin xem được profile trong subgroup mình quản lý", () => {
     const admin = makeAccount({
       username: "nhompho1",
@@ -167,5 +210,97 @@ describe("canViewTask", () => {
     expect(
       canViewTask(account, { ...baseTask, assignedTo: "" }, [])
     ).toBe(false);
+  });
+});
+
+describe("getScopedAppData", () => {
+  const makeProgress = (taskId: string, userId: string): ProgressRecord => ({
+    taskId,
+    userId,
+    reportDate: "2025-08-22",
+    percent: 50,
+    note: "",
+    submittedAt: "2025-08-22T08:00:00+07:00"
+  });
+
+  const makeTaskForAssignee = (id: string, assignedTo: string, nhom = "Nhóm A"): Task => ({
+    id,
+    stt: 1,
+    wo: `WO-${id}`,
+    tagname: `TAG-${id}`,
+    taskName: `Task ${id}`,
+    nhom,
+    donVi: "UTILITY",
+    section: "",
+    duration: "1d",
+    priority: 1,
+    startDate: "",
+    finishDate: "",
+    resourceName: assignedTo.toUpperCase(),
+    nhomTruong: "",
+    assignedTo,
+    isCancelled: false,
+    cancelReason: ""
+  });
+
+  it("scope nhóm trưởng giữ cả PNT, thành viên và task/progress của họ", () => {
+    const groupLead = makeAccount({
+      username: "lead-a",
+      role: "admin",
+      orgRole: "nhomTruong",
+      managedGroups: ["Nhóm A"]
+    });
+    const pnt = makeProfile({
+      id: "user-pnt-a",
+      role: "admin",
+      orgGroup: "Nhóm A",
+      orgRole: "pnt",
+      subgroup: "PN1"
+    });
+    const member = makeProfile({
+      id: "user-member-a",
+      role: "worker",
+      orgGroup: "Nhóm A",
+      orgRole: "member",
+      subgroup: "PN1"
+    });
+    const outsidePnt = makeProfile({
+      id: "user-pnt-b",
+      role: "admin",
+      orgGroup: "Nhóm B",
+      orgRole: "pnt",
+      subgroup: "PN1"
+    });
+    const pntTask = makeTaskForAssignee("task-pnt", pnt.id);
+    const memberTask = makeTaskForAssignee("task-member", member.id);
+    const outsideTask = makeTaskForAssignee("task-out", outsidePnt.id, "Nhóm B");
+    const data: AppData = {
+      accounts: [],
+      profiles: [pnt, member, outsidePnt],
+      tasks: [pntTask, memberTask, outsideTask],
+      progress: [
+        makeProgress(pntTask.id, pnt.id),
+        makeProgress(memberTask.id, member.id),
+        makeProgress(outsideTask.id, outsidePnt.id)
+      ],
+      dailySnapshots: [],
+      offlineQueue: [],
+      activeUserId: null
+    };
+
+    const scoped = getScopedAppData(data, groupLead);
+
+    expect(scoped.profiles.map((profile) => profile.id).sort()).toEqual([
+      member.id,
+      pnt.id
+    ]);
+    expect(scoped.tasks.map((task) => task.id).sort()).toEqual([
+      memberTask.id,
+      pntTask.id
+    ]);
+    expect(scoped.progress.map((record) => record.userId).sort()).toEqual([
+      member.id,
+      pnt.id
+    ]);
   });
 });

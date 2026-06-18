@@ -2,9 +2,13 @@ import type {
   AppData,
   ProgressPercent,
   ProgressRecord,
-  Profile,
   Task
 } from "@/types/domain";
+import {
+  getActiveTasksByAssignee,
+  getReportablePersonnel,
+  hasSubmittedReportForDate
+} from "@/lib/reportingPersonnel";
 
 export interface CompletionRow {
   readonly name: string;
@@ -256,14 +260,30 @@ const buildExecutiveSummary = (
   reportDate: string
 ): ExecutiveDashboardSummary => {
   const activeTaskIds = new Set(activeTasks.map((task) => task.id));
+  const reportablePersonnel = getReportablePersonnel(data.profiles);
+  const reportablePersonnelIds = new Set(
+    reportablePersonnel.map((profile) => profile.id)
+  );
+  const activeTasksByAssignee = getActiveTasksByAssignee(activeTasks);
   const cumulativeRecords = data.progress.filter(
     (record) => activeTaskIds.has(record.taskId) && record.reportDate <= reportDate
   );
   const todayRecords = data.progress.filter(
-    (record) => activeTaskIds.has(record.taskId) && record.reportDate === reportDate
+    (record) =>
+      activeTaskIds.has(record.taskId) &&
+      record.reportDate === reportDate &&
+      reportablePersonnelIds.has(record.userId)
   );
   const statuses = activeTasks.map((task) =>
     getStatus(task, getCumulativePercent(data.progress, task.id, reportDate))
+  );
+  const submittedPersonnel = reportablePersonnel.filter((profile) =>
+    hasSubmittedReportForDate({
+      activeTasks: activeTasksByAssignee.get(profile.id) ?? [],
+      progress: todayRecords,
+      profileId: profile.id,
+      reportDate
+    })
   );
 
   return {
@@ -275,16 +295,10 @@ const buildExecutiveSummary = (
     notStartedTasks: statuses.filter((status) => status === "notStarted").length,
     unfinishedTasks: statuses.filter((status) => status !== "completed").length,
     updatedTasks: new Set(cumulativeRecords.map((record) => record.taskId)).size,
-    submittedWorkers: new Set(todayRecords.map((record) => record.userId)).size,
-    totalWorkers: getReportableWorkers(data.profiles).length,
+    submittedWorkers: submittedPersonnel.length,
+    totalWorkers: reportablePersonnel.length,
     overallPercent: overall.percent
   };
-};
-
-const getReportableWorkers = (profiles: readonly Profile[]): Profile[] => {
-  return profiles.filter(
-    (profile) => profile.role === "worker" && profile.canLogin && !profile.isPlaceholder
-  );
 };
 
 const getAttentionOwnerUnits = (rows: readonly CompletionRow[]): CompletionRow[] => {

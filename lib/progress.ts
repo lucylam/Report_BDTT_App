@@ -5,6 +5,11 @@ import type {
   ProgressRecord,
   Task
 } from "@/types/domain";
+import {
+  getActiveTasksByAssignee,
+  getReportablePersonnel,
+  hasSubmittedReportForDate
+} from "@/lib/reportingPersonnel";
 
 export const percentOptions: readonly ProgressPercent[] = [0, 25, 50, 75, 100];
 
@@ -51,14 +56,8 @@ export const calculateMetrics = (
     (percent) => percent > 0 && percent < 100
   ).length;
   const notStarted = percents.filter((percent) => percent === 0).length;
-  const submittedWorkerIds = new Set(
-    data.progress
-      .filter((record) => record.reportDate === reportDate)
-      .map((record) => record.userId)
-  );
-  const workerIds = data.profiles
-    .filter((profile) => profile.role === "worker" && !profile.isPlaceholder)
-    .map((profile) => profile.id);
+  const reportablePersonnel = getReportablePersonnel(data.profiles);
+  const activeTasksByAssignee = getActiveTasksByAssignee(activeTasks);
   const priorityOpen = activeTasks.filter((task) => {
     return (
       task.priority === 1 &&
@@ -77,8 +76,15 @@ export const calculateMetrics = (
     inProgress,
     notStarted,
     cancelled,
-    unsubmittedWorkers: workerIds.filter((id) => !submittedWorkerIds.has(id))
-      .length,
+    unsubmittedWorkers: reportablePersonnel.filter(
+      (profile) =>
+        !hasSubmittedReportForDate({
+          activeTasks: activeTasksByAssignee.get(profile.id) ?? [],
+          progress: data.progress,
+          profileId: profile.id,
+          reportDate
+        })
+    ).length,
     priorityOpen,
     overdue,
     overallPercent:

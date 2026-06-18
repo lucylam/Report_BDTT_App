@@ -31,10 +31,11 @@ const makeTask = (overrides: Partial<Task> & { readonly id: string }): Task => {
 const makeProgress = (
   taskId: string,
   percent: ProgressPercent,
-  date = reportDate
+  date = reportDate,
+  userId = "user-1"
 ): ProgressRecord => ({
   taskId,
-  userId: "user-1",
+  userId,
   reportDate: date,
   percent,
   note: "",
@@ -184,7 +185,7 @@ describe("buildExcelDashboard", () => {
       notStartedTasks: 1,
       unfinishedTasks: 2,
       updatedTasks: 2,
-      submittedWorkers: 1,
+      submittedWorkers: 2,
       totalWorkers: 2
     });
     expect(dashboard.attentionOwnerUnits[0]?.name).toBe("UREA");
@@ -221,5 +222,42 @@ describe("buildExcelDashboard", () => {
     expect(unitLead?.values[lead]).toBe(75);
     expect(htdk?.rows).toHaveLength(1);
     expect(htdk?.rows[0]).toMatchObject({ total: 2, percent: 75 });
+  });
+
+  it("khong dem progress cua user ngoai danh sach worker vao KPI worker bao cao", () => {
+    const data = makeData(
+      [makeTask({ id: "task-1" }), makeTask({ id: "task-2" })],
+      [
+        makeProgress("task-1", 50, reportDate, "user-1"),
+        makeProgress("task-2", 25, reportDate, "unknown-db-user"),
+        makeProgress("task-2", 75, reportDate, "admin-user")
+      ],
+      [makeProfile("user-1")]
+    );
+
+    const dashboard = buildExcelDashboard(data, reportDate);
+
+    expect(dashboard.executive.submittedWorkers).toBe(1);
+    expect(dashboard.executive.totalWorkers).toBe(1);
+  });
+
+  it("tinh nhan su khong co task la da bao cao trong ngay", () => {
+    const data = makeData(
+      [makeTask({ id: "task-1", assignedTo: "user-1" })],
+      [],
+      [
+        makeProfile("user-1"),
+        {
+          ...makeProfile("leader-1"),
+          role: "admin",
+          orgRole: "nhomTruong"
+        }
+      ]
+    );
+
+    const dashboard = buildExcelDashboard(data, reportDate);
+
+    expect(dashboard.executive.submittedWorkers).toBe(1);
+    expect(dashboard.executive.totalWorkers).toBe(2);
   });
 });

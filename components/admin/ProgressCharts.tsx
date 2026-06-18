@@ -98,7 +98,11 @@ export const ProgressCharts = ({
               Ngày báo cáo: {reportDateLabel} · Dữ liệu tính từ DATA A:M và báo cáo worker đã gửi đến ngày này.
             </p>
           </div>
-          <DashboardExportButton className="min-h-9 justify-self-start px-3 py-2 text-xs" />
+          <DashboardExportButton
+            className="min-h-9 justify-self-start px-3 py-2 text-xs"
+            dashboard={dashboard}
+            reportDateLabel={reportDateLabel}
+          />
         </div>
         <ExecutiveBoard dashboard={dashboard} reportDateLabel={reportDateLabel} />
       </header>
@@ -167,7 +171,7 @@ const ExecutiveBoard = ({
           value={executive.updatedTasks}
         />
         <Metric
-          label="Worker báo cáo"
+          label="Nhân sự báo cáo"
           note={`${formatNumber(executive.submittedWorkers)}/${formatNumber(executive.totalWorkers)} người trong ngày`}
           tone="worker"
           value={`${executive.submittedWorkers}/${executive.totalWorkers}`}

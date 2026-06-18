@@ -14,6 +14,11 @@ import {
   hasFullOrgScope
 } from "@/lib/permissions";
 import { calculateMetrics, getTaskPercent } from "@/lib/progress";
+import {
+  getActiveTasksByAssignee,
+  getReportablePersonnel,
+  hasSubmittedReportForDate
+} from "@/lib/reportingPersonnel";
 import { useAppData } from "@/hooks/useAppData";
 import type { AppData, DashboardMetrics, Task } from "@/types/domain";
 
@@ -350,13 +355,13 @@ const ReportCoverage = ({
     <Widget className="p-5">
       <WidgetHeader
         subtitle={formatViDate(DEFAULT_REPORT_DATE)}
-        title="Báo cáo worker trong ngày"
+        title="Báo cáo nhân sự trong ngày"
       />
       <div className="rounded-[var(--radius-card)] bg-[var(--foreground)] p-5 text-[var(--surface)]">
         <p className="text-sm font-semibold opacity-75">Tỷ lệ đã gửi báo cáo</p>
         <p className="mt-3 text-5xl font-semibold leading-none tabular-nums">{coveragePercent}%</p>
         <p className="mt-3 text-sm font-semibold opacity-80">
-          {submitted}/{members} worker có cập nhật trong ngày.
+          {submitted}/{members} nhân sự được ghi nhận trong ngày.
         </p>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3">
@@ -509,6 +514,7 @@ const LegendDot = ({
 );
 
 const buildOrgUnitRows = (data: AppData, level: OrgUnitLevel): OrgUnitRow[] => {
+  const activeTasksByAssignee = getActiveTasksByAssignee(data.tasks);
   const units = new Map<
     string,
     {
@@ -520,8 +526,7 @@ const buildOrgUnitRows = (data: AppData, level: OrgUnitLevel): OrgUnitRow[] => {
     }
   >();
 
-  data.profiles
-    .filter((profile) => profile.role === "worker")
+  getReportablePersonnel(data.profiles)
     .forEach((profile) => {
       const groupName = profile.orgGroup || profile.nhom || "Chưa phân nhóm";
       const subgroupName = profile.subgroup || profile.nhom || groupName;
@@ -534,13 +539,14 @@ const buildOrgUnitRows = (data: AppData, level: OrgUnitLevel): OrgUnitRow[] => {
           profiles: new Set<string>(),
           submitted: new Set<string>(),
           tasks: []
-        };
+      };
       current.profiles.add(profile.id);
-      if (
-        data.progress.some(
-          (record) => record.userId === profile.id && record.reportDate === DEFAULT_REPORT_DATE
-        )
-      ) {
+      if (hasSubmittedReportForDate({
+        activeTasks: activeTasksByAssignee.get(profile.id) ?? [],
+        progress: data.progress,
+        profileId: profile.id,
+        reportDate: DEFAULT_REPORT_DATE
+      })) {
         current.submitted.add(profile.id);
       }
       units.set(key, current);

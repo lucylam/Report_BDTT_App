@@ -4,6 +4,10 @@ import { useMemo, useState } from "react";
 import { Badge, Icon, Input, Select, Widget, WidgetHeader } from "@/components/ui";
 import { REPORT_DATES, formatViDate } from "@/lib/date";
 import { getTaskPercent } from "@/lib/progress";
+import {
+  getReportablePersonnel,
+  hasSubmittedReportForDate
+} from "@/lib/reportingPersonnel";
 import type {
   AppData,
   Profile,
@@ -87,17 +91,21 @@ const createDayStatuses = (
     );
     return {
       date,
-      submitted: records.length > 0,
+      submitted: hasSubmittedReportForDate({
+        activeTasks,
+        progress: data.progress,
+        profileId: profile.id,
+        reportDate: date
+      }),
       updatedTasks: new Set(records.map((record) => record.taskId)).size,
       percent:
-        activeTasks.length === 0 ? 0 : Math.round(percentSum / activeTasks.length)
+        activeTasks.length === 0 ? 100 : Math.round(percentSum / activeTasks.length)
     };
   });
 };
 
 const buildRows = (data: AppData, dateFilter: DateFilter): WorkerRow[] => {
-  return data.profiles
-    .filter((profile) => profile.role === "worker")
+  return getReportablePersonnel(data.profiles)
     .map((profile) => {
       const tasks = data.tasks.filter((task) => task.assignedTo === profile.id);
       const activeTasks = tasks.filter((task) => !task.isCancelled);
@@ -126,7 +134,7 @@ const buildRows = (data: AppData, dateFilter: DateFilter): WorkerRow[] => {
         done,
         cancelled,
         percent:
-          activeTasks.length === 0 ? 0 : Math.round(percentSum / activeTasks.length),
+          activeTasks.length === 0 ? 100 : Math.round(percentSum / activeTasks.length),
         submitted,
         submittedDays,
         totalDays: REPORT_DATES.length,
@@ -188,7 +196,7 @@ export const WorkerStatusTable = ({
   return (
     <section className="grid min-w-0 gap-4">
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <PersonnelMetric icon="people" label="Worker" tone="info" value={filteredRows.length} />
+        <PersonnelMetric icon="people" label="Nhân sự" tone="info" value={filteredRows.length} />
         <PersonnelMetric icon="check" label="Đã gửi" tone="success" value={submittedCount} />
         <PersonnelMetric icon="bell" label="Còn thiếu" tone="danger" value={missingCount} />
         <PersonnelMetric icon="chart" label="Tiến độ TB" suffix="%" tone="warning" value={averagePercent} />
@@ -198,12 +206,12 @@ export const WorkerStatusTable = ({
         <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <WidgetHeader
             className="mb-0"
-            subtitle={`${filteredRows.length}/${rows.length} worker · ${getDateLabel(dateFilter)}`}
-            title="Theo dõi báo cáo worker"
+            subtitle={`${filteredRows.length}/${rows.length} nhân sự · ${getDateLabel(dateFilter)}`}
+            title="Theo dõi báo cáo nhân sự"
           />
           <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:w-[420px] lg:max-w-[42vw]">
             <label>
-              <span className="sr-only">Tìm worker</span>
+              <span className="sr-only">Tìm nhân sự</span>
               <Input
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Tìm tên, nhóm, username..."
@@ -251,7 +259,7 @@ export const WorkerStatusTable = ({
         <Widget className="min-w-0 p-4 lg:p-5">
           <div className="grid min-w-0 gap-2">
             <div className="hidden rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] px-4 py-3 text-xs font-semibold uppercase text-[var(--text-soft)] lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.8fr)_minmax(0,1.35fr)_minmax(0,0.75fr)] lg:gap-4">
-              <span className="truncate">Worker</span>
+              <span className="truncate">Nhân sự</span>
               <span className="truncate">Nhóm</span>
               <span className="truncate">Số liệu</span>
               <span className="truncate">Tiến độ</span>
@@ -354,8 +362,8 @@ const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.R
     return (
       <Widget className="p-5">
         <WidgetHeader
-          subtitle="Chọn một worker để xem lịch gửi báo cáo và danh sách hạng mục."
-          title="Chi tiết worker"
+          subtitle="Chọn một nhân sự để xem lịch gửi báo cáo và danh sách hạng mục."
+          title="Chi tiết nhân sự"
         />
       </Widget>
     );
