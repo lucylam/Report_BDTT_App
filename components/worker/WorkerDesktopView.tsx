@@ -182,8 +182,8 @@ export const WorkerDesktopView = ({
   }, [filteredTasks, selectedTaskId]);
 
   return (
-    <main className="hidden min-h-dvh w-full max-w-[100vw] overflow-x-hidden p-2 sm:p-3 lg:block lg:p-5">
-      <div className="app-shell mx-auto grid min-h-[calc(100dvh-2.5rem)] max-w-[1700px] grid-cols-[218px_minmax(0,1fr)] overflow-hidden rounded-[22px]">
+    <main className="hidden min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 pb-2 pt-2 sm:px-3 sm:pb-3 sm:pt-3 lg:block lg:p-3 2xl:p-4">
+      <div className="app-shell mx-auto grid min-h-[calc(100dvh-1rem)] w-full max-w-none grid-cols-[218px_minmax(0,1fr)] overflow-hidden rounded-[22px] lg:min-h-[calc(100dvh-1.5rem)] 2xl:min-h-[calc(100dvh-2rem)]">
         <aside className="flex border-r border-[var(--line)] bg-[var(--surface)] p-4">
           <div className="flex min-h-full w-full flex-col">
             <Link
@@ -256,7 +256,7 @@ export const WorkerDesktopView = ({
           </header>
 
           <div className="min-w-0 px-5 pb-6 pt-0">
-            <div className="mx-auto flex w-full max-w-[1400px] min-w-0 flex-col gap-4 pt-5 lg:gap-5">
+            <div className="mx-auto flex w-full max-w-none min-w-0 flex-col gap-4 pt-5 lg:gap-5">
               {tab === "tasks" ? (
                 <TasksWorkspace
                   allTasks={allTasks}

@@ -352,7 +352,7 @@ const unitLeadPanel = (
       const fillW = Math.max(4, (row.value / 100) * barW);
       return [
         text(truncate(row.unit, 15), labelX, yy + 9, 12, 800, colors.text),
-        text(truncate(normalizeLeadLabel(row.lead), 30), labelX, yy + 23, 11, 700, colors.muted),
+        text(truncate(normalizeLeadLabel(row.lead), 30), labelX, yy + 23, 11, 800, colors.text),
         roundedRect(barX, yy + 6, barW, 13, 7, colors.grid, 0.9),
         roundedRect(barX, yy + 6, fillW, 13, 7, row.color, 0.95),
         text(`${formatNumber(row.value)}%`, valueX, yy + 18, 12, 800, colors.text)
@@ -487,7 +487,7 @@ const compactBars = (
       const labelW = 196;
       const barW = Math.max(90, w - labelW - 40);
       return [
-        text(truncate(row.name, 16), x, yy + 17, 11, 800, colors.muted),
+        text(truncate(row.name, 16), x, yy + 17, 11, 800, colors.text),
         roundedRect(x + labelW, yy + 8, barW, 8, 4, colors.grid, 0.9),
         roundedRect(x + labelW, yy + 8, (row.done / maxTotal) * barW, 8, 4, colors.done, 0.96),
         roundedRect(
@@ -562,7 +562,7 @@ const legendRow = (
     .map(([label, color]) => {
       const item = [
         `<circle cx="${currentX}" cy="${y - 4}" r="6" fill="${color}"/>`,
-        text(label, currentX + 14, y, 11, 800, colors.muted)
+        text(label, currentX + 14, y, 11, 800, colors.text)
       ].join("");
       currentX += 14 + label.length * 6.2 + 18;
       return item;

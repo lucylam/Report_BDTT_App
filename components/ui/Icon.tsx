@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ChevronDown,
   CircleHelp,
+  X,
   Database,
   Download,
   FileSpreadsheet,
@@ -37,6 +38,7 @@ export type IconName =
   | "chart"
   | "check"
   | "chevronDown"
+  | "close"
   | "dashboard"
   | "data"
   | "database"
@@ -72,6 +74,7 @@ const iconMap: Record<IconName, LucideIcon> = {
   chart: BarChart3,
   check: CheckCircle2,
   chevronDown: ChevronDown,
+  close: X,
   dashboard: LayoutDashboard,
   data: Database,
   database: Database,

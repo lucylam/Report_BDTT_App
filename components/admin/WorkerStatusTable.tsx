@@ -45,6 +45,17 @@ interface WorkerRow {
 
 type SubmittedFilter = "all" | "submitted" | "missing";
 type DateFilter = "all-days" | string;
+type DetailTab = "summary" | "days" | "tasks";
+
+const detailTabs: readonly {
+  readonly key: DetailTab;
+  readonly label: string;
+  readonly icon: "chart" | "calendar" | "workorder";
+}[] = [
+  { key: "summary", label: "Tổng quan", icon: "chart" },
+  { key: "days", label: "Lịch báo cáo", icon: "calendar" },
+  { key: "tasks", label: "Hạng mục giao", icon: "workorder" }
+];
 
 const getTaskPercentForFilter = (
   progress: readonly ProgressRecord[],
@@ -167,6 +178,7 @@ export const WorkerStatusTable = ({
   const [status, setStatus] = useState<SubmittedFilter>("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all-days");
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
+  const [mobileDetailTab, setMobileDetailTab] = useState<DetailTab>("days");
 
   const rows = useMemo(() => buildRows(data, dateFilter), [data, dateFilter]);
   const filteredRows = rows.filter((row) => {
@@ -183,6 +195,9 @@ export const WorkerStatusTable = ({
     filteredRows.find((row) => row.profile.id === selectedWorkerId) ??
     filteredRows[0] ??
     null;
+  const mobileSelectedRow = selectedWorkerId
+    ? filteredRows.find((row) => row.profile.id === selectedWorkerId) ?? null
+    : null;
   const submittedCount = filteredRows.filter((row) => row.submitted).length;
   const missingCount = filteredRows.length - submittedCount;
   const averagePercent =
@@ -268,15 +283,29 @@ export const WorkerStatusTable = ({
               <WorkerStatusRow
                 active={selectedRow?.profile.id === row.profile.id}
                 key={row.profile.id}
-                onSelect={() => setSelectedWorkerId(row.profile.id)}
+                onSelect={() => {
+                  setSelectedWorkerId(row.profile.id);
+                  setMobileDetailTab("days");
+                }}
                 row={row}
               />
             ))}
           </div>
         </Widget>
 
-        <WorkerDetailPanel row={selectedRow} />
+        <div className="hidden xl:block">
+          <WorkerDetailPanel row={selectedRow} />
+        </div>
       </div>
+
+      {mobileSelectedRow ? (
+        <WorkerMobileDetailSheet
+          activeTab={mobileDetailTab}
+          onClose={() => setSelectedWorkerId(null)}
+          onTabChange={setMobileDetailTab}
+          row={mobileSelectedRow}
+        />
+      ) : null}
     </section>
   );
 };
@@ -440,6 +469,231 @@ const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.R
     </Widget>
   );
 };
+
+const WorkerMobileDetailSheet = ({
+  activeTab,
+  onClose,
+  onTabChange,
+  row
+}: {
+  readonly activeTab: DetailTab;
+  readonly onClose: () => void;
+  readonly onTabChange: (tab: DetailTab) => void;
+  readonly row: WorkerRow;
+}): React.ReactElement => {
+  const [taskQuery, setTaskQuery] = useState<string>("");
+  const normalizedQuery = taskQuery.trim().toLowerCase();
+  const visibleTasks = normalizedQuery
+    ? row.taskStatuses.filter((item) =>
+        `${item.task.tagname} ${item.task.wo} ${item.task.taskName} ${item.task.donVi} ${item.task.section}`
+          .toLowerCase()
+          .includes(normalizedQuery)
+      )
+    : row.taskStatuses;
+
+  return (
+    <div className="fixed inset-0 z-50 xl:hidden" role="dialog" aria-modal="true">
+      <button
+        aria-label="Đóng chi tiết nhân sự"
+        className="absolute inset-0 h-full w-full bg-black/45"
+        onClick={onClose}
+        type="button"
+      />
+
+      <section className="absolute inset-x-2 bottom-2 flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-floating)]">
+        <header className="shrink-0 border-b border-[var(--line)] bg-[var(--surface)] p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-lg font-semibold text-[var(--foreground)]">
+                {row.profile.fullName}
+              </p>
+              <p className="mt-1 truncate text-sm font-semibold text-[var(--text-muted)]">
+                @{row.profile.username} · {row.profile.nhom || row.profile.subgroup || "Chưa phân nhóm"}
+              </p>
+            </div>
+            <button
+              aria-label="Đóng"
+              className="focus-ring icon-button shrink-0"
+              onClick={onClose}
+              type="button"
+            >
+              <Icon name="close" />
+            </button>
+          </div>
+
+          <div className="mt-3 grid grid-cols-4 gap-2">
+            <InfoMini label="Mục" value={row.assigned} />
+            <InfoMini label="Cập nhật" value={row.updatedTasks} />
+            <InfoMini label="Xong" value={row.done} />
+            <InfoMini label="Cancel" value={row.cancelled} />
+          </div>
+
+          <div className="mt-3 flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <ProgressInline percent={row.percent} />
+            </div>
+            <Badge tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] p-1">
+            {detailTabs.map((tab) => {
+              const active = tab.key === activeTab;
+              return (
+                <button
+                  className={`focus-ring pressable flex min-h-11 items-center justify-center gap-1 rounded-[calc(var(--radius-field)-0.2rem)] px-2 text-xs font-semibold ${
+                    active
+                      ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-[var(--shadow-soft-sm)]"
+                      : "text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
+                  }`}
+                  key={tab.key}
+                  onClick={() => onTabChange(tab.key)}
+                  type="button"
+                >
+                  <Icon className="h-4 w-4" name={tab.icon} />
+                  <span className="truncate">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </header>
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-[calc(var(--safe-bottom)+1rem)]">
+          {activeTab === "summary" ? (
+            <MobileWorkerSummary row={row} />
+          ) : null}
+
+          {activeTab === "days" ? (
+            <MobileWorkerDayList row={row} />
+          ) : null}
+
+          {activeTab === "tasks" ? (
+            <MobileWorkerTaskList
+              query={taskQuery}
+              row={row}
+              tasks={visibleTasks}
+              onQueryChange={setTaskQuery}
+            />
+          ) : null}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const MobileWorkerSummary = ({ row }: { readonly row: WorkerRow }): React.ReactElement => (
+  <div className="grid gap-3">
+    <div className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-4">
+      <p className="text-sm font-semibold text-[var(--foreground)]">Tóm tắt báo cáo</p>
+      <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
+        {row.profile.fullName} có {row.assigned} hạng mục active, đã cập nhật {row.updatedTasks} hạng mục và có báo cáo {row.submittedDays}/{row.totalDays} ngày.
+      </p>
+      <div className="mt-4">
+        <ProgressInline percent={row.percent} />
+      </div>
+    </div>
+
+    <div className="grid grid-cols-2 gap-3">
+      <InfoTile label="Ngày đã báo cáo" value={row.submittedDays} />
+      <InfoTile label="Ngày còn thiếu" value={row.totalDays - row.submittedDays} />
+      <InfoTile label="Hoàn thành" value={row.done} />
+      <InfoTile label="Đã cancel" value={row.cancelled} />
+    </div>
+  </div>
+);
+
+const MobileWorkerDayList = ({ row }: { readonly row: WorkerRow }): React.ReactElement => (
+  <div className="grid gap-3">
+    <div>
+      <p className="font-semibold text-[var(--foreground)]">Lịch gửi báo cáo</p>
+      <p className="mt-1 text-sm font-semibold text-[var(--text-muted)]">
+        {row.submittedDays}/{row.totalDays} ngày có cập nhật
+      </p>
+    </div>
+
+    {row.dayStatuses.map((day) => (
+      <div
+        className="grid grid-cols-[92px_minmax(0,1fr)_76px] items-center gap-3 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3"
+        key={day.date}
+      >
+        <p className="text-sm font-semibold leading-5 text-[var(--text-muted)]">
+          {formatViDate(day.date)}
+        </p>
+        <ProgressInline percent={day.percent} />
+        <Badge tone={day.submitted ? "success" : "danger"}>
+          {day.submitted ? day.updatedTasks : "Thiếu"}
+        </Badge>
+      </div>
+    ))}
+  </div>
+);
+
+const MobileWorkerTaskList = ({
+  onQueryChange,
+  query,
+  row,
+  tasks
+}: {
+  readonly onQueryChange: (query: string) => void;
+  readonly query: string;
+  readonly row: WorkerRow;
+  readonly tasks: readonly WorkerTaskStatus[];
+}): React.ReactElement => (
+  <div className="grid gap-3">
+    <div>
+      <p className="font-semibold text-[var(--foreground)]">Hạng mục được giao</p>
+      <p className="mt-1 text-sm font-semibold text-[var(--text-muted)]">
+        {tasks.length}/{row.taskStatuses.length} hạng mục phù hợp
+      </p>
+    </div>
+
+    <label>
+      <span className="sr-only">Tìm hạng mục được giao</span>
+      <Input
+        onChange={(event) => onQueryChange(event.target.value)}
+        placeholder="Tìm tag, WO, section..."
+        value={query}
+      />
+    </label>
+
+    {tasks.length === 0 ? (
+      <div className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-4 text-sm font-semibold text-[var(--text-muted)]">
+        Không có hạng mục phù hợp với bộ lọc hiện tại.
+      </div>
+    ) : null}
+
+    {tasks.map((item) => (
+      <div
+        className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3"
+        key={item.task.id}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate font-mono text-sm font-semibold text-[var(--foreground)]">
+              {item.task.tagname}
+            </p>
+            <p className="mt-1 text-xs font-semibold text-[var(--primary-strong)]">
+              WO {item.task.wo}
+            </p>
+            <p className="mt-1 line-clamp-2 text-sm leading-5 text-[var(--text-muted)]">
+              {item.task.taskName || "N/A"}
+            </p>
+          </div>
+          <span className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1 text-sm font-semibold tabular-nums">
+            {item.percent}%
+          </span>
+        </div>
+        <div className="mt-3">
+          <ProgressInline percent={item.percent} />
+        </div>
+        {item.latestRecord?.note ? (
+          <p className="mt-3 rounded-[var(--radius-field)] bg-[var(--surface)] p-3 text-sm leading-5 text-[var(--text-muted)] ring-1 ring-[var(--border)]">
+            {item.latestRecord.note}
+          </p>
+        ) : null}
+      </div>
+    ))}
+  </div>
+);
 
 const ProgressInline = ({ percent }: { readonly percent: number }): React.ReactElement => {
   const tone =

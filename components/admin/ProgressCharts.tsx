@@ -46,8 +46,23 @@ const softGridProps = {
 };
 const softAxisProps = {
   axisLine: { stroke: gridStroke, strokeOpacity: 0.5 },
-  tick: { fill: "var(--text-muted)", fontSize: 11 },
+  tick: { fill: "var(--text-muted)", fontSize: 12, fontWeight: 600 },
   tickLine: false
+} as const;
+const categoryAxisProps = {
+  ...softAxisProps,
+  tick: { fill: "var(--foreground)", fontSize: 13, fontWeight: 700 }
+} as const;
+const legendTextStyle = {
+  color: "var(--foreground)",
+  fontSize: 13,
+  fontWeight: 700,
+  lineHeight: "20px"
+} as const;
+const compactLegendTextStyle = {
+  ...legendTextStyle,
+  fontSize: 12,
+  lineHeight: "18px"
 } as const;
 const tooltipStyle = {
   backgroundColor: "var(--surface)",
@@ -444,7 +459,7 @@ const OverallPie = ({
               contentStyle={tooltipStyle}
               formatter={(value) => [formatNumber(Number(value)), "Hạng mục quy đổi"]}
             />
-            <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} />
+            <Legend iconType="circle" wrapperStyle={compactLegendTextStyle} />
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 grid place-items-center pb-6">
@@ -492,13 +507,13 @@ const CompletionChart = ({
               type="number"
             />
             <YAxis
-              {...softAxisProps}
+              {...categoryAxisProps}
               dataKey="name"
               type="category"
               width={compact ? 104 : 112}
             />
             <Tooltip contentStyle={tooltipStyle} formatter={(value) => [formatNumber(Number(value)), ""]} />
-            {showLegend ? <Legend iconType="circle" wrapperStyle={{ fontSize: 11 }} /> : null}
+            {showLegend ? <Legend iconType="circle" wrapperStyle={legendTextStyle} /> : null}
             <Bar
               barSize={compact ? 9 : 12}
               dataKey="done"
@@ -570,9 +585,9 @@ const UnitLeadChart = ({
               tickFormatter={(value) => `${value}%`}
               type="number"
             />
-            <YAxis {...softAxisProps} dataKey="name" type="category" width={112} />
+            <YAxis {...categoryAxisProps} dataKey="name" type="category" width={112} />
             <Tooltip contentStyle={tooltipStyle} formatter={(value) => [`${value}%`, ""]} />
-            <Legend iconType="circle" wrapperStyle={{ fontSize: 10, lineHeight: "16px" }} />
+            <Legend iconType="circle" wrapperStyle={compactLegendTextStyle} />
             {visibleLeads.map((lead, index) => (
               <Bar
                 barSize={7}
@@ -619,9 +634,9 @@ const LeadStatusChart = ({
           >
             <CartesianGrid {...softGridProps} />
             <XAxis {...softAxisProps} allowDecimals={false} type="number" />
-            <YAxis {...softAxisProps} dataKey="name" type="category" width={148} />
+            <YAxis {...categoryAxisProps} dataKey="name" type="category" width={148} />
             <Tooltip contentStyle={tooltipStyle} />
-            <Legend iconType="circle" wrapperStyle={{ fontSize: 10, lineHeight: "16px" }} />
+            <Legend iconType="circle" wrapperStyle={compactLegendTextStyle} />
             <Bar
               barSize={12}
               dataKey="completed"

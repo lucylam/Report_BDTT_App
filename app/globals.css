@@ -9,8 +9,8 @@
   /* Base — nền xám phẳng "earthy" (clone family-budget) */
   --background: #f2f2f0;
   --foreground: #111111;
-  --text-muted: #8b8b85;
-  --text-soft: #a6a69e;
+  --text-muted: #5f625a;
+  --text-soft: #74786f;
   --surface: #ffffff;
   --surface-muted: #f7f7f4;
   --surface-glass: #ffffff;
@@ -92,8 +92,8 @@
 .dark {
   --background: #151612;
   --foreground: #f6f7ef;
-  --text-muted: #a4a69b;
-  --text-soft: #7f8377;
+  --text-muted: #c0c4b7;
+  --text-soft: #a5aa9d;
   --surface: #20211c;
   --surface-muted: #2b2d25;
   --surface-glass: #20211c;
@@ -181,6 +181,23 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: auto;
+}
+
+.text-\[10px\] {
+  font-size: 0.75rem !important;
+  line-height: 1.05rem !important;
+}
+
+.text-\[11px\],
+.text-\[12px\],
+.text-xs {
+  font-size: 0.8125rem !important;
+  line-height: 1.25rem !important;
+}
+
+.text-sm {
+  font-size: 0.9375rem !important;
+  line-height: 1.45rem !important;
 }
 
 button,
