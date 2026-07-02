@@ -66,7 +66,7 @@ export const SegmentBar = ({
         <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
           {visible.map((segment, index) => (
             <li
-              className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]"
+              className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]"
               key={segment.label ?? index}
             >
               <span
@@ -74,7 +74,7 @@ export const SegmentBar = ({
                 className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: segment.color ?? toneVar[segment.tone ?? "neutral"] }}
               />
-              {segment.label ? <span>{segment.label}</span> : null}
+              {segment.label ? <span className="min-w-0 truncate">{segment.label}</span> : null}
               <span className="tabular-nums text-[var(--foreground)]">{segment.value}</span>
             </li>
           ))}

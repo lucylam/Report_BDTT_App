@@ -36,12 +36,14 @@ const LoginPage = (): React.ReactElement => {
     router.replace(currentAccount.role === "admin" ? "/admin" : "/worker");
   }, [currentAccount, data, router]);
 
-  const submitLogin = (event: React.FormEvent<HTMLFormElement>): void => {
+  const submitLogin = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     event.preventDefault();
     setError("");
     setIsSubmitting(true);
     try {
-      const account = login(username, password, rememberLogin);
+      const account = await login(username, password, rememberLogin);
       if (account.mustChangePassword) {
         router.replace("/change-password");
       } else {

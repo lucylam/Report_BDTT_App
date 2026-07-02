@@ -356,13 +356,13 @@ const WorkerStatusRow = ({
         <p className="truncate font-semibold">{row.profile.fullName}</p>
         <p className="mt-1 truncate text-xs text-[var(--text-muted)]">@{row.profile.username}</p>
       </div>
-      <span className="lg:hidden">
+      <span className="shrink-0 lg:hidden">
         <Badge tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
       </span>
     </div>
 
     <div className="min-w-0">
-      <p className="text-sm font-semibold leading-5 text-[var(--foreground)]">
+      <p className="line-clamp-2 text-sm font-semibold leading-5 text-[var(--foreground)]">
         {row.profile.nhom || row.profile.subgroup || "N/A"}
       </p>
       <p className="mt-1 text-xs font-semibold text-[var(--text-soft)]">
@@ -521,7 +521,7 @@ const WorkerMobileDetailSheet = ({
             </button>
           </div>
 
-          <div className="mt-3 grid grid-cols-4 gap-2">
+          <div className="mt-3 grid grid-cols-4 gap-1.5 sm:gap-2">
             <InfoMini label="Mục" value={row.assigned} />
             <InfoMini label="Cập nhật" value={row.updatedTasks} />
             <InfoMini label="Xong" value={row.done} />
@@ -540,7 +540,7 @@ const WorkerMobileDetailSheet = ({
               const active = tab.key === activeTab;
               return (
                 <button
-                  className={`focus-ring pressable flex min-h-11 items-center justify-center gap-1 rounded-[calc(var(--radius-field)-0.2rem)] px-2 text-xs font-semibold ${
+                  className={`focus-ring pressable mobile-compact-tab flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-[calc(var(--radius-field)-0.2rem)] px-1 font-semibold sm:flex-row sm:gap-1 sm:px-2 ${
                     active
                       ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-[var(--shadow-soft-sm)]"
                       : "text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
@@ -549,8 +549,8 @@ const WorkerMobileDetailSheet = ({
                   onClick={() => onTabChange(tab.key)}
                   type="button"
                 >
-                  <Icon className="h-4 w-4" name={tab.icon} />
-                  <span className="truncate">{tab.label}</span>
+                  <Icon className="h-4 w-4 shrink-0" name={tab.icon} />
+                  <span className="block min-w-0 max-w-full truncate">{tab.label}</span>
                 </button>
               );
             })}
@@ -612,10 +612,10 @@ const MobileWorkerDayList = ({ row }: { readonly row: WorkerRow }): React.ReactE
 
     {row.dayStatuses.map((day) => (
       <div
-        className="grid grid-cols-[92px_minmax(0,1fr)_76px] items-center gap-3 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3"
+        className="mobile-worker-day-row grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3"
         key={day.date}
       >
-        <p className="text-sm font-semibold leading-5 text-[var(--text-muted)]">
+        <p className="min-w-0 text-sm font-semibold leading-5 text-[var(--text-muted)]">
           {formatViDate(day.date)}
         </p>
         <ProgressInline percent={day.percent} />
@@ -706,7 +706,7 @@ const ProgressInline = ({ percent }: { readonly percent: number }): React.ReactE
           style={{ width: `${Math.min(percent, 100)}%` }}
         />
       </div>
-      <span className="w-10 text-right text-xs font-semibold tabular-nums">{percent}%</span>
+      <span className="w-10 shrink-0 text-right text-xs font-semibold tabular-nums">{percent}%</span>
     </div>
   );
 };
@@ -719,7 +719,7 @@ const InfoMini = ({
   readonly value: number;
 }): React.ReactElement => (
   <span className="min-w-0 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-2 py-1.5 text-center leading-tight ring-1 ring-[var(--border)]">
-    <span className="block truncate text-[10px] font-semibold uppercase text-[var(--text-soft)]">
+    <span className="mobile-compact-label block truncate font-semibold uppercase text-[var(--text-soft)]">
       {label}
     </span>
     <span className="mt-0.5 block text-sm font-semibold tabular-nums text-[var(--foreground)]">
@@ -736,7 +736,7 @@ const InfoTile = ({
   readonly value: number;
 }): React.ReactElement => (
   <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
-    <p className="text-xs font-semibold uppercase text-[var(--text-soft)]">{label}</p>
+    <p className="mobile-compact-label font-semibold uppercase text-[var(--text-soft)]">{label}</p>
     <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
   </div>
 );

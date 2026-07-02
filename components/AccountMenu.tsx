@@ -59,12 +59,12 @@ export const AccountMenu = ({
           <div className="mt-5 space-y-4">
             <div className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-4">
               <p className="text-sm font-semibold text-[var(--foreground)]">@{account.username}</p>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">{account.email}</p>
+              <p className="mt-1 break-all text-sm text-[var(--text-muted)]">{account.email}</p>
               <div className="mt-3 rounded-[var(--radius-field)] bg-[var(--primary-pale)] p-3 ring-1 ring-[var(--border)]">
-                <p className="text-sm font-semibold text-[var(--primary-strong)]">
+                <p className="mobile-safe-text text-sm font-semibold text-[var(--primary-strong)]">
                   {account.orgTitle}
                 </p>
-                <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
+                <p className="mobile-safe-text mt-1 text-sm leading-6 text-[var(--text-muted)]">
                   {account.orgAssignment}
                 </p>
               </div>

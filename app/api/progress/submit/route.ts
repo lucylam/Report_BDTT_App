@@ -22,13 +22,16 @@ interface SubmitProgressBody {
   };
 }
 
-const validPercents = new Set<number>([0, 25, 50, 75, 100]);
-
 const normalizeText = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
 
 const isProgressPercent = (value: unknown): value is ProgressPercent => {
-  return typeof value === "number" && validPercents.has(value);
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= 100
+  );
 };
 
 const isUuid = (value: string): boolean => {

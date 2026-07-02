@@ -9,7 +9,7 @@ Rules:
 - Initial password is `123456`.
 - `profiles.must_change_password` starts as `true`.
 - After first login, user must change password and the app sets `must_change_password = false`.
-- Do not store plaintext passwords in `profiles`.
+- Do not store plaintext passwords in `profiles`; internal login uses `profiles.password_hash`.
 - Do not place the Supabase service role key in client code.
 
 Suggested server-side creation flow:

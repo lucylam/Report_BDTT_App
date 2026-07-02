@@ -70,6 +70,10 @@ const tooltipStyle = {
   borderRadius: "12px",
   boxShadow: "var(--shadow-soft-sm)"
 } as const;
+const formatAxisName = (value: unknown): string => {
+  const text = String(value ?? "");
+  return text.length > 22 ? `${text.slice(0, 21)}...` : text;
+};
 
 type MetricTone = "attention" | "done" | "neutral" | "progress" | "remaining" | "worker";
 
@@ -490,9 +494,13 @@ const CompletionChart = ({
 }): React.ReactElement => {
   if (data.length === 0) return <EmptyChart subtitle={subtitle} title={title} />;
   const chartRows = [...data].slice(0, compact ? 5 : 10);
+  if (compact) {
+    return <CompactCompletionBars rows={chartRows} subtitle={subtitle} title={title} />;
+  }
+
   return (
     <ChartShell subtitle={subtitle} title={title}>
-      <div className={compact ? "mt-3 h-[165px] sm:h-[185px]" : "mt-3 h-[260px] sm:h-[300px]"}>
+      <div className={compact ? "mt-3 h-[165px] min-w-0 sm:h-[185px]" : "mt-3 h-[260px] min-w-0 sm:h-[300px]"}>
         <ResponsiveContainer height="100%" width="100%">
           <BarChart
             barCategoryGap={compact ? 5 : 8}
@@ -509,8 +517,9 @@ const CompletionChart = ({
             <YAxis
               {...categoryAxisProps}
               dataKey="name"
+              tickFormatter={formatAxisName}
               type="category"
-              width={compact ? 104 : 112}
+              width={compact ? 116 : 128}
             />
             <Tooltip contentStyle={tooltipStyle} formatter={(value) => [formatNumber(Number(value)), ""]} />
             {showLegend ? <Legend iconType="circle" wrapperStyle={legendTextStyle} /> : null}
@@ -534,6 +543,62 @@ const CompletionChart = ({
             />
           </BarChart>
         </ResponsiveContainer>
+      </div>
+    </ChartShell>
+  );
+};
+
+const CompactCompletionBars = ({
+  rows,
+  subtitle,
+  title
+}: {
+  readonly rows: readonly CompletionRow[];
+  readonly subtitle: string;
+  readonly title: string;
+}): React.ReactElement => {
+  const maxTotal = Math.max(1, ...rows.map((row) => row.total));
+
+  return (
+    <ChartShell subtitle={subtitle} title={title}>
+      <div className="mt-4 grid gap-3">
+        {rows.map((row) => {
+          const totalWidth = `${Math.max(10, (row.total / maxTotal) * 100)}%`;
+          const doneWidth = row.total === 0 ? "0%" : `${(row.done / row.total) * 100}%`;
+
+          return (
+            <div className="min-w-0" key={row.name}>
+              <div className="flex items-start justify-between gap-3">
+                <p className="min-w-0 text-sm font-semibold leading-5 text-[var(--foreground)] [overflow-wrap:anywhere]">
+                  {row.name}
+                </p>
+                <span className="shrink-0 rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-semibold text-[var(--text-muted)] tabular-nums ring-1 ring-[var(--border)]">
+                  {row.percent}%
+                </span>
+              </div>
+
+              <div
+                aria-label={`${row.name}: ${formatNumber(row.done)} đã thực hiện, ${formatNumber(row.remaining)} còn lại, ${row.percent}% hoàn thành`}
+                className="mt-2 h-3 overflow-hidden rounded-full bg-[var(--line)]"
+                role="img"
+              >
+                <div
+                  className="h-full max-w-full overflow-hidden rounded-full bg-[var(--chart-remaining-soft)]"
+                  style={{ width: totalWidth }}
+                >
+                  <div
+                    className="h-full rounded-full bg-[var(--chart-done-strong)]"
+                    style={{ width: doneWidth }}
+                  />
+                </div>
+              </div>
+
+              <p className="mt-1 text-xs font-semibold leading-5 text-[var(--text-muted)]">
+                {formatNumber(row.done)} đã thực hiện · {formatNumber(row.remaining)} còn lại · tổng {formatNumber(row.total)}
+              </p>
+            </div>
+          );
+        })}
       </div>
     </ChartShell>
   );
@@ -569,7 +634,7 @@ const UnitLeadChart = ({
       subtitle="Average %Complete theo Đơn vị chủ quản và Nhóm trưởng, dùng để nhìn nhóm nào đang kéo tiến độ."
       title={title}
     >
-      <div className="mt-3" style={{ height: chartHeight }}>
+      <div className="mt-3 min-w-0" style={{ height: chartHeight }}>
         <ResponsiveContainer height="100%" width="100%">
           <BarChart
             barCategoryGap={18}
@@ -585,7 +650,13 @@ const UnitLeadChart = ({
               tickFormatter={(value) => `${value}%`}
               type="number"
             />
-            <YAxis {...categoryAxisProps} dataKey="name" type="category" width={112} />
+            <YAxis
+              {...categoryAxisProps}
+              dataKey="name"
+              tickFormatter={formatAxisName}
+              type="category"
+              width={128}
+            />
             <Tooltip contentStyle={tooltipStyle} formatter={(value) => [`${value}%`, ""]} />
             <Legend iconType="circle" wrapperStyle={compactLegendTextStyle} />
             {visibleLeads.map((lead, index) => (
@@ -624,7 +695,7 @@ const LeadStatusChart = ({
       subtitle="Stacked status theo Nhóm trưởng. Xám = chưa thực hiện, cam = đang thực hiện, xanh = hoàn thành."
       title="THỐNG KÊ TIẾN ĐỘ THEO CÁC NHÓM"
     >
-      <div className="mt-3 h-[245px] sm:h-[275px]">
+      <div className="mt-3 h-[245px] min-w-0 sm:h-[275px]">
         <ResponsiveContainer height="100%" width="100%">
           <BarChart
             barCategoryGap={8}
@@ -634,7 +705,13 @@ const LeadStatusChart = ({
           >
             <CartesianGrid {...softGridProps} />
             <XAxis {...softAxisProps} allowDecimals={false} type="number" />
-            <YAxis {...categoryAxisProps} dataKey="name" type="category" width={148} />
+            <YAxis
+              {...categoryAxisProps}
+              dataKey="name"
+              tickFormatter={formatAxisName}
+              type="category"
+              width={132}
+            />
             <Tooltip contentStyle={tooltipStyle} />
             <Legend iconType="circle" wrapperStyle={compactLegendTextStyle} />
             <Bar

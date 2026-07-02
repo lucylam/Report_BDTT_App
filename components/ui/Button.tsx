@@ -37,7 +37,7 @@ export const Button = ({
   return (
     <button
       className={cn(
-        "focus-ring pressable inline-flex items-center justify-center gap-2 rounded-[var(--radius-field)] font-semibold disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-soft)] disabled:shadow-none",
+        "focus-ring pressable inline-flex max-w-full min-w-0 items-center justify-center gap-2 rounded-[var(--radius-field)] text-center font-semibold leading-tight whitespace-normal [overflow-wrap:anywhere] disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-soft)] disabled:shadow-none",
         variantClass[variant],
         sizeClass[size],
         full && "w-full",

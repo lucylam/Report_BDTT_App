@@ -1,8 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
+import { randomBytes, scryptSync } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 const DEFAULT_PASSWORD = "123456";
+const PASSWORD_KEY_LENGTH = 64;
 const INTERNAL_AUTH_DOMAIN = "bdtt.local";
 const ACCOUNT_SOURCE = "lib/org2026.ts";
 
@@ -40,6 +42,11 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 const getUsername = (email) => email.split("@")[0]?.trim().toLowerCase() ?? email;
 const getInternalEmail = (username) => `${username}@${INTERNAL_AUTH_DOMAIN}`;
 const toResourceName = (fullName) => fullName.toUpperCase();
+const hashPassword = (password) => {
+  const salt = randomBytes(16).toString("base64url");
+  const hash = scryptSync(password, salt, PASSWORD_KEY_LENGTH).toString("base64url");
+  return `scrypt:v1:${salt}:${hash}`;
+};
 
 const parsePersonRows = (source) => {
   const rows = [];
@@ -193,7 +200,7 @@ const createOrUpdateAuthUser = async (account, existingUser) => {
   return { id: data.user.id, action: "create" };
 };
 
-const upsertProfile = async (account, authUserId) => {
+const upsertProfile = async (account, authUserId, action) => {
   const profile = {
     id: authUserId,
     email: account.authEmail,
@@ -204,9 +211,13 @@ const upsertProfile = async (account, authUserId) => {
     nhom: account.nhom,
     nhom_truong: account.nhomTruong,
     role: account.role,
-    must_change_password: true,
     is_active: true
   };
+
+  if (action === "create" || action === "reset-password") {
+    profile.password_hash = hashPassword(DEFAULT_PASSWORD);
+    profile.must_change_password = true;
+  }
 
   if (isDryRun) return;
 
@@ -256,7 +267,7 @@ const main = async () => {
 
     const existingUser = usersByEmail.get(account.authEmail);
     const result = await createOrUpdateAuthUser(account, existingUser);
-    await upsertProfile(account, result.id);
+    await upsertProfile(account, result.id, result.action);
     summary[result.action] += 1;
 
     console.log(

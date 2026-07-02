@@ -11,7 +11,8 @@ import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
 import {
   getOrgScopeLabel,
   getScopedAppData,
-  hasFullOrgScope
+  hasFullOrgScope,
+  isDataAdminAccount
 } from "@/lib/permissions";
 import { calculateMetrics, getTaskPercent } from "@/lib/progress";
 import {
@@ -27,6 +28,24 @@ const PLAN_TARGET_PERCENT = 50;
 type OrgUnitLevel = "group" | "subgroup";
 type Tone = "info" | "success" | "warning" | "danger";
 type DashboardView = "excel" | "overview";
+
+interface RecentUpdateRow {
+  readonly key: string;
+  readonly workerName: string;
+  readonly taskTag: string;
+  readonly taskName: string;
+  readonly reportDate: string;
+  readonly reportDateLabel: string;
+  readonly submittedAtLabel: string;
+  readonly percent: number;
+  readonly hasPhoto: boolean;
+}
+
+interface RecentUpdateGroup {
+  readonly reportDate: string;
+  readonly reportDateLabel: string;
+  readonly rows: readonly RecentUpdateRow[];
+}
 
 interface OrgUnitRow {
   readonly key: string;
@@ -93,16 +112,23 @@ const AdminPage = (): React.ReactElement => {
       subtitle={`Tổ Thiết bị Đo lường & Điều khiển · ${scopeLabel} · Ngày báo cáo: ${formatViDate(DEFAULT_REPORT_DATE)}`}
       title={isFullScope ? "Dashboard giám sát" : "Dashboard nhóm"}
     >
-      <ManagementDashboard data={scopedData} isFullScope={isFullScope} metrics={metrics} />
+      <ManagementDashboard
+        canReviewUpdateHistory={isDataAdminAccount(currentAccount)}
+        data={scopedData}
+        isFullScope={isFullScope}
+        metrics={metrics}
+      />
     </AdminShell>
   );
 };
 
 const ManagementDashboard = ({
+  canReviewUpdateHistory,
   data,
   isFullScope,
   metrics
 }: {
+  readonly canReviewUpdateHistory: boolean;
   readonly data: AppData;
   readonly isFullScope: boolean;
   readonly metrics: DashboardMetrics;
@@ -111,6 +137,10 @@ const ManagementDashboard = ({
   const excelDashboard = useMemo(
     () => buildExcelDashboard(data, DEFAULT_REPORT_DATE),
     [data]
+  );
+  const updateHistoryRows = useMemo(
+    () => (canReviewUpdateHistory ? buildRecentUpdateRows(data) : []),
+    [canReviewUpdateHistory, data]
   );
   const level: OrgUnitLevel = isFullScope ? "group" : "subgroup";
   const rows = buildOrgUnitRows(data, level);
@@ -168,7 +198,91 @@ const ManagementDashboard = ({
       <StatusLegend />
         </>
       )}
+
+      {canReviewUpdateHistory ? <RecentUpdateList rows={updateHistoryRows} /> : null}
     </section>
+  );
+};
+
+const RecentUpdateList = ({
+  rows
+}: {
+  readonly rows: readonly RecentUpdateRow[];
+}): React.ReactElement => {
+  const groups = buildRecentUpdateGroups(rows);
+
+  return (
+    <details className="glass-card min-w-0 overflow-hidden rounded-[var(--radius-card)] border-dashed shadow-none">
+      <summary className="focus-ring flex min-h-11 cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-3 py-2 [&::-webkit-details-marker]:hidden">
+        <span className="flex min-w-0 items-center gap-2">
+          <Icon className="h-4 w-4 text-[var(--text-soft)]" name="history" />
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-semibold text-[var(--foreground)]">
+              Lịch sử cập nhật worker
+            </span>
+            <span className="block truncate text-[11px] font-semibold text-[var(--text-soft)]">
+              Chỉ hiển thị với vinhlpp · tất cả ngày báo cáo
+            </span>
+          </span>
+        </span>
+        <span className="inline-flex shrink-0 items-center gap-2">
+          <span className="rounded-full bg-[var(--line-soft)] px-2 py-1 text-[11px] font-semibold text-[var(--text-muted)]">
+            {rows.length} bản ghi
+          </span>
+          <Icon className="h-4 w-4 text-[var(--text-soft)]" name="chevronDown" />
+        </span>
+      </summary>
+
+      {rows.length === 0 ? (
+        <p className="border-t border-[var(--line-soft)] px-3 py-2 text-xs font-semibold text-[var(--text-muted)]">
+          Chưa có worker gửi báo cáo hoặc chỉnh sửa tiến độ.
+        </p>
+      ) : (
+        <div className="max-h-[24rem] overflow-y-auto border-t border-[var(--line-soft)]">
+          {groups.map((group) => (
+            <section className="min-w-0" key={group.reportDate}>
+              <h3 className="bg-[var(--surface-muted)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text-muted)]">
+                BC {group.reportDateLabel} · {group.rows.length} cập nhật
+              </h3>
+              <ol className="divide-y divide-[var(--line-soft)]">
+                {group.rows.map((row) => (
+                  <li
+                    className="grid min-w-0 gap-1.5 px-3 py-2 text-xs sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3"
+                    key={row.key}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="max-w-full truncate font-semibold text-[var(--foreground)]">
+                          {row.workerName}
+                        </span>
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${recentPercentPillClass(row.percent)}`}>
+                          {row.percent}%
+                        </span>
+                        {row.hasPhoto ? (
+                          <span className="rounded-full bg-[var(--info-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--info-strong)]">
+                            Có ảnh
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 truncate text-[11px] font-semibold text-[var(--text-muted)]">
+                        <span className="font-mono text-[var(--foreground)]">{row.taskTag}</span>
+                        <span> · {row.taskName}</span>
+                      </p>
+                    </div>
+
+                    <div className="flex min-w-0 items-center gap-2 text-[11px] font-semibold text-[var(--text-soft)] sm:justify-end">
+                      <span>{row.submittedAtLabel}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>Gửi/chỉnh sửa</span>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ))}
+        </div>
+      )}
+    </details>
   );
 };
 
@@ -512,6 +626,90 @@ const LegendDot = ({
     {label}
   </span>
 );
+
+const buildRecentUpdateRows = (
+  data: AppData,
+  limit?: number
+): RecentUpdateRow[] => {
+  const profilesById = new Map(data.profiles.map((profile) => [profile.id, profile]));
+  const tasksById = new Map(data.tasks.map((task) => [task.id, task]));
+
+  const rows = [...data.progress]
+    .filter((record) => tasksById.has(record.taskId))
+    .sort((left, right) => getProgressTimestamp(right) - getProgressTimestamp(left))
+    .map((record, index) => {
+      const task = tasksById.get(record.taskId);
+      const profile = profilesById.get(record.userId);
+      const workerName =
+        profile?.fullName || profile?.resourceName || task?.resourceName || record.userId;
+
+      return {
+        key: `${record.taskId}-${record.userId}-${record.reportDate}-${record.submittedAt ?? index}`,
+        workerName,
+        taskTag: task?.tagname || task?.wo || record.taskId,
+        taskName: task?.taskName || "Hạng mục không còn trong DATA hiện tại",
+        reportDate: record.reportDate,
+        reportDateLabel: formatViDate(record.reportDate),
+        submittedAtLabel: formatProgressSubmittedAt(record),
+        percent: record.percent,
+        hasPhoto: Boolean(record.photoPath)
+      };
+    });
+
+  return typeof limit === "number" ? rows.slice(0, limit) : rows;
+};
+
+const buildRecentUpdateGroups = (
+  rows: readonly RecentUpdateRow[]
+): RecentUpdateGroup[] => {
+  const groups = new Map<string, RecentUpdateRow[]>();
+
+  rows.forEach((row) => {
+    const current = groups.get(row.reportDate) ?? [];
+    current.push(row);
+    groups.set(row.reportDate, current);
+  });
+
+  return Array.from(groups.entries()).map(([reportDate, groupRows]) => ({
+    reportDate,
+    reportDateLabel: groupRows[0]?.reportDateLabel ?? formatViDate(reportDate),
+    rows: groupRows
+  }));
+};
+
+const getProgressTimestamp = (record: {
+  readonly reportDate: string;
+  readonly submittedAt?: string;
+}): number => {
+  const submittedTime = Date.parse(record.submittedAt ?? "");
+  if (Number.isFinite(submittedTime)) return submittedTime;
+
+  const reportTime = Date.parse(`${record.reportDate}T00:00:00+07:00`);
+  return Number.isFinite(reportTime) ? reportTime : 0;
+};
+
+const formatProgressSubmittedAt = (record: {
+  readonly reportDate: string;
+  readonly submittedAt?: string;
+}): string => {
+  const submittedTime = Date.parse(record.submittedAt ?? "");
+  if (!Number.isFinite(submittedTime)) return formatViDate(record.reportDate);
+
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+    minute: "2-digit",
+    month: "2-digit",
+    timeZone: "Asia/Ho_Chi_Minh"
+  }).format(new Date(submittedTime));
+};
+
+const recentPercentPillClass = (percent: number): string => {
+  if (percent >= 100) return "bg-[var(--success-soft)] text-[var(--success)]";
+  if (percent > 0) return "bg-[var(--surface-warm)] text-[var(--accent-strong)]";
+  return "bg-[var(--line-soft)] text-[var(--text-muted)]";
+};
 
 const buildOrgUnitRows = (data: AppData, level: OrgUnitLevel): OrgUnitRow[] => {
   const activeTasksByAssignee = getActiveTasksByAssignee(data.tasks);

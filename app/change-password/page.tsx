@@ -17,7 +17,9 @@ const ChangePasswordPage = (): React.ReactElement => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  const submitChange = (event: React.FormEvent<HTMLFormElement>): void => {
+  const submitChange = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     event.preventDefault();
     setError("");
     if (nextPassword !== confirmPassword) {
@@ -26,7 +28,7 @@ const ChangePasswordPage = (): React.ReactElement => {
     }
     setIsSubmitting(true);
     try {
-      changePassword(nextPassword);
+      await changePassword(nextPassword);
       router.replace(currentAccount?.role === "admin" ? "/admin" : "/worker");
     } catch (changeError) {
       setError(

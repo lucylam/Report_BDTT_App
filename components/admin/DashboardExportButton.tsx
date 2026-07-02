@@ -36,7 +36,7 @@ export const DashboardExportButton = ({
   return (
     <button
       className={cn(
-        "focus-ring pressable min-h-12 rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 py-3 text-sm font-semibold text-[var(--primary-contrast)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary)]",
+        "focus-ring pressable min-h-12 min-w-0 max-w-full rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 py-3 text-center text-sm font-semibold leading-tight whitespace-normal text-[var(--primary-contrast)] shadow-[var(--shadow-soft-sm)] [overflow-wrap:anywhere] hover:bg-[var(--primary)]",
         className
       )}
       data-export-hidden="true"

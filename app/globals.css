@@ -365,8 +365,115 @@ button:disabled {
   padding-bottom: max(0.75rem, var(--safe-bottom));
 }
 
+.mobile-bottom-nav a,
+.mobile-bottom-nav button,
+.floating-pill a,
+.floating-pill button {
+  min-width: 0;
+}
+
+.mobile-bottom-nav span,
+.floating-pill a span,
+.floating-pill button span {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-safe-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mobile-button-label {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  line-height: 1.05rem;
+}
+
+.mobile-bottom-nav .mobile-button-label,
+.floating-pill .mobile-button-label {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.mobile-action-button {
+  min-height: 2.75rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.1rem;
+}
+
+.mobile-chart-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.mobile-chart-date {
+  font-size: 0.72rem !important;
+  line-height: 0.9rem !important;
+  white-space: nowrap;
+}
+
+.mobile-chart-value {
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+}
+
+.mobile-worker-day-row > :nth-child(2) {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.mobile-worker-day-row > :nth-child(3) {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+}
+
 .mobile-scroll-section {
   scroll-margin-top: calc(var(--mobile-topbar-height) + var(--safe-top));
+}
+
+@media (max-width: 640px) {
+  .mobile-compact-label {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+
+  .mobile-compact-tab {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .mobile-chart-card {
+    padding: 1rem;
+  }
+
+  .mobile-chart-donut {
+    height: 7rem;
+    width: 7rem;
+  }
+
+  .mobile-chart-stat {
+    padding: 0.625rem 0.5rem;
+  }
+
+  .mobile-daily-chart {
+    gap: 0.25rem;
+  }
+
+  .mobile-daily-bar {
+    padding: 0.1875rem;
+  }
 }
 
 /* Thanh tiến độ sọc chéo 45° (clone family-budget) — dùng cho ProgressBar striped */

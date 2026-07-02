@@ -34,7 +34,7 @@ const firstValidHttpUrl = (
   return values.find(isValidHttpUrl) ?? null;
 };
 
-const getSupabaseServerConfig = async (): Promise<
+export const getSupabaseServerConfig = async (): Promise<
   { readonly url: string; readonly serviceRoleKey: string } | null
 > => {
   const serverConfig = await readServerConfigFile();

@@ -46,7 +46,7 @@ export const Badge = ({
   return (
     <span
       className={cn(
-        "inline-flex min-h-7 items-center rounded-full px-2.5 text-xs font-semibold tabular-nums",
+        "inline-flex min-h-7 max-w-full min-w-0 items-center overflow-hidden whitespace-nowrap rounded-full px-2.5 text-xs font-semibold tabular-nums",
         solid ? solidClass[tone] : softClass[tone],
         className
       )}

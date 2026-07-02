@@ -1,4 +1,4 @@
-export type ProgressPercent = 0 | 25 | 50 | 75 | 100;
+export type ProgressPercent = number;
 
 export type UserRole = "admin" | "worker";
 

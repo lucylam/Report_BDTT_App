@@ -139,12 +139,45 @@ export const loginAccount = (
   return { data: nextData, account };
 };
 
+export const setAuthenticatedAccount = (
+  data: AppData,
+  accountId: string,
+  rememberLogin: boolean
+): AppData => {
+  const nextData: AppData = {
+    ...data,
+    activeUserId: accountId
+  };
+  setRememberLoginPreference(rememberLogin);
+  setSessionUserId(rememberLogin ? null : accountId);
+  saveAppData(nextData);
+  return nextData;
+};
+
 export const logoutAccount = (data: AppData): AppData => {
   const nextData: AppData = {
     ...data,
     activeUserId: null
   };
   setSessionUserId(null);
+  saveAppData(nextData);
+  return nextData;
+};
+
+export const setAccountMustChangePassword = (
+  data: AppData,
+  accountId: string,
+  mustChangePassword: boolean
+): AppData => {
+  const nextData: AppData = {
+    ...data,
+    accounts: data.accounts.map((account) =>
+      account.id === accountId ? { ...account, mustChangePassword } : account
+    ),
+    profiles: data.profiles.map((profile) =>
+      profile.id === accountId ? { ...profile, mustChangePassword } : profile
+    )
+  };
   saveAppData(nextData);
   return nextData;
 };

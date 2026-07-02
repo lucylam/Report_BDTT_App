@@ -99,8 +99,8 @@ export const PwaInstallButton = ({
   };
 
   const buttonClass = compact
-    ? "focus-ring pressable min-h-12 w-full rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-    : "focus-ring pressable min-h-12 rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 text-sm font-semibold text-white shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary)]";
+    ? "focus-ring pressable min-h-12 w-full min-w-0 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-sm font-semibold leading-tight whitespace-normal text-[var(--foreground)] [overflow-wrap:anywhere] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+    : "focus-ring pressable min-h-12 min-w-0 rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 text-sm font-semibold leading-tight whitespace-normal text-white shadow-[var(--shadow-soft-sm)] [overflow-wrap:anywhere] hover:bg-[var(--primary)]";
 
   const button = deferredPrompt ? (
     <button
@@ -113,7 +113,7 @@ export const PwaInstallButton = ({
   ) : null;
 
   const hint = canShowFallbackHint ? (
-    <p className="text-sm font-semibold leading-6 text-[var(--text-muted)]">
+    <p className="mobile-safe-text text-sm font-semibold leading-6 text-[var(--text-muted)]">
       {isIos
         ? "iPhone/iPad: bấm Chia sẻ, sau đó chọn Thêm vào Màn hình chính."
         : "Android: mở bằng Chrome trên link HTTPS, sau đó chọn Cài app hoặc Thêm vào màn hình chính."}
@@ -126,7 +126,7 @@ export const PwaInstallButton = ({
         className={`rounded-[var(--radius-card)] border border-[var(--border)] bg-[var(--surface-muted)] p-4 shadow-[var(--shadow-soft-sm)] ${className}`}
       >
         <p className="text-sm font-semibold text-[var(--foreground)]">Dùng như mobile app</p>
-        <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
+        <p className="mobile-safe-text mt-1 text-sm leading-6 text-[var(--text-muted)]">
           Cài BDTT lên màn hình chính để mở nhanh như ứng dụng nội bộ.
         </p>
         {button ? <div className="mt-3">{button}</div> : null}

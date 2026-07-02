@@ -22,7 +22,7 @@ export const WorkerSearchControls = ({
   return (
     <div className="glass-card rounded-[var(--radius-card)] p-3">
       <label className="block" htmlFor={inputId}>
-        <span className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
+        <span className="mobile-compact-label block font-semibold uppercase text-[var(--primary-strong)]">
           Tìm nhanh tag / WO / khu vực
         </span>
         <div className="control-pill mt-2 flex min-h-12 items-center gap-2 rounded-[var(--radius-field)] px-3 focus-within:border-[var(--primary)] focus-within:ring-4 focus-within:ring-[var(--primary-soft)] md:min-h-12">
@@ -40,7 +40,7 @@ export const WorkerSearchControls = ({
           />
           {searchQuery ? (
             <button
-              className="focus-ring pressable min-h-9 rounded-[var(--radius-field)] bg-[var(--primary-soft)] px-3 text-sm font-semibold text-[var(--primary-strong)]"
+              className="focus-ring pressable min-h-10 shrink-0 rounded-[var(--radius-field)] bg-[var(--primary-soft)] px-3 text-sm font-semibold leading-tight text-[var(--primary-strong)]"
               onClick={() => onSearchChange("")}
               type="button"
             >
@@ -51,12 +51,14 @@ export const WorkerSearchControls = ({
       </label>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold text-[var(--text-muted)]">{resultLabel}</span>
+        <span className="mobile-compact-label min-w-0 font-semibold text-[var(--text-muted)]">
+          {resultLabel}
+        </span>
         {unitChips.map((unit) => {
           const active = searchQuery.trim().toLowerCase() === unit.toLowerCase();
           return (
             <button
-              className={`focus-ring pressable min-h-9 rounded-full border px-3 text-xs font-semibold ${
+              className={`focus-ring pressable mobile-action-button max-w-full min-w-0 rounded-full border px-3 text-xs font-semibold ${
                 active
                   ? "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-sm"
                   : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
@@ -65,7 +67,7 @@ export const WorkerSearchControls = ({
               onClick={() => onSearchChange(active ? "" : unit)}
               type="button"
             >
-              {unit}
+              <span className="mobile-button-label">{unit}</span>
             </button>
           );
         })}
@@ -98,7 +100,7 @@ const GroupButton = ({
 }): React.ReactElement => {
   return (
     <button
-      className={`focus-ring pressable min-h-10 rounded-[var(--radius-field)] px-2 text-xs font-semibold ${
+      className={`focus-ring pressable mobile-action-button min-w-0 rounded-[var(--radius-field)] px-2 text-xs font-semibold ${
         active
           ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
           : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
@@ -106,7 +108,7 @@ const GroupButton = ({
       onClick={onClick}
       type="button"
     >
-      {label}
+      <span className="mobile-button-label">{label}</span>
     </button>
   );
 };

@@ -149,7 +149,7 @@ export const AdminShell = ({
                 key={link.href}
               >
                 <Icon name={link.icon} />
-                <span>{link.shortLabel}</span>
+                <span className="block min-w-0 max-w-full truncate">{link.shortLabel}</span>
               </Link>
             );
           })}

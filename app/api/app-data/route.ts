@@ -45,8 +45,6 @@ interface DbProgress {
   readonly submitted_at: string | null;
 }
 
-const validPercents = new Set<number>([0, 25, 50, 75, 100]);
-
 const normalizeText = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
 
@@ -59,7 +57,10 @@ const getResourceNameSuffix = (value: string): string => {
 };
 
 const isProgressPercent = (value: unknown): value is ProgressPercent =>
-  typeof value === "number" && validPercents.has(value);
+  typeof value === "number" &&
+  Number.isInteger(value) &&
+  value >= 0 &&
+  value <= 100;
 
 const toPriority = (value: number | null): Task["priority"] => {
   if (value === 1 || value === 2 || value === 3) return value;

@@ -47,7 +47,7 @@ export const TaskCard = ({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="font-mono text-base font-semibold leading-tight text-[var(--foreground)]">
+              <h2 className="truncate font-mono text-base font-semibold leading-tight text-[var(--foreground)]">
                 {task.tagname}
               </h2>
               <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-[var(--text-muted)]">

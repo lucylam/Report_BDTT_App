@@ -15,11 +15,8 @@ export const percentOptions: readonly ProgressPercent[] = [0, 25, 50, 75, 100];
 
 export const normalizePercent = (value: unknown): ProgressPercent => {
   const numberValue = Number(value);
-  if (numberValue >= 88) return 100;
-  if (numberValue >= 63) return 75;
-  if (numberValue >= 38) return 50;
-  if (numberValue >= 13) return 25;
-  return 0;
+  if (!Number.isFinite(numberValue)) return 0;
+  return Math.max(0, Math.min(100, Math.round(numberValue)));
 };
 
 export const getTaskProgress = (

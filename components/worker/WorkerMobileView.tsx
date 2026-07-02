@@ -163,8 +163,8 @@ export const WorkerMobileView = ({
               href="/admin"
             />
           ) : (
-            <div className="inline-flex min-h-11 flex-1 items-center rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-soft-sm)]">
-              Workspace
+            <div className="inline-flex min-h-11 min-w-0 flex-1 items-center rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-soft-sm)]">
+              <span className="min-w-0 truncate">Workspace</span>
             </div>
           )}
           <ThemeToggle className="shrink-0" />
@@ -193,9 +193,9 @@ export const WorkerMobileView = ({
                 Tiến độ
               </span>
             </span>
-            <Badge tone={isOnline ? "success" : "warning"}>
-              <span className="inline-flex items-center gap-1">
-                <Icon className="h-3.5 w-3.5" name={isOnline ? "wifi" : "wifiOff"} />
+            <Badge className="shrink-0" tone={isOnline ? "success" : "warning"}>
+              <span className="inline-flex min-w-0 items-center gap-1">
+                <Icon className="h-3.5 w-3.5 shrink-0" name={isOnline ? "wifi" : "wifiOff"} />
                 {isOnline ? "Online" : "Offline"}
               </span>
             </Badge>
@@ -220,7 +220,7 @@ export const WorkerMobileView = ({
             <div className="control-pill grid grid-cols-4 gap-1 rounded-[var(--radius-field)] p-1.5">
               {filters.map((item) => (
                 <button
-                  className={`focus-ring pressable min-h-12 rounded-[calc(var(--radius-field)-0.25rem)] px-1 text-xs font-semibold leading-tight sm:px-2 sm:text-sm ${
+                  className={`focus-ring pressable min-h-12 min-w-0 rounded-[calc(var(--radius-field)-0.25rem)] px-1 text-xs font-semibold leading-tight sm:px-2 sm:text-sm ${
                     item.key === filter
                       ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md ring-1 ring-[var(--primary)]"
                       : "text-[var(--foreground)] ring-1 ring-transparent hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
@@ -229,13 +229,13 @@ export const WorkerMobileView = ({
                   onClick={() => onFilterChange(item.key)}
                   type="button"
                 >
-                  {item.label}
+                  <span className="mobile-button-label">{item.label}</span>
                 </button>
               ))}
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button
-                className={`focus-ring pressable min-h-9 rounded-[var(--radius-field)] border px-3 text-sm font-semibold ${
+                className={`focus-ring pressable mobile-action-button min-w-0 rounded-[var(--radius-field)] border px-2 text-sm font-semibold sm:px-3 ${
                   filter === "p1"
                     ? "border-[var(--danger)] bg-[var(--danger)] text-white shadow-md"
                     : "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] shadow-sm hover:border-[var(--danger)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
@@ -246,7 +246,7 @@ export const WorkerMobileView = ({
                 P1 chưa xong: {p1Open}
               </button>
               <button
-                className={`focus-ring pressable min-h-9 rounded-[var(--radius-field)] border px-3 text-sm font-semibold ${
+                className={`focus-ring pressable mobile-action-button min-w-0 rounded-[var(--radius-field)] border px-2 text-sm font-semibold sm:px-3 ${
                   filter === "cancelled"
                     ? "border-[var(--danger)] bg-[var(--danger)] text-white shadow-md"
                     : "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] shadow-sm hover:border-[var(--danger)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
@@ -354,7 +354,7 @@ export const WorkerMobileView = ({
         <div className="floating-pill mx-auto grid max-w-[520px] grid-cols-3 gap-1 rounded-[var(--radius-card)] p-2 text-center text-[11px] font-semibold">
           {tabs.map((item) => (
             <button
-              className={`focus-ring pressable flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--radius-field)] px-1 leading-tight ${
+              className={`focus-ring pressable flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-field)] px-1 leading-tight ${
                 item.key === tab
                   ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
                   : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
@@ -363,8 +363,8 @@ export const WorkerMobileView = ({
               onClick={() => setTab(item.key)}
               type="button"
             >
-              <Icon name={item.icon} />
-              {item.label}
+              <Icon className="shrink-0" name={item.icon} />
+              <span className="mobile-button-label max-w-full">{item.label}</span>
             </button>
           ))}
         </div>
@@ -391,9 +391,9 @@ export const ProgressDonutChart = ({
   const offset = circumference * (1 - overallPercent / 100);
 
   return (
-    <section className="glass-card rounded-[var(--radius-card)] p-5">
-      <div className="flex items-center justify-between gap-4">
-        <div>
+    <section className="glass-card mobile-chart-card rounded-[var(--radius-card)] p-5">
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
             Tiến độ tổng
           </p>
@@ -404,7 +404,7 @@ export const ProgressDonutChart = ({
         </div>
         <svg
           aria-label={`Tiến độ trung bình ${overallPercent}%`}
-          className="h-32 w-32 shrink-0"
+          className="mobile-chart-donut h-28 w-28 shrink-0 sm:h-32 sm:w-32"
           role="img"
           viewBox="0 0 120 120"
         >
@@ -468,7 +468,7 @@ export const DailyCompletionChart = ({
   const scaleMax = Math.max(1, maxCompleted);
 
   return (
-    <section className="glass-card rounded-[var(--radius-card)] p-5">
+    <section className="glass-card mobile-chart-card rounded-[var(--radius-card)] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
@@ -483,24 +483,24 @@ export const DailyCompletionChart = ({
 
       <div
         aria-label="Biểu đồ cột số hạng mục hoàn thành theo ngày"
-        className="mt-5 flex h-40 items-end gap-2"
+        className="mobile-daily-chart mt-5 flex h-40 min-w-0 items-end gap-1 sm:gap-2"
         role="img"
       >
         {chartRows.map((row) => {
           const height =
             row.completed === 0 ? 8 : Math.max(16, (row.completed / scaleMax) * 128);
           return (
-            <div className="flex min-w-0 flex-1 flex-col items-center gap-2" key={row.date}>
-              <div className="flex h-32 w-full items-end rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-1 ring-1 ring-[var(--border)]">
+            <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5 sm:gap-2" key={row.date}>
+              <div className="mobile-daily-bar flex h-32 w-full items-end rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-1 ring-1 ring-[var(--border)]">
                 <div
                   className="w-full rounded-[calc(var(--radius-field)-0.25rem)] bg-[var(--primary-strong)] shadow-sm"
                   style={{ height }}
                 />
               </div>
-              <span className="text-xs font-semibold text-[var(--text-muted)]">
+              <span className="mobile-chart-date font-semibold text-[var(--text-muted)]">
                 {row.date.slice(8, 10)}/{row.date.slice(5, 7)}
               </span>
-              <span className="text-xs font-semibold tabular-nums">{row.completed}</span>
+              <span className="mobile-chart-value font-semibold tabular-nums">{row.completed}</span>
             </div>
           );
         })}
@@ -581,9 +581,9 @@ const ChartStat = ({
         : "bg-[var(--surface-muted)] text-[var(--text-muted)] ring-1 ring-[var(--border)]";
 
   return (
-    <div className={`rounded-[var(--radius-field)] p-3 text-center ${toneClass}`}>
+    <div className={`mobile-chart-stat rounded-[var(--radius-field)] p-3 text-center ${toneClass}`}>
       <p className="text-xl font-semibold tabular-nums">{value}</p>
-      <p className="mt-1 text-xs font-semibold leading-tight">{label}</p>
+      <p className="mobile-button-label mt-1 text-xs font-semibold leading-tight">{label}</p>
     </div>
   );
 };

@@ -29,8 +29,15 @@ export const ProgressEditor = ({
   const [photoError, setPhotoError] = useState<string>("");
   const [isProcessingPhoto, setIsProcessingPhoto] = useState<boolean>(false);
   const percent = progress?.percent ?? 0;
+  const [manualState, setManualState] = useState<{
+    readonly taskId: string;
+    readonly value: string;
+  }>({ taskId: task.id, value: String(percent) });
+  const manualPercent =
+    manualState.taskId === task.id ? manualState.value : String(percent);
   const note = progress?.note ?? "";
   const photoPath = progress?.photoPath;
+  const isManualPercent = !percentOptions.includes(percent);
 
   const stageChange = (
     nextPercent: ProgressPercent,
@@ -38,6 +45,14 @@ export const ProgressEditor = ({
     nextPhotoPath = photoPath
   ): void => {
     onChange({ percent: nextPercent, note: nextNote, photoPath: nextPhotoPath });
+  };
+
+  const stageManualPercent = (value: string): void => {
+    setManualState({ taskId: task.id, value });
+    if (value.trim() === "") return;
+    const nextPercent = Number(value);
+    if (!Number.isFinite(nextPercent)) return;
+    stageChange(Math.max(0, Math.min(100, Math.round(nextPercent))));
   };
 
   const handlePhoto = (file: File): void => {
@@ -71,7 +86,7 @@ export const ProgressEditor = ({
         </div>
         <div
           aria-label={`Chọn phần trăm hoàn thành cho ${task.tagname}`}
-          className="control-pill grid grid-cols-5 gap-1 rounded-[var(--radius-field)] p-1"
+          className="control-pill grid grid-cols-3 gap-1 rounded-[var(--radius-field)] p-1 sm:grid-cols-6"
           role="group"
         >
           {percentOptions.map((option) => (
@@ -83,12 +98,41 @@ export const ProgressEditor = ({
                   : "border-transparent bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
               }`}
               key={option}
-              onClick={() => stageChange(option)}
+              onClick={() => {
+                setManualState({ taskId: task.id, value: String(option) });
+                stageChange(option);
+              }}
               type="button"
             >
               {option}%
             </button>
           ))}
+          <label
+            className={`flex min-h-12 min-w-0 items-center rounded-[calc(var(--radius-field)-0.25rem)] border bg-[var(--surface)] px-2 shadow-sm transition focus-within:outline focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-[rgba(111,165,31,0.35)] ${
+              isManualPercent
+                ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary-strong)]"
+                : "border-transparent text-[var(--foreground)]"
+            }`}
+          >
+            <span className="sr-only">Nháº­p tiáº¿n Ä‘á»™ thá»§ cÃ´ng</span>
+            <input
+              aria-label="Nháº­p tiáº¿n Ä‘á»™ thá»§ cÃ´ng"
+              className="min-w-0 flex-1 bg-transparent text-center text-sm font-semibold tabular-nums outline-none placeholder:text-[var(--text-soft)]"
+              inputMode="numeric"
+              max={100}
+              min={0}
+              onBlur={() => {
+                if (manualPercent.trim() === "") {
+                  setManualState({ taskId: task.id, value: String(percent) });
+                }
+              }}
+              onChange={(event) => stageManualPercent(event.target.value)}
+              placeholder="KhÃ¡c"
+              type="number"
+              value={manualPercent}
+            />
+            <span className="shrink-0 text-sm font-semibold">%</span>
+          </label>
         </div>
       </div>
 
@@ -110,7 +154,7 @@ export const ProgressEditor = ({
       {showDetails ? (
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <label className="focus-ring pressable inline-flex min-h-12 cursor-pointer items-center justify-center rounded-[var(--radius-field)] border border-[var(--primary)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--primary-strong)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary-soft)]">
+            <label className="focus-ring pressable inline-flex min-h-12 min-w-0 cursor-pointer items-center justify-center rounded-[var(--radius-field)] border border-[var(--primary)] bg-[var(--surface)] px-4 text-center text-sm font-semibold text-[var(--primary-strong)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--primary-soft)]">
               {photoPath ? "Thay ảnh" : "Chọn / chụp ảnh"}
               <input
                 accept="image/*"
@@ -126,7 +170,7 @@ export const ProgressEditor = ({
             </label>
             {photoPath ? (
               <button
-                className="focus-ring pressable min-h-12 rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--danger)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--danger-soft)]"
+                className="focus-ring pressable min-h-12 min-w-0 rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--danger)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--danger-soft)]"
                 onClick={removePhoto}
                 type="button"
               >

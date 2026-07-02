@@ -1,20 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getLoginUsername } from "@/lib/accounts";
 import { normalizeStoredAppData } from "@/lib/appDataMigration";
 import { createDemoData } from "@/lib/demoData";
 import {
-  changeAccountPassword,
   createDailySnapshot,
   createOfficialDemoProgress,
   flushOfflineQueue,
   loadAppData,
-  loginAccount,
   logoutAccount,
   queueProgressUpdate,
   removeOfficialDemoProgress,
   replaceTasks,
   saveAppData,
+  setAccountMustChangePassword,
+  setAuthenticatedAccount,
   setTaskCancelled,
   upsertProgress
 } from "@/lib/storage";
@@ -45,9 +46,9 @@ interface UseAppDataResult {
     username: string,
     password: string,
     rememberLogin: boolean
-  ) => AuthAccount;
+  ) => Promise<AuthAccount>;
   readonly logout: () => void;
-  readonly changePassword: (nextPassword: string) => void;
+  readonly changePassword: (nextPassword: string) => Promise<void>;
   readonly setImportedTasks: (tasks: readonly Task[]) => void;
   readonly cancelTask: (taskId: string, cancelReason: string) => void;
   readonly updateProgress: (update: ProgressUpdate) => void;
@@ -67,6 +68,19 @@ interface RemoteAppDataResponse {
     readonly taskCount?: number;
     readonly progressCount?: number;
   };
+}
+
+interface AuthApiAccount {
+  readonly username: string;
+  readonly role: AuthAccount["role"];
+  readonly mustChangePassword: boolean;
+  readonly canLogin: boolean;
+}
+
+interface AuthApiResponse {
+  readonly ok?: boolean;
+  readonly account?: AuthApiAccount;
+  readonly error?: string;
 }
 
 const DEMO_NOTE_PREFIX = "[DEMO]";
@@ -118,6 +132,48 @@ const fetchRemoteAppData = async (): Promise<AppData | null> => {
   }
 };
 
+const readAuthError = async (response: Response): Promise<string> => {
+  try {
+    const payload = (await response.json()) as AuthApiResponse;
+    return payload.error || "Khong xac thuc duoc tai khoan.";
+  } catch {
+    return "Khong xac thuc duoc tai khoan.";
+  }
+};
+
+const postAuthJson = async <TBody,>(
+  url: string,
+  body: TBody
+): Promise<AuthApiResponse> => {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!response.ok) {
+    throw new Error(await readAuthError(response));
+  }
+
+  return (await response.json()) as AuthApiResponse;
+};
+
+const withAccountPasswordState = (
+  data: AppData,
+  accountId: string,
+  mustChangePassword: boolean
+): AppData => ({
+  ...data,
+  accounts: data.accounts.map((account) =>
+    account.id === accountId ? { ...account, mustChangePassword } : account
+  ),
+  profiles: data.profiles.map((profile) =>
+    profile.id === accountId ? { ...profile, mustChangePassword } : profile
+  )
+});
+
 export const useAppData = (): UseAppDataResult => {
   const [data, setData] = useState<AppData | null>(null);
   const currentAccount =
@@ -150,26 +206,62 @@ export const useAppData = (): UseAppDataResult => {
     };
   }, []);
 
-  const login = (
+  const login = async (
     username: string,
     password: string,
     rememberLogin: boolean
-  ): AuthAccount => {
+  ): Promise<AuthAccount> => {
     const base = data ?? loadAppData();
-    const result = loginAccount(base, username, password, rememberLogin);
-    setData(result.data);
-    return result.account;
+    const payload = await postAuthJson("/api/auth/login", {
+      username,
+      password,
+      rememberLogin
+    });
+    const authAccount = payload.account;
+    if (!authAccount) {
+      throw new Error("Khong doc duoc thong tin tai khoan sau khi dang nhap.");
+    }
+
+    const normalizedUsername = getLoginUsername(authAccount.username);
+    const localAccount = base.accounts.find(
+      (account) => getLoginUsername(account.username) === normalizedUsername
+    );
+    if (!localAccount) {
+      throw new Error(`Tai khoan ${authAccount.username} chua co trong danh sach noi bo.`);
+    }
+    if (!localAccount.canLogin || !authAccount.canLogin) {
+      throw new Error("Tai khoan tam chua duoc kich hoat.");
+    }
+
+    const nextData = setAuthenticatedAccount(
+      withAccountPasswordState(base, localAccount.id, authAccount.mustChangePassword),
+      localAccount.id,
+      rememberLogin
+    );
+    setData(nextData);
+    return (
+      nextData.accounts.find((account) => account.id === localAccount.id) ??
+      localAccount
+    );
   };
 
   const logout = (): void => {
+    void fetch("/api/auth/logout", { method: "POST" }).catch((error) => {
+      console.warn("[useAppData.logout]", error);
+    });
     setData((current) => logoutAccount(current ?? loadAppData()));
   };
 
-  const changePassword = (nextPassword: string): void => {
+  const changePassword = async (nextPassword: string): Promise<void> => {
     if (!currentAccount) {
       throw new Error("Bạn cần đăng nhập trước khi đổi mật khẩu.");
     }
-    const nextData = changeAccountPassword(data ?? loadAppData(), currentAccount.id, nextPassword);
+    await postAuthJson("/api/auth/change-password", { nextPassword });
+    const nextData = setAccountMustChangePassword(
+      data ?? loadAppData(),
+      currentAccount.id,
+      false
+    );
     setData(nextData);
   };
 
