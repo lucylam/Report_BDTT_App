@@ -68,8 +68,7 @@ const LoginPage = (): React.ReactElement => {
               Không gian làm việc nội bộ
             </h1>
             <p className="mt-4 max-w-md text-sm font-semibold leading-7 opacity-85">
-              Công nhân cập nhật tiến độ, nhóm trưởng giám sát WorkOrder, tổ trưởng kiểm tra
-              tình trạng báo cáo trong cùng một giao diện.
+              Công cụ cập nhật, báo cáo, giám sát tiến độ trong BDTT của Tổ Thiết bị Đo lường & Điều khiển
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -105,7 +104,7 @@ const LoginPage = (): React.ReactElement => {
               <Input
                 autoComplete="username"
                 onChange={(event) => setUsername(event.target.value)}
-                placeholder="Ví dụ: tên + chữ viết tắt nhóm"
+                placeholder="Ví dụ: vinhlpp"
                 required
                 value={username}
               />
@@ -114,6 +113,7 @@ const LoginPage = (): React.ReactElement => {
               <Input
                 autoComplete="current-password"
                 onChange={(event) => setPassword(event.target.value)}
+                placeholder="Mặc định: 123456"
                 required
                 trailing={
                   <button
