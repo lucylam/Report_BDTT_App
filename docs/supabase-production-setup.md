@@ -17,6 +17,13 @@ Open `SQL Editor` and run the migration files in this order:
 1. `supabase/migrations/20250822_initial_schema.sql`
 2. `supabase/migrations/20260608_production_persistence.sql`
 3. `supabase/migrations/20260608_data_admin_permissions.sql`
+4. `supabase/migrations/20260702_profile_password_hash.sql`
+5. `supabase/migrations/20260708_progress_percent_range.sql`
+6. `supabase/migrations/20260717_am_workflow.sql`
+7. `supabase/migrations/20260718_portal_modules.sql`
+
+Migration cuối tạo danh mục công tác và bảng quyền dùng chung, đồng thời mở rộng
+thông báo để các công tác mới không phải sửa check constraint `am/bdtt`.
 
 Do not disable RLS. The migrations enable RLS and add policies.
 

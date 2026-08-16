@@ -5,6 +5,7 @@ import { Badge, ProgressBar } from "@/components/ui";
 import type { ProgressTone } from "@/components/ui";
 import { ProgressEditor } from "@/components/worker/ProgressEditor";
 import type { SaveState, WorkerProgressUpdate } from "@/components/worker/types";
+import { getProgressPhotoPaths } from "@/lib/photo";
 import type { ProgressPercent, ProgressRecord, Task } from "@/types/domain";
 
 interface TaskCardProps {
@@ -35,26 +36,26 @@ export const TaskCard = ({
   onCancel
 }: TaskCardProps): React.ReactElement => {
   const [isExpanded, setIsExpanded] = useState<boolean>(
-    Boolean(progress?.note || progress?.photoPath)
+    Boolean(progress?.note || getProgressPhotoPaths(progress).length)
   );
   const percent = progress?.percent ?? 0;
-  const hasDetail = Boolean(progress?.note || progress?.photoPath);
+  const hasDetail = Boolean(progress?.note || getProgressPhotoPaths(progress).length);
 
   return (
     <article className="glass-card overflow-hidden rounded-[var(--radius-card)]">
-      <div className="flex items-start gap-3 p-4">
+      <div className="flex items-start gap-3 p-3">
         <ProgressRing cancelled={task.isCancelled} percent={percent} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="truncate font-mono text-base font-semibold leading-tight text-[var(--foreground)]">
+              <h2 className="break-words font-mono text-base font-semibold leading-tight text-[var(--info-strong)]">
                 {task.tagname}
               </h2>
-              <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-[var(--text-muted)]">
+              <p className="mt-1 line-clamp-2 text-sm font-medium leading-5 text-[var(--text-muted)]">
                 {task.taskName}
               </p>
             </div>
-            <span className="shrink-0 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-2 text-sm font-semibold tabular-nums ring-1 ring-[var(--border)]">
+            <span className="shrink-0 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-2.5 py-1.5 text-sm font-semibold tabular-nums ring-1 ring-[var(--border)]">
               {task.isCancelled ? "NA" : `${percent}%`}
             </span>
           </div>
@@ -69,18 +70,18 @@ export const TaskCard = ({
       </div>
 
       <ProgressBar
-        className="mx-4"
+        className="mx-3"
         striped
         tone={progressTone(percent)}
         value={task.isCancelled ? 0 : percent}
       />
 
-      <div className="p-4">
+      <div className="p-3">
         {task.isCancelled ? (
-          <div className="rounded-[var(--radius-field)] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
+          <div className="border-l-2 border-[var(--danger)] bg-[var(--danger-soft)] px-3 py-2.5 text-sm font-semibold text-[var(--danger)]">
             Hạng mục này đã được hủy và đã báo cho admin.
             {task.cancelReason ? (
-              <span className="mt-2 block font-semibold text-[var(--text-muted)]">
+              <span className="mt-2 block font-medium text-[var(--text-muted)]">
                 Lý do: {task.cancelReason}
               </span>
             ) : null}

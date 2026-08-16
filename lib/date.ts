@@ -1,24 +1,47 @@
-export const REPORT_DATES: readonly string[] = [
-  "2025-08-16",
-  "2025-08-17",
-  "2025-08-18",
-  "2025-08-19",
-  "2025-08-20",
-  "2025-08-21",
-  "2025-08-22",
-  "2025-08-23",
-  "2025-08-24",
-  "2025-08-25",
-  "2025-08-26",
-  "2025-08-27",
-  "2025-08-28",
-  "2025-08-29"
-];
-
-export const DEFAULT_REPORT_DATE = "2025-08-22";
-
 const EXCEL_DATE_OFFSET = 25569;
 const MS_PER_DAY = 86_400_000;
+const DEFAULT_REPORT_WINDOW_DAYS = 14;
+
+export const getCurrentReportDate = (now: Date = new Date()): string => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Saigon",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(now);
+  const year = parts.find((part) => part.type === "year")?.value ?? "";
+  const month = parts.find((part) => part.type === "month")?.value ?? "";
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  return `${year}-${month}-${day}`;
+};
+
+export const getRecentReportDates = (
+  anchorDate = getCurrentReportDate(),
+  dayCount = DEFAULT_REPORT_WINDOW_DAYS
+): readonly string[] => {
+  const safeDayCount = Math.max(1, Math.floor(dayCount));
+  const anchor = new Date(`${anchorDate}T00:00:00.000Z`);
+  return Array.from({ length: safeDayCount }, (_, index) => {
+    const date = new Date(anchor);
+    date.setUTCDate(anchor.getUTCDate() - (safeDayCount - index - 1));
+    return date.toISOString().slice(0, 10);
+  });
+};
+
+/** Ngày vận hành hiện tại tại múi giờ nhà máy. Không còn khóa vào dữ liệu demo. */
+export const DEFAULT_REPORT_DATE = getCurrentReportDate();
+
+/** Cửa sổ mặc định cho lịch sử; màn hình có dữ liệu sẽ hợp nhất thêm các ngày thực tế. */
+export const REPORT_DATES: readonly string[] = getRecentReportDates();
+
+export const getAvailableReportDates = (
+  reportDates: readonly string[],
+  anchorDate = DEFAULT_REPORT_DATE
+): readonly string[] =>
+  [...new Set([...getRecentReportDates(anchorDate), ...reportDates.filter(Boolean)])].sort();
+
+export const getReportYear = (reportDate: string): string =>
+  /^\d{4}-\d{2}-\d{2}$/.test(reportDate) ? reportDate.slice(0, 4) : "";
 
 export const excelSerialToDate = (serial: number): string => {
   const timestamp = (serial - EXCEL_DATE_OFFSET) * MS_PER_DAY;

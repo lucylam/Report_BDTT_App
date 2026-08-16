@@ -1,26 +1,14 @@
 {
-  "name": "BDTT Maintenance Progress",
-  "short_name": "BDTT",
-  "description": "Internal maintenance progress reporting app",
-  "start_url": "/login",
+  "name": "Cổng vận hành Xưởng Điều khiển",
+  "short_name": "Xưởng ĐK",
+  "description": "Công tác, nhiệm vụ và báo cáo nội bộ của Xưởng Điều khiển",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
-  "background_color": "#f2f2f0",
-  "theme_color": "#6fa51f",
+  "background_color": "#11131a",
+  "theme_color": "#181a22",
   "icons": [
-    {
-      "src": "/icons/app-icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/app-icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
     {
       "src": "/icons/app-icon-192.svg",
       "sizes": "192x192",

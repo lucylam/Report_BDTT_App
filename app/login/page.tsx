@@ -33,7 +33,7 @@ const LoginPage = (): React.ReactElement => {
       router.replace("/change-password");
       return;
     }
-    router.replace(currentAccount.role === "admin" ? "/admin" : "/worker");
+    router.replace("/");
   }, [currentAccount, data, router]);
 
   const submitLogin = async (
@@ -47,7 +47,7 @@ const LoginPage = (): React.ReactElement => {
       if (account.mustChangePassword) {
         router.replace("/change-password");
       } else {
-        router.replace(account.role === "admin" ? "/admin" : "/worker");
+        router.replace("/");
       }
     } catch (loginError) {
       console.error("[LoginPage.submitLogin]", loginError);
@@ -77,10 +77,10 @@ const LoginPage = (): React.ReactElement => {
           </div>
         </div>
 
-        <div className="rounded-[var(--radius-card)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft-sm)] md:p-7">
+        <div className="min-w-0 rounded-[var(--radius-card)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft-sm)] md:p-7">
           <div className="flex items-start justify-between gap-4">
             <CompanyBrand
-              className="min-w-0"
+              className="min-w-0 flex-1"
               variant="full"
             />
             <ThemeToggle className="shrink-0" />
@@ -168,10 +168,10 @@ const LoginMetric = ({
   readonly label: string;
   readonly value: string;
 }): React.ReactElement => (
-  <div className="rounded-[var(--radius-field)] bg-white/10 p-4 ring-1 ring-white/15">
+  <div className="rounded-[var(--radius-field)] bg-white/10 p-3">
     <Icon className="text-[var(--primary)]" name={icon} />
-    <p className="mt-3 text-xs font-semibold uppercase opacity-75">{label}</p>
-    <p className="mt-2 text-2xl font-semibold">{value}</p>
+    <p className="mt-2 text-[11px] font-semibold uppercase opacity-75">{label}</p>
+    <p className="mt-1 text-xl font-semibold">{value}</p>
   </div>
 );
 

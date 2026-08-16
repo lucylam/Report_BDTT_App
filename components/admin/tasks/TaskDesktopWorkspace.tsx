@@ -6,14 +6,21 @@ import {
   getStatusTone,
   type TaskRow
 } from "@/components/admin/tasks/taskTableModel";
+import type { AppData } from "@/types/domain";
 
 interface TaskDesktopWorkspaceProps {
+  readonly data: AppData;
+  readonly canManage: boolean;
+  readonly onDataChanged: () => Promise<void>;
   readonly rows: readonly TaskRow[];
   readonly selectedTaskId: string | null;
   readonly onSelectTask: (taskId: string) => void;
 }
 
 export const TaskDesktopWorkspace = ({
+  data,
+  canManage,
+  onDataChanged,
   rows,
   selectedTaskId,
   onSelectTask
@@ -116,7 +123,12 @@ export const TaskDesktopWorkspace = ({
           </tbody>
         </table>
       </div>
-      <TaskDetailPanel row={selectedRow} />
+      <TaskDetailPanel
+        canManage={canManage}
+        data={data}
+        onDataChanged={onDataChanged}
+        row={selectedRow}
+      />
     </section>
   );
 };

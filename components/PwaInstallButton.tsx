@@ -100,7 +100,7 @@ export const PwaInstallButton = ({
 
   const buttonClass = compact
     ? "focus-ring pressable min-h-12 w-full min-w-0 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-sm font-semibold leading-tight whitespace-normal text-[var(--foreground)] [overflow-wrap:anywhere] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-    : "focus-ring pressable min-h-12 min-w-0 rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 text-sm font-semibold leading-tight whitespace-normal text-white shadow-[var(--shadow-soft-sm)] [overflow-wrap:anywhere] hover:bg-[var(--primary)]";
+    : "focus-ring pressable min-h-12 min-w-0 rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 text-sm font-semibold leading-tight whitespace-normal text-[var(--primary-contrast)] shadow-[var(--shadow-soft-sm)] [overflow-wrap:anywhere] hover:bg-[var(--primary)]";
 
   const button = deferredPrompt ? (
     <button

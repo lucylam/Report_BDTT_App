@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
+import { getLoginUsername } from "@/lib/accounts";
+import {
+  findReportableTask,
+  getAuthenticatedProfile,
+  isSessionProfileReference
+} from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
+import { isInlinePhotoDataUrl } from "@/lib/api/photoStorage";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { ProgressPercent, Task } from "@/types/domain";
+import { isPercentAllowedForMode } from "@/lib/progressMode";
+import type { Task } from "@/types/domain";
 
 export const runtime = "nodejs";
 
@@ -13,6 +21,7 @@ interface SubmitProgressBody {
     readonly percent?: number;
     readonly note?: string;
     readonly photoPath?: string;
+    readonly photoPaths?: string[];
   };
   readonly task?: Task;
   readonly worker?: {
@@ -25,141 +34,106 @@ interface SubmitProgressBody {
 const normalizeText = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
 
-const isProgressPercent = (value: unknown): value is ProgressPercent => {
-  return (
-    typeof value === "number" &&
-    Number.isInteger(value) &&
-    value >= 0 &&
-    value <= 100
-  );
-};
-
-const isUuid = (value: string): boolean => {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value
-  );
-};
+const toErrorResponse = (error: string, status: number): NextResponse =>
+  NextResponse.json({ ok: false, error }, { status });
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   if (!isAllowedRequestOrigin(request)) {
-    return NextResponse.json({ error: forbiddenOriginMessage }, { status: 403 });
+    return toErrorResponse(forbiddenOriginMessage, 403);
   }
 
   const supabase = await createServerSupabaseClient();
   if (!supabase) {
-    return NextResponse.json(
-      {
-        error:
-          "Chưa cấu hình Supabase server env trên Vercel. Cần NEXT_PUBLIC_SUPABASE_URL và SUPABASE_SERVICE_ROLE_KEY, hoặc BDTT_SERVER_CONFIG_JSON."
-      },
-      { status: 503 }
+    return toErrorResponse(
+      "Chua cau hinh Supabase server env cho API ghi tien do.",
+      503
     );
   }
+
+  const auth = await getAuthenticatedProfile(request, supabase);
+  if (!auth.ok) return toErrorResponse(auth.error, auth.status);
+  const { profile } = auth;
 
   const body = (await request.json()) as SubmitProgressBody;
   const update = body.update;
   const task = body.task;
-  const username = normalizeText(body.worker?.username);
+  if (!update || !task) {
+    return toErrorResponse("Thieu update hoac task.", 400);
+  }
 
-  if (!update || !task || !username) {
-    return NextResponse.json(
-      { error: "Thiếu update, task hoặc worker username." },
-      { status: 400 }
-    );
+  const bodyUsername = normalizeText(body.worker?.username);
+  if (bodyUsername && getLoginUsername(bodyUsername) !== profile.username) {
+    return toErrorResponse("Tai khoan trong request khong khop phien dang nhap.", 403);
+  }
+
+  const updateUserId = normalizeText(update.userId);
+  if (!updateUserId || !isSessionProfileReference(updateUserId, profile)) {
+    return toErrorResponse("User cap nhat khong khop phien dang nhap.", 403);
   }
 
   const reportDate = normalizeText(update.reportDate);
-  if (!reportDate || !isProgressPercent(update.percent)) {
-    return NextResponse.json(
-      { error: "Dữ liệu tiến độ không hợp lệ." },
-      { status: 400 }
+  if (!reportDate || typeof update.percent !== "number") {
+    return toErrorResponse("Dữ liệu tiến độ không hợp lệ.", 400);
+  }
+
+  const photoPath = normalizeText(update.photoPath);
+  const photoPaths = Array.from(
+    new Set(
+      [...(Array.isArray(update.photoPaths) ? update.photoPaths : []), photoPath]
+        .map(normalizeText)
+        .filter(Boolean)
+    )
+  );
+  if (photoPaths.length > 5) {
+    return toErrorResponse("Moi bao cao chi duoc toi da 5 anh.", 400);
+  }
+  if (photoPaths.some(isInlinePhotoDataUrl)) {
+    return toErrorResponse("Anh can duoc upload len storage truoc khi submit.", 400);
+  }
+
+  const taskResult = await findReportableTask(supabase, profile.id, task);
+  if (!taskResult.ok) return toErrorResponse(taskResult.error, taskResult.status);
+  if (taskResult.task.is_cancelled) {
+    return toErrorResponse("Hạng mục đã hủy, không thể cập nhật tiến độ.", 409);
+  }
+  const progressMode =
+    taskResult.task.progress_mode === "binary" ? "binary" : "continuous";
+  if (!isPercentAllowedForMode(update.percent, progressMode)) {
+    return toErrorResponse(
+      progressMode === "binary"
+        ? "Hạng mục này chỉ cho phép tiến độ 0% hoặc 100%."
+        : "Phần trăm tiến độ phải là số nguyên từ 0 đến 100.",
+      400
     );
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("id, username")
-    .eq("username", username)
-    .maybeSingle();
-
-  if (profileError) {
-    return NextResponse.json({ error: profileError.message }, { status: 500 });
-  }
-  if (!profile?.id) {
-    return NextResponse.json(
-      { error: `Không tìm thấy profile DB cho username ${username}.` },
-      { status: 409 }
-    );
-  }
-
-  let dbTaskId = isUuid(task.id) ? task.id : "";
-  if (!dbTaskId) {
-    let query = supabase
-      .from("tasks")
-      .select("id")
-      .eq("tagname", task.tagname)
-      .eq("assigned_to", profile.id)
-      .limit(1);
-
-    if (task.wo) {
-      query = query.eq("wo", task.wo);
-    }
-
-    const { data: existingTasks, error: taskLookupError } = await query;
-    if (taskLookupError) {
-      return NextResponse.json({ error: taskLookupError.message }, { status: 500 });
-    }
-
-    dbTaskId = existingTasks?.[0]?.id ?? "";
-  }
-
-  if (!dbTaskId) {
-    const { data: insertedTask, error: insertTaskError } = await supabase
-      .from("tasks")
-      .insert({
-        stt: task.stt,
-        wo: task.wo,
-        tagname: task.tagname,
-        task_name: task.taskName,
-        nhom: task.nhom,
-        don_vi: task.donVi,
-        section: task.section,
-        duration: task.duration,
-        priority: task.priority,
-        start_date: task.startDate || null,
-        finish_date: task.finishDate || null,
-        resource_name: task.resourceName,
-        nhom_truong: task.nhomTruong,
-        assigned_to: profile.id,
-        is_cancelled: task.isCancelled,
-        cancel_reason: task.cancelReason
-      })
-      .select("id")
-      .single();
-
-    if (insertTaskError) {
-      return NextResponse.json({ error: insertTaskError.message }, { status: 500 });
-    }
-    dbTaskId = insertedTask.id;
-  }
-
-  const { error: progressError } = await supabase.from("progress").upsert(
-    {
-      task_id: dbTaskId,
-      user_id: profile.id,
-      report_date: reportDate,
-      percent: update.percent,
-      note: normalizeText(update.note),
-      photo_path: update.photoPath ?? null,
-      submitted_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    },
+  const now = new Date().toISOString();
+  const baseRow = {
+    task_id: taskResult.task.id,
+    user_id: profile.id,
+    report_date: reportDate,
+    percent: update.percent,
+    note: normalizeText(update.note),
+    photo_path: photoPaths[0] || null,
+    submitted_by: profile.id,
+    submitted_at: now,
+    updated_at: now
+  };
+  let { error: progressError } = await supabase.from("progress").upsert(
+    { ...baseRow, photo_paths: photoPaths },
     { onConflict: "task_id,user_id,report_date" }
   );
 
-  if (progressError) {
-    return NextResponse.json({ error: progressError.message }, { status: 500 });
+  if (progressError?.message.toLowerCase().includes("photo_paths")) {
+    const fallback = await supabase.from("progress").upsert(baseRow, {
+      onConflict: "task_id,user_id,report_date"
+    });
+    progressError = fallback.error;
   }
 
-  return NextResponse.json({ ok: true, taskId: dbTaskId });
+  if (progressError) {
+    return toErrorResponse(progressError.message, 500);
+  }
+
+  return NextResponse.json({ ok: true, taskId: taskResult.task.id });
 };

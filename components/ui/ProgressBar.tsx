@@ -32,7 +32,7 @@ const stripeClass: Record<ProgressTone, string> = {
 interface ProgressBarProps {
   readonly value: number;
   readonly tone?: ProgressTone;
-  /** Bật để hiển thị sọc chéo 45° (clone family-budget) trên track phẳng. */
+  /** Bật để hiển thị sọc chéo 45° trên track phẳng. */
   readonly striped?: boolean;
   readonly className?: string;
 }

@@ -42,13 +42,13 @@ const defaultColors: ExportColors = {
   primary: "#9bd13b",
   primaryStrong: "#6fa51f",
   primarySoft: "#edf8d5",
-  done: "#6fa51f",
-  remaining: "#b8b8af",
-  accent: "#f2a24a",
+  done: "#007a5a",
+  remaining: "#7c8892",
+  accent: "#d56a00",
   accentStrong: "#d76635",
-  danger: "#df5b3a",
-  info: "#4a90d9",
-  slate: "#a6a69e",
+  danger: "#c53a32",
+  info: "#0067a0",
+  slate: "#7c8892",
   grid: "#ececea"
 };
 
@@ -59,7 +59,7 @@ export interface DashboardExportTheme {
 
 let colors: ExportColors = defaultColors;
 let exportFontFamily =
-  'var(--font-sans), "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif';
+  '"Inter", "Segoe UI", Arial, sans-serif';
 
 interface SvgReport {
   readonly svg: string;
@@ -161,8 +161,8 @@ const background = (): string =>
   `<rect width="100%" height="100%" fill="${colors.bg}"/>`;
 
 const header = (reportDateLabel: string, y: number): string => [
-  text("DASH BOARD EXCEL", pagePad, y + 18, 15, 800, colors.primaryStrong, "track"),
-  text("BÁO CÁO NGẮN TIẾN ĐỘ BDTT 2025 TỔ TB ĐL&ĐK", pagePad, y + 52, 30, 800, colors.text),
+  text("BÁO CÁO EXCEL", pagePad, y + 18, 15, 800, colors.primaryStrong, "track"),
+  text(`Báo cáo ngắn tiến độ BDTT ${reportDateLabel.match(/\d{4}/)?.[0] ?? ""} · Tổ TB ĐL&ĐK`, pagePad, y + 52, 30, 600, colors.text),
   text(
     `Ngày báo cáo: ${reportDateLabel} · Dữ liệu tính từ DATA A:M và báo cáo worker đã gửi đến ngày này.`,
     pagePad,
@@ -250,11 +250,40 @@ const overallPanel = (dashboard: ExcelDashboardData, rect: ChartRect): string =>
 };
 
 const ownerUnitPanel = (rows: readonly CompletionRow[], rect: ChartRect): string => {
-  const visibleRows = rows.slice(0, 8);
+  const visibleRows = rows.filter((row) => row.total > 0).slice(0, 7);
+  const labelX = rect.x + 24;
+  const plotX = rect.x + 126;
+  const plotW = rect.w - 206;
+  const valueX = plotX + plotW + 12;
+  const startY = rect.y + 82;
+  const rowHeight = 27;
+  const guides = [0, 25, 50, 75, 100]
+    .map((tick) => {
+      const x = plotX + (tick / 100) * plotW;
+      return [
+        `<line x1="${x}" y1="${startY - 16}" x2="${x}" y2="${startY + visibleRows.length * rowHeight}" stroke="${colors.grid}" stroke-width="1"/>`,
+        text(`${tick}%`, x, startY - 22, 10, 700, colors.muted, tick === 0 ? "start" : "middle")
+      ].join("");
+    })
+    .join("");
+  const dots = visibleRows
+    .map((row, index) => {
+      const y = startY + index * rowHeight;
+      const markerX = plotX + (Math.max(1, Math.min(99, row.percent)) / 100) * plotW;
+      return [
+        text(truncate(row.name, 13), labelX, y + 5, 11, 800, colors.text),
+        `<line x1="${plotX}" y1="${y}" x2="${plotX + plotW}" y2="${y}" stroke="${colors.border}" stroke-width="2"/>`,
+        `<rect x="${markerX - 5}" y="${y - 5}" width="10" height="10" fill="${colors.done}" stroke="${colors.surface}" stroke-width="2"/>`,
+        text(`${row.percent}%`, markerX, y - 9, 10, 800, colors.text, "middle"),
+        text(`${formatNumber(row.done)}/${formatNumber(row.total)}`, valueX, y + 5, 10, 800, colors.text)
+      ].join("");
+    })
+    .join("");
   return [
     card(rect.x, rect.y, rect.w, rect.h, 22),
-    panelTitle("Tiến độ theo đơn vị chủ quản", "Stacked bar đã thực hiện / còn lại", rect),
-    stackedBars(visibleRows, rect.x + 24, rect.y + 72, rect.w - 48, 196)
+    panelTitle("Vị thế tiến độ theo đơn vị chủ quản", "Vị trí ô vuông = % hoàn thành · số bên phải = đã làm/tổng", rect),
+    guides,
+    dots
   ].join("");
 };
 
@@ -312,58 +341,81 @@ const unitLeadPanel = (
   leadNames: readonly string[],
   rect: ChartRect
 ): string => {
-  const series = [colors.done, colors.info, colors.accent, colors.danger];
-  const leadColor = new Map(
-    leadNames.slice(0, 4).map((lead, index) => [lead, series[index % series.length]])
-  );
-  const rankedRows = rows
-    .flatMap((row) =>
-      leadNames.slice(0, 4).map((lead) => ({
-        lead,
-        unit: row.name,
-        value: row.values[lead] ?? 0,
-        color: leadColor.get(lead) ?? colors.done
-      }))
-    )
-    .filter((row) => row.value > 0)
-    .sort((left, right) => {
-      if (right.value !== left.value) return right.value - left.value;
-      return `${left.unit} ${left.lead}`.localeCompare(`${right.unit} ${right.lead}`);
-    })
-    .slice(0, 7);
+  const visibleLeads = leadNames.slice(0, 4);
+  const visibleRows = rows
+    .filter((row) => visibleLeads.some((lead) => (row.totals[lead] ?? 0) > 0))
+    .slice(0, 5);
 
-  if (rankedRows.length === 0) {
+  if (visibleRows.length === 0 || visibleLeads.length === 0) {
     return [
       card(rect.x, rect.y, rect.w, rect.h, 22),
-      panelTitle("% hoàn thành theo đơn vị và nhóm trưởng", "Average %Complete, chỉ hiện khi đã có tiến độ để so sánh", rect),
-      emptyMessage(rect, "Chưa có dữ liệu tiến độ > 0% để so sánh nhóm trưởng.")
+      panelTitle("Ma trận tiến độ đơn vị × nhóm trưởng", "Mỗi ô là % hoàn thành của đúng cụm phân công", rect),
+      emptyMessage(rect, "Chưa có phân công theo đơn vị và nhóm trưởng để lập ma trận.")
     ].join("");
   }
 
-  const labelX = rect.x + 24;
-  const barX = rect.x + 312;
-  const barW = rect.w - 392;
-  const valueX = barX + barW + 18;
-  const rowH = 25;
-  const y = rect.y + 78;
-  const bars = rankedRows
-    .map((row, index) => {
-      const yy = y + index * rowH;
-      const fillW = Math.max(4, (row.value / 100) * barW);
+  const tableX = rect.x + 24;
+  const tableY = rect.y + 88;
+  const unitWidth = 118;
+  const cellWidth = (rect.w - 48 - unitWidth) / visibleLeads.length;
+  const rowHeight = 31;
+  const headers = visibleLeads
+    .map((lead, index) =>
+      text(
+        truncate(normalizeLeadLabel(lead), 15),
+        tableX + unitWidth + index * cellWidth + cellWidth / 2,
+        tableY - 12,
+        9,
+        800,
+        colors.muted,
+        "middle"
+      )
+    )
+    .join("");
+  const cells = visibleRows
+    .map((row, rowIndex) => {
+      const y = tableY + rowIndex * rowHeight;
       return [
-        text(truncate(row.unit, 15), labelX, yy + 9, 12, 800, colors.text),
-        text(truncate(normalizeLeadLabel(row.lead), 30), labelX, yy + 23, 11, 800, colors.text),
-        roundedRect(barX, yy + 6, barW, 13, 7, colors.grid, 0.9),
-        roundedRect(barX, yy + 6, fillW, 13, 7, row.color, 0.95),
-        text(`${formatNumber(row.value)}%`, valueX, yy + 18, 12, 800, colors.text)
+        text(truncate(row.name, 13), tableX, y + 20, 11, 800, colors.text),
+        ...visibleLeads.map((lead, columnIndex) => {
+          const total = row.totals[lead] ?? 0;
+          const percent = row.values[lead] ?? 0;
+          const x = tableX + unitWidth + columnIndex * cellWidth;
+          const color = total === 0 ? colors.grid : getExportHeatColor(percent);
+          return [
+            `<rect x="${x + 2}" y="${y + 2}" width="${cellWidth - 4}" height="${rowHeight - 4}" fill="${color}" opacity="${total === 0 ? 0.55 : 0.18}"/>`,
+            total > 0
+              ? `<rect x="${x + 2}" y="${y + 2}" width="4" height="${rowHeight - 4}" fill="${color}"/>`
+              : "",
+            text(
+              total > 0 ? `${percent}% · ${formatNumber(total)}` : "—",
+              x + cellWidth / 2,
+              y + 20,
+              10,
+              800,
+              total > 0 ? colors.text : colors.muted,
+              "middle"
+            )
+          ].join("");
+        })
       ].join("");
     })
     .join("");
   return [
     card(rect.x, rect.y, rect.w, rect.h, 22),
-    panelTitle("% hoàn thành theo đơn vị và nhóm trưởng", "Top các cụm có tiến độ; tên nhóm trưởng và % hiển thị trực tiếp trên ảnh", rect),
-    bars
+    panelTitle("Ma trận tiến độ đơn vị × nhóm trưởng", "Giá trị trong ô: % hoàn thành · số task", rect),
+    headers,
+    cells
   ].join("");
+};
+
+const getExportHeatColor = (percent: number): string => {
+  if (percent >= 100) return colors.done;
+  if (percent >= 75) return colors.primaryStrong;
+  if (percent >= 50) return colors.info;
+  if (percent >= 25) return colors.accent;
+  if (percent > 0) return colors.danger;
+  return colors.slate;
 };
 
 const attentionPanel = (dashboard: ExcelDashboardData, rect: ChartRect): string => {
@@ -439,34 +491,6 @@ const notePanel = (rect: ChartRect): string => [
 const resourceGroupsHeight = (groups: readonly ResourceGroupDashboard[]): number => {
   const rows = Math.ceil(groups.length / 4);
   return 68 + rows * 158 + Math.max(0, rows - 1) * 14 + 24;
-};
-
-const stackedBars = (
-  rows: readonly CompletionRow[],
-  x: number,
-  y: number,
-  w: number,
-  h: number
-): string => {
-  const maxTotal = Math.max(1, ...rows.map((row) => row.total));
-  const rowH = h / Math.max(1, rows.length);
-  return rows
-    .map((row, index) => {
-      const yy = y + index * rowH;
-      const labelW = 120;
-      const barX = x + labelW;
-      const barW = w - labelW - 46;
-      const doneW = (row.done / maxTotal) * barW;
-      const remainingW = (row.remaining / maxTotal) * barW;
-      return [
-        text(truncate(row.name, 14), x, yy + 18, 12, 800, colors.text),
-        roundedRect(barX, yy + 8, barW, 10, 5, colors.grid, 0.9),
-        roundedRect(barX, yy + 8, Math.max(0, doneW), 10, 5, colors.done, 0.96),
-        roundedRect(barX + doneW, yy + 8, Math.max(0, remainingW), 10, 5, colors.remaining, 0.9),
-        text(`${row.percent}%`, barX + barW + 12, yy + 18, 12, 800, colors.muted)
-      ].join("");
-    })
-    .join("");
 };
 
 const compactBars = (
@@ -614,7 +638,7 @@ const styleSheet = (): string => `
 
 const sanitizeCssFontFamily = (value: string): string =>
   value.replace(/[;\n\r{}]/g, "").trim() ||
-  '"Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif';
+  '"Inter", "Segoe UI", Arial, sans-serif';
 
 const truncate = (value: string, maxLength: number): string => {
   if (value.length <= maxLength) return value;

@@ -6,10 +6,7 @@ interface WidgetProps {
   readonly className?: string;
 }
 
-/**
- * Section card phẳng (clone "finance-card" của family-budget, tùy biến cho BDTT).
- * Dùng làm khối widget trên dashboard/worker: nền trắng, viền mảnh, bóng nhẹ, bo 16px.
- */
+/** Khối nội dung dùng chung của giao diện BDTT cũ. */
 export const Widget = ({ children, className }: WidgetProps): React.ReactElement => {
   return (
     <section

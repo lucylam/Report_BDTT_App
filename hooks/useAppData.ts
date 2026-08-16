@@ -10,6 +10,7 @@ import {
   flushOfflineQueue,
   loadAppData,
   logoutAccount,
+  queueCancelTaskUpdate,
   queueProgressUpdate,
   removeOfficialDemoProgress,
   replaceTasks,
@@ -36,6 +37,7 @@ interface ProgressUpdate {
   readonly percent: ProgressPercent;
   readonly note: string;
   readonly photoPath?: string;
+  readonly photoPaths?: readonly string[];
 }
 
 interface UseAppDataResult {
@@ -53,11 +55,17 @@ interface UseAppDataResult {
   readonly cancelTask: (taskId: string, cancelReason: string) => void;
   readonly updateProgress: (update: ProgressUpdate) => void;
   readonly queueProgress: (update: ProgressUpdate) => void;
-  readonly flushQueue: () => void;
+  readonly queueCancelTask: (
+    taskId: string,
+    userId: string,
+    cancelReason: string
+  ) => void;
+  readonly flushQueue: (syncedItemIds?: readonly string[]) => void;
   readonly createSnapshot: (reportDate: string) => void;
   readonly createDemoProgress: () => DemoProgressMutationResult;
   readonly clearDemoProgress: () => DemoProgressMutationResult;
   readonly resetDemo: () => void;
+  readonly refreshRemoteData: () => Promise<void>;
 }
 
 interface RemoteAppDataResponse {
@@ -83,6 +91,12 @@ interface AuthApiResponse {
   readonly error?: string;
 }
 
+interface RemoteAppDataResult {
+  readonly data: AppData | null;
+  readonly unauthorized: boolean;
+  readonly unavailable: boolean;
+}
+
 const DEMO_NOTE_PREFIX = "[DEMO]";
 
 const getProgressKey = (record: ProgressRecord): string =>
@@ -102,6 +116,10 @@ const mergeProgressWithLocalDemo = (
 };
 
 const shouldUseRemoteData = (localData: AppData, remoteData: AppData): boolean => {
+  if (remoteData.activeUserId) return true;
+  if (localData.activeUserId && remoteData.activeUserId === localData.activeUserId) {
+    return true;
+  }
   if (remoteData.tasks.length === 0) return false;
   if (remoteData.tasks.length >= localData.tasks.length) return true;
   return localData.tasks.length <= 50;
@@ -110,25 +128,30 @@ const shouldUseRemoteData = (localData: AppData, remoteData: AppData): boolean =
 const mergeRemoteAppData = (localData: AppData, remoteData: AppData): AppData => {
   return normalizeStoredAppData({
     ...remoteData,
-    accounts: localData.accounts,
-    profiles: localData.profiles,
     progress: mergeProgressWithLocalDemo(remoteData.progress, localData.progress),
     dailySnapshots: localData.dailySnapshots,
     offlineQueue: localData.offlineQueue,
-    activeUserId: localData.activeUserId
+    activeUserId: remoteData.activeUserId
   });
 };
 
-const fetchRemoteAppData = async (): Promise<AppData | null> => {
+const fetchRemoteAppData = async (): Promise<RemoteAppDataResult> => {
   try {
     const response = await fetch("/api/app-data", { cache: "no-store" });
-    if (!response.ok) return null;
+    if (response.status === 401) {
+      return { data: null, unauthorized: true, unavailable: false };
+    }
+    if (!response.ok) return { data: null, unauthorized: false, unavailable: true };
 
     const payload = (await response.json()) as RemoteAppDataResponse;
-    return payload.ok && payload.data ? payload.data : null;
+    return {
+      data: payload.ok && payload.data ? payload.data : null,
+      unauthorized: false,
+      unavailable: false
+    };
   } catch (error) {
     console.warn("[useAppData.fetchRemoteAppData]", error);
-    return null;
+    return { data: null, unauthorized: false, unavailable: true };
   }
 };
 
@@ -187,9 +210,19 @@ export const useAppData = (): UseAppDataResult => {
       const localData = loadAppData();
       if (cancelled) return;
 
-      setData(localData);
-      void fetchRemoteAppData().then((remoteData) => {
-        if (!remoteData || cancelled) return;
+      void fetchRemoteAppData().then((remoteResult) => {
+        if (cancelled) return;
+        if (remoteResult.unauthorized) {
+          setData(localData.activeUserId ? logoutAccount(localData) : localData);
+          return;
+        }
+        if (!remoteResult.data) {
+          // Cache local chỉ là dữ liệu hỗ trợ offline, không phải bằng chứng đăng nhập.
+          // Khi máy chủ không xác minh được cookie, tuyệt đối không dựng phiên từ localStorage.
+          setData({ ...localData, activeUserId: null });
+          return;
+        }
+        const remoteData = remoteResult.data;
         setData((current) => {
           const base = current ?? localData;
           if (!shouldUseRemoteData(base, remoteData)) return base;
@@ -238,9 +271,16 @@ export const useAppData = (): UseAppDataResult => {
       localAccount.id,
       rememberLogin
     );
-    setData(nextData);
+    const remoteResult = await fetchRemoteAppData();
+    if (!remoteResult.data) {
+      void fetch("/api/auth/logout", { method: "POST" }).catch(() => undefined);
+      throw new Error("Đã xác thực tài khoản nhưng chưa tải được dữ liệu theo quyền. Vui lòng thử lại.");
+    }
+    const verifiedData = mergeRemoteAppData(nextData, remoteResult.data);
+    saveAppData(verifiedData);
+    setData(verifiedData);
     return (
-      nextData.accounts.find((account) => account.id === localAccount.id) ??
+      verifiedData.accounts.find((account) => account.id === localAccount.id) ??
       localAccount
     );
   };
@@ -293,8 +333,19 @@ export const useAppData = (): UseAppDataResult => {
     });
   };
 
-  const flushQueue = (): void => {
-    setData((current) => flushOfflineQueue(current ?? loadAppData()));
+  const queueCancelTask = (
+    taskId: string,
+    userId: string,
+    cancelReason: string
+  ): void => {
+    setData((current) => {
+      const base = current ?? loadAppData();
+      return queueCancelTaskUpdate(base, { taskId, userId, cancelReason });
+    });
+  };
+
+  const flushQueue = (syncedItemIds?: readonly string[]): void => {
+    setData((current) => flushOfflineQueue(current ?? loadAppData(), syncedItemIds));
   };
 
   const createSnapshot = (reportDate: string): void => {
@@ -319,6 +370,20 @@ export const useAppData = (): UseAppDataResult => {
     setData(nextData);
   };
 
+  const refreshRemoteData = async (): Promise<void> => {
+    const remoteResult = await fetchRemoteAppData();
+    if (!remoteResult.data) {
+      throw new Error("Không tải lại được dữ liệu mới nhất từ máy chủ.");
+    }
+    const remoteData = remoteResult.data;
+    setData((current) => {
+      const base = current ?? loadAppData();
+      const nextData = mergeRemoteAppData(base, remoteData);
+      saveAppData(nextData);
+      return nextData;
+    });
+  };
+
   return {
     data,
     currentAccount,
@@ -330,10 +395,12 @@ export const useAppData = (): UseAppDataResult => {
     cancelTask,
     updateProgress,
     queueProgress,
+    queueCancelTask,
     flushQueue,
     createSnapshot,
     createDemoProgress,
     clearDemoProgress,
-    resetDemo
+    resetDemo,
+    refreshRemoteData
   };
 };

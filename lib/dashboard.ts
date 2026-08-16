@@ -30,6 +30,7 @@ export interface LeadStatusRow {
 export interface UnitLeadRow {
   readonly name: string;
   readonly values: Record<string, number>;
+  readonly totals: Record<string, number>;
 }
 
 export interface ResourceGroupDashboard {
@@ -397,11 +398,13 @@ const buildGroupedLeadRows = (
   return Array.from(grouped.entries())
     .map(([, group]) => {
       const values: Record<string, number> = {};
+      const totals: Record<string, number> = {};
       leadNames.forEach((lead) => {
         const item = group.leads.get(getDashboardKey(lead));
         values[lead] = item && item.total > 0 ? Math.round(item.percentSum / item.total) : 0;
+        totals[lead] = item?.total ?? 0;
       });
-      return { name: group.name, values };
+      return { name: group.name, values, totals };
     })
     .sort((left, right) =>
       compareByPreferredOrder(

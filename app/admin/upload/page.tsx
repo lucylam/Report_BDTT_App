@@ -4,35 +4,61 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Alert, Button, Icon, Widget, WidgetHeader } from "@/components/ui";
-import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
-import {
-  OFFICIAL_DEMO_NOTE,
-  OFFICIAL_DEMO_NOTE_PREFIX,
-  isOfficialDemoProgress
-} from "@/lib/demoProgress";
-import { downloadExportWorkbook } from "@/lib/excel/exporter";
-import { parseExcelFile } from "@/lib/excel/parser";
+import { Alert, Badge, Button, Icon, Widget, WidgetHeader } from "@/components/ui";
+import { OFFICIAL_DEMO_NOTE_PREFIX, isOfficialDemoProgress } from "@/lib/demoProgress";
 import { isDataAdminAccount } from "@/lib/permissions";
 import { useAppData } from "@/hooks/useAppData";
-import type { ImportPreview, Task } from "@/types/domain";
 
-const MAX_EXCEL_SIZE_BYTES = 5 * 1024 * 1024;
+interface BootstrapPreview {
+  readonly initialized: boolean;
+  readonly checksum?: string;
+  readonly rowCount: number;
+  readonly duplicateKeys?: string[];
+  readonly unmappedResourceNames?: string[];
+  readonly missingColumns?: string[];
+  readonly incompleteRows?: number[];
+  readonly progressModeHeaderMissing?: boolean;
+  readonly hasBlockingErrors?: boolean;
+  readonly sample?: readonly {
+    readonly tagname: string;
+    readonly wo: string;
+    readonly taskName: string;
+    readonly resourceName: string;
+    readonly progressMode: string;
+  }[];
+  readonly message?: string;
+}
 
-const readApiResult = async <T extends { readonly error?: string }>(
-  response: Response
-): Promise<T | { readonly error: string }> => {
-  const text = await response.text();
-  if (!text) return { error: `HTTP ${response.status}: server không trả nội dung.` };
+interface SyncPreview {
+  readonly checksum: string;
+  readonly status: "never" | "synced" | "pending" | "failed";
+  readonly lastSyncedAt?: string;
+  readonly lastError?: string;
+  readonly range: string;
+  readonly stats: {
+    readonly totalTasks: number;
+    readonly newTasks: number;
+    readonly changedTasks: number;
+    readonly changedAssignments: number;
+    readonly changedReports: number;
+    readonly cancelledTasks: number;
+    readonly adHocTasks: number;
+  };
+}
 
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    return {
-      error: `HTTP ${response.status}: ${text.slice(0, 240)}`
-    };
-  }
+const requestJson = async <T,>(url: string, body: unknown): Promise<T> => {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const payload = (await response.json().catch(() => ({}))) as T & { error?: string };
+  if (!response.ok) throw new Error(payload.error || `Yêu cầu thất bại (HTTP ${response.status}).`);
+  return payload;
 };
+
+const formatTimestamp = (value: string | undefined): string =>
+  value ? new Date(value).toLocaleString("vi-VN") : "Chưa có";
 
 const AdminUploadPage = (): React.ReactElement => {
   const router = useRouter();
@@ -42,164 +68,12 @@ const AdminUploadPage = (): React.ReactElement => {
     currentAccount,
     data,
     logout,
-    setImportedTasks
+    refreshRemoteData
   } = useAppData();
-  const [preview, setPreview] = useState<ImportPreview | null>(null);
-  const [message, setMessage] = useState<string>("");
-  const [isParsing, setIsParsing] = useState<boolean>(false);
-  const [isImporting, setIsImporting] = useState<boolean>(false);
-  const [isSyncingSheet, setIsSyncingSheet] = useState<boolean>(false);
-  const [selectedFileName, setSelectedFileName] = useState<string>("");
-
-  const handleFile = async (file: File): Promise<void> => {
-    if (!data) return;
-    setSelectedFileName(file.name);
-    if (!file.name.toLowerCase().endsWith(".xlsx")) {
-      setMessage("Chỉ hỗ trợ file .xlsx.");
-      return;
-    }
-    if (file.size > MAX_EXCEL_SIZE_BYTES) {
-      setMessage("File Excel vượt quá 5MB. Hãy kiểm tra lại file import.");
-      return;
-    }
-    setIsParsing(true);
-    setMessage("");
-    try {
-      const result = await parseExcelFile(file, data.profiles);
-      setPreview(result);
-      if (result.missingColumns.length > 0) {
-        setMessage("File thiếu cột bắt buộc. Chưa thể import.");
-      } else {
-        setMessage(`Đã đọc ${result.rowCount} dòng từ sheet DATA A:M.`);
-      }
-    } catch (error) {
-      console.error("[AdminUploadPage.handleFile]", error);
-      setMessage(error instanceof Error ? error.message : "Lỗi đọc file Excel.");
-    } finally {
-      setIsParsing(false);
-    }
-  };
-
-  const applyImport = async (): Promise<void> => {
-    if (!preview || preview.missingColumns.length > 0 || !currentAccount) return;
-    setIsImporting(true);
-    setMessage("");
-    try {
-      const response = await fetch("/api/tasks/import", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json"
-        },
-        body: JSON.stringify({
-          fileName: selectedFileName || "DATA.xlsx",
-          importedByUsername: currentAccount.username,
-          tasks: preview.tasks
-        })
-      });
-      const result = (await readApiResult(response)) as
-        | {
-            readonly ok?: boolean;
-            readonly inserted?: number;
-            readonly updated?: number;
-            readonly error?: string;
-          }
-        | null;
-
-      if (!response.ok || !result?.ok) {
-        throw new Error(
-          result?.error || `Không import được DATA vào database. HTTP ${response.status}.`
-        );
-      }
-
-      setImportedTasks(preview.tasks);
-      setMessage(
-        `Đã import ${preview.tasks.length} hạng mục: thêm ${result.inserted ?? 0}, cập nhật ${
-          result.updated ?? 0
-        } trong database.`
-      );
-    } catch (error) {
-      console.error("[AdminUploadPage.applyImport]", error);
-      setMessage(error instanceof Error ? error.message : "Lỗi import DATA vào database.");
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
-  const exportFile = (): void => {
-    if (!data) return;
-    try {
-      downloadExportWorkbook(data);
-      setMessage(
-        `Đã export bdtt-progress-export.xlsx từ dữ liệu ${formatViDate(
-          DEFAULT_REPORT_DATE
-        )}, tổng ${data.tasks.length} hạng mục.`
-      );
-    } catch (error) {
-      console.error("[AdminUploadPage.exportFile]", error);
-      setMessage(error instanceof Error ? error.message : "Lỗi export Excel.");
-    }
-  };
-
-  const syncGoogleSheet = async (): Promise<void> => {
-    if (!data) return;
-    setIsSyncingSheet(true);
-    setMessage("");
-    try {
-      const response = await fetch("/api/google-sheets/sync-data", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json"
-        },
-        body: JSON.stringify(data)
-      });
-      const result = (await readApiResult(response)) as
-        | {
-            readonly ok?: boolean;
-            readonly updatedRows?: number;
-            readonly updatedColumns?: number;
-            readonly range?: string;
-            readonly error?: string;
-          }
-        | null;
-
-      if (!response.ok || !result?.ok) {
-        throw new Error(
-          result?.error || `Không sync được Google Sheet DATA. HTTP ${response.status}.`
-        );
-      }
-
-      setMessage(
-        `Đã đẩy ${result.updatedRows ?? 0} dòng, ${result.updatedColumns ?? 0} cột (${result.range ?? "N:AF"}) về Google Sheet DATA.`
-      );
-    } catch (error) {
-      console.error("[AdminUploadPage.syncGoogleSheet]", error);
-      setMessage(error instanceof Error ? error.message : "Lỗi sync Google Sheet DATA.");
-    } finally {
-      setIsSyncingSheet(false);
-    }
-  };
-
-  const createDemo = (): void => {
-    if (!data) return;
-    const result = createDemoProgress();
-    if (result.created === 0) {
-      setMessage(
-        `Không tạo thêm record demo mới. Hiện có ${result.totalDemo} record demo; các task phù hợp đã có progress.`
-      );
-      return;
-    }
-    setMessage(
-      `Đã tạo thêm ${result.created} record demo cho ${formatViDate(
-        DEFAULT_REPORT_DATE
-      )}. Tổng demo hiện có: ${result.totalDemo}.`
-    );
-  };
-
-  const clearDemo = (): void => {
-    if (!data) return;
-    const result = clearDemoProgress();
-    setMessage(`Đã xóa ${result.cleared} record demo. Dữ liệu thật được giữ nguyên.`);
-  };
+  const [bootstrap, setBootstrap] = useState<BootstrapPreview | null>(null);
+  const [sync, setSync] = useState<SyncPreview | null>(null);
+  const [busy, setBusy] = useState<"bootstrap-preview" | "bootstrap-apply" | "sync-preview" | "sync-apply" | "">("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     if (!data) return;
@@ -208,248 +82,197 @@ const AdminUploadPage = (): React.ReactElement => {
   }, [currentAccount, data, router]);
 
   if (!data || !currentAccount || currentAccount.mustChangePassword) {
-    return (
-      <main className="min-h-dvh p-6">
-        <p className="text-sm text-[var(--text-muted)]">Đang kiểm tra đăng nhập...</p>
-      </main>
-    );
+    return <main className="min-h-dvh p-6"><p className="text-sm text-[var(--text-muted)]">Đang kiểm tra đăng nhập...</p></main>;
   }
-
-  const canManageData = isDataAdminAccount(currentAccount);
-  const demoCount = data.progress.filter(isOfficialDemoProgress).length;
-
-  if (currentAccount.role !== "admin" || !canManageData) {
+  if (currentAccount.role !== "admin" || !isDataAdminAccount(currentAccount)) {
     return (
       <main className="min-h-dvh px-4 py-8">
-        <section className="glass-card mx-auto max-w-md rounded-[var(--radius-card)] p-6">
-          <h1 className="text-xl font-semibold">Không có quyền import/export DATA</h1>
-          <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-            Chỉ tài khoản được phân quyền DATA admin mới được import và export DATA.
-          </p>
-          <Link
-            className="focus-ring pressable mt-4 inline-flex min-h-12 items-center rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 text-sm font-semibold text-[var(--primary-contrast)] hover:bg-[var(--primary)]"
-            href={currentAccount.role === "admin" ? "/admin" : "/worker"}
-          >
-            Quay lại
-          </Link>
+        <section className="mx-auto max-w-md rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[var(--shadow-soft-sm)]">
+          <h1 className="text-xl font-semibold">Không có quyền quản lý DATA</h1>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">Chỉ tài khoản DATA admin được khởi tạo và đồng bộ Google Sheet.</p>
+          <Link className="focus-ring pressable mt-4 inline-flex min-h-11 items-center rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 text-sm font-semibold text-[var(--primary-contrast)] no-underline shadow-[var(--shadow-soft-sm)]" href="/admin">Quay lại</Link>
         </section>
       </main>
     );
   }
 
+  const loadBootstrap = async (): Promise<void> => {
+    setBusy("bootstrap-preview");
+    setMessage("");
+    try {
+      setBootstrap(await requestJson<BootstrapPreview>("/api/google-sheets/bootstrap", { action: "preview" }));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Không đọc được Google Sheet.");
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const applyBootstrap = async (): Promise<void> => {
+    if (!bootstrap?.checksum) return;
+    setBusy("bootstrap-apply");
+    try {
+      const result = await requestJson<BootstrapPreview>("/api/google-sheets/bootstrap", {
+        action: "apply",
+        expectedChecksum: bootstrap.checksum
+      });
+      setBootstrap(result);
+      setMessage(`Đã khởi tạo ${result.rowCount} task từ Google Sheet.`);
+      await refreshRemoteData();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Không khởi tạo được dữ liệu.");
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const loadSync = async (): Promise<void> => {
+    setBusy("sync-preview");
+    setMessage("");
+    try {
+      setSync(await requestJson<SyncPreview>("/api/google-sheets/sync-data", { action: "preview" }));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Không tạo được preview đồng bộ.");
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const applySync = async (): Promise<void> => {
+    if (!sync?.checksum) return;
+    setBusy("sync-apply");
+    try {
+      const result = await requestJson<SyncPreview & { updatedRows?: number }>("/api/google-sheets/sync-data", {
+        action: "apply",
+        expectedChecksum: sync.checksum
+      });
+      setMessage(`Đã đồng bộ ${result.updatedRows ?? result.stats.totalTasks} dòng A:AG sang Google Sheet.`);
+      await loadSync();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Không đồng bộ được Google Sheet.");
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const demoCount = data.progress.filter(isOfficialDemoProgress).length;
+
   return (
     <AdminShell
       account={currentAccount}
       onLogout={logout}
-      subtitle="Import DATA A:M, export tiến độ worker và đồng bộ Google Sheets."
-      title="Import / Export DATA"
+      subtitle="Database là nguồn dữ liệu chính; Google Sheet chỉ dùng để khởi tạo một lần và nhận snapshot đầu ra."
+      title="Dữ liệu & Google Sheet"
     >
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.82fr)]">
-        <Widget className="p-5 lg:p-6">
-          <WidgetHeader
-            action={<Icon className="text-[var(--primary-strong)]" name="upload" />}
-            subtitle="Bước 1: chọn file, kiểm tra preview, sau đó mới ghi database"
-            title="Import hạng mục từ Excel"
-          />
-          <label className="mt-5 block">
-            <span className="text-sm font-semibold">Chọn file .xlsx</span>
-            <input
-              accept=".xlsx"
-              className="focus-ring mt-2 block w-full rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-3 text-base text-[var(--foreground)] shadow-[var(--shadow-soft-sm)]"
-              disabled={!data || isParsing}
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void handleFile(file);
-              }}
-              type="file"
-            />
-          </label>
-          <Alert className="mt-4 p-4 leading-6" tone="warning">
-            Khi xác nhận import, danh sách hạng mục hiện tại sẽ được ghi vào database và thay
-            thế bằng file mới trên web.
-          </Alert>
-          <Button
-            className="mt-4"
-            disabled={!preview || preview.missingColumns.length > 0 || isImporting}
-            full
-            onClick={() => void applyImport()}
-          >
-            {isImporting ? (
-              <>
-                <Icon className="animate-spin" name="loading" />
-                Đang import vào database...
-              </>
-            ) : (
-              <>
-                <Icon name="database" />
-                Xác nhận thay danh sách hạng mục
-              </>
-            )}
-          </Button>
+      {message ? <Alert tone="info">{message}</Alert> : null}
+      <section className="grid items-start gap-3 xl:grid-cols-2">
+        <Widget>
+          <WidgetHeader action={<Icon name="upload" />} subtitle="Chỉ khả dụng khi database chưa có task kế hoạch" title="1. Khởi tạo từ Google Sheet" />
+          <div className="mt-3 grid grid-cols-2 border-y border-[var(--line)]">
+            <Metric label="Task trong database" value={String(data.tasks.length)} />
+            <Metric label="Khởi tạo gần nhất" value={formatTimestamp(data.planVersion?.importedAt)} />
+          </div>
+          <div className="mt-3 flex flex-wrap justify-end gap-2">
+            <Button disabled={busy !== ""} onClick={() => void loadBootstrap()} variant="secondary">
+              {busy === "bootstrap-preview" ? "Đang đọc..." : "Đọc và xem trước"}
+            </Button>
+            <Button disabled={!bootstrap?.checksum || bootstrap.initialized || bootstrap.hasBlockingErrors || busy !== ""} onClick={() => void applyBootstrap()}>
+              {busy === "bootstrap-apply" ? "Đang khởi tạo..." : "Xác nhận khởi tạo"}
+            </Button>
+          </div>
+          {bootstrap ? <BootstrapPanel preview={bootstrap} /> : null}
         </Widget>
 
-        <Widget className="p-5 lg:p-6">
-          <WidgetHeader
-            action={<Icon className="text-[var(--accent-strong)]" name="download" />}
-            subtitle={`Dữ liệu ngày báo cáo ${formatViDate(DEFAULT_REPORT_DATE)}`}
-            title="Export và đồng bộ"
-          />
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 2xl:grid-cols-2">
-            <Metric label="Ngày báo cáo" value={formatViDate(DEFAULT_REPORT_DATE)} />
-            <Metric label="Tổng hạng mục" value={String(data?.tasks.length ?? 0)} />
+        <Widget>
+          <WidgetHeader action={<Icon name="spreadsheet" />} subtitle="Server tạo snapshot A:AG từ database; không nhận dữ liệu từ trình duyệt" title="2. Đồng bộ đầu ra" />
+          <div className="mt-3 grid grid-cols-2 border-y border-[var(--line)]">
+            <Metric label="Trạng thái" value={sync ? syncStatusLabel(sync.status) : "Chưa kiểm tra"} />
+            <Metric label="Lần đồng bộ cuối" value={formatTimestamp(sync?.lastSyncedAt)} />
           </div>
-          <Button className="mt-4" disabled={!data} full onClick={exportFile} variant="secondary">
-            <Icon name="download" />
-            Export DATA hoàn chỉnh
-          </Button>
-          <Button
-            className="mt-3"
-            disabled={!data || isSyncingSheet}
-            full
-            onClick={() => void syncGoogleSheet()}
-          >
-            {isSyncingSheet ? (
-              <>
-                <Icon className="animate-spin" name="loading" />
-                Đang đẩy lên Google Sheet...
-              </>
-            ) : (
-              <>
-                <Icon name="spreadsheet" />
-                Đẩy lên Google Sheet DATA
-              </>
-            )}
-          </Button>
-          {message ? (
-            <p
-              aria-live="polite"
-              className="mt-4 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 text-sm text-[var(--text-muted)] ring-1 ring-[var(--line)]"
-            >
-              {message}
-            </p>
-          ) : null}
-        </Widget>
-
-        <Widget className="p-5 lg:col-span-2 lg:p-6">
-          <WidgetHeader
-            action={<Icon className="text-[var(--primary-strong)]" name="shield" />}
-            subtitle="Chỉ tạo/xóa các progress có marker [DEMO], không thay task thật hoặc record thật"
-            title="Chế độ demo trình bày"
-          />
-          <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Metric label="Record demo hiện có" value={String(demoCount)} />
-              <Metric label="Ngày demo" value={formatViDate(DEFAULT_REPORT_DATE)} />
-              <Metric label="Marker an toàn" value={OFFICIAL_DEMO_NOTE_PREFIX} />
-            </div>
-            <div className="grid gap-3">
-              <Button disabled={!data} full onClick={createDemo}>
-                <Icon name="chart" />
-                Tạo dữ liệu demo
-              </Button>
-              <Button
-                disabled={!data || demoCount === 0}
-                full
-                onClick={clearDemo}
-                variant="danger"
-              >
-                <Icon name="database" />
-                Clear demo
-              </Button>
-            </div>
+          <div className="mt-3 flex flex-wrap justify-end gap-2">
+            <a className="focus-ring inline-flex min-h-11 items-center gap-2 border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] no-underline" href="/api/exports/tasks"><Icon name="download" /> Xuất Excel</a>
+            <Button disabled={data.tasks.length === 0 || busy !== ""} onClick={() => void loadSync()} variant="secondary">
+              {busy === "sync-preview" ? "Đang so sánh..." : "Xem thay đổi"}
+            </Button>
+            <Button disabled={!sync?.checksum || sync.status === "synced" || busy !== ""} onClick={() => void applySync()}>
+              {busy === "sync-apply" ? "Đang đồng bộ..." : "Xác nhận đồng bộ"}
+            </Button>
           </div>
-          <Alert className="mt-4 p-4 leading-6" tone="info">
-            Demo mode dùng cho trình bày nhanh dashboard. Mỗi record được ghi chú
-            {" "}
-            <span className="font-semibold">{OFFICIAL_DEMO_NOTE}</span>
-            {" "}
-            để có thể xóa sạch bằng nút Clear mà không ảnh hưởng tiến độ worker thật.
-          </Alert>
+          {sync ? <SyncPanel preview={sync} /> : null}
         </Widget>
       </section>
 
-      {preview ? <ImportPreviewPanel preview={preview} /> : null}
+      <Widget>
+        <WidgetHeader subtitle={`Marker an toàn ${OFFICIAL_DEMO_NOTE_PREFIX}; không tác động task thật`} title="Dữ liệu demo trình bày" />
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Metric label="Record demo hiện có" value={String(demoCount)} />
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => { const result = createDemoProgress(); setMessage(`Đã tạo ${result.created} record demo.`); }} variant="secondary">Tạo demo</Button>
+            <Button disabled={demoCount === 0} onClick={() => { const result = clearDemoProgress(); setMessage(`Đã xóa ${result.cleared} record demo.`); }} variant="danger">Xóa demo</Button>
+          </div>
+        </div>
+      </Widget>
     </AdminShell>
   );
 };
 
-const ImportPreviewPanel = ({
-  preview
-}: {
-  readonly preview: ImportPreview;
-}): React.ReactElement => (
-  <Widget className="p-5 lg:p-6">
-    <WidgetHeader
-      subtitle="Chỉ khi preview hợp lệ mới cho phép import"
-      title="Xem trước dữ liệu import"
-    />
-    <div className="mt-4 grid gap-3 sm:grid-cols-3">
-      <Metric label="Dòng hạng mục" value={String(preview.rowCount)} />
-      <Metric label="Thiếu cột" value={String(preview.missingColumns.length)} />
-      <Metric label="Worker chưa map" value={String(preview.unmappedResourceNames.length)} />
+const BootstrapPanel = ({ preview }: { readonly preview: BootstrapPreview }): React.ReactElement => (
+  <div className="mt-3 border-t border-[var(--line)] pt-3">
+    <div className="flex flex-wrap items-center gap-2">
+      <Badge tone={preview.initialized ? "success" : preview.hasBlockingErrors ? "danger" : "info"}>{preview.initialized ? "Đã khóa khởi tạo" : preview.hasBlockingErrors ? "Cần sửa Sheet" : "Sẵn sàng"}</Badge>
+      <span className="text-sm font-semibold">{preview.rowCount} dòng</span>
     </div>
-    <div className="mt-4 grid gap-4 lg:grid-cols-2">
-      <PreviewList title="Cột thiếu" values={preview.missingColumns} />
-      <PreviewList
-        title="Resource chưa map"
-        values={preview.unmappedResourceNames.slice(0, 30)}
-      />
-    </div>
-    <div className="mt-5">
-      <h3 className="text-sm font-semibold text-[var(--foreground)]">Sample 5 dòng đầu</h3>
-      <div className="mt-2 grid gap-2">
-        {preview.tasks.slice(0, 5).map((task) => (
-          <SampleTask key={task.id} task={task} />
-        ))}
+    {preview.message ? <p className="mt-2 text-sm text-[var(--text-muted)]">{preview.message}</p> : null}
+    {!preview.initialized ? (
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric label="Key trùng Tag + WO" value={String(preview.duplicateKeys?.length ?? 0)} />
+        <Metric label="Resource chưa map" value={String(preview.unmappedResourceNames?.length ?? 0)} />
+        <Metric label="Cột thiếu" value={String(preview.missingColumns?.length ?? 0)} />
+        <Metric label="Dòng thiếu dữ liệu" value={String(preview.incompleteRows?.length ?? 0)} />
+        {preview.progressModeHeaderMissing ? (
+          <p className="text-sm text-[var(--text-muted)] sm:col-span-2 xl:col-span-4">
+            Sheet cũ chưa có tiêu đề AG. Hệ thống sẽ mặc định các task là 0-100 và tạo cột AG khi đồng bộ đầu ra.
+          </p>
+        ) : null}
       </div>
+    ) : null}
+    {preview.sample?.length ? (
+      <div className="mt-3 divide-y divide-[var(--line)] border-y border-[var(--line)]">
+        {preview.sample.map((task) => <p className="break-words py-2 text-sm" key={`${task.tagname}|${task.wo}`}><span className="font-mono font-semibold">{task.tagname}</span> · {task.taskName} · {task.progressMode === "binary" ? "0/100" : "0-100"}</p>)}
+      </div>
+    ) : null}
+  </div>
+);
+
+const SyncPanel = ({ preview }: { readonly preview: SyncPreview }): React.ReactElement => (
+  <div className="mt-3 border-t border-[var(--line)] pt-3">
+    <div className="flex flex-wrap items-center gap-2"><Badge tone={preview.status === "synced" ? "success" : preview.status === "failed" ? "danger" : "warning"}>{syncStatusLabel(preview.status)}</Badge><span className="font-mono text-sm">{preview.range}</span></div>
+    <div className="mt-3 grid grid-cols-2 gap-px bg-[var(--line)] sm:grid-cols-4">
+      <Metric label="Task mới" value={String(preview.stats.newTasks)} />
+      <Metric label="Task thay đổi" value={String(preview.stats.changedTasks)} />
+      <Metric label="Đổi phân công" value={String(preview.stats.changedAssignments)} />
+      <Metric label="Báo cáo thay đổi" value={String(preview.stats.changedReports)} />
+      <Metric label="Task phát sinh" value={String(preview.stats.adHocTasks)} />
+      <Metric label="Task đã hủy" value={String(preview.stats.cancelledTasks)} />
+      <Metric label="Tổng task" value={String(preview.stats.totalTasks)} />
+      <Metric label="Checksum" value={preview.checksum.slice(0, 10)} />
     </div>
-  </Widget>
-);
-
-const SampleTask = ({ task }: { readonly task: Task }): React.ReactElement => (
-  <div className="rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] p-3 text-sm">
-    <p className="font-mono font-semibold">{task.tagname}</p>
-    <p className="mt-1 text-[var(--text-muted)]">{task.taskName}</p>
-    <p className="mt-1 text-xs text-[var(--text-muted)]">
-      {task.donVi || "N/A"} · {task.resourceName || "N/A"}
-    </p>
+    {preview.lastError ? <Alert className="mt-3" tone="danger">{preview.lastError}</Alert> : null}
   </div>
 );
 
-const Metric = ({
-  label,
-  value
-}: {
-  readonly label: string;
-  readonly value: string;
-}): React.ReactElement => (
-  <div className="metric-card rounded-[var(--radius-card)] p-4">
+const Metric = ({ label, value }: { readonly label: string; readonly value: string }): React.ReactElement => (
+  <div className="min-w-0 bg-[var(--surface-muted)] px-3 py-2">
     <p className="text-sm text-[var(--text-muted)]">{label}</p>
-    <p className="mt-1 text-2xl font-semibold">{value}</p>
+    <p className="mt-1 break-words text-base font-semibold tabular-nums">{value}</p>
   </div>
 );
 
-const PreviewList = ({
-  title,
-  values
-}: {
-  readonly title: string;
-  readonly values: readonly string[];
-}): React.ReactElement => (
-  <div>
-    <h3 className="text-sm font-semibold text-[var(--foreground)]">{title}</h3>
-    {values.length === 0 ? (
-      <p className="mt-2 text-sm text-[var(--text-muted)]">Không có</p>
-    ) : (
-      <ul className="mt-2 max-h-56 overflow-auto rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3 text-sm">
-        {values.map((value) => (
-          <li className="border-b border-[var(--line)] py-2 last:border-b-0" key={value}>
-            {value}
-          </li>
-        ))}
-      </ul>
-    )}
-  </div>
-);
+const syncStatusLabel = (status: SyncPreview["status"]): string => {
+  if (status === "synced") return "Đã đồng bộ";
+  if (status === "pending") return "Chưa đồng bộ";
+  if (status === "failed") return "Đồng bộ lỗi";
+  return "Chưa từng đồng bộ";
+};
 
 export default AdminUploadPage;

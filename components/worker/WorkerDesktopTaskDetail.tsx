@@ -34,20 +34,20 @@ export const WorkerDesktopTaskDetail = ({
 
   return (
     <>
-      <p className="text-sm font-semibold uppercase tracking-wide text-[var(--primary)]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--primary)]">
         Hạng mục đang chọn
       </p>
-      <h2 className="mt-2 font-mono text-2xl font-semibold">{task.tagname}</h2>
-      <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">{task.taskName}</p>
-      <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+      <h2 className="mt-1 font-mono text-xl font-semibold">{task.tagname}</h2>
+      <p className="mt-1 text-sm leading-5 text-[var(--text-muted)]">{task.taskName}</p>
+      <div className="mt-3 grid grid-cols-2 overflow-hidden border border-[var(--line)] text-sm">
         <Info label="Đơn vị" value={task.donVi} />
         <Info label="Section" value={task.section} />
         <Info label="Priority" value={`P${task.priority}`} />
         <Info label="Finish" value={task.finishDate || "N/A"} />
       </div>
-      <div className="mt-5">
+      <div className="mt-3 border-t border-[var(--line)] pt-3">
         {task.isCancelled ? (
-          <div className="rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
+          <div className="border-l-2 border-[var(--danger)] bg-[var(--danger-soft)] px-3 py-2.5 text-sm font-semibold text-[var(--danger)]">
             Hạng mục này đã được hủy và đã báo cho admin.
             {task.cancelReason ? (
               <span className="mt-2 block font-medium text-[var(--text-muted)]">
@@ -65,7 +65,7 @@ export const WorkerDesktopTaskDetail = ({
               task={task}
             />
             <button
-              className="focus-ring pressable mt-4 min-h-12 w-full rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)]"
+              className="focus-ring pressable mt-3 min-h-10 rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)]"
               onClick={() => onCancel(task.id)}
               type="button"
             >
@@ -86,9 +86,9 @@ const Info = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
-      <p className="text-xs font-semibold uppercase text-[var(--text-muted)]">{label}</p>
-      <p className="mt-1 font-semibold">{value || "N/A"}</p>
+    <div className="border-b border-r border-[var(--line)] bg-[var(--surface-muted)] px-3 py-2">
+      <p className="text-[10px] font-medium uppercase tracking-[0.06em] text-[var(--text-muted)]">{label}</p>
+      <p className="mt-0.5 font-semibold">{value || "N/A"}</p>
     </div>
   );
 };

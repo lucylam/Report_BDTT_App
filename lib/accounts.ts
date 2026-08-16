@@ -38,6 +38,26 @@ export const createSeedAccounts = (): AuthAccount[] => {
   });
 };
 
+export const applyAccountPasswordRequirements = (
+  accounts: readonly AuthAccount[],
+  requirements: readonly {
+    readonly username: string;
+    readonly mustChangePassword: boolean;
+  }[]
+): AuthAccount[] => {
+  const requirementByUsername = new Map(
+    requirements.map((item) => [getLoginUsername(item.username), item.mustChangePassword])
+  );
+  return accounts.map((account) => {
+    const mustChangePassword = requirementByUsername.get(
+      getLoginUsername(account.username)
+    );
+    return mustChangePassword === undefined
+      ? account
+      : { ...account, mustChangePassword };
+  });
+};
+
 export const createProfilesFromAccounts = (
   accounts: readonly AuthAccount[]
 ): Profile[] => {

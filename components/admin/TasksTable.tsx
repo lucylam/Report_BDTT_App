@@ -5,6 +5,7 @@ import { TaskDesktopWorkspace } from "@/components/admin/tasks/TaskDesktopWorksp
 import { TaskFilterToolbar } from "@/components/admin/tasks/TaskFilterToolbar";
 import { TaskKpiStrip } from "@/components/admin/tasks/TaskKpiStrip";
 import { TaskMobileCards } from "@/components/admin/tasks/TaskMobileCards";
+import { LeaderTaskManager } from "@/components/admin/tasks/LeaderTaskManager";
 import {
   buildTaskKpis,
   buildTaskRows,
@@ -20,6 +21,9 @@ import type { AppData } from "@/types/domain";
 interface TasksTableProps {
   readonly data: AppData;
   readonly limit?: number;
+  readonly canManage?: boolean;
+  readonly onDataChanged?: () => Promise<void>;
+  readonly initialQuery?: string;
 }
 
 const matchesQuickFilter = (row: TaskRow, quickFilter: QuickFilter): boolean => {
@@ -34,9 +38,12 @@ const matchesQuickFilter = (row: TaskRow, quickFilter: QuickFilter): boolean => 
 
 export const TasksTable = ({
   data,
-  limit = 50
+  limit = 50,
+  canManage = false,
+  onDataChanged = async () => undefined,
+  initialQuery = ""
 }: TasksTableProps): React.ReactElement => {
-  const [query, setQuery] = useState<string>("");
+  const [query, setQuery] = useState<string>(initialQuery);
   const [group, setGroup] = useState<string>("all");
   const [unit, setUnit] = useState<string>("all");
   const [section, setSection] = useState<string>("all");
@@ -71,6 +78,8 @@ export const TasksTable = ({
     );
   });
   const rows = filteredRows.slice(0, visibleCount);
+  const selectedRow =
+    rows.find((row) => row.task.id === selectedTaskId) ?? rows[0] ?? null;
 
   const updateFilter = <T,>(setter: (value: T) => void, value: T): void => {
     setter(value);
@@ -78,9 +87,21 @@ export const TasksTable = ({
     setSelectedTaskId(null);
   };
 
+  const selectKpi = (key: keyof typeof kpis): void => {
+    setStatus("all");
+    setQuickFilter("all");
+    if (key === "completed") setStatus("completed");
+    if (key === "inProgress") setStatus("inProgress");
+    if (key === "notStarted") setStatus("notStarted");
+    if (key === "cancelled") setStatus("cancelled");
+    if (key === "p1Open") setQuickFilter("p1Open");
+    resetVisibleRows();
+    setSelectedTaskId(null);
+  };
+
   return (
     <section className="grid gap-4">
-      <TaskKpiStrip kpis={kpis} />
+      <TaskKpiStrip kpis={kpis} onSelect={selectKpi} />
 
       <TaskFilterToolbar
         group={group}
@@ -110,18 +131,36 @@ export const TasksTable = ({
             subtitle={`Hiển thị ${rows.length}/${filteredRows.length} dòng phù hợp`}
             title="Danh sách hạng mục"
           />
-          <p className="rounded-full bg-[var(--surface-muted)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] ring-1 ring-[var(--border-strong)]">
-            Tổng dữ liệu: {allRows.length} hạng mục
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="rounded-full bg-[var(--surface-muted)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] ring-1 ring-[var(--border-strong)]">
+              Tổng dữ liệu: {allRows.length} hạng mục
+            </p>
+            {canManage ? (
+              <LeaderTaskManager
+                data={data}
+                onChanged={onDataChanged}
+                row={selectedRow}
+                showCreate
+              />
+            ) : null}
+          </div>
         </div>
 
         <div className="mt-4">
           <TaskDesktopWorkspace
+            canManage={canManage}
+            data={data}
+            onDataChanged={onDataChanged}
             onSelectTask={setSelectedTaskId}
             rows={rows}
             selectedTaskId={selectedTaskId}
           />
-          <TaskMobileCards rows={rows} />
+          <TaskMobileCards
+            canManage={canManage}
+            data={data}
+            onDataChanged={onDataChanged}
+            rows={rows}
+          />
         </div>
 
         {visibleCount < filteredRows.length ? (

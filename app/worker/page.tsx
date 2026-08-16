@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CancelReasonDialog } from "@/components/worker/CancelReasonDialog";
 import { WorkerDesktopView } from "@/components/worker/WorkerDesktopView";
 import { WorkerMobileView } from "@/components/worker/WorkerMobileView";
@@ -15,12 +15,21 @@ import {
   sortWorkerTasks
 } from "@/components/worker/taskView";
 import type {
+  QueueSyncState,
   SaveState,
   WorkerFilter,
   WorkerProgressDraftMap,
   WorkerProgressUpdate
 } from "@/components/worker/types";
 import { DEFAULT_REPORT_DATE } from "@/lib/date";
+import { getProgressPhotoPaths, isInlinePhotoPath } from "@/lib/photo";
+import {
+  createOfflinePhotoReference,
+  isOfflinePhotoReference,
+  readOfflinePhoto,
+  removeOfflinePhotos,
+  storeOfflinePhoto
+} from "@/lib/offlinePhotoStore";
 import { getTaskPercent, getTaskProgress } from "@/lib/progress";
 import { useAppData } from "@/hooks/useAppData";
 import type { ProgressPercent, Task } from "@/types/domain";
@@ -32,11 +41,34 @@ const matchesFilter = (
 ): boolean => {
   if (filter === "cancelled") return task.isCancelled;
   if (task.isCancelled) return false;
+  if (filter === "today") {
+    return percent < 100 && (!task.startDate || task.startDate <= DEFAULT_REPORT_DATE);
+  }
   if (filter === "todo") return percent === 0;
   if (filter === "progress") return percent > 0 && percent < 100;
   if (filter === "done") return percent === 100;
   if (filter === "p1") return task.priority === 1 && percent < 100;
   return true;
+};
+
+interface WorkerProgressPayload {
+  readonly taskId: string;
+  readonly userId: string;
+  readonly reportDate: string;
+  readonly percent: ProgressPercent;
+  readonly note: string;
+  readonly photoPath?: string;
+  readonly photoPaths?: readonly string[];
+}
+
+const readWorkerApiError = async (
+  response: Response,
+  fallback: string
+): Promise<string> => {
+  const result = (await response.json().catch(() => null)) as
+    | { readonly error?: string }
+    | null;
+  return result?.error || fallback;
 };
 
 const submitProgressToDatabase = async ({
@@ -45,14 +77,7 @@ const submitProgressToDatabase = async ({
   worker
 }: {
   readonly task: Task;
-  readonly update: {
-    readonly taskId: string;
-    readonly userId: string;
-    readonly reportDate: string;
-    readonly percent: ProgressPercent;
-    readonly note: string;
-    readonly photoPath?: string;
-  };
+  readonly update: WorkerProgressPayload;
   readonly worker: {
     readonly username: string;
     readonly fullName: string;
@@ -72,10 +97,79 @@ const submitProgressToDatabase = async ({
   });
 
   if (!response.ok) {
-    const result = (await response.json().catch(() => null)) as
-      | { readonly error?: string }
-      | null;
-    throw new Error(result?.error || "Không ghi được tiến độ vào DB web.");
+    const message = await readWorkerApiError(response, "Khong ghi duoc tien do vao DB web.");
+    if (response.status === 408 || response.status === 429 || response.status >= 500) {
+      throw new TypeError(message);
+    }
+    throw new Error(message);
+  }
+};
+
+const uploadProgressPhotos = async ({
+  task,
+  reportDate,
+  photoPaths
+}: {
+  readonly task: Task;
+  readonly reportDate: string;
+  readonly photoPaths: readonly string[];
+}): Promise<string[]> => {
+  const uploadedPaths: string[] = [];
+  for (const source of photoPaths) {
+    const dataUrl = isOfflinePhotoReference(source)
+      ? await readOfflinePhoto(source)
+      : source;
+    if (!isInlinePhotoPath(dataUrl)) {
+      uploadedPaths.push(dataUrl);
+      continue;
+    }
+
+    const response = await fetch("/api/photos/upload", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ task, reportDate, dataUrl })
+    });
+
+    if (!response.ok) {
+      const message = await readWorkerApiError(response, "Khong upload duoc anh len storage.");
+      if (response.status === 408 || response.status === 429 || response.status >= 500) {
+        throw new TypeError(message);
+      }
+      throw new Error(message);
+    }
+    const result = (await response.json()) as { readonly photoPath?: string };
+    if (!result.photoPath) {
+      throw new Error("API upload anh khong tra ve storage path.");
+    }
+    uploadedPaths.push(result.photoPath);
+  }
+  return uploadedPaths;
+};
+
+const submitCancelToDatabase = async ({
+  task,
+  cancelReason
+}: {
+  readonly task: Task;
+  readonly cancelReason: string;
+}): Promise<void> => {
+  const response = await fetch("/api/tasks/cancel", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify({
+      task,
+      cancelReason
+    })
+  });
+
+  if (!response.ok) {
+    const message = await readWorkerApiError(response, "Khong cancel duoc task tren DB web.");
+    if (response.status === 408 || response.status === 429 || response.status >= 500) {
+      throw new TypeError(message);
+    }
+    throw new Error(message);
   }
 };
 
@@ -88,11 +182,13 @@ const WorkerPage = (): React.ReactElement => {
     data,
     flushQueue,
     logout,
+    queueCancelTask,
     queueProgress,
     updateProgress
   } = useAppData();
-  const [filter, setFilter] = useState<WorkerFilter>("all");
+  const [filter, setFilter] = useState<WorkerFilter>("today");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedUnit, setSelectedUnit] = useState<string>("");
   const [cancelTaskId, setCancelTaskId] = useState<string | null>(null);
   const [draftUpdates, setDraftUpdates] = useState<WorkerProgressDraftMap>({});
   const [isSubmittingUpdates, setIsSubmittingUpdates] = useState<boolean>(false);
@@ -100,7 +196,25 @@ const WorkerPage = (): React.ReactElement => {
   const [isOnline, setIsOnline] = useState<boolean>(() =>
     typeof navigator === "undefined" ? true : navigator.onLine
   );
+  const [queueSyncState, setQueueSyncState] = useState<QueueSyncState>("idle");
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const isSyncingQueueRef = useRef<boolean>(false);
+  const syncContextRef = useRef({
+    cancelTask,
+    currentProfile,
+    data,
+    flushQueue,
+    updateProgress
+  });
+  useEffect(() => {
+    syncContextRef.current = {
+      cancelTask,
+      currentProfile,
+      data,
+      flushQueue,
+      updateProgress
+    };
+  }, [cancelTask, currentProfile, data, flushQueue, updateProgress]);
 
   useEffect(() => {
     if (!data) return;
@@ -108,46 +222,92 @@ const WorkerPage = (): React.ReactElement => {
     if (currentAccount?.mustChangePassword) router.replace("/change-password");
   }, [currentAccount, data, router]);
 
-  const syncOfflineQueue = async (): Promise<void> => {
+  const syncOfflineQueue = useCallback(async (): Promise<void> => {
     if (isSyncingQueueRef.current) return;
-    const queue = data?.offlineQueue ?? [];
-    const profile = currentProfile;
-    if (!data || !profile || queue.length === 0) return;
+    const {
+      cancelTask: applyCancel,
+      currentProfile: profile,
+      data: currentData,
+      flushQueue: flushSyncedItems,
+      updateProgress: applyProgress
+    } = syncContextRef.current;
+    const queue = currentData?.offlineQueue ?? [];
+    if (!currentData || !profile || queue.length === 0 || !navigator.onLine) return;
 
     isSyncingQueueRef.current = true;
+    setQueueSyncState("syncing");
     try {
+      const syncedItemIds: string[] = [];
+      let failedCount = 0;
       for (const queued of queue) {
-        const task = data.tasks.find((item) => item.id === queued.taskId);
-        if (!task) continue;
-        await submitProgressToDatabase({
-          task,
-          update: {
+        try {
+          const task = currentData.tasks.find((item) => item.id === queued.taskId);
+          if (!task) continue;
+
+          if (queued.kind === "cancelTask") {
+            await submitCancelToDatabase({
+              task,
+              cancelReason: queued.cancelReason
+            });
+            applyCancel(queued.taskId, queued.cancelReason);
+            syncedItemIds.push(queued.id);
+            continue;
+          }
+
+          const queuedPhotoPaths = getProgressPhotoPaths(queued);
+          const photoPaths = await uploadProgressPhotos({
+            task,
+            reportDate: queued.reportDate,
+            photoPaths: queuedPhotoPaths
+          });
+          const payload: WorkerProgressPayload = {
             taskId: queued.taskId,
             userId: queued.userId,
             reportDate: queued.reportDate,
             percent: queued.percent,
             note: queued.note,
-            photoPath: queued.photoPath
-          },
-          worker: {
-            username: profile.username,
-            fullName: profile.fullName,
-            resourceName: profile.resourceName
-          }
-        });
+            photoPath: photoPaths[0],
+            photoPaths
+          };
+
+          await submitProgressToDatabase({
+            task,
+            update: payload,
+            worker: {
+              username: profile.username,
+              fullName: profile.fullName,
+              resourceName: profile.resourceName
+            }
+          });
+          applyProgress(payload);
+          await removeOfflinePhotos(queuedPhotoPaths);
+          syncedItemIds.push(queued.id);
+        } catch (error) {
+          failedCount += 1;
+          console.error("[WorkerPage.syncOfflineQueue.item]", error);
+        }
       }
-      flushQueue();
+
+      if (syncedItemIds.length > 0) {
+        flushSyncedItems(syncedItemIds);
+      }
+      if (failedCount > 0) {
+        setQueueSyncState("failed");
+      } else {
+        setQueueSyncState("synced");
+        setLastSyncedAt(new Date().toISOString());
+      }
     } catch (error) {
+      setQueueSyncState("failed");
       console.error("[WorkerPage.syncOfflineQueue]", error);
     } finally {
       isSyncingQueueRef.current = false;
     }
-  };
+  }, []);
 
   useEffect(() => {
     const online = (): void => {
       setIsOnline(true);
-      void syncOfflineQueue();
     };
     const offline = (): void => setIsOnline(false);
     window.addEventListener("online", online);
@@ -156,15 +316,29 @@ const WorkerPage = (): React.ReactElement => {
       window.removeEventListener("online", online);
       window.removeEventListener("offline", offline);
     };
-  });
+  }, []);
 
   const queueLength = data?.offlineQueue.length ?? 0;
   useEffect(() => {
-    if (isOnline && queueLength > 0) {
+    if (!isOnline || queueLength === 0) return;
+    const initialSyncTimer = window.setTimeout(() => {
       void syncOfflineQueue();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline, queueLength]);
+    }, 0);
+    const retryTimer = window.setInterval(() => {
+      if (navigator.onLine) void syncOfflineQueue();
+    }, 30_000);
+    const handleVisibility = (): void => {
+      if (document.visibilityState === "visible" && navigator.onLine) {
+        void syncOfflineQueue();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.clearTimeout(initialSyncTimer);
+      window.clearInterval(retryTimer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [isOnline, queueLength, syncOfflineQueue]);
 
   const worker = currentProfile;
   const pendingUpdateCount = Object.keys(draftUpdates).length;
@@ -180,7 +354,9 @@ const WorkerPage = (): React.ReactElement => {
 
   const allWorkerTasks = useMemo(() => {
     if (!data || !worker) return [];
-    return data.tasks.filter((task) => task.assignedTo === worker.id);
+    return data.tasks.filter(
+      (task) => task.assignedTo === worker.id || task.reporterId === worker.id
+    );
   }, [data, worker]);
 
   const filteredTasks = useMemo(() => {
@@ -190,13 +366,14 @@ const WorkerPage = (): React.ReactElement => {
         const percent = getTaskPercent(data.progress, task.id, DEFAULT_REPORT_DATE);
         return (
           matchesFilter(task, percent, filter) &&
+          (!selectedUnit || task.donVi === selectedUnit) &&
           matchesWorkerTaskQuery(task, searchQuery)
         );
       }),
       data.progress,
       DEFAULT_REPORT_DATE
     );
-  }, [allWorkerTasks, data, filter, searchQuery]);
+  }, [allWorkerTasks, data, filter, searchQuery, selectedUnit]);
 
   if (!data || !currentAccount || !worker || currentAccount.mustChangePassword) {
     return (
@@ -249,6 +426,48 @@ const WorkerPage = (): React.ReactElement => {
     });
   };
 
+  const queueOfflineProgress = async (
+    taskId: string,
+    payload: WorkerProgressPayload
+  ): Promise<void> => {
+    const sourcePhotoPaths = getProgressPhotoPaths(payload);
+    const previousQueuedItem = data.offlineQueue.find(
+      (item) =>
+        item.kind === "progress" &&
+        item.taskId === payload.taskId &&
+        item.userId === payload.userId &&
+        item.reportDate === payload.reportDate
+    );
+    const storedPhotoPaths: string[] = [];
+    for (const [index, photoPath] of sourcePhotoPaths.entries()) {
+      if (!isInlinePhotoPath(photoPath)) {
+        storedPhotoPaths.push(photoPath);
+        continue;
+      }
+      const reference = createOfflinePhotoReference(
+        `${payload.taskId}-${payload.reportDate}-${index}`
+      );
+      await storeOfflinePhoto(reference, photoPath);
+      storedPhotoPaths.push(reference);
+    }
+    const offlinePayload: WorkerProgressPayload = {
+      ...payload,
+      photoPath: storedPhotoPaths[0],
+      photoPaths: storedPhotoPaths
+    };
+    queueProgress(offlinePayload);
+    updateProgress(offlinePayload);
+    if (previousQueuedItem?.kind === "progress") {
+      await removeOfflinePhotos(
+        getProgressPhotoPaths(previousQueuedItem).filter(
+          (path) => !storedPhotoPaths.includes(path)
+        )
+      );
+    }
+    setSaveStates((current) => ({ ...current, [taskId]: "offline" }));
+    setQueueSyncState("idle");
+  };
+
   const submitDraftUpdates = async (): Promise<void> => {
     const entries = Object.entries(draftUpdates);
     if (entries.length === 0 || isSubmittingUpdates) return;
@@ -271,41 +490,55 @@ const WorkerPage = (): React.ReactElement => {
           continue;
         }
 
-        const payload = {
+        const payload: WorkerProgressPayload = {
           taskId,
           userId: worker.id,
           reportDate: DEFAULT_REPORT_DATE,
           percent: update.percent,
           note: update.note,
-          photoPath: update.photoPath
+          photoPath: update.photoPath,
+          photoPaths: update.photoPaths
         };
 
+        let payloadForOfflineRetry = payload;
         try {
           if (isOnline) {
+            const uploadedPhotoPaths = await uploadProgressPhotos({
+              task,
+              reportDate: DEFAULT_REPORT_DATE,
+              photoPaths: getProgressPhotoPaths(payload)
+            });
+            const persistedPayload: WorkerProgressPayload = {
+              ...payload,
+              photoPath: uploadedPhotoPaths[0],
+              photoPaths: uploadedPhotoPaths
+            };
+            payloadForOfflineRetry = persistedPayload;
             await submitProgressToDatabase({
               task,
-              update: payload,
+              update: persistedPayload,
               worker: {
                 username: worker.username,
                 fullName: worker.fullName,
                 resourceName: worker.resourceName
               }
             });
-            updateProgress(payload);
+            updateProgress(persistedPayload);
             setSaveStates((current) => ({ ...current, [taskId]: "saved" }));
           } else {
-            updateProgress(payload);
-            queueProgress(payload);
-            setSaveStates((current) => ({ ...current, [taskId]: "offline" }));
+            await queueOfflineProgress(taskId, payload);
           }
           submittedUpdates.set(taskId, update);
         } catch (error) {
           console.error("[WorkerPage.submitDraftUpdates]", error);
           if (error instanceof TypeError) {
-            updateProgress(payload);
-            queueProgress(payload);
-            setSaveStates((current) => ({ ...current, [taskId]: "offline" }));
-            submittedUpdates.set(taskId, update);
+            try {
+              await queueOfflineProgress(taskId, payloadForOfflineRetry);
+              submittedUpdates.set(taskId, update);
+            } catch (queueError) {
+              console.error("[WorkerPage.submitDraftUpdates.queueOffline]", queueError);
+              setSaveStates((current) => ({ ...current, [taskId]: "error" }));
+            }
           } else {
             setSaveStates((current) => ({ ...current, [taskId]: "error" }));
           }
@@ -338,15 +571,34 @@ const WorkerPage = (): React.ReactElement => {
     setCancelTaskId(taskId);
   };
 
-  const confirmCancel = (cancelReason: string): void => {
+  const confirmCancel = async (cancelReason: string): Promise<void> => {
     if (!cancelTaskId) return;
+    const taskId = cancelTaskId;
+    const task = data.tasks.find((item) => item.id === taskId);
+    if (!task || task.isCancelled) return;
+
+    setSaveStates((current) => ({ ...current, [taskId]: "saving" }));
     try {
-      cancelTask(cancelTaskId, cancelReason);
-      setSaveStates((current) => ({ ...current, [cancelTaskId]: "saved" }));
+      if (isOnline) {
+        await submitCancelToDatabase({ task, cancelReason });
+        cancelTask(taskId, cancelReason);
+        setSaveStates((current) => ({ ...current, [taskId]: "saved" }));
+      } else {
+        cancelTask(taskId, cancelReason);
+        queueCancelTask(taskId, worker.id, cancelReason);
+        setSaveStates((current) => ({ ...current, [taskId]: "offline" }));
+      }
       setCancelTaskId(null);
     } catch (error) {
       console.error("[WorkerPage.confirmCancel]", error);
-      setSaveStates((current) => ({ ...current, [cancelTaskId]: "error" }));
+      if (error instanceof TypeError) {
+        cancelTask(taskId, cancelReason);
+        queueCancelTask(taskId, worker.id, cancelReason);
+        setSaveStates((current) => ({ ...current, [taskId]: "offline" }));
+        setCancelTaskId(null);
+      } else {
+        setSaveStates((current) => ({ ...current, [taskId]: "error" }));
+      }
     }
   };
 
@@ -363,20 +615,25 @@ const WorkerPage = (): React.ReactElement => {
         filteredTasks={filteredTasks}
         isOnline={isOnline}
         isSubmittingUpdates={isSubmittingUpdates}
+        lastSyncedAt={lastSyncedAt}
         onCancel={handleCancel}
         onChange={handleChange}
         onDiscardUpdates={discardDraftUpdates}
         onFilterChange={setFilter}
         onLogout={logout}
         onSearchChange={setSearchQuery}
+        onUnitChange={setSelectedUnit}
         onSubmitUpdates={() => {
           void submitDraftUpdates();
         }}
         pendingUpdateCount={pendingUpdateCount}
+        planVersion={data.planVersion}
+        queuedUpdateCount={queueLength}
+        queueSyncState={queueSyncState}
         progress={data.progress}
         saveStates={saveStates}
         searchQuery={searchQuery}
-        worker={worker}
+        selectedUnit={selectedUnit}
       />
       <WorkerDesktopView
         account={currentAccount}
@@ -386,19 +643,25 @@ const WorkerPage = (): React.ReactElement => {
         filteredTasks={filteredTasks}
         isOnline={isOnline}
         isSubmittingUpdates={isSubmittingUpdates}
+        lastSyncedAt={lastSyncedAt}
         onCancel={handleCancel}
         onChange={handleChange}
         onDiscardUpdates={discardDraftUpdates}
         onFilterChange={setFilter}
         onLogout={logout}
         onSearchChange={setSearchQuery}
+        onUnitChange={setSelectedUnit}
         onSubmitUpdates={() => {
           void submitDraftUpdates();
         }}
         pendingUpdateCount={pendingUpdateCount}
+        planVersion={data.planVersion}
+        queuedUpdateCount={queueLength}
+        queueSyncState={queueSyncState}
         progress={data.progress}
         saveStates={saveStates}
         searchQuery={searchQuery}
+        selectedUnit={selectedUnit}
         worker={worker}
       />
       {cancelCandidate ? (

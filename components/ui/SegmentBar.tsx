@@ -35,7 +35,7 @@ interface SegmentBarProps {
 }
 
 /**
- * Thanh phân bổ nhiều màu theo tỉ lệ (clone allocation bar của family-budget).
+ * Thanh phân bổ nhiều màu theo tỉ lệ.
  * BDTT: phân bổ công việc theo trạng thái / đơn vị / mức ưu tiên.
  */
 export const SegmentBar = ({

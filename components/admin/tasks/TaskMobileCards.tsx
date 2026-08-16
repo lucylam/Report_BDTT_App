@@ -5,12 +5,22 @@ import {
   getStatusTone,
   type TaskRow
 } from "@/components/admin/tasks/taskTableModel";
+import { LeaderTaskManager } from "@/components/admin/tasks/LeaderTaskManager";
+import type { AppData } from "@/types/domain";
 
 interface TaskMobileCardsProps {
   readonly rows: readonly TaskRow[];
+  readonly data: AppData;
+  readonly canManage: boolean;
+  readonly onDataChanged: () => Promise<void>;
 }
 
-export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElement => {
+export const TaskMobileCards = ({
+  rows,
+  data,
+  canManage,
+  onDataChanged
+}: TaskMobileCardsProps): React.ReactElement => {
   return (
     <section className="grid gap-3 lg:hidden">
       {rows.map((row) => {
@@ -57,6 +67,12 @@ export const TaskMobileCards = ({ rows }: TaskMobileCardsProps): React.ReactElem
               <p className="mt-3 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 text-sm font-medium leading-6 text-[var(--foreground)] ring-1 ring-[var(--border)]">
                 {progress.note}
               </p>
+            ) : null}
+
+            {canManage ? (
+              <div className="mt-3">
+                <LeaderTaskManager data={data} onChanged={onDataChanged} row={row} />
+              </div>
             ) : null}
           </article>
         );

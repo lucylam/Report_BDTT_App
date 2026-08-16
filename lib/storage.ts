@@ -12,8 +12,10 @@ import type {
   AppData,
   AuthAccount,
   DailySnapshot,
+  OfflineQueueItem,
   ProgressPercent,
   ProgressRecord,
+  QueuedCancelTaskUpdate,
   QueuedProgressUpdate,
   Task
 } from "@/types/domain";
@@ -29,6 +31,13 @@ interface ProgressUpdateInput {
   readonly percent: ProgressPercent;
   readonly note: string;
   readonly photoPath?: string;
+  readonly photoPaths?: readonly string[];
+}
+
+interface CancelTaskQueueInput {
+  readonly taskId: string;
+  readonly userId: string;
+  readonly cancelReason: string;
 }
 
 export const loadAppData = (): AppData => {
@@ -228,7 +237,14 @@ export const saveAppData = (data: AppData): void => {
     ...data,
     activeUserId: loadRememberLoginPreference() ? data.activeUserId : null
   };
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedData));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedData));
+  } catch (error) {
+    console.error("[saveAppData]", error);
+    throw new Error(
+      "Khong luu duoc du lieu tam tren may. Hay gui khi co mang hoac xoa bot anh dang cho dong bo."
+    );
+  }
 };
 
 export const replaceTasks = (data: AppData, tasks: readonly Task[]): AppData => {
@@ -289,32 +305,68 @@ export const queueProgressUpdate = (
 ): AppData => {
   const queuedUpdate: QueuedProgressUpdate = {
     ...update,
+    kind: "progress",
     id: `${update.taskId}-${update.userId}-${update.reportDate}-${Date.now()}`,
     queuedAt: new Date().toISOString()
   };
   const nextData: AppData = {
     ...data,
-    offlineQueue: [...data.offlineQueue, queuedUpdate]
+    offlineQueue: [
+      ...data.offlineQueue.filter(
+        (item) =>
+          !(
+            item.kind === "progress" &&
+            item.taskId === update.taskId &&
+            item.userId === update.userId &&
+            item.reportDate === update.reportDate
+          )
+      ),
+      queuedUpdate
+    ]
   };
   saveAppData(nextData);
   return nextData;
 };
 
-export const flushOfflineQueue = (data: AppData): AppData => {
-  let nextData = data;
-  data.offlineQueue.forEach((queued) => {
-    nextData = upsertProgress(nextData, {
-      taskId: queued.taskId,
-      userId: queued.userId,
-      reportDate: queued.reportDate,
-      percent: queued.percent,
-      note: queued.note,
-      photoPath: queued.photoPath
-    });
-  });
-  nextData = {
-    ...nextData,
-    offlineQueue: []
+export const queueCancelTaskUpdate = (
+  data: AppData,
+  update: CancelTaskQueueInput
+): AppData => {
+  const queuedUpdate: QueuedCancelTaskUpdate = {
+    ...update,
+    kind: "cancelTask",
+    id: `cancel-${update.taskId}-${update.userId}-${Date.now()}`,
+    queuedAt: new Date().toISOString()
+  };
+  const nextData: AppData = {
+    ...data,
+    offlineQueue: [
+      ...data.offlineQueue.filter(
+        (item) =>
+          !(
+            item.kind === "cancelTask" &&
+            item.taskId === update.taskId &&
+            item.userId === update.userId
+          )
+      ),
+      queuedUpdate
+    ]
+  };
+  saveAppData(nextData);
+  return nextData;
+};
+
+export const flushOfflineQueue = (
+  data: AppData,
+  syncedItemIds?: readonly string[]
+): AppData => {
+  const syncedIds = syncedItemIds ? new Set(syncedItemIds) : null;
+  const nextQueue: OfflineQueueItem[] = syncedIds
+    ? data.offlineQueue.filter((item) => !syncedIds.has(item.id))
+    : [];
+  const nextData: AppData = {
+    ...data,
+    offlineQueue: nextQueue
   };
   saveAppData(nextData);
   return nextData;

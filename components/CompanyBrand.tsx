@@ -28,14 +28,14 @@ export const CompanyBrand = ({
         width={109}
       />
       {isCompact ? null : (
-        <div className={cn("min-w-0", isFull ? "" : "flex-1")}>
+        <div className="min-w-0 flex-1">
           <p
             className={cn(
               "font-semibold uppercase leading-none text-[var(--primary-strong)]",
               isFull ? "text-xs" : "text-[10px]"
             )}
           >
-            BDTT 2026
+            Cổng vận hành nội bộ
           </p>
           <p
             className={cn(
@@ -53,12 +53,12 @@ export const CompanyBrand = ({
           >
             Nhà máy Đạm Cà Mau
           </p>
-          <p className={cn("mt-1 font-semibold text-[var(--text-muted)]", isFull ? "text-sm" : "text-xs")}>
+          <p className={cn("mt-1 font-medium text-[var(--text-muted)]", isFull ? "text-sm" : "text-xs")}>
             Xưởng Điều khiển
           </p>
           {isFull ? (
-            <p className="mt-3 text-sm font-semibold text-[var(--text-muted)]">
-              Tiến độ bảo dưỡng, giám sát WorkOrder và tổng hợp báo cáo nội bộ
+            <p className="mt-3 text-sm font-medium text-[var(--text-muted)]">
+              Công tác, nhiệm vụ, thông báo và báo cáo theo vai trò
             </p>
           ) : null}
         </div>

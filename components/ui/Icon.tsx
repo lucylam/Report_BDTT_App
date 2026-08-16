@@ -98,6 +98,8 @@ const iconMap: Record<IconName, LucideIcon> = {
   workorder: BriefcaseBusiness
 };
 
+export const isIconName = (value: string): value is IconName => value in iconMap;
+
 export const Icon = ({
   name,
   className,

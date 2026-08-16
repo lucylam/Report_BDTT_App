@@ -1,12 +1,31 @@
+import { Select } from "@/components/ui";
 import type { WorkerGroupMode } from "@/components/worker/taskView";
+import type { WorkerFilter } from "@/components/worker/types";
+
+const filterOptions: readonly {
+  readonly key: WorkerFilter;
+  readonly label: string;
+}[] = [
+  { key: "today", label: "Cần làm hôm nay" },
+  { key: "all", label: "Tất cả trạng thái" },
+  { key: "todo", label: "Chưa làm" },
+  { key: "progress", label: "Đang làm" },
+  { key: "done", label: "Hoàn thành" },
+  { key: "p1", label: "P1 chưa xong" },
+  { key: "cancelled", label: "Đã hủy" }
+];
 
 interface WorkerSearchControlsProps {
   readonly inputId: string;
   readonly searchQuery: string;
   readonly resultLabel: string;
-  readonly unitChips: readonly string[];
+  readonly unitOptions: readonly string[];
+  readonly selectedUnit: string;
+  readonly filter: WorkerFilter;
   readonly groupMode: WorkerGroupMode;
+  readonly onFilterChange: (value: WorkerFilter) => void;
   readonly onSearchChange: (value: string) => void;
+  readonly onUnitChange: (value: string) => void;
   readonly onGroupModeChange: (value: WorkerGroupMode) => void;
 }
 
@@ -14,101 +33,109 @@ export const WorkerSearchControls = ({
   inputId,
   searchQuery,
   resultLabel,
-  unitChips,
+  unitOptions,
+  selectedUnit,
+  filter,
   groupMode,
+  onFilterChange,
   onSearchChange,
+  onUnitChange,
   onGroupModeChange
 }: WorkerSearchControlsProps): React.ReactElement => {
+  const hasCustomFilter =
+    searchQuery.trim().length > 0 ||
+    selectedUnit.length > 0 ||
+    filter !== "today" ||
+    groupMode !== "unit";
+
+  const resetFilters = (): void => {
+    onSearchChange("");
+    onUnitChange("");
+    onFilterChange("today");
+    onGroupModeChange("unit");
+  };
+
   return (
-    <div className="glass-card rounded-[var(--radius-card)] p-3">
-      <label className="block" htmlFor={inputId}>
-        <span className="mobile-compact-label block font-semibold uppercase text-[var(--primary-strong)]">
-          Tìm nhanh tag / WO / khu vực
-        </span>
-        <div className="control-pill mt-2 flex min-h-12 items-center gap-2 rounded-[var(--radius-field)] px-3 focus-within:border-[var(--primary)] focus-within:ring-4 focus-within:ring-[var(--primary-soft)] md:min-h-12">
-          <span aria-hidden="true" className="text-sm font-semibold text-[var(--primary)]">
-            Tìm
+    <div className="min-w-0">
+      <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(280px,1fr)_180px_180px_180px_auto] xl:items-end">
+        <label className="min-w-0 sm:col-span-2 xl:col-span-1" htmlFor={inputId}>
+          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+            Tìm kiếm
           </span>
           <input
             autoComplete="off"
-            className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-[var(--text-soft)] md:text-base"
+            className="focus-ring control-pill min-h-11 w-full rounded-[var(--radius-field)] px-3 text-base font-medium text-[var(--foreground)] outline-none placeholder:font-normal placeholder:text-[var(--text-soft)] lg:text-sm"
             id={inputId}
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="VD: 41PT, 1007, UREA, 164156"
+            placeholder="Tag, WorkOrder, hạng mục hoặc khu vực"
             type="search"
             value={searchQuery}
           />
-          {searchQuery ? (
-            <button
-              className="focus-ring pressable min-h-10 shrink-0 rounded-[var(--radius-field)] bg-[var(--primary-soft)] px-3 text-sm font-semibold leading-tight text-[var(--primary-strong)]"
-              onClick={() => onSearchChange("")}
-              type="button"
-            >
-              Xóa
-            </button>
-          ) : null}
-        </div>
-      </label>
+        </label>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="mobile-compact-label min-w-0 font-semibold text-[var(--text-muted)]">
-          {resultLabel}
-        </span>
-        {unitChips.map((unit) => {
-          const active = searchQuery.trim().toLowerCase() === unit.toLowerCase();
-          return (
-            <button
-              className={`focus-ring pressable mobile-action-button max-w-full min-w-0 rounded-full border px-3 text-xs font-semibold ${
-                active
-                  ? "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-sm"
-                  : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-              }`}
-              key={unit}
-              onClick={() => onSearchChange(active ? "" : unit)}
-              type="button"
-            >
-              <span className="mobile-button-label">{unit}</span>
-            </button>
-          );
-        })}
+        <label className="min-w-0">
+          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+            Trạng thái
+          </span>
+          <Select
+            className="min-h-11 lg:min-h-11"
+            onChange={(event) => onFilterChange(event.target.value as WorkerFilter)}
+            value={filter}
+          >
+            {filterOptions.map((option) => (
+              <option key={option.key} value={option.key}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+        </label>
+
+        <label className="min-w-0">
+          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+            Đơn vị
+          </span>
+          <Select
+            className="min-h-11 lg:min-h-11"
+            onChange={(event) => onUnitChange(event.target.value)}
+            value={selectedUnit}
+          >
+            <option value="">Tất cả đơn vị</option>
+            {unitOptions.map((unit) => (
+              <option key={unit} value={unit}>
+                {unit}
+              </option>
+            ))}
+          </Select>
+        </label>
+
+        <label className="min-w-0">
+          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+            Nhóm hiển thị
+          </span>
+          <Select
+            className="min-h-11 lg:min-h-11"
+            onChange={(event) => onGroupModeChange(event.target.value as WorkerGroupMode)}
+            value={groupMode}
+          >
+            <option value="unit">Theo đơn vị</option>
+            <option value="section">Theo section</option>
+          </Select>
+        </label>
+
+        {hasCustomFilter ? (
+          <button
+            className="focus-ring pressable min-h-11 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-sm font-medium text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)] sm:self-end"
+            onClick={resetFilters}
+            type="button"
+          >
+            Đặt lại
+          </button>
+        ) : null}
       </div>
 
-      <div className="control-pill mt-3 grid grid-cols-2 gap-1 rounded-[var(--radius-field)] p-1">
-        <GroupButton
-          active={groupMode === "unit"}
-          label="Theo đơn vị"
-          onClick={() => onGroupModeChange("unit")}
-        />
-        <GroupButton
-          active={groupMode === "section"}
-          label="Theo section"
-          onClick={() => onGroupModeChange("section")}
-        />
-      </div>
+      <p aria-live="polite" className="mt-2 text-sm font-medium text-[var(--text-muted)]">
+        {resultLabel}
+      </p>
     </div>
-  );
-};
-
-const GroupButton = ({
-  active,
-  label,
-  onClick
-}: {
-  readonly active: boolean;
-  readonly label: string;
-  readonly onClick: () => void;
-}): React.ReactElement => {
-  return (
-    <button
-      className={`focus-ring pressable mobile-action-button min-w-0 rounded-[var(--radius-field)] px-2 text-xs font-semibold ${
-        active
-          ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
-          : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-      }`}
-      onClick={onClick}
-      type="button"
-    >
-      <span className="mobile-button-label">{label}</span>
-    </button>
   );
 };

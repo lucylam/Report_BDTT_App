@@ -6,6 +6,9 @@ import type { ProgressRecord } from "@/types/domain";
 
 const normalizePhotoPath = (value: string | undefined): string => value ?? "";
 
+const normalizePhotoPaths = (value: readonly string[] | undefined): string =>
+  (value ?? []).join("\n");
+
 export const isSameWorkerProgressUpdate = (
   left: WorkerProgressUpdate,
   right: WorkerProgressUpdate
@@ -13,18 +16,20 @@ export const isSameWorkerProgressUpdate = (
   return (
     left.percent === right.percent &&
     left.note === right.note &&
-    normalizePhotoPath(left.photoPath) === normalizePhotoPath(right.photoPath)
+    normalizePhotoPath(left.photoPath) === normalizePhotoPath(right.photoPath) &&
+    normalizePhotoPaths(left.photoPaths) === normalizePhotoPaths(right.photoPaths)
   );
 };
 
 export const isSameProgressUpdate = (
-  current: Pick<ProgressRecord, "percent" | "note" | "photoPath"> | null,
+  current: Pick<ProgressRecord, "percent" | "note" | "photoPath" | "photoPaths"> | null,
   update: WorkerProgressUpdate
 ): boolean => {
   return (
     (current?.percent ?? 0) === update.percent &&
     (current?.note ?? "") === update.note &&
-    normalizePhotoPath(current?.photoPath) === normalizePhotoPath(update.photoPath)
+    normalizePhotoPath(current?.photoPath) === normalizePhotoPath(update.photoPath) &&
+    normalizePhotoPaths(current?.photoPaths) === normalizePhotoPaths(update.photoPaths)
   );
 };
 
@@ -50,7 +55,8 @@ export const mergeProgressWithDrafts = (
       reportDate,
       percent: draft.percent,
       note: draft.note,
-      photoPath: draft.photoPath
+      photoPath: draft.photoPath,
+      photoPaths: draft.photoPaths
     }))
   ];
 };

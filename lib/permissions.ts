@@ -33,6 +33,16 @@ export const hasFullOrgScope = (account: ScopeAccount | null): boolean => {
   );
 };
 
+export const canManageBdttTasks = (account: ScopeAccount | null): boolean => {
+  if (!account || account.role !== "admin") return false;
+  return (
+    hasFullOrgScope(account) ||
+    account.orgRole === "nhomTruong" ||
+    account.orgRole === "nhomPho" ||
+    account.orgRole === "pnt"
+  );
+};
+
 export const canViewProfile = (
   account: ScopeAccount | null,
   profile: Profile
@@ -54,9 +64,13 @@ export const canViewTask = (
 ): boolean => {
   if (!account) return false;
   if (hasFullOrgScope(account)) return true;
-  if (!task.assignedTo) return false;
-  const assignee = profiles.find((profile) => profile.id === task.assignedTo);
-  return assignee ? canViewProfile(account, assignee) : false;
+  const responsibleProfileIds = [task.assignedTo, task.reporterId].filter(
+    (profileId): profileId is string => Boolean(profileId)
+  );
+  return responsibleProfileIds.some((profileId) => {
+    const profile = profiles.find((item) => item.id === profileId);
+    return profile ? canViewProfile(account, profile) : false;
+  });
 };
 
 export const getScopedAppData = (
@@ -66,12 +80,9 @@ export const getScopedAppData = (
   if (hasFullOrgScope(account)) return data;
 
   const profiles = data.profiles.filter((profile) => canViewProfile(account, profile));
-  const profileIds = new Set(profiles.map((profile) => profile.id));
   const tasks = data.tasks.filter((task) => canViewTask(account, task, data.profiles));
   const taskIds = new Set(tasks.map((task) => task.id));
-  const progress = data.progress.filter(
-    (record) => profileIds.has(record.userId) && taskIds.has(record.taskId)
-  );
+  const progress = data.progress.filter((record) => taskIds.has(record.taskId));
 
   return {
     ...data,

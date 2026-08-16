@@ -1,34 +1,32 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { FirstRunOnboarding } from "@/components/FirstRunOnboarding";
 import { PwaRuntime } from "@/components/PwaRuntime";
 import { getInitialTheme } from "@/lib/theme.server";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin", "vietnamese"],
-  variable: "--font-plus-jakarta",
-  display: "swap"
+  display: "swap",
+  variable: "--font-plus-jakarta"
 });
 
 export const metadata: Metadata = {
-  applicationName: "BDTT 2026",
-  title: "Tiến độ BDTT 2026",
-  description: "Theo dõi tiến độ BDTT 2026 nội bộ",
+  applicationName: "Cổng vận hành Xưởng Điều khiển",
+  title: "Cổng vận hành Xưởng Điều khiển",
+  description: "Công tác, nhiệm vụ và báo cáo nội bộ của Xưởng Điều khiển",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "BDTT 2026"
+    title: "Xưởng Điều khiển"
   },
   icons: {
     icon: [
-      { url: "/icons/app-icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/app-icon-512.png", sizes: "512x512", type: "image/png" },
       { url: "/icons/app-icon.svg", type: "image/svg+xml" },
       { url: "/icons/app-icon-192.svg", sizes: "192x192", type: "image/svg+xml" },
       { url: "/icons/app-icon-512.svg", sizes: "512x512", type: "image/svg+xml" }
-    ],
-    apple: [{ url: "/icons/app-icon-192.png", sizes: "192x192", type: "image/png" }]
+    ]
   }
 };
 
@@ -54,7 +52,14 @@ const RootLayout = async ({ children }: RootLayoutProps): Promise<React.ReactEle
     >
       <body>
         <PwaRuntime />
-        {children}
+        <FirstRunOnboarding />
+        <a
+          className="fixed left-4 top-4 z-[2000] -translate-y-[200%] rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 py-3 font-semibold text-[var(--primary-contrast)] transition-transform focus:translate-y-0"
+          href="#main-content"
+        >
+          Bỏ qua đến nội dung chính
+        </a>
+        <div id="main-content" tabIndex={-1}>{children}</div>
       </body>
     </html>
   );

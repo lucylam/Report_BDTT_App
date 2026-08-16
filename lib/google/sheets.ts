@@ -11,7 +11,7 @@ const DEFAULT_SHEET_NAME = "DATA";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 const PROGRESS_CLEAR_RANGE_PATTERN = /^N3:AF(\d+)$/;
-const PROGRESS_UPDATE_RANGE = "N3";
+const FULL_CLEAR_RANGE_PATTERN = /^A3:AG(\d+)$/;
 
 const base64UrlEncode = (value: string): string =>
   Buffer.from(value)
@@ -20,9 +20,7 @@ const base64UrlEncode = (value: string): string =>
     .replaceAll("/", "_")
     .replace(/=+$/g, "");
 
-const normalizePrivateKey = (value: string): string => {
-  return value.replace(/\\n/g, "\n");
-};
+const normalizePrivateKey = (value: string): string => value.replace(/\\n/g, "\n");
 
 const getServiceAccountCredential = async (): Promise<{
   readonly clientEmail: string;
@@ -38,10 +36,7 @@ const getServiceAccountCredential = async (): Promise<{
   if (jsonValue) {
     const credential = readGoogleServiceAccountFromJson(jsonValue);
     if (credential.client_email && credential.private_key) {
-      return {
-        clientEmail: credential.client_email,
-        privateKey: credential.private_key
-      };
+      return { clientEmail: credential.client_email, privateKey: credential.private_key };
     }
   }
 
@@ -49,35 +44,23 @@ const getServiceAccountCredential = async (): Promise<{
   if (jsonPath) {
     const credential = await readGoogleServiceAccountFromPath(jsonPath);
     if (credential.client_email && credential.private_key) {
-      return {
-        clientEmail: credential.client_email,
-        privateKey: credential.private_key
-      };
+      return { clientEmail: credential.client_email, privateKey: credential.private_key };
     }
   }
 
-  const serverConfig = await readServerConfigFile();
-  const credential = serverConfig?.googleServiceAccount;
+  const credential = (await readServerConfigFile())?.googleServiceAccount;
   if (credential?.client_email && credential.private_key) {
-    return {
-      clientEmail: credential.client_email,
-      privateKey: credential.private_key
-    };
+    return { clientEmail: credential.client_email, privateKey: credential.private_key };
   }
 
   throw new Error(
-    "Chưa cấu hình Google service account. Cần GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY, GOOGLE_SERVICE_ACCOUNT_JSON, GOOGLE_SERVICE_ACCOUNT_JSON_PATH, BDTT_SERVER_CONFIG_JSON, hoặc BDTT_SERVER_CONFIG_PATH."
+    "Chưa cấu hình Google service account. Cần khai báo credential trong biến môi trường hoặc server config."
   );
 };
 
 const createJwt = (clientEmail: string, privateKey: string): string => {
   const now = Math.floor(Date.now() / 1000);
-  const header = base64UrlEncode(
-    JSON.stringify({
-      alg: "RS256",
-      typ: "JWT"
-    })
-  );
+  const header = base64UrlEncode(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claim = base64UrlEncode(
     JSON.stringify({
       iss: clientEmail,
@@ -95,35 +78,27 @@ const createJwt = (clientEmail: string, privateKey: string): string => {
     .replaceAll("+", "-")
     .replaceAll("/", "_")
     .replace(/=+$/g, "");
-
   return `${unsignedToken}.${signature}`;
 };
 
 const getAccessToken = async (): Promise<string> => {
   const { clientEmail, privateKey } = await getServiceAccountCredential();
-
   const response = await fetch(TOKEN_URL, {
     method: "POST",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded"
-    },
+    headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
       assertion: createJwt(clientEmail, privateKey)
     })
   });
-
   const json = (await response.json()) as {
     access_token?: string;
     error?: string;
     error_description?: string;
   };
   if (!response.ok || !json.access_token) {
-    throw new Error(
-      json.error_description || json.error || "Không lấy được Google access token."
-    );
+    throw new Error(json.error_description || json.error || "Không lấy được Google access token.");
   }
-
   return json.access_token;
 };
 
@@ -133,90 +108,131 @@ const getSpreadsheetId = (): string =>
 const getSheetName = (): string =>
   process.env.GOOGLE_SHEETS_DATA_SHEET_NAME || DEFAULT_SHEET_NAME;
 
-const sheetRange = (sheetName: string, range: string): string =>
-  `${sheetName}!${range}`;
+const sheetRange = (range: string): string => `${getSheetName()}!${range}`;
 
-const assertProgressWriteRange = (options: {
-  readonly clearRange?: string;
-  readonly updateRange?: string;
-}): { readonly clearRange: string; readonly updateRange: string } => {
-  const clearRange = options.clearRange;
-  const updateRange = options.updateRange;
-  const clearRangeMatch = clearRange?.match(PROGRESS_CLEAR_RANGE_PATTERN);
-  const clearEndRow = clearRangeMatch ? Number(clearRangeMatch[1]) : 0;
+export const computeSheetChecksum = (
+  values: readonly (readonly ExportCellValue[])[]
+): string =>
+  crypto.createHash("sha256").update(JSON.stringify(values)).digest("hex");
 
-  if (!clearRangeMatch || clearEndRow < 3) {
-    throw new Error(
-      `Google Sheet sync bị chặn: clearRange phải nằm trong N3:AF..., hiện tại là "${clearRange ?? "trống"}".`
-    );
+export const readDataSheetValues = async (
+  range = "A2:AG"
+): Promise<readonly (readonly ExportCellValue[])[]> => {
+  if (!/^[A-Z]+\d+:[A-Z]+(?:\d+)?$/.test(range)) {
+    throw new Error("Phạm vi đọc Google Sheet không hợp lệ.");
   }
-
-  if (updateRange !== PROGRESS_UPDATE_RANGE) {
-    throw new Error(
-      `Google Sheet sync bị chặn: updateRange phải là ${PROGRESS_UPDATE_RANGE}, hiện tại là "${updateRange ?? "trống"}".`
-    );
+  const accessToken = await getAccessToken();
+  const target = encodeURIComponent(sheetRange(range));
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${getSpreadsheetId()}/values/${target}?majorDimension=ROWS`,
+    { headers: { authorization: `Bearer ${accessToken}` }, cache: "no-store" }
+  );
+  const payload = (await response.json()) as {
+    values?: ExportCellValue[][];
+    error?: { message?: string };
+  };
+  if (!response.ok) {
+    throw new Error(payload.error?.message || "Không đọc được Google Sheet DATA.");
   }
-
-  return { clearRange: clearRangeMatch[0], updateRange };
+  return payload.values ?? [];
 };
 
-export const syncDataSheetValues = async (
+const writeValues = async (
   values: readonly (readonly ExportCellValue[])[],
-  options: {
-    readonly clearRange?: string;
-    readonly updateRange?: string;
-  }
+  clearRange: string,
+  updateRange: string
 ): Promise<{ readonly updatedRows: number; readonly updatedColumns: number }> => {
-  if (values.length === 0 || values[0].length === 0) {
-    throw new Error("Không có dữ liệu để ghi Google Sheet.");
-  }
-
-  const safeRange = assertProgressWriteRange(options);
   const accessToken = await getAccessToken();
-  const spreadsheetId = getSpreadsheetId();
-  const sheetName = getSheetName();
   const headers = {
     authorization: `Bearer ${accessToken}`,
     "content-type": "application/json"
   };
-
-  const clearRange = encodeURIComponent(sheetRange(sheetName, safeRange.clearRange));
-  const clearResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${clearRange}:clear`,
-    {
-      method: "POST",
-      headers,
-      body: "{}"
-    }
-  );
-  if (!clearResponse.ok) {
-    const errorText = await clearResponse.text();
-    throw new Error(`Không clear được sheet DATA: ${errorText}`);
-  }
-
-  const updateRange = encodeURIComponent(sheetRange(sheetName, safeRange.updateRange));
+  const encodedUpdateRange = encodeURIComponent(sheetRange(updateRange));
   const updateResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${updateRange}?valueInputOption=USER_ENTERED`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${getSpreadsheetId()}/values/${encodedUpdateRange}?valueInputOption=USER_ENTERED`,
     {
       method: "PUT",
       headers,
-      body: JSON.stringify({
-        majorDimension: "ROWS",
-        values
-      })
+      body: JSON.stringify({ majorDimension: "ROWS", values })
     }
   );
-  const updateJson = (await updateResponse.json()) as {
+  const payload = (await updateResponse.json()) as {
     updatedRows?: number;
     updatedColumns?: number;
     error?: { message?: string };
   };
   if (!updateResponse.ok) {
-    throw new Error(updateJson.error?.message || "Không ghi được Google Sheet DATA.");
+    throw new Error(payload.error?.message || "Không ghi được Google Sheet DATA.");
   }
 
+  const clearMatch = clearRange.match(/^([A-Z]+)3:([A-Z]+)(\d+)$/);
+  const oldLastRow = clearMatch ? Number(clearMatch[3]) : 0;
+  const newLastRow = values.length + 2;
+  if (clearMatch && oldLastRow > newLastRow) {
+    const trailingRange = `${clearMatch[1]}${newLastRow + 1}:${clearMatch[2]}${oldLastRow}`;
+    const encodedTrailingRange = encodeURIComponent(sheetRange(trailingRange));
+    const clearResponse = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${getSpreadsheetId()}/values/${encodedTrailingRange}:clear`,
+      { method: "POST", headers, body: "{}" }
+    );
+    if (!clearResponse.ok) {
+      throw new Error(
+        `Đã ghi dữ liệu mới nhưng chưa xóa được các dòng thừa: ${await clearResponse.text()}`
+      );
+    }
+  }
   return {
-    updatedRows: updateJson.updatedRows ?? values.length,
-    updatedColumns: updateJson.updatedColumns ?? values[0].length
+    updatedRows: payload.updatedRows ?? values.length,
+    updatedColumns: payload.updatedColumns ?? values[0]?.length ?? 0
   };
+};
+
+const writeProgressModeHeader = async (): Promise<void> => {
+  const accessToken = await getAccessToken();
+  const target = encodeURIComponent(sheetRange("AG2"));
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${getSpreadsheetId()}/values/${target}?valueInputOption=RAW`,
+    {
+      method: "PUT",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ majorDimension: "ROWS", values: [["Chế độ tiến độ"]] })
+    }
+  );
+  if (!response.ok) {
+    throw new Error("Không cập nhật được tiêu đề cột AG trên Google Sheet DATA.");
+  }
+};
+
+export const syncDataSheetValues = async (
+  values: readonly (readonly ExportCellValue[])[],
+  options: { readonly clearRange?: string; readonly updateRange?: string }
+): Promise<{ readonly updatedRows: number; readonly updatedColumns: number }> => {
+  if (values.length === 0 || values[0]?.length === 0) {
+    throw new Error("Không có dữ liệu để ghi Google Sheet.");
+  }
+  const clearRange = options.clearRange ?? "";
+  const match = clearRange.match(PROGRESS_CLEAR_RANGE_PATTERN);
+  if (!match || Number(match[1]) < 3 || options.updateRange !== "N3") {
+    throw new Error("Google Sheet sync bị chặn: vùng tiến độ phải nằm trong N3:AF.");
+  }
+  return writeValues(values, clearRange, "N3");
+};
+
+export const syncFullDataSheetValues = async (
+  values: readonly (readonly ExportCellValue[])[],
+  options: { readonly clearRange?: string; readonly updateRange?: string }
+): Promise<{ readonly updatedRows: number; readonly updatedColumns: number }> => {
+  if (values.length === 0 || values[0]?.length !== 33) {
+    throw new Error("Snapshot Google Sheet phải có ít nhất một dòng và đúng 33 cột A:AG.");
+  }
+  const clearRange = options.clearRange ?? "";
+  const match = clearRange.match(FULL_CLEAR_RANGE_PATTERN);
+  if (!match || Number(match[1]) < 3 || options.updateRange !== "A3") {
+    throw new Error("Google Sheet sync bị chặn: snapshot chỉ được ghi trong A3:AG.");
+  }
+  await writeProgressModeHeader();
+  return writeValues(values, clearRange, "A3");
 };

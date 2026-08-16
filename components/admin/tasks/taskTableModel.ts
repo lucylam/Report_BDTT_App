@@ -39,7 +39,8 @@ export const getStatusLabel = (status: StatusFilter): string => {
 
 export const getStatusTone = (status: StatusFilter): BadgeTone => {
   if (status === "completed") return "success";
-  if (status === "inProgress") return "accent";
+  if (status === "inProgress") return "info";
+  if (status === "notStarted") return "warning";
   if (status === "cancelled") return "danger";
   return "neutral";
 };

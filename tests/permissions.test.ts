@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getOrgScopeKey } from "@/lib/org2026";
 import {
+  canManageBdttTasks,
   canViewProfile,
   canViewTask,
   getScopedAppData,
@@ -91,6 +92,31 @@ describe("isDataAdminAccount", () => {
     expect(isDataAdminAccount(makeAccount({ username: "vinhlpp" }))).toBe(true);
     expect(isDataAdminAccount(makeAccount({ username: "kiaq" }))).toBe(false);
     expect(isDataAdminAccount(null)).toBe(false);
+  });
+});
+
+describe("canManageBdttTasks", () => {
+  it("cho phép trưởng nhóm, phó nhóm và trưởng phân nhóm quản lý đúng phạm vi", () => {
+    expect(
+      canManageBdttTasks(
+        makeAccount({ username: "lead-a", role: "admin", orgRole: "nhomTruong" })
+      )
+    ).toBe(true);
+    expect(
+      canManageBdttTasks(
+        makeAccount({ username: "pnt-a", role: "admin", orgRole: "pnt" })
+      )
+    ).toBe(true);
+    expect(
+      canManageBdttTasks(
+        makeAccount({ username: "deputy-a", role: "admin", orgRole: "nhomPho" })
+      )
+    ).toBe(true);
+    expect(
+      canManageBdttTasks(
+        makeAccount({ username: "worker-a", role: "worker", orgRole: "member" })
+      )
+    ).toBe(false);
   });
 });
 
@@ -210,6 +236,18 @@ describe("canViewTask", () => {
     expect(
       canViewTask(account, { ...baseTask, assignedTo: "" }, [])
     ).toBe(false);
+  });
+
+  it("người được chỉ định báo cáo vẫn xem được task", () => {
+    const reporter = makeAccount({ username: "reporter" });
+    const profiles = [makeProfile({ id: reporter.id, orgGroup: "Nhóm A" })];
+    expect(
+      canViewTask(
+        reporter,
+        { ...baseTask, assignedTo: "user-other", reporterId: reporter.id },
+        profiles
+      )
+    ).toBe(true);
   });
 });
 

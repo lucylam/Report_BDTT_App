@@ -6,60 +6,64 @@
   --font-sans: var(--font-plus-jakarta), "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
-  /* Base — nền xám phẳng "earthy" (clone family-budget) */
+  /* Giao diện BDTT cũ: nền xám ấm, thẻ trắng, điểm nhấn lime/cam. */
   --background: #f2f2f0;
   --foreground: #111111;
   --text-muted: #5f625a;
   --text-soft: #74786f;
   --surface: #ffffff;
   --surface-muted: #f7f7f4;
+  --surface-elevated: #f7f7f4;
   --surface-glass: #ffffff;
   --surface-warm: #fff0dc;
+  --sidebar: #ffffff;
   --card: #ffffff;
   --line: #ececea;
   --line-soft: #f1f1ee;
   --border: rgba(17, 17, 17, 0.07);
   --border-strong: rgba(17, 17, 17, 0.12);
 
-  /* Primary — lime / teal */
   --primary: #9bd13b;
   --primary-strong: #6fa51f;
   --primary-contrast: #ffffff;
   --primary-soft: #edf8d5;
   --primary-pale: #f5fbe8;
 
-  /* Accent — cam */
   --accent: #f2a24a;
   --accent-strong: #d76635;
   --accent-soft: #fff0dc;
+  --on-accent: #ffffff;
 
-  /* Warning — vàng */
   --warning: #b18416;
   --warning-strong: #8a6510;
   --warning-soft: #fff7c7;
+  --on-warning: #ffffff;
 
-  /* Danger — đỏ ấm (giữ phân biệt "trễ / P1") */
   --danger: #df5b3a;
   --danger-strong: #c2452a;
   --danger-soft: #fde7e0;
+  --on-danger: #ffffff;
 
-  /* Success — teal / lime */
   --success: #6fa51f;
   --success-strong: #5a8718;
   --success-soft: #edf8d5;
+  --on-success: #ffffff;
 
-  /* Info — xanh dịu (giữ cho badge "đơn vị") */
   --info: #4a90d9;
   --info-strong: #2f6fb5;
   --info-soft: #e7f0fb;
+  --on-info: #ffffff;
 
-  /* Yellow — cho SegmentBar / thanh phân bổ */
   --yellow: #e7e94a;
   --yellow-strong: #c9b735;
   --yellow-soft: #fff7c7;
+  --on-yellow: #171820;
 
   --purple: #7c5cff;
   --purple-soft: #f0edff;
+
+  --gradient-primary: linear-gradient(135deg, #9bd13b, #6fa51f);
+  --gradient-panel: linear-gradient(135deg, #ffffff, #f7f7f4);
 
   --chart-primary: #6fa51f;
   --chart-primary-soft: #dfeec4;
@@ -73,12 +77,10 @@
   --chart-muted: #a6a69e;
   --chart-grid: rgba(17, 17, 17, 0.08);
 
-  /* Bóng phẳng theo finance-card */
   --shadow-soft-sm: 0 12px 30px rgb(16 24 40 / 0.05);
   --shadow-soft-md: 0 16px 36px -8px rgb(16 24 40 / 0.08);
   --shadow-floating: 0 24px 50px -16px rgb(16 24 40 / 0.18);
 
-  /* Bo góc nhỏ lại (clone) */
   --radius-card: 1rem;
   --radius-field: 0.75rem;
   --radius-panel: 1.25rem;
@@ -96,8 +98,10 @@
   --text-soft: #a5aa9d;
   --surface: #20211c;
   --surface-muted: #2b2d25;
+  --surface-elevated: #2b2d25;
   --surface-glass: #20211c;
   --surface-warm: rgb(255 183 102 / 0.14);
+  --sidebar: #20211c;
   --card: #20211c;
   --line: rgb(255 255 255 / 0.12);
   --line-soft: rgb(255 255 255 / 0.08);
@@ -113,29 +117,38 @@
   --accent: #ffb766;
   --accent-strong: #ff9f43;
   --accent-soft: rgb(255 183 102 / 0.15);
+  --on-accent: #111111;
 
   --warning: #f4d35e;
   --warning-strong: #ffda6b;
   --warning-soft: rgb(244 211 94 / 0.16);
+  --on-warning: #111111;
 
   --danger: #ff8a6b;
   --danger-strong: #ff7354;
   --danger-soft: rgb(255 138 107 / 0.15);
+  --on-danger: #111111;
 
   --success: #b7e35a;
   --success-strong: #d5ff7d;
   --success-soft: rgb(183 227 90 / 0.14);
+  --on-success: #111111;
 
   --info: #8cc7ff;
   --info-strong: #b4dcff;
   --info-soft: rgb(140 199 255 / 0.14);
+  --on-info: #111111;
 
   --yellow: #eff26d;
   --yellow-strong: #f7f992;
   --yellow-soft: rgb(239 242 109 / 0.14);
+  --on-yellow: #171820;
 
   --purple: #b3a2ff;
   --purple-soft: rgb(179 162 255 / 0.14);
+
+  --gradient-primary: linear-gradient(135deg, #b7e35a, #8fbe37);
+  --gradient-panel: linear-gradient(135deg, #20211c, #2b2d25);
 
   --chart-primary: #b7e35a;
   --chart-primary-soft: rgb(183 227 90 / 0.2);
@@ -170,11 +183,17 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
+  position: relative;
+  isolation: isolate;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 16px;
+  font-weight: 400;
   line-height: 1.5;
+  font-optical-sizing: auto;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -183,6 +202,8 @@ body {
   overscroll-behavior-y: auto;
 }
 
+/* Readability floor for dense operational screens. Spacing stays compact while
+   captions and secondary text remain legible on plant laptops and mobile. */
 .text-\[10px\] {
   font-size: 0.75rem !important;
   line-height: 1.05rem !important;
@@ -192,12 +213,21 @@ body {
 .text-\[12px\],
 .text-xs {
   font-size: 0.8125rem !important;
-  line-height: 1.25rem !important;
+  line-height: 1.2rem !important;
 }
 
 .text-sm {
   font-size: 0.9375rem !important;
-  line-height: 1.45rem !important;
+  line-height: 1.4rem !important;
+}
+
+body::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  display: none;
 }
 
 button,
@@ -267,7 +297,7 @@ button:disabled {
 }
 
 .focus-ring:focus-visible {
-  outline: 3px solid rgba(111, 165, 31, 0.35);
+  outline: 3px solid color-mix(in srgb, var(--primary) 42%, transparent);
   outline-offset: 2px;
 }
 
@@ -323,13 +353,40 @@ button:disabled {
 .icon-button:hover {
   background: var(--surface-muted);
   color: var(--foreground);
-  transform: translateY(-1px);
+}
+
+@media (min-width: 1024px) {
+  .icon-button {
+    min-height: 2.25rem;
+    min-width: 2.25rem;
+  }
 }
 
 .icon-button-active {
   background: var(--primary-strong);
-  color: white;
+  color: var(--primary-contrast);
   box-shadow: var(--shadow-soft-sm);
+}
+
+.primary-action {
+  background: var(--primary-strong);
+  color: var(--primary-contrast);
+  box-shadow: var(--shadow-soft-sm);
+}
+
+.primary-action:hover {
+  background: var(--success-strong);
+}
+
+.reference-panel {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft-sm);
+}
+
+.workspace-sidebar {
+  background: var(--surface);
+  color: var(--foreground);
 }
 
 .progress-track {
@@ -416,14 +473,14 @@ button:disabled {
 }
 
 .mobile-chart-date {
-  font-size: 0.72rem !important;
-  line-height: 0.9rem !important;
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
   white-space: nowrap;
 }
 
 .mobile-chart-value {
-  font-size: 0.75rem !important;
-  line-height: 1rem !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.1rem !important;
 }
 
 .mobile-worker-day-row > :nth-child(2) {
@@ -442,14 +499,36 @@ button:disabled {
 }
 
 @media (max-width: 640px) {
+  .worker-mobile-view {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .worker-mobile-view .text-xs,
+  .worker-mobile-view .text-\[11px\] {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  .worker-mobile-view input,
+  .worker-mobile-view select,
+  .worker-mobile-view textarea {
+    font-size: 1rem;
+  }
+
+  .worker-mobile-view button,
+  .worker-mobile-view label[role="button"] {
+    min-height: 2.75rem;
+  }
+
   .mobile-compact-label {
-    font-size: 0.75rem !important;
-    line-height: 1rem !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.1rem !important;
   }
 
   .mobile-compact-tab {
-    font-size: 0.75rem !important;
-    line-height: 1rem !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.1rem !important;
   }
 }
 
@@ -476,7 +555,7 @@ button:disabled {
   }
 }
 
-/* Thanh tiến độ sọc chéo 45° (clone family-budget) — dùng cho ProgressBar striped */
+/* Thanh tiến độ sọc chéo 45° — dùng cho ProgressBar striped */
 .progress-stripe-primary {
   background-image: repeating-linear-gradient(45deg, var(--primary) 0, var(--primary) 4px, var(--primary-strong) 4px, var(--primary-strong) 7px);
 }
@@ -499,7 +578,7 @@ button:disabled {
   background-image: repeating-linear-gradient(45deg, var(--yellow) 0, var(--yellow) 4px, var(--yellow-strong) 4px, var(--yellow-strong) 7px);
 }
 
-/* Hiệu ứng vào trang / skeleton (clone family-budget) */
+/* Hiệu ứng vào trang / skeleton */
 .page-enter {
   animation: page-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -526,6 +605,11 @@ button:disabled {
   background: linear-gradient(110deg, rgb(226 232 240 / 0.58) 8%, rgb(241 245 249 / 0.95) 18%, rgb(226 232 240 / 0.58) 33%);
   background-size: 220% 100%;
   animation: shimmer-skeleton 1.25s linear infinite;
+}
+
+.dark .shimmer-skeleton {
+  background: linear-gradient(110deg, rgb(48 50 63 / 0.78) 8%, rgb(65 67 82 / 0.92) 18%, rgb(48 50 63 / 0.78) 33%);
+  background-size: 220% 100%;
 }
 
 @keyframes page-enter {

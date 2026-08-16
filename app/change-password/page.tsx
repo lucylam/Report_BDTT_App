@@ -29,7 +29,7 @@ const ChangePasswordPage = (): React.ReactElement => {
     setIsSubmitting(true);
     try {
       await changePassword(nextPassword);
-      router.replace(currentAccount?.role === "admin" ? "/admin" : "/worker");
+      router.replace("/");
     } catch (changeError) {
       setError(
         changeError instanceof Error ? changeError.message : "Không đổi được mật khẩu."

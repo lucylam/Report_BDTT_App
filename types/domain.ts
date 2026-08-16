@@ -1,4 +1,5 @@
 export type ProgressPercent = number;
+export type ProgressMode = "continuous" | "binary";
 
 export type UserRole = "admin" | "worker";
 
@@ -62,7 +63,7 @@ export interface AuthAccount {
   readonly managedSubgroups: readonly string[];
   readonly isPlaceholder: boolean;
   readonly canLogin: boolean;
-  readonly password: string;
+  readonly password?: string;
   readonly mustChangePassword: boolean;
 }
 
@@ -82,6 +83,11 @@ export interface Task {
   readonly resourceName: string;
   readonly nhomTruong: string;
   readonly assignedTo: string | null;
+  readonly reporterId?: string | null;
+  readonly taskSource?: "plan" | "ad_hoc";
+  readonly progressMode?: ProgressMode;
+  readonly createdBy?: string | null;
+  readonly updatedBy?: string | null;
   readonly isCancelled: boolean;
   readonly cancelReason: string;
 }
@@ -93,7 +99,68 @@ export interface ProgressRecord {
   readonly percent: ProgressPercent;
   readonly note: string;
   readonly photoPath?: string;
+  readonly photoPaths?: readonly string[];
   readonly submittedAt?: string;
+  readonly submittedBy?: string;
+}
+
+export interface PlanVersion {
+  readonly batchId: string;
+  readonly fileName: string;
+  readonly importedAt: string;
+  readonly rowCount: number;
+}
+
+export type SheetSyncStatus = "never" | "synced" | "pending" | "failed";
+
+export interface SheetSyncSummary {
+  readonly status: SheetSyncStatus;
+  readonly checksum: string;
+  readonly lastSyncedChecksum?: string;
+  readonly lastSyncedAt?: string;
+  readonly lastError?: string;
+  readonly rowCount: number;
+}
+
+export type DataIssueType = "wrong_tag" | "wrong_wo" | "wrong_assignment" | "other";
+export type DataIssueStatus = "open" | "reviewing" | "resolved" | "rejected";
+
+export interface DataIssueReport {
+  readonly id: string;
+  readonly taskId: string;
+  readonly reportedBy: string;
+  readonly issueType: DataIssueType;
+  readonly currentValue: string;
+  readonly suggestedValue: string;
+  readonly note: string;
+  readonly status: DataIssueStatus;
+  readonly resolvedBy?: string;
+  readonly resolutionNote: string;
+  readonly reviewStartedAt?: string;
+  readonly resolvedAt?: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export type AbnormalitySeverity = "low" | "medium" | "high" | "critical";
+export type AbnormalityStatus = "new" | "in_progress" | "resolved" | "closed";
+
+export interface BdttAbnormality {
+  readonly id: string;
+  readonly taskId?: string;
+  readonly title: string;
+  readonly description: string;
+  readonly location: string;
+  readonly severity: AbnormalitySeverity;
+  readonly status: AbnormalityStatus;
+  readonly reportedBy: string;
+  readonly assignedTo?: string;
+  readonly resolutionNote: string;
+  readonly photoPaths: readonly string[];
+  readonly resolvedAt?: string;
+  readonly closedAt?: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
 }
 
 export interface DailySnapshot {
@@ -109,6 +176,7 @@ export interface DailySnapshot {
 }
 
 export interface QueuedProgressUpdate {
+  readonly kind: "progress";
   readonly id: string;
   readonly taskId: string;
   readonly userId: string;
@@ -116,8 +184,20 @@ export interface QueuedProgressUpdate {
   readonly percent: ProgressPercent;
   readonly note: string;
   readonly photoPath?: string;
+  readonly photoPaths?: readonly string[];
   readonly queuedAt: string;
 }
+
+export interface QueuedCancelTaskUpdate {
+  readonly kind: "cancelTask";
+  readonly id: string;
+  readonly taskId: string;
+  readonly userId: string;
+  readonly cancelReason: string;
+  readonly queuedAt: string;
+}
+
+export type OfflineQueueItem = QueuedProgressUpdate | QueuedCancelTaskUpdate;
 
 export interface AppData {
   readonly accounts: AuthAccount[];
@@ -125,8 +205,9 @@ export interface AppData {
   readonly tasks: Task[];
   readonly progress: ProgressRecord[];
   readonly dailySnapshots: DailySnapshot[];
-  readonly offlineQueue: QueuedProgressUpdate[];
+  readonly offlineQueue: OfflineQueueItem[];
   readonly activeUserId: string | null;
+  readonly planVersion?: PlanVersion;
 }
 
 export interface ImportPreview {

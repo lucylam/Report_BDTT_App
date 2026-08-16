@@ -210,14 +210,14 @@ export const WorkerStatusTable = ({
 
   return (
     <section className="grid min-w-0 gap-4">
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid overflow-hidden border border-[var(--line)] sm:grid-cols-2 xl:grid-cols-4">
         <PersonnelMetric icon="people" label="Nhân sự" tone="info" value={filteredRows.length} />
         <PersonnelMetric icon="check" label="Đã gửi" tone="success" value={submittedCount} />
         <PersonnelMetric icon="bell" label="Còn thiếu" tone="danger" value={missingCount} />
         <PersonnelMetric icon="chart" label="Tiến độ TB" suffix="%" tone="warning" value={averagePercent} />
       </section>
 
-      <Widget className="p-4 lg:p-5">
+      <Widget>
         <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <WidgetHeader
             className="mb-0"
@@ -250,7 +250,7 @@ export const WorkerStatusTable = ({
 
         <div className="mt-4 grid gap-2 sm:max-w-xs">
           <label>
-            <span className="mb-1 block text-xs font-semibold uppercase text-[var(--text-soft)]">
+            <span className="mb-1 block text-xs font-medium uppercase text-[var(--text-soft)]">
               Ngày báo cáo
             </span>
             <Select
@@ -270,14 +270,14 @@ export const WorkerStatusTable = ({
         </div>
       </Widget>
 
-      <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.82fr)]">
-        <Widget className="min-w-0 p-4 lg:p-5">
-          <div className="grid min-w-0 gap-2">
-            <div className="hidden rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] px-4 py-3 text-xs font-semibold uppercase text-[var(--text-soft)] lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.8fr)_minmax(0,1.35fr)_minmax(0,0.75fr)] lg:gap-4">
+      <div className="grid min-w-0 items-start gap-4 2xl:grid-cols-[minmax(0,1.5fr)_minmax(340px,0.7fr)]">
+        <Widget className="min-w-0 overflow-hidden p-0">
+          <div className="grid min-w-0">
+            <div className="hidden border-b border-[var(--line)] bg-[var(--surface-muted)] px-4 py-2 text-xs font-medium uppercase text-[var(--text-soft)] lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)_minmax(0,1.8fr)_minmax(0,1fr)] lg:gap-3">
               <span className="truncate">Nhân sự</span>
               <span className="truncate">Nhóm</span>
               <span className="truncate">Số liệu</span>
-              <span className="truncate">Tiến độ</span>
+              <span className="truncate">Tiến độ / trạng thái</span>
             </div>
             {filteredRows.map((row) => (
               <WorkerStatusRow
@@ -293,7 +293,7 @@ export const WorkerStatusTable = ({
           </div>
         </Widget>
 
-        <div className="hidden xl:block">
+        <div className="hidden 2xl:block">
           <WorkerDetailPanel row={selectedRow} />
         </div>
       </div>
@@ -323,10 +323,12 @@ const PersonnelMetric = ({
   readonly tone: "danger" | "info" | "success" | "warning";
   readonly value: number;
 }): React.ReactElement => (
-  <div className={`metric-card rounded-[var(--radius-card)] p-4 ${toneText(tone)}`}>
-    <Icon name={icon} />
-    <p className="mt-3 text-[11px] font-semibold uppercase text-[var(--text-soft)]">{label}</p>
-    <p className="mt-2 text-3xl font-semibold tabular-nums">
+  <div className={`border-b border-r border-[var(--line)] px-3 py-2.5 ${toneText(tone)} ${toneSurface(tone)}`}>
+    <div className="flex items-center gap-2">
+      <Icon name={icon} />
+      <p className="text-[11px] font-medium uppercase text-[var(--text-soft)]">{label}</p>
+    </div>
+    <p className="mt-1 text-xl font-semibold tabular-nums">
       {value}
       {suffix}
     </p>
@@ -343,10 +345,10 @@ const WorkerStatusRow = ({
   readonly row: WorkerRow;
 }): React.ReactElement => (
   <button
-    className={`focus-ring pressable grid min-w-0 gap-3 rounded-[var(--radius-card)] border p-4 text-left shadow-[var(--shadow-soft-sm)] transition lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.8fr)_minmax(0,1.35fr)_minmax(0,0.75fr)] lg:items-center lg:gap-4 ${
+    className={`focus-ring pressable grid min-w-0 gap-3 border-x-0 border-t-0 border-b px-4 py-3 text-left lg:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)_minmax(0,1.8fr)_minmax(0,1fr)] lg:items-center lg:gap-3 lg:py-2.5 ${
       active
-        ? "border-[var(--primary)] bg-[var(--primary-soft)]"
-        : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--primary)] hover:bg-[var(--line-soft)]"
+        ? "border-l-2 border-b-[var(--line)] border-l-[var(--primary)] bg-[var(--primary-soft)]"
+        : "border-b-[var(--line)] bg-[var(--surface)] hover:bg-[var(--line-soft)]"
     }`}
     onClick={onSelect}
     type="button"
@@ -357,7 +359,7 @@ const WorkerStatusRow = ({
         <p className="mt-1 truncate text-xs text-[var(--text-muted)]">@{row.profile.username}</p>
       </div>
       <span className="shrink-0 lg:hidden">
-        <Badge tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
+        <Badge solid tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
       </span>
     </div>
 
@@ -365,22 +367,24 @@ const WorkerStatusRow = ({
       <p className="line-clamp-2 text-sm font-semibold leading-5 text-[var(--foreground)]">
         {row.profile.nhom || row.profile.subgroup || "N/A"}
       </p>
-      <p className="mt-1 text-xs font-semibold text-[var(--text-soft)]">
+      <p className="mt-1 text-xs font-medium text-[var(--text-soft)]">
         {row.submittedDays}/{row.totalDays} ngày có báo cáo
       </p>
     </div>
 
-    <div className="grid min-w-0 grid-cols-2 gap-2">
+    <div className="grid min-w-0 grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-[var(--line)]">
       <InfoMini label="Hạng mục" value={row.assigned} />
       <InfoMini label="Cập nhật" value={row.updatedTasks} />
       <InfoMini label="Xong" value={row.done} />
       <InfoMini label="Cancel" value={row.cancelled} />
     </div>
 
-    <div className="min-w-0">
-      <ProgressInline percent={row.percent} />
-      <div className="mt-2 hidden lg:block">
-        <Badge tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
+    <div className="min-w-0 lg:flex lg:items-center lg:gap-2">
+      <div className="min-w-0 flex-1">
+        <ProgressInline percent={row.percent} />
+      </div>
+      <div className="mt-2 hidden shrink-0 lg:block lg:mt-0">
+        <Badge solid tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
       </div>
     </div>
   </button>
@@ -389,7 +393,7 @@ const WorkerStatusRow = ({
 const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.ReactElement => {
   if (!row) {
     return (
-      <Widget className="p-5">
+      <Widget>
         <WidgetHeader
           subtitle="Chọn một nhân sự để xem lịch gửi báo cáo và danh sách hạng mục."
           title="Chi tiết nhân sự"
@@ -399,7 +403,7 @@ const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.R
   }
 
   return (
-    <Widget className="p-5">
+    <Widget>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xl font-semibold">{row.profile.fullName}</p>
@@ -407,7 +411,7 @@ const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.R
             @{row.profile.username} · {row.profile.nhom || row.profile.subgroup || "N/A"}
           </p>
         </div>
-        <Badge tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
+        <Badge solid tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-3">
@@ -428,9 +432,9 @@ const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.R
               className="grid grid-cols-[110px_minmax(0,1fr)_70px] items-center gap-3 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]"
               key={day.date}
             >
-              <p className="text-xs font-semibold text-[var(--text-muted)]">{formatViDate(day.date)}</p>
+              <p className="text-xs font-medium text-[var(--text-muted)]">{formatViDate(day.date)}</p>
               <ProgressInline percent={day.percent} />
-              <Badge tone={day.submitted ? "success" : "danger"}>
+              <Badge solid tone={day.submitted ? "success" : "danger"}>
                 {day.submitted ? day.updatedTasks : "Thiếu"}
               </Badge>
             </div>
@@ -492,7 +496,7 @@ const WorkerMobileDetailSheet = ({
     : row.taskStatuses;
 
   return (
-    <div className="fixed inset-0 z-50 xl:hidden" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 2xl:hidden" role="dialog" aria-modal="true">
       <button
         aria-label="Đóng chi tiết nhân sự"
         className="absolute inset-0 h-full w-full bg-black/45"
@@ -507,7 +511,7 @@ const WorkerMobileDetailSheet = ({
               <p className="truncate text-lg font-semibold text-[var(--foreground)]">
                 {row.profile.fullName}
               </p>
-              <p className="mt-1 truncate text-sm font-semibold text-[var(--text-muted)]">
+              <p className="mt-1 truncate text-sm font-medium text-[var(--text-muted)]">
                 @{row.profile.username} · {row.profile.nhom || row.profile.subgroup || "Chưa phân nhóm"}
               </p>
             </div>
@@ -532,7 +536,7 @@ const WorkerMobileDetailSheet = ({
             <div className="min-w-0 flex-1">
               <ProgressInline percent={row.percent} />
             </div>
-            <Badge tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
+            <Badge solid tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
           </div>
 
           <div className="mt-4 grid grid-cols-3 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] p-1">
@@ -605,7 +609,7 @@ const MobileWorkerDayList = ({ row }: { readonly row: WorkerRow }): React.ReactE
   <div className="grid gap-3">
     <div>
       <p className="font-semibold text-[var(--foreground)]">Lịch gửi báo cáo</p>
-      <p className="mt-1 text-sm font-semibold text-[var(--text-muted)]">
+      <p className="mt-1 text-sm font-medium text-[var(--text-muted)]">
         {row.submittedDays}/{row.totalDays} ngày có cập nhật
       </p>
     </div>
@@ -615,11 +619,11 @@ const MobileWorkerDayList = ({ row }: { readonly row: WorkerRow }): React.ReactE
         className="mobile-worker-day-row grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3"
         key={day.date}
       >
-        <p className="min-w-0 text-sm font-semibold leading-5 text-[var(--text-muted)]">
+        <p className="min-w-0 text-sm font-medium leading-5 text-[var(--text-muted)]">
           {formatViDate(day.date)}
         </p>
         <ProgressInline percent={day.percent} />
-        <Badge tone={day.submitted ? "success" : "danger"}>
+        <Badge solid tone={day.submitted ? "success" : "danger"}>
           {day.submitted ? day.updatedTasks : "Thiếu"}
         </Badge>
       </div>
@@ -641,7 +645,7 @@ const MobileWorkerTaskList = ({
   <div className="grid gap-3">
     <div>
       <p className="font-semibold text-[var(--foreground)]">Hạng mục được giao</p>
-      <p className="mt-1 text-sm font-semibold text-[var(--text-muted)]">
+      <p className="mt-1 text-sm font-medium text-[var(--text-muted)]">
         {tasks.length}/{row.taskStatuses.length} hạng mục phù hợp
       </p>
     </div>
@@ -656,7 +660,7 @@ const MobileWorkerTaskList = ({
     </label>
 
     {tasks.length === 0 ? (
-      <div className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-4 text-sm font-semibold text-[var(--text-muted)]">
+      <div className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-4 text-sm font-medium text-[var(--text-muted)]">
         Không có hạng mục phù hợp với bộ lọc hiện tại.
       </div>
     ) : null}
@@ -678,7 +682,7 @@ const MobileWorkerTaskList = ({
               {item.task.taskName || "N/A"}
             </p>
           </div>
-          <span className="rounded-full border border-[var(--line)] bg-[var(--surface)] px-3 py-1 text-sm font-semibold tabular-nums">
+          <span className="rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] px-3 py-1 text-sm font-semibold tabular-nums">
             {item.percent}%
           </span>
         </div>
@@ -718,11 +722,11 @@ const InfoMini = ({
   readonly label: string;
   readonly value: number;
 }): React.ReactElement => (
-  <span className="min-w-0 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-2 py-1.5 text-center leading-tight ring-1 ring-[var(--border)]">
-    <span className="mobile-compact-label block truncate font-semibold uppercase text-[var(--text-soft)]">
+  <span className="min-w-0 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-2 py-1.5 text-center leading-tight ring-1 ring-[var(--border)] lg:flex lg:items-baseline lg:justify-center lg:gap-1.5 lg:rounded-none lg:bg-transparent lg:px-2 lg:py-1 lg:ring-0">
+    <span className="mobile-compact-label block truncate font-medium uppercase text-[var(--text-soft)] lg:text-[10px]">
       {label}
     </span>
-    <span className="mt-0.5 block text-sm font-semibold tabular-nums text-[var(--foreground)]">
+    <span className="mt-0.5 block text-sm font-semibold tabular-nums text-[var(--foreground)] lg:mt-0">
       {value}
     </span>
   </span>
@@ -736,14 +740,21 @@ const InfoTile = ({
   readonly value: number;
 }): React.ReactElement => (
   <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
-    <p className="mobile-compact-label font-semibold uppercase text-[var(--text-soft)]">{label}</p>
+    <p className="mobile-compact-label font-medium uppercase text-[var(--text-soft)]">{label}</p>
     <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
   </div>
 );
 
 const toneText = (tone: "danger" | "info" | "success" | "warning"): string => {
-  if (tone === "success") return "text-[var(--success)]";
-  if (tone === "warning") return "text-[var(--accent-strong)]";
-  if (tone === "danger") return "text-[var(--danger)]";
-  return "text-[var(--info)]";
+  if (tone === "success") return "text-[var(--success-strong)]";
+  if (tone === "warning") return "text-[var(--warning-strong)]";
+  if (tone === "danger") return "text-[var(--danger-strong)]";
+  return "text-[var(--info-strong)]";
+};
+
+const toneSurface = (tone: "danger" | "info" | "success" | "warning"): string => {
+  if (tone === "success") return "bg-[var(--success-soft)]";
+  if (tone === "warning") return "bg-[var(--warning-soft)]";
+  if (tone === "danger") return "bg-[var(--danger-soft)]";
+  return "bg-[var(--info-soft)]";
 };

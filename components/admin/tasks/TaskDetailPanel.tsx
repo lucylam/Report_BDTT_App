@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 import { Badge, Icon, Widget, WidgetHeader } from "@/components/ui";
 import {
   getProgressLabel,
@@ -6,15 +9,56 @@ import {
   getStatusTone,
   type TaskRow
 } from "@/components/admin/tasks/taskTableModel";
+import { getProgressPhotoPaths, resolvePhotoPreviewUrl } from "@/lib/photo";
+import { LeaderTaskManager } from "@/components/admin/tasks/LeaderTaskManager";
+import type { AppData } from "@/types/domain";
 
 interface TaskDetailPanelProps {
   readonly row: TaskRow | null;
+  readonly data: AppData;
+  readonly canManage: boolean;
+  readonly onDataChanged: () => Promise<void>;
 }
 
-export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactElement => {
+export const TaskDetailPanel = ({
+  row,
+  data,
+  canManage,
+  onDataChanged
+}: TaskDetailPanelProps): React.ReactElement => {
+  const [photoPreviews, setPhotoPreviews] = useState<
+    readonly { readonly source: string; readonly url: string }[]
+  >([]);
+  const photoPaths = useMemo(
+    () => getProgressPhotoPaths(row?.progress),
+    [row?.progress]
+  );
+  const visiblePhotoPreviews = photoPreviews.filter((preview) =>
+    photoPaths.includes(preview.source)
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    if (photoPaths.length === 0) return;
+
+    void Promise.all(
+      photoPaths.map(async (source) => ({ source, url: await resolvePhotoPreviewUrl(source) }))
+    )
+      .then((previews) => {
+        if (!cancelled) setPhotoPreviews(previews);
+      })
+      .catch((error: unknown) => {
+        console.error("[TaskDetailPanel.resolvePhotoPreviewUrl]", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [photoPaths]);
+
   if (!row) {
     return (
-      <Widget className="p-5">
+      <Widget>
         <WidgetHeader
           subtitle="Chọn một dòng trong bảng để xem task, WO, resource, ghi chú và ảnh cập nhật."
           title="Chi tiết hạng mục"
@@ -24,9 +68,6 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
   }
 
   const { task, percent, progress, status } = row;
-  const photoPath = progress?.photoPath;
-  const canPreviewPhoto =
-    photoPath?.startsWith("data:") || photoPath?.startsWith("http://") || photoPath?.startsWith("https://");
 
   return (
     <Widget className="sticky top-24 max-h-[calc(100dvh-7rem)] overflow-auto p-5">
@@ -66,6 +107,30 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
         </p>
       </div>
 
+      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+        <Info
+          label="Người thực hiện"
+          value={
+            data.profiles.find((profile) => profile.id === task.assignedTo)?.fullName ||
+            task.resourceName ||
+            "N/A"
+          }
+        />
+        <Info
+          label="Người báo cáo"
+          value={
+            data.profiles.find((profile) => profile.id === task.reporterId)?.fullName ||
+            "N/A"
+          }
+        />
+      </div>
+
+      {task.taskSource === "ad_hoc" ? (
+        <p className="mt-4 rounded-[var(--radius-field)] bg-[var(--accent-soft)] px-4 py-3 text-xs font-semibold uppercase text-[var(--accent-strong)] ring-1 ring-[var(--border)]">
+          Task phát sinh
+        </p>
+      ) : null}
+
       {task.isCancelled ? (
         <div className="mt-4 rounded-[var(--radius-field)] bg-[var(--danger-soft)] p-4 text-sm font-semibold text-[var(--danger)]">
           Lý do cancel: {task.cancelReason || "Chưa nhập lý do"}
@@ -80,17 +145,35 @@ export const TaskDetailPanel = ({ row }: TaskDetailPanelProps): React.ReactEleme
         <p className="mt-2 min-h-12 text-sm leading-6 text-[var(--foreground)]">
           {progress?.note || "Chưa có ghi chú cho ngày báo cáo hiện tại."}
         </p>
+        {progress?.submittedBy && progress.submittedBy !== progress.userId ? (
+          <p className="mt-2 text-xs font-medium text-[var(--text-muted)]">
+            Cập nhật thay bởi:{" "}
+            {data.profiles.find((profile) => profile.id === progress.submittedBy)?.fullName ||
+              "Tài khoản quản lý"}
+          </p>
+        ) : null}
       </div>
 
-      {canPreviewPhoto && photoPath ? (
-        <Image
-          alt={`Ảnh cập nhật cho ${task.tagname}`}
-          className="mt-4 h-56 w-full rounded-[var(--radius-field)] border border-[var(--border-strong)] object-cover shadow-[var(--shadow-soft-sm)]"
-          height={224}
-          src={photoPath}
-          unoptimized
-          width={420}
-        />
+      {visiblePhotoPreviews.length > 0 ? (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {visiblePhotoPreviews.map((photo, index) => (
+            <Image
+              alt={`Ảnh cập nhật ${index + 1} cho ${task.tagname}`}
+              className="h-36 w-full rounded-[var(--radius-field)] border border-[var(--border-strong)] object-cover"
+              height={180}
+              key={photo.source}
+              src={photo.url}
+              unoptimized
+              width={260}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {canManage ? (
+        <div className="mt-3">
+          <LeaderTaskManager data={data} onChanged={onDataChanged} row={row} />
+        </div>
       ) : null}
     </Widget>
   );

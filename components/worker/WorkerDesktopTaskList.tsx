@@ -44,7 +44,7 @@ export const WorkerDesktopTaskList = ({
   if (taskGroups.length === 0) {
     return (
       <EmptyState
-        description="Thử chọn bộ lọc “Tất cả” hoặc xóa từ khóa tìm kiếm. Nếu vẫn trống, có thể bạn chưa được giao hạng mục nào — hãy liên hệ nhóm trưởng."
+        description="Thử chọn bộ lọc “Tất cả” hoặc xóa từ khóa tìm kiếm. Nếu vẫn trống, có thể bạn chưa được giao hạng mục nào. Hãy liên hệ nhóm trưởng."
         title="Không có hạng mục"
       />
     );
@@ -77,7 +77,7 @@ export const WorkerDesktopTaskList = ({
                 </span>
               </span>
               <span
-                className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
+                className={`flex shrink-0 items-center gap-2 rounded-[var(--radius-field)] border-l-2 px-3 py-1 text-sm font-semibold ${
                   isCollapsed
                     ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-1 ring-[var(--line)]"
                     : "bg-black/10 text-[var(--primary-contrast)]"
@@ -113,10 +113,10 @@ export const WorkerDesktopTaskList = ({
                     >
                       <div className="grid grid-cols-[minmax(110px,0.9fr)_minmax(0,1.7fr)_72px] items-center gap-3">
                         <div className="min-w-0">
-                          <p className="truncate font-mono text-base font-semibold">
+                          <p className="break-words font-mono text-base font-semibold text-[var(--info-strong)]">
                             {task.tagname}
                           </p>
-                          <p className="mt-1 text-xs font-semibold text-[var(--text-muted)]">
+                          <p className="mt-1 text-xs font-medium text-[var(--text-muted)]">
                             WO {task.wo || "N/A"}
                           </p>
                         </div>
@@ -135,9 +135,9 @@ export const WorkerDesktopTaskList = ({
                           <p className="text-right text-base font-semibold tabular-nums">
                             {task.isCancelled ? "NA" : `${percent}%`}
                           </p>
-                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-muted)] ring-1 ring-[var(--border)]">
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-[1px] bg-[var(--surface-muted)] ring-1 ring-[var(--border)]">
                             <div
-                              className={`h-full rounded-full ${percentTone(percent)}`}
+                              className={`h-full rounded-[1px] ${percentTone(percent)}`}
                               style={{ width: `${task.isCancelled ? 0 : percent}%` }}
                             />
                           </div>

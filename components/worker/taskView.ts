@@ -106,13 +106,11 @@ export const groupWorkerTasks = (
     );
 };
 
-export const getTaskUnitChips = (
-  tasks: readonly Task[],
-  limit = 6
+export const getTaskUnitOptions = (
+  tasks: readonly Task[]
 ): readonly string[] => {
   return Array.from(new Set(tasks.map((task) => task.donVi).filter(Boolean)))
     .sort((first, second) =>
       first.localeCompare(second, "vi", { numeric: true, sensitivity: "base" })
-    )
-    .slice(0, limit);
+    );
 };

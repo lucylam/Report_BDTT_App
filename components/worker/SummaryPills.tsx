@@ -16,7 +16,7 @@ export const SummaryPills = ({ percents }: SummaryPillsProps): React.ReactElemen
       segments={[
         { value: done, tone: "success", label: "Hoàn thành" },
         { value: progress, tone: "accent", label: "Đang làm" },
-        { value: todo, tone: "neutral", label: "Chưa làm" }
+        { value: todo, tone: "warning", label: "Chưa làm" }
       ]}
     />
   );

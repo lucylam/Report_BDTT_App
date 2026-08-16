@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { DEFAULT_REPORT_DATE } from "@/lib/date";
 import type { ImportPreview, Profile, Task } from "@/types/domain";
 
 const REQUIRED_HEADERS = [
@@ -60,7 +61,7 @@ const normalizeTaskDate = (value: unknown): string => {
 
   const day = match[1]?.padStart(2, "0") ?? "01";
   const month = match[2]?.padStart(2, "0") ?? "01";
-  const rawYear = match[3] ?? "2025";
+  const rawYear = match[3] ?? DEFAULT_REPORT_DATE.slice(0, 4);
   const year = rawYear.length === 2 ? `20${rawYear}` : rawYear;
   return `${year}-${month}-${day}`;
 };

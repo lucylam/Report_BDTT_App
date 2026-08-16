@@ -3,38 +3,44 @@ import { Icon, type IconName } from "@/components/ui";
 
 interface TaskKpiStripProps {
   readonly kpis: TaskKpis;
+  readonly onSelect?: (key: keyof TaskKpis) => void;
 }
 
 const kpiItems: ReadonlyArray<{
   readonly key: keyof TaskKpis;
   readonly icon: IconName;
   readonly label: string;
-  readonly tone: string;
+  readonly className: string;
 }> = [
-  { key: "total", icon: "workorder", label: "Tổng hạng mục", tone: "text-[var(--foreground)]" },
-  { key: "p1Open", icon: "bell", label: "P1 chưa xong", tone: "text-[var(--danger)]" },
-  { key: "notStarted", icon: "list", label: "Chưa thực hiện", tone: "text-[var(--text-muted)]" },
-  { key: "inProgress", icon: "chart", label: "Đang thực hiện", tone: "text-[var(--accent-strong)]" },
-  { key: "cancelled", icon: "logout", label: "Cancel", tone: "text-[var(--danger)]" },
-  { key: "completed", icon: "check", label: "Hoàn thành", tone: "text-[var(--success)]" }
+  { key: "total", icon: "workorder", label: "Tổng hạng mục", className: "bg-[var(--surface)] text-[var(--foreground)]" },
+  { key: "p1Open", icon: "bell", label: "P1 chưa xong", className: "bg-[var(--danger-soft)] text-[var(--danger-strong)]" },
+  { key: "notStarted", icon: "list", label: "Chưa thực hiện", className: "bg-[var(--warning-soft)] text-[var(--warning-strong)]" },
+  { key: "inProgress", icon: "chart", label: "Đang thực hiện", className: "bg-[var(--info-soft)] text-[var(--info-strong)]" },
+  { key: "cancelled", icon: "logout", label: "Cancel", className: "bg-[var(--danger-soft)] text-[var(--danger-strong)]" },
+  { key: "completed", icon: "check", label: "Hoàn thành", className: "bg-[var(--success-soft)] text-[var(--success-strong)]" }
 ];
 
-export const TaskKpiStrip = ({ kpis }: TaskKpiStripProps): React.ReactElement => {
+export const TaskKpiStrip = ({ kpis, onSelect }: TaskKpiStripProps): React.ReactElement => {
   return (
     <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
       {kpiItems.map((item) => (
-        <div
-          className={`metric-card rounded-[var(--radius-card)] p-4 ${item.tone}`}
+        <button
+          aria-label={`Lọc theo ${item.label}: ${kpis[item.key]}`}
+          className={`metric-card focus-ring pressable min-h-11 rounded-[var(--radius-card)] p-4 text-left transition-colors hover:border-[var(--primary)] ${item.className}`}
           key={item.key}
+          onClick={() => onSelect?.(item.key)}
+          type="button"
         >
-          <Icon name={item.icon} />
-          <p className="mt-3 text-[11px] font-semibold uppercase text-[var(--text-soft)]">
-            {item.label}
-          </p>
-          <p className="mt-2 text-3xl font-semibold tabular-nums">
+          <div className="flex items-center gap-2">
+            <Icon name={item.icon} />
+            <p className="text-xs font-semibold uppercase text-current opacity-80">
+              {item.label}
+            </p>
+          </div>
+          <p className="mt-2 text-2xl font-semibold tabular-nums">
             {kpis[item.key]}
           </p>
-        </div>
+        </button>
       ))}
     </section>
   );

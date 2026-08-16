@@ -140,6 +140,7 @@ describe("buildExcelDashboard", () => {
 
     expect(utility?.done).toBe(1);
     expect(ureaLeadRow?.values[leadB]).toBe(50);
+    expect(ureaLeadRow?.totals[leadB]).toBe(1);
     expect(htdk?.rows).toHaveLength(1);
     expect(htdk?.rows[0]?.name).toBe("HTĐK_VÕ QUANG MINH");
   });
@@ -220,6 +221,7 @@ describe("buildExcelDashboard", () => {
     expect(dashboard.leadNames).toEqual([lead]);
     expect(leadStatus).toMatchObject({ completed: 1, inProgress: 1, total: 2 });
     expect(unitLead?.values[lead]).toBe(75);
+    expect(unitLead?.totals[lead]).toBe(2);
     expect(htdk?.rows).toHaveLength(1);
     expect(htdk?.rows[0]).toMatchObject({ total: 2, percent: 75 });
   });

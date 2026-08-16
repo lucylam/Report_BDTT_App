@@ -40,4 +40,15 @@ describe("getTaskPercent", () => {
     expect(getTaskPercent([record], "task-2", "2025-08-22")).toBe(0);
     expect(getTaskPercent([record], "task-1", "2025-08-23")).toBe(0);
   });
+
+  it("uses the latest submission when report ownership changed", () => {
+    const replacement: ProgressRecord = {
+      ...record,
+      userId: "user-2",
+      percent: 75,
+      submittedBy: "leader-1",
+      submittedAt: "2025-08-22T06:00:00.000Z"
+    };
+    expect(getTaskPercent([record, replacement], "task-1", "2025-08-22")).toBe(75);
+  });
 });

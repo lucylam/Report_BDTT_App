@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
+import { getAuthenticatedDataAdmin } from "@/lib/api/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Task } from "@/types/domain";
 
@@ -58,6 +59,11 @@ const createTaskKey = (task: {
     normalizeResourceName(normalizeText(task.resource_name))
   ].join("|");
 
+const describeTaskKey = (key: string): string => {
+  const [tagname, wo, resourceName] = key.split("|");
+  return `${tagname || "NO_TAG"} / ${wo || "NO_WO"} / ${resourceName || "NO_RESOURCE"}`;
+};
+
 const findAssignedProfileId = (
   profiles: readonly DbProfile[],
   resourceName: string
@@ -96,6 +102,9 @@ const toTaskRow = (
   resource_name: task.resourceName,
   nhom_truong: task.nhomTruong,
   assigned_to: assignedTo,
+  reporter_id: assignedTo,
+  task_source: "plan",
+  progress_mode: task.progressMode === "binary" ? "binary" : "continuous",
   is_cancelled: task.isCancelled,
   cancel_reason: task.cancelReason,
   updated_at: new Date().toISOString()
@@ -142,6 +151,11 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       );
     }
 
+    const auth = await getAuthenticatedDataAdmin(request, supabase);
+    if (!auth.ok) {
+      return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
+    }
+
     const body = (await request.json()) as ImportTasksBody;
     const tasks = body.tasks ?? [];
     if (tasks.length === 0) {
@@ -159,12 +173,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     }
 
     const dbProfiles = (profiles ?? []) as DbProfile[];
-    const importedBy =
-      dbProfiles.find(
-        (profile) =>
-          normalizeText(profile.username).toLowerCase() ===
-          normalizeText(body.importedByUsername).toLowerCase()
-      )?.id ?? null;
+    const importedBy = auth.profile.id;
 
     const { data: batch, error: batchError } = await supabase
       .from("import_batches")
@@ -188,10 +197,69 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     }
 
     const existingByKey = new Map<string, string>();
+    const existingIdsByKey = new Map<string, string[]>();
     existingTaskResult.tasks.forEach((task) => {
       const key = createTaskKey(task);
+      existingIdsByKey.set(key, [...(existingIdsByKey.get(key) ?? []), task.id]);
       if (!existingByKey.has(key)) existingByKey.set(key, task.id);
     });
+
+    const incomingCountsByKey = new Map<string, number>();
+    tasks.forEach((task) => {
+      const key = createTaskKey({
+        tagname: task.tagname,
+        wo: task.wo,
+        resource_name: task.resourceName
+      });
+      incomingCountsByKey.set(key, (incomingCountsByKey.get(key) ?? 0) + 1);
+    });
+    const duplicateIncomingKeys = Array.from(incomingCountsByKey.entries())
+      .filter(([, count]) => count > 1)
+      .map(([key]) => key);
+    if (duplicateIncomingKeys.length > 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `File import co key hang muc bi trung: ${duplicateIncomingKeys
+            .slice(0, 8)
+            .map(describeTaskKey)
+            .join("; ")}. Hay kiem tra DATA truoc khi ghi database.`
+        },
+        { status: 409 }
+      );
+    }
+
+    const { count: existingTaskCount, error: countError } = await supabase
+      .from("tasks")
+      .select("id", { count: "exact", head: true });
+    if (countError) {
+      return NextResponse.json({ error: countError.message }, { status: 500 });
+    }
+    if ((existingTaskCount ?? 0) > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Database đã có kế hoạch. Import chỉ được dùng cho lần khởi tạo đầu tiên; các thay đổi sau đó thực hiện trên WebApp."
+        },
+        { status: 409 }
+      );
+    }
+
+    const duplicateExistingKeys = Array.from(incomingCountsByKey.keys()).filter(
+      (key) => (existingIdsByKey.get(key)?.length ?? 0) > 1
+    );
+    if (duplicateExistingKeys.length > 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Database dang co nhieu hang muc cung key import: ${duplicateExistingKeys
+            .slice(0, 8)
+            .map(describeTaskKey)
+            .join("; ")}. Can lam sach du lieu truoc khi upsert.`
+        },
+        { status: 409 }
+      );
+    }
 
     let inserted = 0;
     let updated = 0;

@@ -36,7 +36,7 @@ export const DashboardExportButton = ({
   return (
     <button
       className={cn(
-        "focus-ring pressable min-h-12 min-w-0 max-w-full rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 py-3 text-center text-sm font-semibold leading-tight whitespace-normal text-[var(--primary-contrast)] shadow-[var(--shadow-soft-sm)] [overflow-wrap:anywhere] hover:bg-[var(--primary)]",
+        "focus-ring pressable min-h-11 min-w-0 max-w-full rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 py-2 text-center text-sm font-semibold leading-tight whitespace-normal text-[var(--primary-contrast)] shadow-[var(--shadow-soft-sm)] [overflow-wrap:anywhere] hover:bg-[var(--primary)] lg:min-h-10",
         className
       )}
       data-export-hidden="true"
@@ -88,24 +88,24 @@ const readDashboardExportTheme = (): DashboardExportTheme => {
   return {
     fontFamily: body.fontFamily,
     colors: {
-      bg: value("--background", "#f2f2f0"),
-      surface: value("--surface", "#ffffff"),
-      mutedSurface: value("--surface-muted", "#f7f7f4"),
-      border: value("--line", "#ececea"),
-      text: value("--foreground", "#111111"),
-      muted: value("--text-muted", "#8b8b85"),
-      soft: value("--text-soft", "#a6a69e"),
-      primary: value("--primary", "#9bd13b"),
-      primaryStrong: value("--primary-strong", "#6fa51f"),
-      primarySoft: value("--primary-soft", "#edf8d5"),
-      done: value("--chart-done-strong", "#6fa51f"),
-      remaining: value("--chart-remaining-strong", "#b8b8af"),
-      accent: value("--chart-accent", "#f2a24a"),
-      accentStrong: value("--accent-strong", "#d76635"),
-      danger: value("--chart-danger", "#df5b3a"),
-      info: value("--chart-info", "#4a90d9"),
-      slate: value("--chart-muted", "#a6a69e"),
-      grid: value("--line", "#ececea")
+      bg: value("--background", "#11131a"),
+      surface: value("--surface", "#181a22"),
+      mutedSurface: value("--surface-muted", "#242631"),
+      border: value("--line", "rgba(255,255,255,0.09)"),
+      text: value("--foreground", "#f5f3fb"),
+      muted: value("--text-muted", "#b7b7c4"),
+      soft: value("--text-soft", "#9294a3"),
+      primary: value("--primary", "#2f7896"),
+      primaryStrong: value("--primary-strong", "#b693fa"),
+      primarySoft: value("--primary-soft", "rgba(198,167,255,0.15)"),
+      done: value("--chart-done-strong", "#007a5a"),
+      remaining: value("--chart-remaining-strong", "#7c8892"),
+      accent: value("--chart-accent", "#d56a00"),
+      accentStrong: value("--accent-strong", "#8ccfff"),
+      danger: value("--chart-danger", "#c53a32"),
+      info: value("--chart-info", "#0067a0"),
+      slate: value("--chart-muted", "#7c8892"),
+      grid: value("--line", "rgba(255,255,255,0.09)")
     }
   };
 };

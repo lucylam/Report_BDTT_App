@@ -1,4 +1,4 @@
-const CACHE_NAME = "bdtt-shell-v1";
+const CACHE_NAME = "portal-shell-v2";
 const SHELL_ASSETS = ["/", "/login", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

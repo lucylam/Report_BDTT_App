@@ -24,11 +24,11 @@ export const getTaskProgress = (
   taskId: string,
   reportDate: string
 ): ProgressRecord | null => {
-  return (
-    progress.find(
-      (record) => record.taskId === taskId && record.reportDate === reportDate
-    ) ?? null
-  );
+  return [...progress]
+    .filter((record) => record.taskId === taskId && record.reportDate === reportDate)
+    .sort((left, right) =>
+      (right.submittedAt ?? "").localeCompare(left.submittedAt ?? "")
+    )[0] ?? null;
 };
 
 export const getTaskPercent = (

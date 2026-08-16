@@ -1,5 +1,11 @@
 import { createProfilesFromAccounts, createSeedAccounts } from "@/lib/accounts";
-import type { AppData, AuthAccount, Profile } from "@/types/domain";
+import type {
+  AppData,
+  AuthAccount,
+  OfflineQueueItem,
+  Profile,
+  ProgressPercent
+} from "@/types/domain";
 
 const byUsername = (accounts: readonly AuthAccount[]): Map<string, AuthAccount> =>
   new Map(accounts.map((account) => [account.username.toLowerCase(), account]));
@@ -78,6 +84,75 @@ const mergeProfilesWithAccounts = (
   });
 };
 
+const isProgressPercent = (value: unknown): value is ProgressPercent => {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= 100
+  );
+};
+
+const normalizeText = (value: unknown): string =>
+  typeof value === "string" ? value.trim() : "";
+
+const normalizePhotoPaths = (value: unknown, legacyValue: unknown): string[] => {
+  const paths = Array.isArray(value)
+    ? value.map(normalizeText).filter(Boolean)
+    : [];
+  const legacyPath = normalizeText(legacyValue);
+  if (legacyPath && !paths.includes(legacyPath)) paths.unshift(legacyPath);
+  return paths.slice(0, 5);
+};
+
+export const normalizeOfflineQueue = (
+  items: readonly unknown[]
+): OfflineQueueItem[] => {
+  return items
+    .map((item): OfflineQueueItem | null => {
+      if (!item || typeof item !== "object") return null;
+      const candidate = item as Record<string, unknown>;
+      const kind = candidate.kind === "cancelTask" ? "cancelTask" : "progress";
+      const taskId = normalizeText(candidate.taskId);
+      const userId = normalizeText(candidate.userId);
+      const queuedAt = normalizeText(candidate.queuedAt) || new Date(0).toISOString();
+      const id =
+        normalizeText(candidate.id) ||
+        `${kind}-${taskId}-${userId}-${queuedAt}`;
+
+      if (!taskId || !userId) return null;
+
+      if (kind === "cancelTask") {
+        const cancelReason = normalizeText(candidate.cancelReason);
+        if (!cancelReason) return null;
+        return {
+          kind,
+          id,
+          taskId,
+          userId,
+          cancelReason,
+          queuedAt
+        };
+      }
+
+      const reportDate = normalizeText(candidate.reportDate);
+      if (!reportDate || !isProgressPercent(candidate.percent)) return null;
+      return {
+        kind,
+        id,
+        taskId,
+        userId,
+        reportDate,
+        percent: candidate.percent,
+        note: normalizeText(candidate.note),
+        photoPath: normalizeText(candidate.photoPath) || undefined,
+        photoPaths: normalizePhotoPaths(candidate.photoPaths, candidate.photoPath),
+        queuedAt
+      };
+    })
+    .filter((item): item is OfflineQueueItem => Boolean(item));
+};
+
 export const normalizeStoredAppData = (data: AppData): AppData => {
   const accounts = mergeAccountsWithSeeds(data.accounts);
   const accountIds = new Set(accounts.map((account) => account.id));
@@ -85,6 +160,21 @@ export const normalizeStoredAppData = (data: AppData): AppData => {
     ...data,
     accounts,
     profiles: mergeProfilesWithAccounts(data.profiles, accounts),
+    tasks: data.tasks.map((task) => ({
+      ...task,
+      reporterId: task.reporterId ?? task.assignedTo,
+      taskSource: task.taskSource === "ad_hoc" ? "ad_hoc" : "plan",
+      progressMode: task.progressMode === "binary" ? "binary" : "continuous"
+    })),
+    progress: data.progress.map((record) => {
+      const photoPaths = normalizePhotoPaths(record.photoPaths, record.photoPath);
+      return {
+        ...record,
+        photoPath: photoPaths[0],
+        photoPaths
+      };
+    }),
+    offlineQueue: normalizeOfflineQueue(data.offlineQueue),
     activeUserId:
       data.activeUserId && accountIds.has(data.activeUserId)
         ? data.activeUserId

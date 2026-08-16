@@ -38,7 +38,7 @@ export const WorkerGroupedTaskList = ({
   if (taskGroups.length === 0) {
     return (
       <EmptyState
-        description="Thử chọn bộ lọc “Tất cả” hoặc xóa từ khóa tìm kiếm. Nếu vẫn trống, có thể bạn chưa được giao hạng mục nào — hãy liên hệ nhóm trưởng."
+        description="Thử chọn bộ lọc “Tất cả” hoặc xóa từ khóa tìm kiếm. Nếu vẫn trống, có thể bạn chưa được giao hạng mục nào. Hãy liên hệ nhóm trưởng."
         title="Không có hạng mục"
       />
     );
@@ -62,11 +62,11 @@ export const WorkerGroupedTaskList = ({
             >
               <span className="min-w-0">
                 <span className="block truncate font-semibold">{group.label}</span>
-                <span className={`mt-0.5 block text-xs font-semibold ${isCollapsed ? "text-[var(--text-muted)]" : "text-[var(--primary-contrast)] opacity-75"}`}>
+                <span className={`mt-0.5 block text-xs font-medium ${isCollapsed ? "text-[var(--text-muted)]" : "text-[var(--primary-contrast)] opacity-75"}`}>
                   {group.tasks.length} hạng mục
                 </span>
               </span>
-              <span className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
+              <span className={`flex shrink-0 items-center gap-2 rounded-[var(--radius-field)] border-l-2 px-3 py-1 text-sm font-semibold ${
                 isCollapsed
                   ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-1 ring-[var(--line)]"
                     : "bg-black/10 text-[var(--primary-contrast)]"
