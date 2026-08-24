@@ -94,19 +94,17 @@ export const PersonnelOrgChart = ({
               <Icon className="h-4 w-4" name="shield" /> Điều hành tổ
             </div>
             {leadership.length > 0 ? (
-              <div
-                className={`relative grid gap-2 pt-4 ${
-                  leadership.length > 1
-                    ? "sm:grid-cols-2 sm:before:absolute sm:before:left-1/4 sm:before:right-1/4 sm:before:top-2 sm:before:border-t-2 sm:before:border-[var(--border-strong)]"
-                    : "mx-auto max-w-sm"
-                }`}
-              >
+              <div className="relative mx-auto grid w-full max-w-sm gap-2 pt-4">
                 {leadership.map((profile) => (
                   <div
-                    className="relative before:absolute before:-top-2 before:left-1/2 before:h-2 before:border-l-2 before:border-[var(--border-strong)]"
+                    className="relative mx-auto w-full before:absolute before:-top-2 before:left-1/2 before:h-2 before:border-l-2 before:border-[var(--border-strong)]"
                     key={profile.id}
                   >
-                    <PersonNode onEdit={onEdit} profile={profile} prominent />
+                    <PersonNode
+                      onEdit={onEdit}
+                      profile={profile}
+                      prominent={profile.orgRole === "toTruong"}
+                    />
                   </div>
                 ))}
               </div>
@@ -248,8 +246,10 @@ const PersonNode = ({
 }): React.ReactElement => (
   <button
     aria-label={`Chỉnh vai trò của ${profile.fullName}`}
-    className={`focus-ring pressable flex min-h-12 min-w-0 items-center gap-2 rounded-[var(--radius-field)] border bg-[var(--surface)] px-2.5 py-2 text-left shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] ${
-      prominent ? "border-[var(--primary)] bg-[var(--primary-soft)]" : "border-[var(--line)]"
+    className={`focus-ring pressable flex min-h-12 w-full min-w-0 items-center gap-2 rounded-[var(--radius-field)] border bg-[var(--surface)] px-2.5 py-2 text-left shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] ${
+      prominent
+        ? "border-2 border-[var(--primary-strong)] bg-[var(--primary-pale)] px-3 py-2.5 shadow-[var(--shadow-floating)] ring-4 ring-[var(--primary-soft)]"
+        : "border-[var(--line)]"
     }`}
     onClick={() => onEdit(profile)}
     type="button"
@@ -259,7 +259,7 @@ const PersonNode = ({
       className={`h-2 w-2 shrink-0 rounded-full ${roleDotClass(profile.orgRole)}`}
     />
     <span className="min-w-0 flex-1">
-      <span className="block break-words text-sm font-semibold leading-5 text-[var(--foreground)]">
+      <span className={`block break-words font-semibold leading-5 text-[var(--foreground)] ${prominent ? "text-base" : "text-sm"}`}>
         {profile.fullName}
       </span>
       <span className={`block break-words text-xs font-semibold leading-4 ${roleTextClass(profile.orgRole)}`}>
