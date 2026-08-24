@@ -43,7 +43,7 @@ const softAxisProps = {
   tick: {
     fill: "var(--text-muted)",
     fontFamily: "var(--font-mono)",
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 500
   },
   tickLine: false
@@ -53,14 +53,14 @@ const categoryAxisProps = {
   tick: {
     fill: "var(--foreground)",
     fontFamily: "var(--font-sans)",
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 500
   }
 } as const;
 const legendTextStyle = {
   color: "var(--foreground)",
   fontFamily: "var(--font-sans)",
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 500,
   lineHeight: "18px"
 } as const;
@@ -70,7 +70,7 @@ const tooltipStyle = {
   borderRadius: "var(--radius-field)",
   boxShadow: "var(--shadow-floating)",
   fontFamily: "var(--font-sans)",
-  fontSize: "13px"
+  fontSize: "15px"
 } as const;
 const tooltipLabelStyle = {
   color: "var(--foreground)",
