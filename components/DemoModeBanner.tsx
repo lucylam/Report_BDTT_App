@@ -217,7 +217,7 @@ export const DemoModeBanner = (): React.ReactElement | null => {
                 Tên đợt dùng thử
                 <Input className="mt-2" maxLength={120} onChange={(event) => setName(event.target.value)} value={name} />
               </label>
-              <Alert tone="info">Google Sheet sẽ không đồng bộ trong thời gian dùng thử.</Alert>
+              <Alert tone="info">Google Sheet chỉ đồng bộ khi DATA admin chủ động xem trước và xác nhận. Snapshot có thể bao gồm dữ liệu dùng thử.</Alert>
               {error ? <Alert tone="danger">{error}</Alert> : null}
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button disabled={busy} onClick={() => setDialogOpen(false)} variant="ghost">Đóng</Button>

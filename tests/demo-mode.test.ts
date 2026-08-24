@@ -17,4 +17,8 @@ describe("BDTT demo mode context", () => {
   it("chấp nhận thao tác chính thức khi Demo Mode đang tắt", () => {
     expect(isTrialRunContextCurrent(undefined, null)).toBe(true);
   });
+
+  it("chặn xác nhận đồng bộ của một đợt thử khác", () => {
+    expect(isTrialRunContextCurrent("trial-old", "trial-current")).toBe(false);
+  });
 });

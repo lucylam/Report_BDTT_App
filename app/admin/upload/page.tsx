@@ -34,6 +34,8 @@ interface SyncPreview {
   readonly lastSyncedAt?: string;
   readonly lastError?: string;
   readonly range: string;
+  readonly trialRunId?: string | null;
+  readonly trialRunName?: string | null;
   readonly stats: {
     readonly totalTasks: number;
     readonly newTasks: number;
@@ -142,7 +144,8 @@ const AdminUploadPage = (): React.ReactElement => {
     try {
       const result = await requestJson<SyncPreview & { updatedRows?: number }>("/api/google-sheets/sync-data", {
         action: "apply",
-        expectedChecksum: sync.checksum
+        expectedChecksum: sync.checksum,
+        expectedTrialRunId: sync.trialRunId ?? null
       });
       setMessage(`Đã đồng bộ ${result.updatedRows ?? result.stats.totalTasks} dòng A:AG sang Google Sheet.`);
       await loadSync();
@@ -181,6 +184,11 @@ const AdminUploadPage = (): React.ReactElement => {
 
         <Widget>
           <WidgetHeader icon="spreadsheet" tone="info" subtitle="Server tạo snapshot A:AG từ database; không nhận dữ liệu từ trình duyệt" title="2. Đồng bộ đầu ra" />
+          {data.trialRun ? (
+            <Alert className="mt-3" tone="warning">
+              Demo Mode đang hoạt động. Snapshot sẽ gồm dữ liệu dùng thử của đợt “{data.trialRun.name}”. Google Sheet không tự phục hồi khi kết thúc dùng thử; hãy đồng bộ lại sau khi xóa dữ liệu demo.
+            </Alert>
+          ) : null}
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Metric label="Trạng thái" value={sync ? syncStatusLabel(sync.status) : "Chưa kiểm tra"} />
             <Metric label="Lần đồng bộ cuối" value={formatTimestamp(sync?.lastSyncedAt)} />
@@ -239,6 +247,11 @@ const BootstrapPanel = ({ preview }: { readonly preview: BootstrapPreview }): Re
 const SyncPanel = ({ preview }: { readonly preview: SyncPreview }): React.ReactElement => (
   <div className="mt-3 border-t border-[var(--line)] pt-3">
     <div className="flex flex-wrap items-center gap-2"><Badge tone={preview.status === "synced" ? "success" : preview.status === "failed" ? "danger" : "warning"}>{syncStatusLabel(preview.status)}</Badge><span className="font-mono text-sm">{preview.range}</span></div>
+    {preview.trialRunId ? (
+      <p className="mt-2 text-sm font-semibold text-[var(--warning-strong)]">
+        Snapshot Demo Mode: {preview.trialRunName || preview.trialRunId}
+      </p>
+    ) : null}
     <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
       <Metric label="Task mới" value={String(preview.stats.newTasks)} />
       <Metric label="Task thay đổi" value={String(preview.stats.changedTasks)} />

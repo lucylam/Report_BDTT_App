@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { loadBdttSnapshot } from "@/lib/api/bdttSnapshot";
 import { getAuthenticatedDataAdmin } from "@/lib/api/session";
-import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
+import { isTrialRunContextCurrent } from "@/lib/api/demoMode";
 import { buildFullDataSheetRangeValues } from "@/lib/excel/exporter";
 import {
   computeSheetChecksum,
@@ -18,6 +18,7 @@ export const maxDuration = 60;
 interface SyncBody {
   readonly action?: "preview" | "apply";
   readonly expectedChecksum?: string;
+  readonly expectedTrialRunId?: string | null;
 }
 
 const errorResponse = (error: string, status: number): NextResponse =>
@@ -31,9 +32,6 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!supabase) return errorResponse("Chưa cấu hình Supabase server cho đồng bộ DATA.", 503);
   const auth = await getAuthenticatedDataAdmin(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
-  if (await getActiveBdttTrialRun(supabase)) {
-    return errorResponse("Đồng bộ Google Sheet tạm khóa trong Demo Mode.", 409);
-  }
 
   const body = (await request.json().catch(() => ({}))) as SyncBody;
   const action = body.action ?? "preview";
@@ -66,6 +64,17 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     if (data.tasks.length === 0) {
       return errorResponse("Database chưa có task. Hãy khởi tạo từ Google Sheet trước.", 409);
     }
+    const trialRunId = data.trialRun?.id ?? null;
+    const trialRunName = data.trialRun?.name ?? null;
+    if (
+      action === "apply" &&
+      !isTrialRunContextCurrent(body.expectedTrialRunId, trialRunId)
+    ) {
+      return errorResponse(
+        "Demo Mode đã thay đổi sau lúc xem trước. Hãy tải lại preview trước khi đồng bộ.",
+        409
+      );
+    }
 
     const rangeValues = buildFullDataSheetRangeValues(data, sheetRows.length);
     const checksum = computeSheetChecksum(rangeValues.values);
@@ -84,6 +93,12 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       error_message?: string;
       created_at?: string;
     } | null;
+    const auditStats = {
+      ...stats,
+      mode: trialRunId ? "trial" : "live",
+      trialRunId,
+      trialRunName
+    };
 
     if (action === "preview") {
       const latestRunAt = latestRun?.created_at ?? "";
@@ -102,6 +117,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         stats,
         range: rangeValues.clearRange,
         status,
+        trialRunId,
+        trialRunName,
         lastSyncedAt: lastSuccess?.completed_at,
         lastError: status === "failed" ? latestRun?.error_message : undefined
       });
@@ -126,7 +143,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         checksum,
         actor_id: auth.profile.id,
         row_count: rangeValues.values.length,
-        stats,
+        stats: auditStats,
         completed_at: completedAt
       });
       if (logError) throw new Error(logError.message);
@@ -136,6 +153,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         checksum,
         stats,
         range: rangeValues.clearRange,
+        trialRunId,
+        trialRunName,
         completedAt,
         ...result
       });
@@ -147,7 +166,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         checksum,
         actor_id: auth.profile.id,
         row_count: rangeValues.values.length,
-        stats,
+        stats: auditStats,
         error_message: message,
         completed_at: new Date().toISOString()
       });
