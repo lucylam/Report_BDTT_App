@@ -105,7 +105,7 @@ export const TaskDesktopWorkspace = ({
                   </td>
                   <td className="py-3 pr-3">
                     <Badge
-                      className="min-h-10 w-[94px] justify-center whitespace-normal px-3 py-1 text-center leading-4"
+                      className="min-h-8 w-fit min-w-[88px] justify-center whitespace-nowrap px-3 py-1 text-center leading-none"
                       solid
                       tone={getStatusTone(status)}
                     >

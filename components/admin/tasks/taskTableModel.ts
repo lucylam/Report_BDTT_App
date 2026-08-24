@@ -31,8 +31,8 @@ export const getStatus = (task: Task, percent: ProgressPercent): StatusFilter =>
 
 export const getStatusLabel = (status: StatusFilter): string => {
   if (status === "completed") return "Hoàn thành";
-  if (status === "inProgress") return "Đang thực hiện";
-  if (status === "notStarted") return "Chưa thực hiện";
+  if (status === "inProgress") return "Đang làm";
+  if (status === "notStarted") return "Chưa làm";
   if (status === "cancelled") return "Cancel";
   return "Tất cả trạng thái";
 };
