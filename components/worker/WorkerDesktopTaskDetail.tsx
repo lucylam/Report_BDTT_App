@@ -44,7 +44,9 @@ export const WorkerDesktopTaskDetail = ({
         <Info label="Đơn vị" value={task.donVi} />
         <Info label="Section" value={task.section} />
         <Info label="Priority" value={`P${task.priority}`} />
-        <Info label="Finish" value={task.finishDate || "N/A"} />
+        <Info label="Thời lượng" value={task.duration || "N/A"} />
+        <Info label="Start Time" value={task.startDate || "N/A"} />
+        <Info label="Finish Time" value={task.finishDate || "N/A"} />
       </div>
       <div className="mt-3 border-t border-[var(--line)] pt-3">
         {task.isCancelled ? (

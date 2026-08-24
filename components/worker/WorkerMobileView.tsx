@@ -23,7 +23,7 @@ import type {
   WorkerFilter,
   WorkerProgressUpdate
 } from "@/components/worker/types";
-import { formatViDate, getReportHistoryDates } from "@/lib/date";
+import { formatViDate, getPlanReportDates, getReportHistoryDates } from "@/lib/date";
 import { getTaskPercent, getTaskProgress } from "@/lib/progress";
 import type { AuthAccount, PlanVersion, ProgressRecord, Task } from "@/types/domain";
 
@@ -36,6 +36,7 @@ interface WorkerMobileViewProps {
   readonly displayProgress: readonly ProgressRecord[];
   readonly filter: WorkerFilter;
   readonly searchQuery: string;
+  readonly selectedTaskDate: string;
   readonly selectedUnit: string;
   readonly isOnline: boolean;
   readonly lastSyncedAt: string | null;
@@ -47,6 +48,7 @@ interface WorkerMobileViewProps {
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly onFilterChange: (filter: WorkerFilter) => void;
   readonly onSearchChange: (query: string) => void;
+  readonly onTaskDateChange: (date: string) => void;
   readonly onUnitChange: (unit: string) => void;
   readonly onChange: (taskId: string, update: WorkerProgressUpdate) => void;
   readonly onCancel: (taskId: string) => void;
@@ -83,6 +85,7 @@ export const WorkerMobileView = ({
   displayProgress,
   filter,
   searchQuery,
+  selectedTaskDate,
   selectedUnit,
   isOnline,
   lastSyncedAt,
@@ -94,6 +97,7 @@ export const WorkerMobileView = ({
   saveStates,
   onFilterChange,
   onSearchChange,
+  onTaskDateChange,
   onUnitChange,
   onChange,
   onCancel,
@@ -129,6 +133,7 @@ export const WorkerMobileView = ({
       getTaskPercent(progress, task.id, reportDate) < 100
   ).length;
   const taskGroups = groupWorkerTasks(filteredTasks, groupMode);
+  const taskDateOptions = getPlanReportDates(allTasks);
   const unitOptions = getTaskUnitOptions(allTasks);
   const reportDates = getReportHistoryDates(
     allTasks,
@@ -223,9 +228,12 @@ export const WorkerMobileView = ({
               onFilterChange={onFilterChange}
               onGroupModeChange={setGroupMode}
               onSearchChange={onSearchChange}
+              onTaskDateChange={onTaskDateChange}
               onUnitChange={onUnitChange}
               resultLabel={`${filteredTasks.length}/${allTasks.length} hạng mục`}
               searchQuery={searchQuery}
+              selectedTaskDate={selectedTaskDate}
+              taskDateOptions={taskDateOptions}
               selectedUnit={selectedUnit}
               unitOptions={unitOptions}
             />

@@ -66,6 +66,9 @@ export const TaskCard = ({
             <Badge solid tone="neutral">{task.duration || "N/A"}</Badge>
             {hasDetail ? <Badge solid tone="success">Có ghi nhận</Badge> : null}
           </div>
+          <p className="mt-2 text-xs font-medium leading-5 tabular-nums text-[var(--text-muted)]">
+            Start Time: {task.startDate || "N/A"} · Finish: {task.finishDate || "N/A"}
+          </p>
         </div>
       </div>
 

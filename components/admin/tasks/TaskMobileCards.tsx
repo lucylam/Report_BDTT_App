@@ -53,7 +53,9 @@ export const TaskMobileCards = ({
             </div>
 
             <div className="mobile-reflow-grid mt-3 grid grid-cols-2 gap-2 text-sm">
-              <Info label="Finish" value={task.finishDate || "N/A"} />
+              <Info label="Start Time" value={task.startDate || "N/A"} />
+              <Info label="Finish Time" value={task.finishDate || "N/A"} />
+              <Info label="Thời lượng" value={task.duration || "N/A"} />
               <Info label="Trạng thái" value={getStatusLabel(status)} />
             </div>
 

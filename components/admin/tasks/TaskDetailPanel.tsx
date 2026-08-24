@@ -98,7 +98,9 @@ export const TaskDetailPanel = ({
         <Info label="Nhóm" value={task.nhom || "N/A"} />
         <Info label="Đơn vị" value={task.donVi || "N/A"} />
         <Info label="Section" value={task.section || "N/A"} />
-        <Info label="Finish" value={task.finishDate || "N/A"} />
+        <Info label="Start Time" value={task.startDate || "N/A"} />
+        <Info label="Finish Time" value={task.finishDate || "N/A"} />
+        <Info label="Thời lượng" value={task.duration || "N/A"} />
       </div>
 
       <div className="mt-4 rounded-[var(--radius-field)] border border-[var(--border)] bg-[var(--surface-muted)] p-4">

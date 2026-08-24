@@ -33,7 +33,7 @@ import type {
   WorkerFilter,
   WorkerProgressUpdate
 } from "@/components/worker/types";
-import { formatViDate, getReportHistoryDates } from "@/lib/date";
+import { formatViDate, getPlanReportDates, getReportHistoryDates } from "@/lib/date";
 import { getTaskPercent, getTaskProgress } from "@/lib/progress";
 import type { AuthAccount, PlanVersion, Profile, ProgressPercent, ProgressRecord, Task } from "@/types/domain";
 
@@ -47,6 +47,7 @@ interface WorkerDesktopViewProps {
   readonly displayProgress: readonly ProgressRecord[];
   readonly filter: WorkerFilter;
   readonly searchQuery: string;
+  readonly selectedTaskDate: string;
   readonly selectedUnit: string;
   readonly isOnline: boolean;
   readonly lastSyncedAt: string | null;
@@ -58,6 +59,7 @@ interface WorkerDesktopViewProps {
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly onFilterChange: (filter: WorkerFilter) => void;
   readonly onSearchChange: (query: string) => void;
+  readonly onTaskDateChange: (date: string) => void;
   readonly onUnitChange: (unit: string) => void;
   readonly onChange: (taskId: string, update: WorkerProgressUpdate) => void;
   readonly onCancel: (taskId: string) => void;
@@ -97,6 +99,7 @@ export const WorkerDesktopView = ({
   displayProgress,
   filter,
   searchQuery,
+  selectedTaskDate,
   selectedUnit,
   isOnline,
   lastSyncedAt,
@@ -108,6 +111,7 @@ export const WorkerDesktopView = ({
   saveStates,
   onFilterChange,
   onSearchChange,
+  onTaskDateChange,
   onUnitChange,
   onChange,
   onCancel,
@@ -164,6 +168,7 @@ export const WorkerDesktopView = ({
       getTaskPercent(progress, task.id, reportDate) < 100
   ).length;
   const taskGroups = groupWorkerTasks(filteredTasks, groupMode);
+  const taskDateOptions = getPlanReportDates(allTasks);
   const unitOptions = getTaskUnitOptions(allTasks);
   const reportDates = getReportHistoryDates(
     allTasks,
@@ -298,6 +303,7 @@ export const WorkerDesktopView = ({
                   onFilterChange={onFilterChange}
                   onGroupModeChange={setGroupMode}
                   onSearchChange={onSearchChange}
+                  onTaskDateChange={onTaskDateChange}
                   onUnitChange={onUnitChange}
                   onSelectTask={setSelectedTaskId}
                   onSubmitUpdates={onSubmitUpdates}
@@ -308,9 +314,11 @@ export const WorkerDesktopView = ({
                   reportDate={reportDate}
                   saveStates={saveStates}
                   searchQuery={searchQuery}
+                  selectedTaskDate={selectedTaskDate}
                   selectedUnit={selectedUnit}
                   selectedTask={selectedTask}
                   taskGroups={taskGroups}
+                  taskDateOptions={taskDateOptions}
                   unitOptions={unitOptions}
                 />
               ) : null}
@@ -362,6 +370,7 @@ const TasksWorkspace = ({
   onFilterChange,
   onGroupModeChange,
   onSearchChange,
+  onTaskDateChange,
   onUnitChange,
   onSelectTask,
   onSubmitUpdates,
@@ -372,9 +381,11 @@ const TasksWorkspace = ({
   reportDate,
   saveStates,
   searchQuery,
+  selectedTaskDate,
   selectedUnit,
   selectedTask,
   taskGroups,
+  taskDateOptions,
   unitOptions
 }: {
   readonly allTasks: readonly Task[];
@@ -394,6 +405,7 @@ const TasksWorkspace = ({
   readonly onFilterChange: (filter: WorkerFilter) => void;
   readonly onGroupModeChange: (groupMode: WorkerGroupMode) => void;
   readonly onSearchChange: (query: string) => void;
+  readonly onTaskDateChange: (date: string) => void;
   readonly onUnitChange: (unit: string) => void;
   readonly onSelectTask: (taskId: string) => void;
   readonly onSubmitUpdates: () => void;
@@ -404,9 +416,11 @@ const TasksWorkspace = ({
   readonly reportDate: string;
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly searchQuery: string;
+  readonly selectedTaskDate: string;
   readonly selectedUnit: string;
   readonly selectedTask: Task | null;
   readonly taskGroups: ReturnType<typeof groupWorkerTasks>;
+  readonly taskDateOptions: readonly string[];
   readonly unitOptions: readonly string[];
 }): React.ReactElement => {
   return (
@@ -483,9 +497,12 @@ const TasksWorkspace = ({
           onFilterChange={onFilterChange}
           onGroupModeChange={onGroupModeChange}
           onSearchChange={onSearchChange}
+          onTaskDateChange={onTaskDateChange}
           onUnitChange={onUnitChange}
           resultLabel={`${filteredTasks.length}/${allTasks.length} hạng mục, nhấn / để tìm`}
           searchQuery={searchQuery}
+          selectedTaskDate={selectedTaskDate}
+          taskDateOptions={taskDateOptions}
           selectedUnit={selectedUnit}
           unitOptions={unitOptions}
         />

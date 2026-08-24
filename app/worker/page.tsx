@@ -12,6 +12,7 @@ import {
   mergeProgressWithDrafts
 } from "@/components/worker/progressDrafts";
 import {
+  matchesWorkerTaskDate,
   matchesWorkerTaskQuery,
   sortWorkerTasks
 } from "@/components/worker/taskView";
@@ -200,6 +201,7 @@ const WorkerPage = (): React.ReactElement => {
   const [filter, setFilter] = useState<WorkerFilter>("today");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedUnit, setSelectedUnit] = useState<string>("");
+  const [selectedTaskDate, setSelectedTaskDate] = useState<string>("");
   const [cancelTaskId, setCancelTaskId] = useState<string | null>(null);
   const [draftUpdates, setDraftUpdates] = useState<WorkerProgressDraftMap>({});
   const [isSubmittingUpdates, setIsSubmittingUpdates] = useState<boolean>(false);
@@ -385,8 +387,10 @@ const WorkerPage = (): React.ReactElement => {
     return sortWorkerTasks(
       allWorkerTasks.filter((task) => {
         const percent = getTaskPercent(data.progress, task.id, reportDate);
+        const filterDate = selectedTaskDate || reportDate;
         return (
-          matchesFilter(task, percent, filter, reportDate) &&
+          matchesFilter(task, percent, filter, filterDate) &&
+          matchesWorkerTaskDate(task, selectedTaskDate) &&
           (!selectedUnit || task.donVi === selectedUnit) &&
           matchesWorkerTaskQuery(task, searchQuery)
         );
@@ -394,7 +398,7 @@ const WorkerPage = (): React.ReactElement => {
       data.progress,
       reportDate
     );
-  }, [allWorkerTasks, data, filter, reportDate, searchQuery, selectedUnit]);
+  }, [allWorkerTasks, data, filter, reportDate, searchQuery, selectedTaskDate, selectedUnit]);
 
   if (!data || !currentAccount || !worker || currentAccount.mustChangePassword) {
     return (
@@ -635,6 +639,11 @@ const WorkerPage = (): React.ReactElement => {
   const cancelCandidate =
     data.tasks.find((task) => task.id === cancelTaskId) ?? null;
 
+  const handleTaskDateChange = (date: string): void => {
+    setSelectedTaskDate(date);
+    if (date) setFilter("all");
+  };
+
   return (
     <>
       <WorkerMobileView
@@ -652,6 +661,7 @@ const WorkerPage = (): React.ReactElement => {
         onFilterChange={setFilter}
         onLogout={logout}
         onSearchChange={setSearchQuery}
+        onTaskDateChange={handleTaskDateChange}
         onUnitChange={setSelectedUnit}
         onSubmitUpdates={() => {
           void submitDraftUpdates();
@@ -664,6 +674,7 @@ const WorkerPage = (): React.ReactElement => {
         reportDate={reportDate}
         saveStates={saveStates}
         searchQuery={searchQuery}
+        selectedTaskDate={selectedTaskDate}
         selectedUnit={selectedUnit}
       />
       <WorkerDesktopView
@@ -681,6 +692,7 @@ const WorkerPage = (): React.ReactElement => {
         onFilterChange={setFilter}
         onLogout={logout}
         onSearchChange={setSearchQuery}
+        onTaskDateChange={handleTaskDateChange}
         onUnitChange={setSelectedUnit}
         onSubmitUpdates={() => {
           void submitDraftUpdates();
@@ -693,6 +705,7 @@ const WorkerPage = (): React.ReactElement => {
         reportDate={reportDate}
         saveStates={saveStates}
         searchQuery={searchQuery}
+        selectedTaskDate={selectedTaskDate}
         selectedUnit={selectedUnit}
         worker={worker}
       />

@@ -131,6 +131,9 @@ export const WorkerDesktopTaskList = ({
                             <Badge solid tone="neutral">{task.section || "N/A"}</Badge>
                             {task.isCancelled ? <Badge solid tone="danger">Cancel</Badge> : null}
                           </div>
+                          <p className="mt-2 truncate text-xs font-medium tabular-nums text-[var(--text-muted)]">
+                            Start Time: {task.startDate || "N/A"} · Finish: {task.finishDate || "N/A"}
+                          </p>
                         </div>
                         <div>
                           <p className="text-right text-base font-semibold tabular-nums">

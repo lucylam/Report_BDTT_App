@@ -42,6 +42,17 @@ export const matchesWorkerTaskQuery = (
   return haystack.includes(normalizedQuery);
 };
 
+export const matchesWorkerTaskDate = (
+  task: Task,
+  selectedDate: string
+): boolean => {
+  if (!selectedDate) return true;
+  if (!task.startDate && !task.finishDate) return false;
+  if (task.startDate && selectedDate < task.startDate) return false;
+  if (task.finishDate && selectedDate > task.finishDate) return false;
+  return true;
+};
+
 export const getWorkerTaskStatusWeight = (
   task: Task,
   percent: ProgressPercent

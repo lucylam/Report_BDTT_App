@@ -44,7 +44,7 @@ export const TaskDesktopWorkspace = ({
               <th className="w-[17%] py-3 pr-3">Resource</th>
               <th className="w-[8%] py-3 pr-3">Tiến độ</th>
               <th className="w-[13%] py-3 pr-3">Trạng thái</th>
-              <th className="w-[14%] py-3 pr-3">Finish</th>
+              <th className="w-[14%] py-3 pr-3">Start / Finish</th>
             </tr>
           </thead>
           <tbody>
@@ -112,9 +112,12 @@ export const TaskDesktopWorkspace = ({
                       {getStatusLabel(status)}
                     </Badge>
                   </td>
-                  <td className="py-3 pr-3" title={task.finishDate || "N/A"}>
+                  <td className="py-3 pr-3" title={`Start Time: ${task.startDate || "N/A"} · Finish Time: ${task.finishDate || "N/A"}`}>
                     <span className="block whitespace-nowrap text-xs font-medium tabular-nums">
-                      {task.finishDate || "N/A"}
+                      S: {task.startDate || "N/A"}
+                    </span>
+                    <span className="mt-1 block whitespace-nowrap text-xs font-medium tabular-nums text-[var(--text-muted)]">
+                      F: {task.finishDate || "N/A"}
                     </span>
                   </td>
                 </tr>
