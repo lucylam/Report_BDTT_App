@@ -5,6 +5,7 @@ import { Alert, Button, Dialog, Field, Input, Select, Textarea } from "@/compone
 import type { TaskRow } from "@/components/admin/tasks/taskTableModel";
 import { DEFAULT_REPORT_DATE } from "@/lib/date";
 import { getMissingLeaderTaskCreateFields } from "@/lib/leaderTaskCreate";
+import { resolveTaskReporterId } from "@/lib/taskReporter";
 import type { AppData, Profile } from "@/types/domain";
 
 interface LeaderTaskManagerProps {
@@ -50,7 +51,6 @@ export const LeaderTaskManager = ({
   const members = useMemo(() => getMemberOptions(data), [data]);
   const [mode, setMode] = useState<DialogMode>(null);
   const [assigneeUsername, setAssigneeUsername] = useState("");
-  const [reporterUsername, setReporterUsername] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [reportDate, setReportDate] = useState(DEFAULT_REPORT_DATE);
   const [percent, setPercent] = useState("0");
@@ -67,12 +67,19 @@ export const LeaderTaskManager = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  const reporter = useMemo(() => {
+    const assignee = data.profiles.find(
+      (profile) => profile.username === assigneeUsername
+    );
+    const reporterId = resolveTaskReporterId(assignee?.id, data.profiles);
+    return data.profiles.find((profile) => profile.id === reporterId) ?? assignee ?? null;
+  }, [assigneeUsername, data.profiles]);
+  const reporterUsername = reporter?.username ?? "";
+
   const setDefaultPeople = (): void => {
     const assignee = data.profiles.find((profile) => profile.id === row?.task.assignedTo);
-    const reporter = data.profiles.find((profile) => profile.id === row?.task.reporterId);
     const first = members[0];
     setAssigneeUsername(assignee?.username ?? first?.username ?? "");
-    setReporterUsername(reporter?.username ?? assignee?.username ?? first?.username ?? "");
   };
 
   const open = (nextMode: OpenDialogMode): void => {
@@ -273,13 +280,13 @@ export const LeaderTaskManager = ({
             {mode === "create" || mode === "reassign" ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <MemberField label={mode === "create" ? "Người thực hiện *" : "Người thực hiện"} members={members} onChange={setAssigneeUsername} required value={assigneeUsername} />
-                <MemberField label={mode === "create" ? "Người báo cáo *" : "Người báo cáo"} members={members} onChange={setReporterUsername} required value={reporterUsername} />
+                <ReadonlyMemberField label="Người báo cáo (tự động)" member={reporter} />
               </div>
             ) : null}
 
             {mode === "report" ? (
               <>
-                <MemberField label="Ghi nhận báo cáo cho" members={members} onChange={setReporterUsername} value={reporterUsername} />
+                <ReadonlyMemberField label="Ghi nhận báo cáo cho" member={reporter} />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Field label="Ngày báo cáo">
                     <Input onChange={(event) => setReportDate(event.target.value)} type="date" value={reportDate} />
@@ -302,7 +309,7 @@ export const LeaderTaskManager = ({
                   <Textarea onChange={(event) => setNote(event.target.value)} value={note} />
                 </Field>
                 <Alert tone="info">
-                  Hệ thống ghi người được chọn là người báo cáo và vẫn lưu nhóm trưởng là người thao tác.
+                  Người báo cáo được xác định tự động theo cơ cấu phân nhóm; người thao tác vẫn được lưu riêng để truy vết.
                 </Alert>
               </>
             ) : null}
@@ -348,6 +355,18 @@ const MemberField = ({ label, members, onChange, required, value }: {
         </option>
       ))}
     </Select>
+  </Field>
+);
+
+const ReadonlyMemberField = ({ label, member }: {
+  readonly label: string;
+  readonly member: Profile | null;
+}): React.ReactElement => (
+  <Field label={label}>
+    <Input
+      disabled
+      value={member ? `${member.fullName} · ${member.orgTitle}` : "Chưa xác định"}
+    />
   </Field>
 );
 

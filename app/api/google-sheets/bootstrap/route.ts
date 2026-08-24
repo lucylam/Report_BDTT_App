@@ -5,6 +5,10 @@ import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { parseBootstrapSheet } from "@/lib/google/bootstrap";
 import { computeSheetChecksum, readDataSheetValues } from "@/lib/google/sheets";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  createTaskReporterPeople,
+  resolveTaskReporterId
+} from "@/lib/taskReporter";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -18,6 +22,10 @@ interface DbProfile {
   readonly id: string;
   readonly username: string | null;
   readonly resource_name: string | null;
+  readonly role: string | null;
+  readonly org_group: string | null;
+  readonly subgroup: string | null;
+  readonly org_role: string | null;
 }
 
 const errorResponse = (error: string, status: number): NextResponse =>
@@ -47,7 +55,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         .from("tasks")
         .select("id", { count: "exact", head: true })
         .eq("task_source", "plan"),
-      supabase.from("profiles").select("id, username, resource_name").eq("is_active", true),
+      supabase
+        .from("profiles")
+        .select("id, username, resource_name, role, org_group, subgroup, org_role")
+        .eq("is_active", true),
       readDataSheetValues("A2:AG")
     ]);
     if (countError) throw new Error(countError.message);
@@ -63,6 +74,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     }
 
     const dbProfiles = (profileResult.data ?? []) as DbProfile[];
+    const reporterPeople = createTaskReporterPeople(dbProfiles);
     const preview = parseBootstrapSheet(
       values,
       dbProfiles.map((profile) => ({
@@ -119,7 +131,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       resource_name: task.resourceName,
       nhom_truong: task.nhomTruong,
       assigned_to: task.assignedTo,
-      reporter_id: task.assignedTo,
+      reporter_id: resolveTaskReporterId(task.assignedTo, reporterPeople),
       progress_mode: task.progressMode
     }));
     const { error: bootstrapError } = await supabase.rpc("bootstrap_bdtt_plan", {

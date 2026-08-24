@@ -3,6 +3,10 @@ import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/securi
 import { getAuthenticatedDataAdmin } from "@/lib/api/session";
 import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  createTaskReporterPeople,
+  resolveTaskReporterId
+} from "@/lib/taskReporter";
 import type { Task } from "@/types/domain";
 
 export const runtime = "nodejs";
@@ -18,6 +22,10 @@ interface DbProfile {
   readonly id: string;
   readonly username: string | null;
   readonly resource_name: string | null;
+  readonly role: string | null;
+  readonly org_group: string | null;
+  readonly subgroup: string | null;
+  readonly org_role: string | null;
 }
 
 interface DbTaskKey {
@@ -86,7 +94,8 @@ const findAssignedProfileId = (
 const toTaskRow = (
   task: Task,
   importBatchId: string | null,
-  assignedTo: string | null
+  assignedTo: string | null,
+  reporterId: string | null
 ) => ({
   import_batch_id: importBatchId,
   stt: task.stt,
@@ -103,7 +112,7 @@ const toTaskRow = (
   resource_name: task.resourceName,
   nhom_truong: task.nhomTruong,
   assigned_to: assignedTo,
-  reporter_id: assignedTo,
+  reporter_id: reporterId,
   task_source: "plan",
   progress_mode: task.progressMode === "binary" ? "binary" : "continuous",
   is_cancelled: task.isCancelled,
@@ -174,12 +183,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, username, resource_name");
+      .select("id, username, resource_name, role, org_group, subgroup, org_role");
     if (profilesError) {
       return NextResponse.json({ error: profilesError.message }, { status: 500 });
     }
 
     const dbProfiles = (profiles ?? []) as DbProfile[];
+    const reporterPeople = createTaskReporterPeople(dbProfiles);
     const importedBy = auth.profile.id;
 
     const { data: batch, error: batchError } = await supabase
@@ -275,7 +285,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
     tasks.forEach((task) => {
       const assignedTo = findAssignedProfileId(dbProfiles, task.resourceName);
-      const row = toTaskRow(task, importBatchId, assignedTo);
+      const reporterId = resolveTaskReporterId(assignedTo, reporterPeople);
+      const row = toTaskRow(task, importBatchId, assignedTo, reporterId);
       const existingId = existingByKey.get(
         createTaskKey({
           tagname: task.tagname,

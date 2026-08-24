@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { createProfilesFromAccounts, createSeedAccounts, getLoginUsername } from "@/lib/accounts";
+import {
+  applyAccountProfileOverrides,
+  createProfilesFromAccounts,
+  createSeedAccounts,
+  getLoginUsername
+} from "@/lib/accounts";
 import { getAuthenticatedAccount, isUuid } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import {
@@ -14,6 +19,7 @@ import {
 } from "@/lib/permissions";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isPercentAllowedForMode } from "@/lib/progressMode";
+import { resolveTaskReporterId } from "@/lib/taskReporter";
 import type { AuthAccount, Profile } from "@/types/domain";
 
 export const runtime = "nodejs";
@@ -48,6 +54,10 @@ interface DbProfile {
   readonly id: string;
   readonly username: string | null;
   readonly resource_name: string | null;
+  readonly role: string | null;
+  readonly org_group: string | null;
+  readonly subgroup: string | null;
+  readonly org_role: string | null;
 }
 
 interface DbTask {
@@ -84,7 +94,16 @@ const isPriority = (value: unknown): value is 1 | 2 | 3 =>
 const buildTeamMembers = (
   dbProfiles: readonly DbProfile[]
 ): TeamMember[] => {
-  const accounts = createSeedAccounts();
+  const accounts = applyAccountProfileOverrides(
+    createSeedAccounts(),
+    dbProfiles.map((profile) => ({
+      ...profile,
+      role:
+        profile.role === "admin" || profile.role === "worker"
+          ? profile.role
+          : null
+    }))
+  );
   const profiles = createProfilesFromAccounts(accounts);
   const profileByUsername = new Map(
     profiles.map((profile) => [getLoginUsername(profile.username), profile])
@@ -111,6 +130,23 @@ const findMember = (
       (member) => getLoginUsername(member.account.username) === normalizedUsername
     ) ?? null
   );
+};
+
+const resolveTeamReporter = (
+  assignee: TeamMember | null,
+  members: readonly TeamMember[]
+): TeamMember | null => {
+  if (!assignee) return null;
+  const reporterId = resolveTaskReporterId(
+    assignee.db.id,
+    members.map((member) => ({
+      id: member.db.id,
+      orgGroup: member.profile.orgGroup,
+      subgroup: member.profile.subgroup,
+      orgRole: member.profile.orgRole
+    }))
+  );
+  return members.find((member) => member.db.id === reporterId) ?? assignee;
 };
 
 const canManageMember = (manager: AuthAccount, member: TeamMember): boolean =>
@@ -229,13 +265,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const { data: dbProfileRows, error: profileError } = await supabase
     .from("profiles")
-    .select("id, username, resource_name")
+    .select("id, username, resource_name, role, org_group, subgroup, org_role")
     .eq("is_active", true);
   if (profileError) return toErrorResponse(profileError.message, 500);
 
   const members = buildTeamMembers((dbProfileRows ?? []) as DbProfile[]);
   const assignee = findMember(members, body.assigneeUsername);
-  const reporter = findMember(members, body.reporterUsername);
+  const reporter = resolveTeamReporter(assignee, members);
 
   if (action === "create") {
     const taskInput = body.task;
@@ -257,7 +293,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       priority: taskInput?.priority,
       progressMode: taskInput?.progressMode,
       assigneeUsername: body.assigneeUsername,
-      reporterUsername: body.reporterUsername
+      reporterUsername: reporter?.account.username
     });
     if (missingFields.length > 0) {
       return toErrorResponse(
@@ -271,7 +307,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     if (!assignee || !reporter) {
       return toErrorResponse("Cần chọn người thực hiện và người báo cáo hợp lệ.", 400);
     }
-    if (!canManageMember(auth.account, assignee) || !canManageMember(auth.account, reporter)) {
+    if (!canManageMember(auth.account, assignee)) {
       return toErrorResponse("Không thể giao task cho người ngoài phạm vi phụ trách.", 403);
     }
     if (!isDateText(startDate) || !isDateText(finishDate)) {
@@ -355,7 +391,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     if (!assignee || !reporter) {
       return toErrorResponse("Cần chọn người thực hiện và người báo cáo hợp lệ.", 400);
     }
-    if (!canManageMember(auth.account, assignee) || !canManageMember(auth.account, reporter)) {
+    if (!canManageMember(auth.account, assignee)) {
       return toErrorResponse("Không thể phân công người ngoài phạm vi phụ trách.", 403);
     }
     if (taskResult.task.is_cancelled) {
@@ -433,7 +469,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return NextResponse.json({ ok: true, taskId });
   }
 
-  if (!reporter || !canManageMember(auth.account, reporter)) {
+  const currentAssignee =
+    members.find((member) => member.db.id === taskResult.task?.assigned_to) ?? null;
+  const taskReporter = resolveTeamReporter(currentAssignee, members);
+  if (!taskReporter) {
     return toErrorResponse("Người báo cáo không hợp lệ hoặc ngoài phạm vi phụ trách.", 403);
   }
   if (taskResult.task.is_cancelled) {
@@ -470,7 +509,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const { error: progressError } = await supabase.from("progress").upsert(
     {
       task_id: taskId,
-      user_id: reporter.db.id,
+      user_id: taskReporter.db.id,
       report_date: reportDate,
       percent: body.percent,
       note: normalizeText(body.note),
@@ -488,7 +527,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const { error: taskUpdateError } = await supabase
     .from("tasks")
     .update({
-      reporter_id: reporter.db.id,
+      reporter_id: taskReporter.db.id,
       updated_by: auth.profile.id,
       updated_at: now
     })
@@ -497,13 +536,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   await writeEvent(supabase, taskId, "report_updated", auth.profile.id, {
     previous_reports: previousRows ?? [],
-    reporter_id: reporter.db.id,
+    reporter_id: taskReporter.db.id,
     report_date: reportDate,
     percent: body.percent
   }, trialRunId);
   await notifyProfiles(
     supabase,
-    [taskResult.task.assigned_to, reporter.db.id],
+    [taskResult.task.assigned_to, taskReporter.db.id],
     auth.profile.id,
     taskId,
     "task_report_updated",
