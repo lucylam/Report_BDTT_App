@@ -143,26 +143,76 @@ export const PersonnelEditorDialog = ({
   return (
     <Dialog
       className="max-h-[calc(100dvh-1rem)] overflow-y-auto sm:max-w-xl"
-      description="Thay đổi này cập nhật phạm vi tổ chức và quyền quản lý BDTT của nhân sự."
+      description="Chỉnh cơ cấu hoặc đặt lại mật khẩu tài khoản."
       eyebrow="Quản trị nhân sự"
       onClose={isBusy ? () => undefined : onClose}
-      title="Chỉnh vai trò và phân nhóm"
+      title="Quản lý nhân sự"
     >
       <form className="mt-5" onSubmit={(event) => void submit(event)}>
         <div className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-4">
-          <div className="flex min-w-0 items-start gap-3">
-            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--primary-soft)] text-[var(--primary-strong)]">
-              <Icon name="account" />
-            </span>
-            <div className="min-w-0">
-              <p className="break-words text-base font-semibold text-[var(--foreground)]">
-                {profile.fullName}
-              </p>
-              <p className="mt-1 break-words text-sm font-medium text-[var(--text-muted)]">
-                {profile.username} · Mã NV {profile.employeeCode || "—"}
-              </p>
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--primary-soft)] text-[var(--primary-strong)]">
+                <Icon name="account" />
+              </span>
+              <div className="min-w-0">
+                <p className="break-words text-base font-semibold text-[var(--foreground)]">
+                  {profile.fullName}
+                </p>
+                <p className="mt-1 break-words text-sm font-medium text-[var(--text-muted)]">
+                  {profile.username} · Mã NV {profile.employeeCode || "—"}
+                </p>
+              </div>
             </div>
+
+            {canResetPassword && resetStatus !== "confirming" ? (
+              <Button
+                className="w-full sm:ml-auto sm:w-auto"
+                disabled={isBusy}
+                onClick={() => {
+                  setResetMessage("");
+                  setResetStatus("confirming");
+                }}
+                size="sm"
+                variant="danger"
+              >
+                Đặt lại mật khẩu
+              </Button>
+            ) : null}
           </div>
+
+          {canResetPassword && resetStatus === "confirming" ? (
+            <div className="mt-4 rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--danger-soft)] p-3">
+              <p className="text-sm font-semibold leading-5 text-[var(--danger)]">
+                Đặt mật khẩu của {profile.fullName} về 123456?
+              </p>
+              <div className="mt-3 flex flex-wrap justify-end gap-2">
+                <Button
+                  onClick={() => setResetStatus("idle")}
+                  size="sm"
+                  variant="secondary"
+                >
+                  Hủy
+                </Button>
+                <Button
+                  onClick={() => void resetPassword()}
+                  size="sm"
+                  variant="danger"
+                >
+                  Xác nhận đặt lại
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {resetMessage ? (
+            <Alert
+              className="mt-3"
+              tone={resetStatus === "success" ? "success" : "danger"}
+            >
+              {resetMessage}
+            </Alert>
+          ) : null}
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -213,70 +263,6 @@ export const PersonnelEditorDialog = ({
           Task đang giao vẫn giữ nguyên người thực hiện. Chức năng này không tự chuyển hoặc xóa WorkOrder.
         </Alert>
         {message ? <Alert className="mt-3" tone="danger">{message}</Alert> : null}
-
-        {canResetPassword ? (
-          <section className="mt-4 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4">
-            <div className="flex min-w-0 items-start gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--danger-soft)] text-[var(--danger)]">
-                <Icon name="shield" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-[var(--foreground)]">
-                  Mật khẩu đăng nhập
-                </p>
-                <p className="mt-1 break-words text-sm text-[var(--text-muted)]">
-                  Tài khoản: {profile.username}
-                </p>
-              </div>
-            </div>
-
-            {resetStatus === "confirming" ? (
-              <div className="mt-4 rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--danger-soft)] p-3">
-                <p className="text-sm font-semibold leading-5 text-[var(--danger)]">
-                  Đặt mật khẩu của {profile.fullName} về 123456?
-                </p>
-                <div className="mt-3 flex flex-wrap justify-end gap-2">
-                  <Button
-                    onClick={() => setResetStatus("idle")}
-                    size="sm"
-                    variant="secondary"
-                  >
-                    Hủy
-                  </Button>
-                  <Button
-                    onClick={() => void resetPassword()}
-                    size="sm"
-                    variant="danger"
-                  >
-                    Xác nhận đặt lại
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Button
-                className="mt-4"
-                disabled={isBusy}
-                onClick={() => {
-                  setResetMessage("");
-                  setResetStatus("confirming");
-                }}
-                size="sm"
-                variant="danger"
-              >
-                Đặt lại mật khẩu
-              </Button>
-            )}
-
-            {resetMessage ? (
-              <Alert
-                className="mt-3"
-                tone={resetStatus === "success" ? "success" : "danger"}
-              >
-                {resetMessage}
-              </Alert>
-            ) : null}
-          </section>
-        ) : null}
 
         <div className="mt-5 flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-4 md:flex-row md:justify-end">
           <Button disabled={isBusy} onClick={onClose} variant="secondary">
