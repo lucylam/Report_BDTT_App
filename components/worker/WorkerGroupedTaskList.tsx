@@ -2,7 +2,6 @@ import { useState } from "react";
 import { EmptyState } from "@/components/ui";
 import { TaskCard } from "@/components/worker/TaskCard";
 import type { SaveState, WorkerProgressUpdate } from "@/components/worker/types";
-import { DEFAULT_REPORT_DATE } from "@/lib/date";
 import { getTaskProgress } from "@/lib/progress";
 import type { ProgressRecord, Task } from "@/types/domain";
 import type { WorkerTaskGroup } from "@/components/worker/taskView";
@@ -10,6 +9,7 @@ import type { WorkerTaskGroup } from "@/components/worker/taskView";
 interface WorkerGroupedTaskListProps {
   readonly taskGroups: readonly WorkerTaskGroup[];
   readonly progress: readonly ProgressRecord[];
+  readonly reportDate: string;
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly onChange: (taskId: string, update: WorkerProgressUpdate) => void;
   readonly onCancel: (taskId: string) => void;
@@ -18,6 +18,7 @@ interface WorkerGroupedTaskListProps {
 export const WorkerGroupedTaskList = ({
   taskGroups,
   progress,
+  reportDate,
   saveStates,
   onChange,
   onCancel
@@ -87,6 +88,7 @@ export const WorkerGroupedTaskList = ({
                 onCancel={onCancel}
                 onChange={onChange}
                 progress={progress}
+                reportDate={reportDate}
                 saveStates={saveStates}
                 tasks={group.tasks}
               />
@@ -101,12 +103,14 @@ export const WorkerGroupedTaskList = ({
 const TaskGroupItems = ({
   tasks,
   progress,
+  reportDate,
   saveStates,
   onChange,
   onCancel
 }: {
   readonly tasks: readonly Task[];
   readonly progress: readonly ProgressRecord[];
+  readonly reportDate: string;
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly onChange: (taskId: string, update: WorkerProgressUpdate) => void;
   readonly onCancel: (taskId: string) => void;
@@ -118,7 +122,7 @@ const TaskGroupItems = ({
           key={task.id}
           onCancel={() => onCancel(task.id)}
           onChange={(update) => onChange(task.id, update)}
-          progress={getTaskProgress(progress, task.id, DEFAULT_REPORT_DATE)}
+          progress={getTaskProgress(progress, task.id, reportDate)}
           saveState={saveStates[task.id] ?? "idle"}
           task={task}
         />

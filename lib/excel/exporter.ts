@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { REPORT_DATES, dateToExcelSerial } from "@/lib/date";
+import { dateToExcelSerial, getPlanReportDates } from "@/lib/date";
 import { getTaskPercent } from "@/lib/progress";
 import { toProgressModeCell } from "@/lib/progressMode";
 import type { AppData, Task } from "@/types/domain";
@@ -11,6 +11,20 @@ export interface SheetRangeValues {
   readonly clearRange: string;
   readonly values: ExportCellValue[][];
 }
+
+const SHEET_PROGRESS_COLUMN_COUNT = 14;
+const SHEET_PROGRESS_OUTPUT_COLUMN_COUNT = 19;
+
+const toExcelColumn = (columnNumber: number): string => {
+  let value = columnNumber;
+  let result = "";
+  while (value > 0) {
+    value -= 1;
+    result = String.fromCharCode(65 + (value % 26)) + result;
+    value = Math.floor(value / 26);
+  }
+  return result;
+};
 
 export const DATA_BASE_HEADERS = [
   "Stt",
@@ -68,11 +82,15 @@ const getSheetNote = (data: AppData, task: Task): string => {
   return parts.join(" | ");
 };
 
-const createExportRow = (data: AppData, task: Task): Record<string, ExportCellValue> => {
+const createExportRow = (
+  data: AppData,
+  task: Task,
+  reportDates: readonly string[]
+): Record<string, ExportCellValue> => {
   const row = createBaseRow(task);
   let total = 0;
 
-  REPORT_DATES.forEach((date) => {
+  reportDates.forEach((date) => {
     const percent = getTaskPercent(data.progress, task.id, date);
     const fraction = percent / 100;
     row[String(dateToExcelSerial(date))] = percent === 0 ? "" : fraction;
@@ -102,21 +120,39 @@ const createProgressFraction = (
 const createProgressValues = (
   data: AppData,
   task: Task,
-  taskIndex: number
+  taskIndex: number,
+  reportDates: readonly string[]
 ): ExportCellValue[] => {
   const excelRow = getExcelRowNumber(taskIndex);
-  return [
-    ...REPORT_DATES.map((date) => createProgressFraction(data, task, date)),
-    `=MAX(N${excelRow}:AA${excelRow})`,
-    `=AB${excelRow}`,
-    `=1-AB${excelRow}`,
+  const progressValues = reportDates.map((date) =>
+    createProgressFraction(data, task, date)
+  );
+  const lastProgressColumn = toExcelColumn(13 + Math.max(1, reportDates.length));
+  const totalColumn = toExcelColumn(14 + reportDates.length);
+  const completeColumn = toExcelColumn(15 + reportDates.length);
+  const metricValues: ExportCellValue[] = [
+    `=MAX(N${excelRow}:${lastProgressColumn}${excelRow})`,
+    `=${totalColumn}${excelRow}`,
+    `=1-${completeColumn}${excelRow}`,
     task.isCancelled ? "X" : "",
     getSheetNote(data, task)
   ];
+  return [
+    ...progressValues,
+    ...metricValues,
+    ...Array(
+      Math.max(
+        0,
+        SHEET_PROGRESS_OUTPUT_COLUMN_COUNT - progressValues.length - metricValues.length
+      )
+    ).fill("")
+  ];
 };
 
-export const buildExportRows = (data: AppData): Array<Record<string, ExportCellValue>> =>
-  data.tasks.map((task) => createExportRow(data, task));
+export const buildExportRows = (data: AppData): Array<Record<string, ExportCellValue>> => {
+  const reportDates = getPlanReportDates(data.tasks);
+  return data.tasks.map((task) => createExportRow(data, task, reportDates));
+};
 
 export const buildExportSheetValues = (data: AppData): ExportCellValue[][] => {
   const rows = buildExportRows(data);
@@ -125,7 +161,10 @@ export const buildExportSheetValues = (data: AppData): ExportCellValue[][] => {
 };
 
 export const buildProgressSheetRangeValues = (data: AppData): SheetRangeValues => {
-  const values = data.tasks.map((task, index) => createProgressValues(data, task, index));
+  const reportDates = getPlanReportDates(data.tasks).slice(0, SHEET_PROGRESS_COLUMN_COUNT);
+  const values = data.tasks.map((task, index) =>
+    createProgressValues(data, task, index, reportDates)
+  );
   const lastRow = Math.max(getExcelRowNumber(data.tasks.length - 1), 3);
   return { range: "N3", clearRange: `N3:AF${lastRow}`, values };
 };
@@ -137,9 +176,10 @@ export const buildFullDataSheetRangeValues = (
   const orderedTasks = [...data.tasks].sort(
     (left, right) => left.stt - right.stt || left.tagname.localeCompare(right.tagname, "vi")
   );
+  const reportDates = getPlanReportDates(orderedTasks).slice(0, SHEET_PROGRESS_COLUMN_COUNT);
   const values = orderedTasks.map((task, index) => [
     ...createBaseValues(task),
-    ...createProgressValues(data, task, index),
+    ...createProgressValues(data, task, index, reportDates),
     toProgressModeCell(task.progressMode)
   ]);
   const lastRow = Math.max(values.length, existingRowCount, 1) + 2;

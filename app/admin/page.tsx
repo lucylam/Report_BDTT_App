@@ -7,7 +7,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { ProgressCharts } from "@/components/admin/ProgressCharts";
 import { AppLoadingState, Badge, Icon, Widget, WidgetHeader, type IconName } from "@/components/ui";
 import { buildExcelDashboard } from "@/lib/dashboard";
-import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
+import { formatViDate, getPlanReportDate } from "@/lib/date";
 import {
   getOrgScopeLabel,
   getScopedAppData,
@@ -104,13 +104,14 @@ const AdminPage = (): React.ReactElement => {
   const scopedData = getScopedAppData(data, currentAccount);
   const scopeLabel = getOrgScopeLabel(currentAccount);
   const isFullScope = hasFullOrgScope(currentAccount);
-  const metrics = calculateMetrics(scopedData, DEFAULT_REPORT_DATE);
+  const reportDate = getPlanReportDate(scopedData.tasks);
+  const metrics = calculateMetrics(scopedData, reportDate);
 
   return (
     <AdminShell
       account={currentAccount}
       onLogout={logout}
-      subtitle={`Tổ Thiết bị Đo lường & Điều khiển · ${scopeLabel} · Ngày báo cáo: ${formatViDate(DEFAULT_REPORT_DATE)}`}
+      subtitle={`Tổ Thiết bị Đo lường & Điều khiển · ${scopeLabel} · Ngày báo cáo: ${formatViDate(reportDate)}`}
       title={isFullScope ? "Dashboard giám sát" : "Dashboard nhóm"}
     >
       <ManagementDashboard
@@ -118,6 +119,7 @@ const AdminPage = (): React.ReactElement => {
         data={scopedData}
         isFullScope={isFullScope}
         metrics={metrics}
+        reportDate={reportDate}
       />
     </AdminShell>
   );
@@ -127,24 +129,26 @@ const ManagementDashboard = ({
   canReviewUpdateHistory,
   data,
   isFullScope,
-  metrics
+  metrics,
+  reportDate
 }: {
   readonly canReviewUpdateHistory: boolean;
   readonly data: AppData;
   readonly isFullScope: boolean;
   readonly metrics: DashboardMetrics;
+  readonly reportDate: string;
 }): React.ReactElement => {
   const [dashboardView, setDashboardView] = useState<DashboardView>("excel");
   const excelDashboard = useMemo(
-    () => buildExcelDashboard(data, DEFAULT_REPORT_DATE),
-    [data]
+    () => buildExcelDashboard(data, reportDate),
+    [data, reportDate]
   );
   const updateHistoryRows = useMemo(
     () => (canReviewUpdateHistory ? buildRecentUpdateRows(data) : []),
     [canReviewUpdateHistory, data]
   );
   const level: OrgUnitLevel = isFullScope ? "group" : "subgroup";
-  const rows = buildOrgUnitRows(data, level);
+  const rows = buildOrgUnitRows(data, level, reportDate);
   const onTrackRows = rows
     .filter((row) => row.percent >= PLAN_TARGET_PERCENT && row.overdue === 0)
     .sort((left, right) => right.percent - left.percent);
@@ -163,7 +167,7 @@ const ManagementDashboard = ({
       {dashboardView === "excel" ? (
         <ProgressCharts
           dashboard={excelDashboard}
-          reportDateLabel={formatViDate(DEFAULT_REPORT_DATE)}
+          reportDateLabel={formatViDate(reportDate)}
         />
       ) : (
         <>
@@ -176,7 +180,7 @@ const ManagementDashboard = ({
 
       <section className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
         <ProgressOverview rows={rows} />
-        <ReportCoverage metrics={metrics} rows={rows} />
+        <ReportCoverage metrics={metrics} reportDate={reportDate} rows={rows} />
       </section>
 
       <section className="grid min-w-0 items-start gap-3 2xl:grid-cols-2">
@@ -485,9 +489,11 @@ const ProgressOverview = ({ rows }: { readonly rows: readonly OrgUnitRow[] }): R
 
 const ReportCoverage = ({
   metrics,
+  reportDate,
   rows
 }: {
   readonly metrics: DashboardMetrics;
+  readonly reportDate: string;
   readonly rows: readonly OrgUnitRow[];
 }): React.ReactElement => {
   const members = rows.reduce((total, row) => total + row.members, 0);
@@ -499,7 +505,7 @@ const ReportCoverage = ({
       <WidgetHeader
         icon="people"
         tone="info"
-        subtitle={formatViDate(DEFAULT_REPORT_DATE)}
+        subtitle={formatViDate(reportDate)}
         title="Báo cáo nhân sự trong ngày"
       />
       <div className="grid grid-cols-2 gap-3">
@@ -722,7 +728,11 @@ const recentPercentPillClass = (percent: number): string => {
   return "bg-[var(--line-soft)] text-[var(--text-muted)]";
 };
 
-const buildOrgUnitRows = (data: AppData, level: OrgUnitLevel): OrgUnitRow[] => {
+const buildOrgUnitRows = (
+  data: AppData,
+  level: OrgUnitLevel,
+  reportDate: string
+): OrgUnitRow[] => {
   const activeTasksByAssignee = getActiveTasksByAssignee(data.tasks);
   const units = new Map<
     string,
@@ -754,7 +764,7 @@ const buildOrgUnitRows = (data: AppData, level: OrgUnitLevel): OrgUnitRow[] => {
         activeTasks: activeTasksByAssignee.get(profile.id) ?? [],
         progress: data.progress,
         profileId: profile.id,
-        reportDate: DEFAULT_REPORT_DATE
+        reportDate
       })) {
         current.submitted.add(profile.id);
       }
@@ -784,15 +794,15 @@ const buildOrgUnitRows = (data: AppData, level: OrgUnitLevel): OrgUnitRow[] => {
     .map(([key, unit]) => {
       const activeTasks = unit.tasks.filter((task) => !task.isCancelled);
       const percents = activeTasks.map((task) =>
-        getTaskPercent(data.progress, task.id, DEFAULT_REPORT_DATE)
+        getTaskPercent(data.progress, task.id, reportDate)
       );
       const totalPercent = percents.reduce<number>((sum, percent) => sum + percent, 0);
       const completed = percents.filter((percent) => percent === 100).length;
       const inProgress = percents.filter((percent) => percent > 0 && percent < 100).length;
       const notStarted = percents.filter((percent) => percent === 0).length;
       const overdue = activeTasks.filter((task) => {
-        const percent = getTaskPercent(data.progress, task.id, DEFAULT_REPORT_DATE);
-        return task.finishDate < DEFAULT_REPORT_DATE && percent < 100;
+        const percent = getTaskPercent(data.progress, task.id, reportDate);
+        return task.finishDate < reportDate && percent < 100;
       }).length;
       const name = level === "group" ? unit.groupName : unit.subgroupName;
 

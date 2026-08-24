@@ -22,7 +22,7 @@ import type {
   WorkerProgressDraftMap,
   WorkerProgressUpdate
 } from "@/components/worker/types";
-import { DEFAULT_REPORT_DATE } from "@/lib/date";
+import { getPlanReportDate } from "@/lib/date";
 import { getProgressPhotoPaths, isInlinePhotoPath } from "@/lib/photo";
 import {
   createOfflinePhotoReference,
@@ -38,13 +38,14 @@ import type { ProgressPercent, Task } from "@/types/domain";
 const matchesFilter = (
   task: Task,
   percent: ProgressPercent,
-  filter: WorkerFilter
+  filter: WorkerFilter,
+  reportDate: string
 ): boolean => {
   if (filter === "all") return true;
   if (filter === "cancelled") return task.isCancelled;
   if (task.isCancelled) return false;
   if (filter === "today") {
-    return percent < 100 && (!task.startDate || task.startDate <= DEFAULT_REPORT_DATE);
+    return percent < 100 && (!task.startDate || task.startDate <= reportDate);
   }
   if (filter === "todo") return percent === 0;
   if (filter === "progress") return percent > 0 && percent < 100;
@@ -195,6 +196,7 @@ const WorkerPage = (): React.ReactElement => {
     queueProgress,
     updateProgress
   } = useAppData();
+  const reportDate = getPlanReportDate(data?.tasks ?? []);
   const [filter, setFilter] = useState<WorkerFilter>("today");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedUnit, setSelectedUnit] = useState<string>("");
@@ -367,9 +369,9 @@ const WorkerPage = (): React.ReactElement => {
       data.progress,
       draftUpdates,
       worker.id,
-      DEFAULT_REPORT_DATE
+      reportDate
     );
-  }, [data, draftUpdates, worker]);
+  }, [data, draftUpdates, reportDate, worker]);
 
   const allWorkerTasks = useMemo(() => {
     if (!data || !worker) return [];
@@ -382,17 +384,17 @@ const WorkerPage = (): React.ReactElement => {
     if (!data) return [];
     return sortWorkerTasks(
       allWorkerTasks.filter((task) => {
-        const percent = getTaskPercent(data.progress, task.id, DEFAULT_REPORT_DATE);
+        const percent = getTaskPercent(data.progress, task.id, reportDate);
         return (
-          matchesFilter(task, percent, filter) &&
+          matchesFilter(task, percent, filter, reportDate) &&
           (!selectedUnit || task.donVi === selectedUnit) &&
           matchesWorkerTaskQuery(task, searchQuery)
         );
       }),
       data.progress,
-      DEFAULT_REPORT_DATE
+      reportDate
     );
-  }, [allWorkerTasks, data, filter, searchQuery, selectedUnit]);
+  }, [allWorkerTasks, data, filter, reportDate, searchQuery, selectedUnit]);
 
   if (!data || !currentAccount || !worker || currentAccount.mustChangePassword) {
     return (
@@ -414,7 +416,7 @@ const WorkerPage = (): React.ReactElement => {
     const committedProgress = getTaskProgress(
       data.progress,
       taskId,
-      DEFAULT_REPORT_DATE
+      reportDate
     );
     const matchesCommitted = isSameProgressUpdate(committedProgress, update);
 
@@ -515,7 +517,7 @@ const WorkerPage = (): React.ReactElement => {
         const payload: WorkerProgressPayload = {
           taskId,
           userId: worker.id,
-          reportDate: DEFAULT_REPORT_DATE,
+          reportDate,
           percent: update.percent,
           note: update.note,
           photoPath: update.photoPath,
@@ -528,7 +530,7 @@ const WorkerPage = (): React.ReactElement => {
           if (isOnline) {
             const uploadedPhotoPaths = await uploadProgressPhotos({
               task,
-              reportDate: DEFAULT_REPORT_DATE,
+              reportDate,
               photoPaths: getProgressPhotoPaths(payload),
               trialRunId: payload.trialRunId ?? null
             });
@@ -659,6 +661,7 @@ const WorkerPage = (): React.ReactElement => {
         queuedUpdateCount={queueLength}
         queueSyncState={queueSyncState}
         progress={data.progress}
+        reportDate={reportDate}
         saveStates={saveStates}
         searchQuery={searchQuery}
         selectedUnit={selectedUnit}
@@ -687,6 +690,7 @@ const WorkerPage = (): React.ReactElement => {
         queuedUpdateCount={queueLength}
         queueSyncState={queueSyncState}
         progress={data.progress}
+        reportDate={reportDate}
         saveStates={saveStates}
         searchQuery={searchQuery}
         selectedUnit={selectedUnit}

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Badge, Icon, Input, Select, Widget, WidgetHeader } from "@/components/ui";
-import { REPORT_DATES, formatViDate } from "@/lib/date";
+import { formatViDate, getAvailableReportDates, getPlanReportDates } from "@/lib/date";
 import { getTaskPercent } from "@/lib/progress";
 import {
   getReportablePersonnel,
@@ -60,12 +60,13 @@ const detailTabs: readonly {
 const getTaskPercentForFilter = (
   progress: readonly ProgressRecord[],
   taskId: string,
-  dateFilter: DateFilter
+  dateFilter: DateFilter,
+  reportDates: readonly string[]
 ): ProgressPercent => {
   if (dateFilter !== "all-days") {
     return getTaskPercent(progress, taskId, dateFilter);
   }
-  return REPORT_DATES.reduce<ProgressPercent>((max, date) => {
+  return reportDates.reduce<ProgressPercent>((max, date) => {
     const percent = getTaskPercent(progress, taskId, date);
     return percent > max ? percent : max;
   }, 0);
@@ -74,13 +75,14 @@ const getTaskPercentForFilter = (
 const getLatestTaskRecord = (
   progress: readonly ProgressRecord[],
   taskId: string,
-  dateFilter: DateFilter
+  dateFilter: DateFilter,
+  reportDates: readonly string[]
 ): ProgressRecord | null => {
   const records = progress
     .filter((record) => {
       if (record.taskId !== taskId) return false;
       return dateFilter === "all-days"
-        ? REPORT_DATES.includes(record.reportDate)
+        ? reportDates.includes(record.reportDate)
         : record.reportDate === dateFilter;
     })
     .sort((left, right) => right.reportDate.localeCompare(left.reportDate));
@@ -90,9 +92,10 @@ const getLatestTaskRecord = (
 const createDayStatuses = (
   data: AppData,
   profile: Profile,
-  activeTasks: readonly Task[]
+  activeTasks: readonly Task[],
+  reportDates: readonly string[]
 ): WorkerDayStatus[] => {
-  return REPORT_DATES.map((date) => {
+  return reportDates.map((date) => {
     const records = data.progress.filter(
       (record) => record.userId === profile.id && record.reportDate === date
     );
@@ -115,18 +118,22 @@ const createDayStatuses = (
   });
 };
 
-const buildRows = (data: AppData, dateFilter: DateFilter): WorkerRow[] => {
+const buildRows = (
+  data: AppData,
+  dateFilter: DateFilter,
+  reportDates: readonly string[]
+): WorkerRow[] => {
   return getReportablePersonnel(data.profiles)
     .map((profile) => {
       const tasks = data.tasks.filter((task) => task.assignedTo === profile.id);
       const activeTasks = tasks.filter((task) => !task.isCancelled);
       const cancelled = tasks.length - activeTasks.length;
-      const dayStatuses = createDayStatuses(data, profile, activeTasks);
+      const dayStatuses = createDayStatuses(data, profile, activeTasks, reportDates);
       const submittedDays = dayStatuses.filter((day) => day.submitted).length;
       const taskStatuses = activeTasks.map((task) => ({
         task,
-        percent: getTaskPercentForFilter(data.progress, task.id, dateFilter),
-        latestRecord: getLatestTaskRecord(data.progress, task.id, dateFilter)
+        percent: getTaskPercentForFilter(data.progress, task.id, dateFilter, reportDates),
+        latestRecord: getLatestTaskRecord(data.progress, task.id, dateFilter, reportDates)
       }));
       const done = taskStatuses.filter((item) => item.percent === 100).length;
       const updatedTasks = taskStatuses.filter((item) => item.latestRecord).length;
@@ -136,7 +143,7 @@ const buildRows = (data: AppData, dateFilter: DateFilter): WorkerRow[] => {
       );
       const submitted =
         dateFilter === "all-days"
-          ? submittedDays === REPORT_DATES.length
+          ? submittedDays === reportDates.length
           : dayStatuses.some((day) => day.date === dateFilter && day.submitted);
 
       return {
@@ -148,7 +155,7 @@ const buildRows = (data: AppData, dateFilter: DateFilter): WorkerRow[] => {
           activeTasks.length === 0 ? 100 : Math.round(percentSum / activeTasks.length),
         submitted,
         submittedDays,
-        totalDays: REPORT_DATES.length,
+        totalDays: reportDates.length,
         updatedTasks,
         dayStatuses,
         taskStatuses: taskStatuses.sort((left, right) => {
@@ -179,8 +186,17 @@ export const WorkerStatusTable = ({
   const [dateFilter, setDateFilter] = useState<DateFilter>("all-days");
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
   const [mobileDetailTab, setMobileDetailTab] = useState<DetailTab>("days");
+  const reportDates = useMemo(() => {
+    const planDates = getPlanReportDates(data.tasks);
+    return planDates.length > 0
+      ? planDates
+      : getAvailableReportDates(data.progress.map((record) => record.reportDate));
+  }, [data.progress, data.tasks]);
 
-  const rows = useMemo(() => buildRows(data, dateFilter), [data, dateFilter]);
+  const rows = useMemo(
+    () => buildRows(data, dateFilter, reportDates),
+    [data, dateFilter, reportDates]
+  );
   const filteredRows = rows.filter((row) => {
     const text =
       `${row.profile.fullName} ${row.profile.nhom} ${row.profile.orgGroup} ${row.profile.subgroup} ${row.profile.username}`.toLowerCase();
@@ -264,7 +280,7 @@ export const WorkerStatusTable = ({
               value={dateFilter}
             >
               <option value="all-days">Tổng các ngày</option>
-              {REPORT_DATES.map((date) => (
+              {reportDates.map((date) => (
                 <option key={date} value={date}>
                   {formatViDate(date)}
                 </option>

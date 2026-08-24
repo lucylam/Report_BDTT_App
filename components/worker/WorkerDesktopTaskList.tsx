@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Badge, EmptyState } from "@/components/ui";
-import { DEFAULT_REPORT_DATE } from "@/lib/date";
 import { getTaskPercent } from "@/lib/progress";
 import type { ProgressRecord, Task } from "@/types/domain";
 import type { WorkerTaskGroup } from "@/components/worker/taskView";
@@ -8,6 +7,7 @@ import type { WorkerTaskGroup } from "@/components/worker/taskView";
 interface WorkerDesktopTaskListProps {
   readonly taskGroups: readonly WorkerTaskGroup[];
   readonly progress: readonly ProgressRecord[];
+  readonly reportDate: string;
   readonly selectedTask: Task | null;
   readonly onSelectTask: (taskId: string) => void;
 }
@@ -22,6 +22,7 @@ const percentTone = (percent: number): string => {
 export const WorkerDesktopTaskList = ({
   taskGroups,
   progress,
+  reportDate,
   selectedTask,
   onSelectTask
 }: WorkerDesktopTaskListProps): React.ReactElement => {
@@ -97,7 +98,7 @@ export const WorkerDesktopTaskList = ({
             {isCollapsed ? null : (
               <div className="space-y-2">
                 {group.tasks.map((task) => {
-                  const percent = getTaskPercent(progress, task.id, DEFAULT_REPORT_DATE);
+                  const percent = getTaskPercent(progress, task.id, reportDate);
                   const selected = selectedTask?.id === task.id;
                   return (
                     <button

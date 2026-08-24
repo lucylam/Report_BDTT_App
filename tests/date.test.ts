@@ -4,7 +4,10 @@ import {
   excelSerialToDate,
   getAvailableReportDates,
   getCurrentReportDate,
+  getPlanReportDate,
+  getPlanReportDates,
   getRecentReportDates,
+  getReportHistoryDates,
   minutesUntilNoon
 } from "@/lib/date";
 
@@ -44,5 +47,32 @@ describe("report date", () => {
       "2026-07-17"
     ]);
     expect(getAvailableReportDates(["2026-07-01"], "2026-07-17")).toContain("2026-07-01");
+  });
+
+  it("lấy ngày báo cáo từ khoảng Start/Finish của kế hoạch", () => {
+    const tasks = [
+      { startDate: "2026-09-15", finishDate: "2026-09-20" },
+      { startDate: "2026-09-18", finishDate: "2026-09-25" }
+    ];
+    expect(getPlanReportDates(tasks)).toEqual([
+      "2026-09-15", "2026-09-16", "2026-09-17", "2026-09-18",
+      "2026-09-19", "2026-09-20", "2026-09-21", "2026-09-22",
+      "2026-09-23", "2026-09-24", "2026-09-25"
+    ]);
+    expect(getPlanReportDate(tasks, "2026-08-24")).toBe("2026-09-15");
+    expect(getPlanReportDate(tasks, "2026-09-21")).toBe("2026-09-21");
+    expect(getPlanReportDate(tasks, "2026-10-01")).toBe("2026-09-25");
+  });
+
+  it("chỉ tạo lịch sử từ các ngày thuộc khoảng kế hoạch", () => {
+    const tasks = [{ startDate: "2026-09-15", finishDate: "2026-09-25" }];
+    expect(getReportHistoryDates(tasks, [], "2026-08-24", 7)).toEqual([
+      "2026-09-15", "2026-09-16", "2026-09-17", "2026-09-18",
+      "2026-09-19", "2026-09-20", "2026-09-21"
+    ]);
+    expect(getReportHistoryDates(tasks, [], "2026-09-22", 7)).toEqual([
+      "2026-09-16", "2026-09-17", "2026-09-18", "2026-09-19",
+      "2026-09-20", "2026-09-21", "2026-09-22"
+    ]);
   });
 });

@@ -23,7 +23,7 @@ import type {
   WorkerFilter,
   WorkerProgressUpdate
 } from "@/components/worker/types";
-import { DEFAULT_REPORT_DATE, formatViDate, getAvailableReportDates } from "@/lib/date";
+import { formatViDate, getReportHistoryDates } from "@/lib/date";
 import { getTaskPercent, getTaskProgress } from "@/lib/progress";
 import type { AuthAccount, PlanVersion, ProgressRecord, Task } from "@/types/domain";
 
@@ -32,6 +32,7 @@ interface WorkerMobileViewProps {
   readonly allTasks: readonly Task[];
   readonly filteredTasks: readonly Task[];
   readonly progress: readonly ProgressRecord[];
+  readonly reportDate: string;
   readonly displayProgress: readonly ProgressRecord[];
   readonly filter: WorkerFilter;
   readonly searchQuery: string;
@@ -78,6 +79,7 @@ export const WorkerMobileView = ({
   allTasks,
   filteredTasks,
   progress,
+  reportDate,
   displayProgress,
   filter,
   searchQuery,
@@ -106,7 +108,7 @@ export const WorkerMobileView = ({
 
   const activeTasks = allTasks.filter((task) => !task.isCancelled);
   const percents = activeTasks.map((task) =>
-    getTaskPercent(progress, task.id, DEFAULT_REPORT_DATE)
+    getTaskPercent(progress, task.id, reportDate)
   );
   const completedCount = percents.filter((percent) => percent === 100).length;
   const inProgressCount = percents.filter(
@@ -124,12 +126,16 @@ export const WorkerMobileView = ({
     (task) =>
       !task.isCancelled &&
       task.priority === 1 &&
-      getTaskPercent(progress, task.id, DEFAULT_REPORT_DATE) < 100
+      getTaskPercent(progress, task.id, reportDate) < 100
   ).length;
   const taskGroups = groupWorkerTasks(filteredTasks, groupMode);
   const unitOptions = getTaskUnitOptions(allTasks);
-  const reportDates = getAvailableReportDates(progress.map((record) => record.reportDate));
-  const historyRows = reportDates.slice(-7)
+  const reportDates = getReportHistoryDates(
+    allTasks,
+    progress.map((record) => record.reportDate),
+    reportDate
+  );
+  const historyRows = [...reportDates]
     .reverse()
     .map((date) => {
       const updates = allTasks
@@ -162,7 +168,7 @@ export const WorkerMobileView = ({
           compact
         />
         <PageHeader
-          eyebrow={`Công việc · BDTT ${DEFAULT_REPORT_DATE.slice(0, 4)}`}
+          eyebrow={`Công việc · BDTT ${reportDate.slice(0, 4)}`}
           title="Báo cáo tiến độ"
         />
         {planVersion ? (
@@ -230,6 +236,7 @@ export const WorkerMobileView = ({
               onCancel={onCancel}
               onChange={onChange}
               progress={displayProgress}
+              reportDate={reportDate}
               saveStates={saveStates}
               taskGroups={taskGroups}
             />
@@ -462,7 +469,7 @@ export const DailyCompletionChart = ({
             <p className="text-xs font-semibold uppercase text-[var(--info-strong)]">
               Hoàn thành theo ngày
             </p>
-            <h2 className="mt-1 text-lg font-semibold">7 ngày gần nhất</h2>
+            <h2 className="mt-1 text-lg font-semibold">7 ngày báo cáo gần nhất</h2>
           </div>
         </div>
         <Badge tone="primary">Max {maxCompleted}</Badge>
@@ -470,7 +477,7 @@ export const DailyCompletionChart = ({
 
       {maxCompleted === 0 ? (
         <Alert className="mt-3" tone="warning">
-          Chưa có hạng mục hoàn thành trong 7 ngày gần nhất.
+          Chưa có hạng mục hoàn thành trong các ngày báo cáo gần nhất.
         </Alert>
       ) : (
         <div

@@ -4,13 +4,13 @@ import type {
   SaveState,
   WorkerProgressUpdate
 } from "@/components/worker/types";
-import { DEFAULT_REPORT_DATE } from "@/lib/date";
 import { getTaskProgress } from "@/lib/progress";
 import type { ProgressRecord, Task } from "@/types/domain";
 
 interface WorkerDesktopTaskDetailProps {
   readonly task: Task | null;
   readonly progress: readonly ProgressRecord[];
+  readonly reportDate: string;
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly onChange: (taskId: string, update: WorkerProgressUpdate) => void;
   readonly onCancel: (taskId: string) => void;
@@ -19,6 +19,7 @@ interface WorkerDesktopTaskDetailProps {
 export const WorkerDesktopTaskDetail = ({
   task,
   progress,
+  reportDate,
   saveStates,
   onChange,
   onCancel
@@ -60,7 +61,7 @@ export const WorkerDesktopTaskDetail = ({
             <ProgressEditor
               key={task.id}
               onChange={(update) => onChange(task.id, update)}
-              progress={getTaskProgress(progress, task.id, DEFAULT_REPORT_DATE)}
+              progress={getTaskProgress(progress, task.id, reportDate)}
               saveState={saveStates[task.id] ?? "idle"}
               task={task}
             />

@@ -2,6 +2,26 @@ const EXCEL_DATE_OFFSET = 25569;
 const MS_PER_DAY = 86_400_000;
 const DEFAULT_REPORT_WINDOW_DAYS = 14;
 
+export interface ReportDateRangeItem {
+  readonly startDate: string;
+  readonly finishDate: string;
+}
+
+const isIsoDate = (value: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+const createDateRange = (startDate: string, finishDate: string): readonly string[] => {
+  if (!isIsoDate(startDate) || !isIsoDate(finishDate) || finishDate < startDate) {
+    return [];
+  }
+  const start = new Date(`${startDate}T00:00:00.000Z`);
+  const finish = new Date(`${finishDate}T00:00:00.000Z`);
+  const dates: string[] = [];
+  for (const date = new Date(start); date <= finish; date.setUTCDate(date.getUTCDate() + 1)) {
+    dates.push(date.toISOString().slice(0, 10));
+  }
+  return dates;
+};
+
 export const getCurrentReportDate = (now: Date = new Date()): string => {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Saigon",
@@ -39,6 +59,60 @@ export const getAvailableReportDates = (
   anchorDate = DEFAULT_REPORT_DATE
 ): readonly string[] =>
   [...new Set([...getRecentReportDates(anchorDate), ...reportDates.filter(Boolean)])].sort();
+
+export const getPlanReportDates = (
+  items: readonly ReportDateRangeItem[]
+): readonly string[] => {
+  const validItems = items.filter(
+    (item) =>
+      isIsoDate(item.startDate) &&
+      isIsoDate(item.finishDate) &&
+      item.finishDate >= item.startDate
+  );
+  if (validItems.length === 0) return [];
+  const startDate = validItems.reduce(
+    (minimum, item) => item.startDate < minimum ? item.startDate : minimum,
+    validItems[0].startDate
+  );
+  const finishDate = validItems.reduce(
+    (maximum, item) => item.finishDate > maximum ? item.finishDate : maximum,
+    validItems[0].finishDate
+  );
+  return createDateRange(startDate, finishDate);
+};
+
+export const getPlanReportDate = (
+  items: readonly ReportDateRangeItem[],
+  currentDate = DEFAULT_REPORT_DATE
+): string => {
+  const reportDates = getPlanReportDates(items);
+  if (reportDates.length === 0) return currentDate;
+  const firstDate = reportDates[0];
+  const lastDate = reportDates[reportDates.length - 1];
+  if (currentDate < firstDate) return firstDate;
+  if (currentDate > lastDate) return lastDate;
+  return currentDate;
+};
+
+export const getReportHistoryDates = (
+  items: readonly ReportDateRangeItem[],
+  actualReportDates: readonly string[],
+  currentDate = DEFAULT_REPORT_DATE,
+  dayCount = 7
+): readonly string[] => {
+  const planDates = getPlanReportDates(items);
+  if (planDates.length === 0) {
+    return getAvailableReportDates(actualReportDates, currentDate).slice(-dayCount);
+  }
+
+  const safeDayCount = Math.max(1, Math.floor(dayCount));
+  const activeDate = getPlanReportDate(items, currentDate);
+  const activeIndex = Math.max(0, planDates.indexOf(activeDate));
+  const planWindow = currentDate < planDates[0]
+    ? planDates.slice(0, safeDayCount)
+    : planDates.slice(Math.max(0, activeIndex - safeDayCount + 1), activeIndex + 1);
+  return planWindow;
+};
 
 export const getReportYear = (reportDate: string): string =>
   /^\d{4}-\d{2}-\d{2}$/.test(reportDate) ? reportDate.slice(0, 4) : "";

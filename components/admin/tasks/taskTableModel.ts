@@ -1,4 +1,4 @@
-import { DEFAULT_REPORT_DATE } from "@/lib/date";
+import { getPlanReportDate } from "@/lib/date";
 import { getTaskPercent, getTaskProgress } from "@/lib/progress";
 import type { AppData, ProgressPercent, ProgressRecord, Task } from "@/types/domain";
 
@@ -50,13 +50,14 @@ export const getProgressLabel = (task: Task, percent: ProgressPercent): string =
 };
 
 export const buildTaskRows = (data: AppData): TaskRow[] => {
+  const reportDate = getPlanReportDate(data.tasks);
   return data.tasks.map((task) => {
-    const percent = getTaskPercent(data.progress, task.id, DEFAULT_REPORT_DATE);
+    const percent = getTaskPercent(data.progress, task.id, reportDate);
     return {
       task,
       percent,
       status: getStatus(task, percent),
-      progress: getTaskProgress(data.progress, task.id, DEFAULT_REPORT_DATE)
+      progress: getTaskProgress(data.progress, task.id, reportDate)
     };
   });
 };

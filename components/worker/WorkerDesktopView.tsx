@@ -33,7 +33,7 @@ import type {
   WorkerFilter,
   WorkerProgressUpdate
 } from "@/components/worker/types";
-import { DEFAULT_REPORT_DATE, formatViDate, getAvailableReportDates } from "@/lib/date";
+import { formatViDate, getReportHistoryDates } from "@/lib/date";
 import { getTaskPercent, getTaskProgress } from "@/lib/progress";
 import type { AuthAccount, PlanVersion, Profile, ProgressPercent, ProgressRecord, Task } from "@/types/domain";
 
@@ -43,6 +43,7 @@ interface WorkerDesktopViewProps {
   readonly allTasks: readonly Task[];
   readonly filteredTasks: readonly Task[];
   readonly progress: readonly ProgressRecord[];
+  readonly reportDate: string;
   readonly displayProgress: readonly ProgressRecord[];
   readonly filter: WorkerFilter;
   readonly searchQuery: string;
@@ -92,6 +93,7 @@ export const WorkerDesktopView = ({
   allTasks,
   filteredTasks,
   progress,
+  reportDate,
   displayProgress,
   filter,
   searchQuery,
@@ -141,7 +143,7 @@ export const WorkerDesktopView = ({
 
   const activeTasks = allTasks.filter((task) => !task.isCancelled);
   const percents: readonly ProgressPercent[] = activeTasks.map((task) =>
-    getTaskPercent(progress, task.id, DEFAULT_REPORT_DATE)
+    getTaskPercent(progress, task.id, reportDate)
   );
   const completedCount = percents.filter((percent) => percent === 100).length;
   const inProgressCount = percents.filter(
@@ -159,12 +161,16 @@ export const WorkerDesktopView = ({
     (task) =>
       !task.isCancelled &&
       task.priority === 1 &&
-      getTaskPercent(progress, task.id, DEFAULT_REPORT_DATE) < 100
+      getTaskPercent(progress, task.id, reportDate) < 100
   ).length;
   const taskGroups = groupWorkerTasks(filteredTasks, groupMode);
   const unitOptions = getTaskUnitOptions(allTasks);
-  const reportDates = getAvailableReportDates(progress.map((record) => record.reportDate));
-  const historyRows: readonly HistoryRow[] = reportDates.slice(-7)
+  const reportDates = getReportHistoryDates(
+    allTasks,
+    progress.map((record) => record.reportDate),
+    reportDate
+  );
+  const historyRows: readonly HistoryRow[] = [...reportDates]
     .reverse()
     .map((date) => {
       const updates = allTasks
@@ -240,8 +246,8 @@ export const WorkerDesktopView = ({
             <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
               <PageHeader
                 className="min-w-0 flex-1"
-                description={`Ngày báo cáo: ${formatViDate(DEFAULT_REPORT_DATE)} · ${worker.orgTitle}${planVersion ? ` · KH cập nhật ${new Date(planVersion.importedAt).toLocaleString("vi-VN")}` : ""}`}
-                eyebrow={`Công việc · BDTT ${DEFAULT_REPORT_DATE.slice(0, 4)}`}
+                description={`Ngày báo cáo: ${formatViDate(reportDate)} · ${worker.orgTitle}${planVersion ? ` · KH cập nhật ${new Date(planVersion.importedAt).toLocaleString("vi-VN")}` : ""}`}
+                eyebrow={`Công việc · BDTT ${reportDate.slice(0, 4)}`}
                 title="Báo cáo tiến độ"
               />
 
@@ -299,6 +305,7 @@ export const WorkerDesktopView = ({
                   pendingUpdateCount={pendingUpdateCount}
                   queuedUpdateCount={queuedUpdateCount}
                   queueSyncState={queueSyncState}
+                  reportDate={reportDate}
                   saveStates={saveStates}
                   searchQuery={searchQuery}
                   selectedUnit={selectedUnit}
@@ -362,6 +369,7 @@ const TasksWorkspace = ({
   pendingUpdateCount,
   queuedUpdateCount,
   queueSyncState,
+  reportDate,
   saveStates,
   searchQuery,
   selectedUnit,
@@ -393,6 +401,7 @@ const TasksWorkspace = ({
   readonly pendingUpdateCount: number;
   readonly queuedUpdateCount: number;
   readonly queueSyncState: QueueSyncState;
+  readonly reportDate: string;
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly searchQuery: string;
   readonly selectedUnit: string;
@@ -493,6 +502,7 @@ const TasksWorkspace = ({
             <WorkerDesktopTaskList
               onSelectTask={onSelectTask}
               progress={displayProgress}
+              reportDate={reportDate}
               selectedTask={selectedTask}
               taskGroups={taskGroups}
             />
@@ -504,6 +514,7 @@ const TasksWorkspace = ({
             onCancel={onCancel}
             onChange={onChange}
             progress={displayProgress}
+            reportDate={reportDate}
             saveStates={saveStates}
             task={selectedTask}
           />
@@ -580,7 +591,7 @@ const HistoryWorkspace = ({
       <WidgetHeader
         icon="history"
         subtitle={`${historyRows.reduce((total, row) => total + row.updates.length, 0)} cập nhật`}
-        title="Lịch sử 7 ngày gần nhất"
+        title="Lịch sử ngày báo cáo"
       />
       <div className="grid gap-2 xl:grid-cols-2">
         {historyRows.map((row) => {

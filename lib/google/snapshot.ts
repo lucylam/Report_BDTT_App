@@ -19,6 +19,13 @@ const normalizeRow = (row: readonly ExportCellValue[]): string[] =>
 const rowKey = (row: readonly ExportCellValue[]): string =>
   `${normalizeCell(row[3]).toUpperCase()}|${normalizeCell(row[2]).toUpperCase()}`;
 
+const getCancelCell = (row: readonly ExportCellValue[]): string => {
+  const totalIndex = row.findIndex(
+    (value, index) => index >= 13 && normalizeCell(value).startsWith("=MAX(N")
+  );
+  return normalizeCell(row[totalIndex >= 0 ? totalIndex + 3 : 30]);
+};
+
 export const compareSheetSnapshot = (
   currentRows: readonly (readonly ExportCellValue[])[],
   existingRows: readonly (readonly ExportCellValue[])[],
@@ -45,7 +52,7 @@ export const compareSheetSnapshot = (
         changedReports += 1;
       }
     }
-    if (normalized[30].toUpperCase() === "X") cancelledTasks += 1;
+    if (getCancelCell(normalized).toUpperCase() === "X") cancelledTasks += 1;
   });
 
   return {

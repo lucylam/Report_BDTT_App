@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Alert, Button, Dialog, Field, Input, Select, Textarea } from "@/components/ui";
 import type { TaskRow } from "@/components/admin/tasks/taskTableModel";
-import { DEFAULT_REPORT_DATE } from "@/lib/date";
+import { getPlanReportDate } from "@/lib/date";
 import { getMissingLeaderTaskCreateFields } from "@/lib/leaderTaskCreate";
 import { resolveTaskReporterId } from "@/lib/taskReporter";
 import type { AppData, Profile } from "@/types/domain";
@@ -49,10 +49,11 @@ export const LeaderTaskManager = ({
   showCreate = false
 }: LeaderTaskManagerProps): React.ReactElement => {
   const members = useMemo(() => getMemberOptions(data), [data]);
+  const planReportDate = getPlanReportDate(data.tasks);
   const [mode, setMode] = useState<DialogMode>(null);
   const [assigneeUsername, setAssigneeUsername] = useState("");
   const [cancelReason, setCancelReason] = useState("");
-  const [reportDate, setReportDate] = useState(DEFAULT_REPORT_DATE);
+  const [reportDate, setReportDate] = useState(planReportDate);
   const [percent, setPercent] = useState("0");
   const [note, setNote] = useState("");
   const [taskName, setTaskName] = useState("");
@@ -62,8 +63,8 @@ export const LeaderTaskManager = ({
   const [section, setSection] = useState("");
   const [priority, setPriority] = useState("2");
   const [progressMode, setProgressMode] = useState<"continuous" | "binary">("continuous");
-  const [startDate, setStartDate] = useState(DEFAULT_REPORT_DATE);
-  const [finishDate, setFinishDate] = useState(DEFAULT_REPORT_DATE);
+  const [startDate, setStartDate] = useState(planReportDate);
+  const [finishDate, setFinishDate] = useState(planReportDate);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 

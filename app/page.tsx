@@ -10,7 +10,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Alert, Badge, Icon, PageHeader, type IconName } from "@/components/ui";
 import { useAppData } from "@/hooks/useAppData";
 import { usePortalModules } from "@/hooks/usePortalModules";
-import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
+import { formatViDate, getPlanReportDate } from "@/lib/date";
 import { calculateMetrics } from "@/lib/progress";
 import { cn } from "@/lib/ui";
 
@@ -31,13 +31,14 @@ const HomePage = (): React.ReactElement => {
   const { currentAccount, data, logout } = useAppData();
   const { modules, loading, error } = usePortalModules(Boolean(currentAccount));
   const [cockpit, setCockpit] = useState<CockpitResponse | null>(null);
+  const reportDate = getPlanReportDate(data?.tasks ?? []);
   const isExecutive = Boolean(
     currentAccount?.role === "admin" ||
       modules.some((module) => ["leader", "workshop_manager", "web_admin"].includes(module.role ?? ""))
   );
   const bdttMetrics = useMemo(
-    () => data && currentAccount?.role === "admin" ? calculateMetrics(data, DEFAULT_REPORT_DATE) : null,
-    [currentAccount?.role, data]
+    () => data && currentAccount?.role === "admin" ? calculateMetrics(data, reportDate) : null,
+    [currentAccount?.role, data, reportDate]
   );
 
   useEffect(() => {
@@ -98,7 +99,7 @@ const HomePage = (): React.ReactElement => {
 
           {isExecutive ? (
             <div className="mt-3">
-              <ExecutiveCockpit bdtt={bdttMetrics} cockpit={cockpit} />
+              <ExecutiveCockpit bdtt={bdttMetrics} cockpit={cockpit} reportDate={reportDate} />
             </div>
           ) : null}
 
@@ -168,7 +169,7 @@ const HomePage = (): React.ReactElement => {
                   label="Công tác"
                   value={currentAccount ? (loading ? "Đang tải" : `${modules.length} được cấp`) : "N/A"}
                 />
-                <StatusTile label="Ngày báo cáo" value={formatViDate(DEFAULT_REPORT_DATE)} />
+                <StatusTile label="Ngày báo cáo" value={formatViDate(reportDate)} />
               </dl>
             </aside>
           </div>
@@ -228,10 +229,12 @@ const ModuleCard = ({
 
 const ExecutiveCockpit = ({
   bdtt,
-  cockpit
+  cockpit,
+  reportDate
 }: {
   readonly bdtt: ReturnType<typeof calculateMetrics> | null;
   readonly cockpit: CockpitResponse | null;
+  readonly reportDate: string;
 }): React.ReactElement => {
   const cockpitStatus = cockpit === null ? "loading" : cockpit.ok === false ? "error" : "ready";
   const toneClass = {
@@ -254,7 +257,7 @@ const ExecutiveCockpit = ({
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.1em] text-[var(--primary-strong)]">Điều hành</p>
           <h2 className="mt-0.5 text-base font-semibold" id="executive-cockpit-title">Tổng hợp cần xử lý</h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">Điểm cần quyết định trong ngày · {formatViDate(DEFAULT_REPORT_DATE)}</p>
+          <p className="mt-1 text-sm text-[var(--text-muted)]">Điểm cần quyết định trong ngày · {formatViDate(reportDate)}</p>
         </div>
         <Badge solid tone={cockpitStatus === "loading" ? "neutral" : cockpitStatus === "error" ? "warning" : (bdtt?.overdue ?? 0) + (cockpit?.am?.overdue ?? 0) > 0 ? "danger" : "success"}>
           {cockpitStatus === "loading" ? "Đang tổng hợp" : cockpitStatus === "error" ? "Chưa tải được" : (bdtt?.overdue ?? 0) + (cockpit?.am?.overdue ?? 0) > 0 ? "Cần xử lý" : "Trong kiểm soát"}
