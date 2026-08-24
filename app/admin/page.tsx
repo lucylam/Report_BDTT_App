@@ -7,18 +7,21 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { ProgressCharts } from "@/components/admin/ProgressCharts";
 import { AppLoadingState, Badge, Icon, Widget, WidgetHeader, type IconName } from "@/components/ui";
 import { buildExcelDashboard } from "@/lib/dashboard";
-import { formatViDate, getPlanReportDate } from "@/lib/date";
+import { formatViDate, getCurrentReportDate, getPlanReportDate } from "@/lib/date";
 import {
   getOrgScopeLabel,
   getScopedAppData,
   hasFullOrgScope,
   isDataAdminAccount
 } from "@/lib/permissions";
-import { calculateMetrics, getTaskPercent } from "@/lib/progress";
+import {
+  calculateCumulativeMetrics,
+  getTaskCumulativePercent
+} from "@/lib/progress";
 import {
   getActiveTasksByAssignee,
   getReportablePersonnel,
-  hasSubmittedReportForDate
+  hasSubmittedAnyReport
 } from "@/lib/reportingPersonnel";
 import { useAppData } from "@/hooks/useAppData";
 import type { AppData, DashboardMetrics, Task } from "@/types/domain";
@@ -104,14 +107,15 @@ const AdminPage = (): React.ReactElement => {
   const scopedData = getScopedAppData(data, currentAccount);
   const scopeLabel = getOrgScopeLabel(currentAccount);
   const isFullScope = hasFullOrgScope(currentAccount);
-  const reportDate = getPlanReportDate(scopedData.tasks);
-  const metrics = calculateMetrics(scopedData, reportDate);
+  const overdueDate = getCurrentReportDate();
+  const reportYear = getPlanReportDate(scopedData.tasks).slice(0, 4);
+  const metrics = calculateCumulativeMetrics(scopedData, overdueDate);
 
   return (
     <AdminShell
       account={currentAccount}
       onLogout={logout}
-      subtitle={`Tổ Thiết bị Đo lường & Điều khiển · ${scopeLabel} · Ngày báo cáo: ${formatViDate(reportDate)}`}
+      subtitle={`Tổ Thiết bị Đo lường & Điều khiển · ${scopeLabel} · Dữ liệu lũy kế toàn bộ kỳ`}
       title={isFullScope ? "Dashboard giám sát" : "Dashboard nhóm"}
     >
       <ManagementDashboard
@@ -119,7 +123,8 @@ const AdminPage = (): React.ReactElement => {
         data={scopedData}
         isFullScope={isFullScope}
         metrics={metrics}
-        reportDate={reportDate}
+        overdueDate={overdueDate}
+        reportYear={reportYear}
       />
     </AdminShell>
   );
@@ -130,25 +135,27 @@ const ManagementDashboard = ({
   data,
   isFullScope,
   metrics,
-  reportDate
+  overdueDate,
+  reportYear
 }: {
   readonly canReviewUpdateHistory: boolean;
   readonly data: AppData;
   readonly isFullScope: boolean;
   readonly metrics: DashboardMetrics;
-  readonly reportDate: string;
+  readonly overdueDate: string;
+  readonly reportYear: string;
 }): React.ReactElement => {
   const [dashboardView, setDashboardView] = useState<DashboardView>("excel");
   const excelDashboard = useMemo(
-    () => buildExcelDashboard(data, reportDate),
-    [data, reportDate]
+    () => buildExcelDashboard(data),
+    [data]
   );
   const updateHistoryRows = useMemo(
     () => (canReviewUpdateHistory ? buildRecentUpdateRows(data) : []),
     [canReviewUpdateHistory, data]
   );
   const level: OrgUnitLevel = isFullScope ? "group" : "subgroup";
-  const rows = buildOrgUnitRows(data, level, reportDate);
+  const rows = buildOrgUnitRows(data, level, overdueDate);
   const onTrackRows = rows
     .filter((row) => row.percent >= PLAN_TARGET_PERCENT && row.overdue === 0)
     .sort((left, right) => right.percent - left.percent);
@@ -167,7 +174,7 @@ const ManagementDashboard = ({
       {dashboardView === "excel" ? (
         <ProgressCharts
           dashboard={excelDashboard}
-          reportDateLabel={formatViDate(reportDate)}
+          reportYear={reportYear}
         />
       ) : (
         <>
@@ -180,7 +187,7 @@ const ManagementDashboard = ({
 
       <section className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
         <ProgressOverview rows={rows} />
-        <ReportCoverage metrics={metrics} reportDate={reportDate} rows={rows} />
+        <ReportCoverage metrics={metrics} rows={rows} />
       </section>
 
       <section className="grid min-w-0 items-start gap-3 2xl:grid-cols-2">
@@ -192,7 +199,7 @@ const ManagementDashboard = ({
           tone="success"
         />
         <ManagementTable
-          emptyText="Không có đơn vị cần tăng cường tại mốc báo cáo này."
+          emptyText="Không có đơn vị cần tăng cường trong dữ liệu lũy kế hiện tại."
           rows={attentionRows}
           subtitle={`${attentionRows.length} đơn vị`}
           title="Cần tăng cường triển khai"
@@ -489,11 +496,9 @@ const ProgressOverview = ({ rows }: { readonly rows: readonly OrgUnitRow[] }): R
 
 const ReportCoverage = ({
   metrics,
-  reportDate,
   rows
 }: {
   readonly metrics: DashboardMetrics;
-  readonly reportDate: string;
   readonly rows: readonly OrgUnitRow[];
 }): React.ReactElement => {
   const members = rows.reduce((total, row) => total + row.members, 0);
@@ -505,13 +510,13 @@ const ReportCoverage = ({
       <WidgetHeader
         icon="people"
         tone="info"
-        subtitle={formatViDate(reportDate)}
-        title="Báo cáo nhân sự trong ngày"
+        subtitle="Toàn bộ kỳ báo cáo"
+        title="Bao phủ báo cáo nhân sự"
       />
       <div className="grid grid-cols-2 gap-3">
         <DashboardMetricCard
           className="col-span-2"
-          helper={`${submitted}/${members} nhân sự được ghi nhận trong ngày`}
+          helper={`${submitted}/${members} nhân sự đã từng gửi báo cáo`}
           icon="people"
           label="Tỷ lệ đã gửi báo cáo"
           tone="info"
@@ -548,7 +553,7 @@ const ManagementTable = ({
           className="mb-0"
           icon={isSuccess ? "check" : "bell"}
           tone={isSuccess ? "success" : "warning"}
-          subtitle={isSuccess ? "Đơn vị đang đi đúng nhịp" : "Ưu tiên kiểm tra trong ngày"}
+          subtitle={isSuccess ? "Đơn vị đang đi đúng nhịp" : "Ưu tiên kiểm tra hiện tại"}
           title={title}
         />
         <Badge tone={isSuccess ? "success" : "warning"}>{subtitle}</Badge>
@@ -615,7 +620,7 @@ const ManagementRow = ({
           </span>
         </div>
         <p className="mt-2 text-xs font-medium text-[var(--text-muted)]">
-          {row.submitted}/{row.members} thành viên có báo cáo · {row.notStarted} chưa triển khai
+          {row.submitted}/{row.members} thành viên đã từng báo cáo · {row.notStarted} chưa triển khai
         </p>
       </div>
     </article>
@@ -731,7 +736,7 @@ const recentPercentPillClass = (percent: number): string => {
 const buildOrgUnitRows = (
   data: AppData,
   level: OrgUnitLevel,
-  reportDate: string
+  overdueDate: string
 ): OrgUnitRow[] => {
   const activeTasksByAssignee = getActiveTasksByAssignee(data.tasks);
   const units = new Map<
@@ -760,11 +765,10 @@ const buildOrgUnitRows = (
           tasks: []
       };
       current.profiles.add(profile.id);
-      if (hasSubmittedReportForDate({
+      if (hasSubmittedAnyReport({
         activeTasks: activeTasksByAssignee.get(profile.id) ?? [],
         progress: data.progress,
-        profileId: profile.id,
-        reportDate
+        profileId: profile.id
       })) {
         current.submitted.add(profile.id);
       }
@@ -794,15 +798,15 @@ const buildOrgUnitRows = (
     .map(([key, unit]) => {
       const activeTasks = unit.tasks.filter((task) => !task.isCancelled);
       const percents = activeTasks.map((task) =>
-        getTaskPercent(data.progress, task.id, reportDate)
+        getTaskCumulativePercent(data.progress, task.id)
       );
       const totalPercent = percents.reduce<number>((sum, percent) => sum + percent, 0);
       const completed = percents.filter((percent) => percent === 100).length;
       const inProgress = percents.filter((percent) => percent > 0 && percent < 100).length;
       const notStarted = percents.filter((percent) => percent === 0).length;
       const overdue = activeTasks.filter((task) => {
-        const percent = getTaskPercent(data.progress, task.id, reportDate);
-        return task.finishDate < reportDate && percent < 100;
+        const percent = getTaskCumulativePercent(data.progress, task.id);
+        return task.finishDate < overdueDate && percent < 100;
       }).length;
       const name = level === "group" ? unit.groupName : unit.subgroupName;
 

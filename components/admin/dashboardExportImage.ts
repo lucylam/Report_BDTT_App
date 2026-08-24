@@ -76,7 +76,7 @@ interface ChartRect {
 
 export const createCompactDashboardExportSvg = (
   dashboard: ExcelDashboardData,
-  reportDateLabel: string,
+  reportYear: string,
   theme: DashboardExportTheme = {}
 ): SvgReport => {
   colors = { ...defaultColors, ...theme.colors };
@@ -87,7 +87,7 @@ export const createCompactDashboardExportSvg = (
   let y = pagePad;
 
   parts.push(background());
-  parts.push(header(reportDateLabel, y));
+  parts.push(header(reportYear, y));
   y += 96;
 
   parts.push(kpiStrip(dashboard, y, contentWidth));
@@ -160,11 +160,11 @@ export const createCompactDashboardExportSvg = (
 const background = (): string =>
   `<rect width="100%" height="100%" fill="${colors.bg}"/>`;
 
-const header = (reportDateLabel: string, y: number): string => [
+const header = (reportYear: string, y: number): string => [
   text("BÁO CÁO EXCEL", pagePad, y + 18, 15, 800, colors.primaryStrong, "track"),
-  text(`Báo cáo ngắn tiến độ BDTT ${reportDateLabel.match(/\d{4}/)?.[0] ?? ""} · Tổ TB ĐL&ĐK`, pagePad, y + 52, 30, 600, colors.text),
+  text(`Báo cáo ngắn tiến độ BDTT ${reportYear} · Tổ TB ĐL&ĐK`, pagePad, y + 52, 30, 600, colors.text),
   text(
-    `Ngày báo cáo: ${reportDateLabel} · Dữ liệu tính từ DATA A:M và báo cáo worker đã gửi đến ngày này.`,
+    "Dữ liệu lũy kế toàn bộ kỳ · Mỗi hạng mục dùng mức tiến độ cao nhất đã ghi nhận.",
     pagePad,
     y + 82,
     17,
@@ -201,7 +201,7 @@ const kpiStrip = (
     {
       label: "Nhân sự báo cáo",
       value: `${formatNumber(executive.submittedWorkers)}/${formatNumber(executive.totalWorkers)}`,
-      note: "trong ngày báo cáo",
+      note: "đã từng báo cáo",
       color: colors.info
     },
     {

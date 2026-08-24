@@ -75,8 +75,8 @@ export const WorkerSearchControls = ({
 
   return (
     <div className="min-w-0">
-      <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3 xl:items-end 2xl:grid-cols-[minmax(240px,1fr)_160px_170px_150px_170px_170px_auto]">
-        <label className="min-w-0 sm:col-span-2 xl:col-span-1" htmlFor={inputId}>
+      <div className="grid min-w-0 gap-2 md:grid-cols-2 xl:grid-cols-3 xl:items-end 2xl:grid-cols-[minmax(240px,1fr)_160px_170px_150px_170px_170px_auto]">
+        <label className="min-w-0 md:col-span-2 xl:col-span-1" htmlFor={inputId}>
           <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
             Tìm kiếm
           </span>

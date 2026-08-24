@@ -85,7 +85,7 @@ describe("buildExcelDashboard", () => {
       [makeProgress("done", 100), makeProgress("half", 50)]
     );
 
-    const dashboard = buildExcelDashboard(data, reportDate);
+    const dashboard = buildExcelDashboard(data);
 
     expect(dashboard.overall).toMatchObject({
       done: 1.5,
@@ -95,7 +95,7 @@ describe("buildExcelDashboard", () => {
     });
   });
 
-  it("lấy tiến độ lũy kế lớn nhất đến ngày báo cáo và bỏ qua ngày tương lai", () => {
+  it("lấy tiến độ lũy kế lớn nhất trong toàn bộ các ngày báo cáo", () => {
     const data = makeData(
       [makeTask({ id: "task-1" })],
       [
@@ -105,11 +105,11 @@ describe("buildExcelDashboard", () => {
       ]
     );
 
-    const dashboard = buildExcelDashboard(data, reportDate);
+    const dashboard = buildExcelDashboard(data);
 
-    expect(dashboard.overall.done).toBe(0.75);
-    expect(dashboard.overall.remaining).toBe(0.25);
-    expect(dashboard.overall.percent).toBe(75);
+    expect(dashboard.overall.done).toBe(1);
+    expect(dashboard.overall.remaining).toBe(0);
+    expect(dashboard.overall.percent).toBe(100);
   });
 
   it("group đúng theo đơn vị chủ quản, nhóm trưởng và prefix resource", () => {
@@ -133,7 +133,7 @@ describe("buildExcelDashboard", () => {
       [makeProgress("utility", 100), makeProgress("urea", 50)]
     );
 
-    const dashboard = buildExcelDashboard(data, reportDate);
+    const dashboard = buildExcelDashboard(data);
     const utility = dashboard.byOwnerUnit.find((row) => row.name === "UTILITY");
     const ureaLeadRow = dashboard.byOwnerUnitAndLead.find((row) => row.name === "UREA");
     const htdk = dashboard.resourceGroups.find((group) => group.key === "HTĐK");
@@ -155,7 +155,7 @@ describe("buildExcelDashboard", () => {
       [makeProgress("active", 100), makeProgress("cancelled", 100)]
     );
 
-    const dashboard = buildExcelDashboard(data, reportDate);
+    const dashboard = buildExcelDashboard(data);
     const leadStatus = dashboard.leadStatus.find((row) => row.name === lead);
 
     expect(dashboard.overall.total).toBe(1);
@@ -177,7 +177,7 @@ describe("buildExcelDashboard", () => {
       [makeProfile("user-1"), makeProfile("user-2")]
     );
 
-    const dashboard = buildExcelDashboard(data, reportDate);
+    const dashboard = buildExcelDashboard(data);
 
     expect(dashboard.executive).toMatchObject({
       activeTasks: 3,
@@ -213,7 +213,7 @@ describe("buildExcelDashboard", () => {
       [makeProgress("accented", 100), makeProgress("plain", 50)]
     );
 
-    const dashboard = buildExcelDashboard(data, reportDate);
+    const dashboard = buildExcelDashboard(data);
     const leadStatus = dashboard.leadStatus.find((row) => row.name === lead);
     const unitLead = dashboard.byOwnerUnitAndLead.find((row) => row.name === "UTILITY");
     const htdk = dashboard.resourceGroups.find((group) => group.key === "HTĐK");
@@ -237,7 +237,7 @@ describe("buildExcelDashboard", () => {
       [makeProfile("user-1")]
     );
 
-    const dashboard = buildExcelDashboard(data, reportDate);
+    const dashboard = buildExcelDashboard(data);
 
     expect(dashboard.executive.submittedWorkers).toBe(1);
     expect(dashboard.executive.totalWorkers).toBe(1);
@@ -257,7 +257,7 @@ describe("buildExcelDashboard", () => {
       ]
     );
 
-    const dashboard = buildExcelDashboard(data, reportDate);
+    const dashboard = buildExcelDashboard(data);
 
     expect(dashboard.executive.submittedWorkers).toBe(1);
     expect(dashboard.executive.totalWorkers).toBe(2);

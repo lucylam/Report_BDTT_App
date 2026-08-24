@@ -236,7 +236,7 @@ export const LeaderTaskManager = ({
                 <Field label="Tên công việc *">
                   <Input required onChange={(event) => setTaskName(event.target.value)} value={taskName} />
                 </Field>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2">
                   <Field label="Tagname *">
                     <Input required onChange={(event) => setTagname(event.target.value)} value={tagname} />
                   </Field>
@@ -279,7 +279,7 @@ export const LeaderTaskManager = ({
             ) : null}
 
             {mode === "create" || mode === "reassign" ? (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-2">
                 <MemberField label={mode === "create" ? "Người thực hiện *" : "Người thực hiện"} members={members} onChange={setAssigneeUsername} required value={assigneeUsername} />
                 <ReadonlyMemberField label="Người báo cáo (tự động)" member={reporter} />
               </div>
@@ -288,7 +288,7 @@ export const LeaderTaskManager = ({
             {mode === "report" ? (
               <>
                 <ReadonlyMemberField label="Ghi nhận báo cáo cho" member={reporter} />
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2">
                   <Field label="Ngày báo cáo">
                     <Input onChange={(event) => setReportDate(event.target.value)} type="date" value={reportDate} />
                   </Field>
@@ -321,7 +321,7 @@ export const LeaderTaskManager = ({
               </Field>
             ) : null}
 
-            <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 md:flex-row md:justify-end">
               <Button disabled={submitting} onClick={close} variant="ghost">Đóng</Button>
               <Button
                 disabled={

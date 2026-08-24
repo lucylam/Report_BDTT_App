@@ -267,7 +267,7 @@ const PhotoStrip = ({
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mobile-action-grid mt-3 grid grid-cols-2 gap-2">
         <label
           aria-disabled={!canEdit || busy}
           className={cn(
@@ -1153,8 +1153,8 @@ const AmPage = (): React.ReactElement => {
   }
 
   return (
-    <main className="min-h-dvh w-full max-w-[100vw] overflow-x-auto px-2 py-2 sm:px-3 sm:py-3 lg:p-3 2xl:p-4">
-      <div className="app-shell mx-auto grid min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)] lg:min-h-[calc(100dvh-1.5rem)] lg:grid-cols-[218px_minmax(0,1fr)] 2xl:min-h-[calc(100dvh-2rem)]">
+    <main className="mobile-native-page min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 py-2 sm:px-3 sm:py-3 lg:p-3 2xl:p-4">
+      <div className="app-shell mobile-native-shell mx-auto grid min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)] lg:min-h-[calc(100dvh-1.5rem)] lg:grid-cols-[218px_minmax(0,1fr)] 2xl:min-h-[calc(100dvh-2rem)]">
         <aside className="hidden border-r border-[var(--line)] bg-[var(--surface)] p-4 lg:flex lg:flex-col">
           <Link className="focus-ring rounded-[var(--radius-card)] p-1" href="/">
             <CompanyBrand variant="sidebar" />
@@ -1218,7 +1218,7 @@ const AmPage = (): React.ReactElement => {
 
             <nav
               aria-label="Chức năng AM"
-              className="flex max-w-full overflow-x-auto border-b border-[var(--line)]"
+              className="mobile-app-tabs flex max-w-full overflow-x-auto border-b border-[var(--line)]"
             >
               {availableViews.map((view) => (
                 <button
@@ -1422,7 +1422,7 @@ const AmPage = (): React.ReactElement => {
                   </div>
                 </div>
 
-                <section aria-label="Lọc nhanh theo trạng thái" className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
+                <section aria-label="Lọc nhanh theo trạng thái" className="mobile-adaptive-grid mt-4 grid grid-cols-2 gap-2 lg:grid-cols-5">
                   {[
                     { key: "all" as const, label: "Tất cả", value: kpis.total, tone: "neutral" as const },
                     {

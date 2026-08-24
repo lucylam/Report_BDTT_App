@@ -127,8 +127,8 @@ export const PersonnelEditorDialog = ({
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <Field className="sm:col-span-2" label="Nhóm công tác">
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <Field className="md:col-span-2" label="Nhóm công tác">
             <Select onChange={(event) => changeGroup(event.target.value)} value={orgGroup}>
               {ORG_GROUP_NAMES.map((group) => (
                 <option key={group} value={group}>{group}</option>
@@ -176,7 +176,7 @@ export const PersonnelEditorDialog = ({
         </Alert>
         {message ? <Alert className="mt-3" tone="danger">{message}</Alert> : null}
 
-        <div className="mt-5 flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-4 sm:flex-row sm:justify-end">
+        <div className="mt-5 flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-4 md:flex-row md:justify-end">
           <Button disabled={status === "saving"} onClick={onClose} variant="secondary">
             Đóng
           </Button>

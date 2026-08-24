@@ -7,8 +7,9 @@ import type {
 import {
   getActiveTasksByAssignee,
   getReportablePersonnel,
-  hasSubmittedReportForDate
+  hasSubmittedAnyReport
 } from "@/lib/reportingPersonnel";
+import { getTaskCumulativePercent } from "@/lib/progress";
 
 export interface CompletionRow {
   readonly name: string;
@@ -115,15 +116,9 @@ const getResourcePrefix = (resourceName: string): string => {
 
 export const getCumulativePercent = (
   progress: readonly ProgressRecord[],
-  taskId: string,
-  reportDate: string
+  taskId: string
 ): ProgressPercent => {
-  return progress
-    .filter((record) => record.taskId === taskId && record.reportDate <= reportDate)
-    .reduce<ProgressPercent>(
-      (max, record) => (record.percent > max ? record.percent : max),
-      0
-    );
+  return getTaskCumulativePercent(progress, taskId);
 };
 
 const getStatus = (
@@ -175,7 +170,6 @@ const round = (value: number): number => Math.round(value * 100) / 100;
 const createCompletionRows = (
   tasks: readonly Task[],
   progress: readonly ProgressRecord[],
-  reportDate: string,
   getName: (task: Task) => string,
   preferredOrder: readonly string[] = []
 ): CompletionRow[] => {
@@ -192,7 +186,7 @@ const createCompletionRows = (
           ...current,
           name: displayName
         },
-        getCumulativePercent(progress, task.id, reportDate)
+        getCumulativePercent(progress, task.id)
       )
     );
   });
@@ -202,14 +196,12 @@ const createCompletionRows = (
 };
 
 export const buildExcelDashboard = (
-  data: AppData,
-  reportDate: string
+  data: AppData
 ): ExcelDashboardData => {
   const activeTasks = data.tasks.filter((task) => !task.isCancelled);
   const byOwnerUnit = createCompletionRows(
     activeTasks,
     data.progress,
-    reportDate,
     (task) => task.donVi,
     preferredOwnerUnitOrder
   );
@@ -218,26 +210,24 @@ export const buildExcelDashboard = (
   const byOwnerUnitAndLead = buildGroupedLeadRows(
     activeTasks,
     data.progress,
-    reportDate,
     leadNames,
     (task) => task.donVi,
     preferredOwnerUnitOrder
   );
-  const leadStatus = buildLeadStatusRows(data.tasks, data.progress, reportDate, leadNames);
+  const leadStatus = buildLeadStatusRows(data.tasks, data.progress, leadNames);
   const resourceGroups = resourceGroupOrder.map((key) => ({
     key,
     title: resourceGroupLabels[key] ?? key,
     rows: createCompletionRows(
       activeTasks.filter((task) => getResourcePrefix(task.resourceName) === normalizeDashboardKey(key)),
       data.progress,
-      reportDate,
       (task) => task.resourceName
     )
   }));
 
   return {
     overall,
-    executive: buildExecutiveSummary(data, activeTasks, overall, reportDate),
+    executive: buildExecutiveSummary(data, activeTasks, overall),
     byOwnerUnit,
     byOwnerUnitAndLead,
     attentionOwnerUnits: getAttentionOwnerUnits(byOwnerUnit),
@@ -257,8 +247,7 @@ export const buildPhaseOneDashboard = buildExcelDashboard;
 const buildExecutiveSummary = (
   data: AppData,
   activeTasks: readonly Task[],
-  overall: CompletionRow,
-  reportDate: string
+  overall: CompletionRow
 ): ExecutiveDashboardSummary => {
   const activeTaskIds = new Set(activeTasks.map((task) => task.id));
   const reportablePersonnel = getReportablePersonnel(data.profiles);
@@ -267,23 +256,19 @@ const buildExecutiveSummary = (
   );
   const activeTasksByAssignee = getActiveTasksByAssignee(activeTasks);
   const cumulativeRecords = data.progress.filter(
-    (record) => activeTaskIds.has(record.taskId) && record.reportDate <= reportDate
+    (record) => activeTaskIds.has(record.taskId)
   );
-  const todayRecords = data.progress.filter(
-    (record) =>
-      activeTaskIds.has(record.taskId) &&
-      record.reportDate === reportDate &&
-      reportablePersonnelIds.has(record.userId)
+  const personnelRecords = cumulativeRecords.filter((record) =>
+    reportablePersonnelIds.has(record.userId)
   );
   const statuses = activeTasks.map((task) =>
-    getStatus(task, getCumulativePercent(data.progress, task.id, reportDate))
+    getStatus(task, getCumulativePercent(data.progress, task.id))
   );
   const submittedPersonnel = reportablePersonnel.filter((profile) =>
-    hasSubmittedReportForDate({
+    hasSubmittedAnyReport({
       activeTasks: activeTasksByAssignee.get(profile.id) ?? [],
-      progress: todayRecords,
-      profileId: profile.id,
-      reportDate
+      progress: personnelRecords,
+      profileId: profile.id
     })
   );
 
@@ -328,7 +313,6 @@ const getAttentionLeads = (rows: readonly LeadStatusRow[]): LeadStatusRow[] => {
 const buildLeadStatusRows = (
   tasks: readonly Task[],
   progress: readonly ProgressRecord[],
-  reportDate: string,
   leadNames: readonly string[]
 ): LeadStatusRow[] => {
   const map = new Map<string, LeadStatusRow>();
@@ -346,7 +330,7 @@ const buildLeadStatusRows = (
         total: 0
       };
     const name = chooseDisplayName(current.name, rawName, leadNames);
-    const status = getStatus(task, getCumulativePercent(progress, task.id, reportDate));
+    const status = getStatus(task, getCumulativePercent(progress, task.id));
     map.set(key, {
       ...current,
       name,
@@ -362,7 +346,6 @@ const buildLeadStatusRows = (
 const buildGroupedLeadRows = (
   tasks: readonly Task[],
   progress: readonly ProgressRecord[],
-  reportDate: string,
   leadNames: readonly string[],
   getGroupName: (task: Task) => string,
   preferredOrder: readonly string[] = []
@@ -390,7 +373,7 @@ const buildGroupedLeadRows = (
     const current = group.leads.get(leadKey) ?? { total: 0, percentSum: 0 };
     group.leads.set(leadKey, {
       total: current.total + 1,
-      percentSum: current.percentSum + getCumulativePercent(progress, task.id, reportDate)
+      percentSum: current.percentSum + getCumulativePercent(progress, task.id)
     });
     grouped.set(groupKey, group);
   });

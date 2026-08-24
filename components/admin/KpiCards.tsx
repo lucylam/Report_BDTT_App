@@ -54,7 +54,7 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
   ];
 
   return (
-    <section className="grid grid-cols-2 gap-3 xl:grid-cols-6">
+    <section className="mobile-adaptive-grid grid grid-cols-2 gap-3 xl:grid-cols-6">
       {cards.map((card) => (
         <div
           className={`metric-card min-h-28 rounded-[var(--radius-card)] p-4 sm:min-h-32 ${toneClass(card.emphasis)}`}

@@ -53,7 +53,7 @@ export const WorkerGroupedTaskList = ({
           <div className="space-y-2" key={group.key}>
             <button
               aria-expanded={!isCollapsed}
-              className={`focus-ring pressable flex min-h-12 w-full items-center justify-between gap-3 rounded-[var(--radius-card)] border px-4 text-left shadow-[var(--shadow-soft-sm)] ${
+              className={`focus-ring pressable mobile-reflow-row flex min-h-12 w-full items-center justify-between gap-3 rounded-[var(--radius-card)] border px-4 py-3 text-left shadow-[var(--shadow-soft-sm)] ${
                 isCollapsed
                   ? "border-[var(--line)] bg-[var(--surface)] text-[var(--primary-strong)]"
                   : "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)]"
@@ -62,12 +62,12 @@ export const WorkerGroupedTaskList = ({
               type="button"
             >
               <span className="min-w-0">
-                <span className="block truncate font-semibold">{group.label}</span>
+                <span className="block break-words font-semibold">{group.label}</span>
                 <span className={`mt-0.5 block text-xs font-medium ${isCollapsed ? "text-[var(--text-muted)]" : "text-[var(--primary-contrast)] opacity-75"}`}>
                   {group.tasks.length} hạng mục
                 </span>
               </span>
-              <span className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ring-1 ${
+              <span className={`flex shrink-0 self-start items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ring-1 ${
                 isCollapsed
                   ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-[var(--line)]"
                     : "bg-black/10 text-[var(--primary-contrast)] ring-white/20"

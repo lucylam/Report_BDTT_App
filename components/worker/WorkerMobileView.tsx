@@ -166,10 +166,10 @@ export const WorkerMobileView = ({
 
   return (
     <main
-      className="worker-mobile-view min-h-dvh w-full max-w-[100vw] overflow-x-auto px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 lg:hidden"
+      className="worker-mobile-view mobile-native-page min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 lg:hidden"
       style={{ "--mobile-topbar-height": "10.5rem" } as React.CSSProperties}
     >
-      <div className="app-shell min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)]">
+      <div className="app-shell mobile-native-shell min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)]">
       <header className="mobile-topbar sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)] px-3 pb-3">
         <ModuleSwitcher
           activeModule="bdtt"
@@ -495,30 +495,48 @@ export const DailyCompletionChart = ({
           Chưa có hạng mục hoàn thành trong các ngày báo cáo gần nhất.
         </Alert>
       ) : (
-        <div
-          aria-label="Biểu đồ cột số hạng mục hoàn thành theo ngày"
-          className="mobile-daily-chart mt-3 flex h-36 min-w-0 items-end gap-1 sm:gap-2"
-          role="img"
-        >
-          {chartRows.map((row) => {
-            const height =
-              row.completed === 0 ? 8 : Math.max(16, (row.completed / scaleMax) * 128);
-            return (
-              <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5 sm:gap-2" key={row.date}>
-                <div className="mobile-daily-bar flex h-28 w-full items-end rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-1.5 ring-1 ring-[var(--border)]">
+        <>
+          <div className="mt-3 grid gap-2 md:hidden">
+            {chartRows.map((row) => (
+              <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]" key={row.date}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium text-[var(--text-muted)]">{row.date.slice(8, 10)}/{row.date.slice(5, 7)}</span>
+                  <strong className="tabular-nums text-[var(--primary-strong)]">{row.completed} hạng mục</strong>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--line)]">
                   <div
-                    className="w-full rounded-full bg-[var(--primary-strong)] shadow-sm"
-                    style={{ height }}
+                    className="h-full rounded-full bg-[var(--primary-strong)]"
+                    style={{ width: `${Math.max(2, (row.completed / scaleMax) * 100)}%` }}
                   />
                 </div>
-                <span className="mobile-chart-date font-medium text-[var(--text-muted)]">
-                  {row.date.slice(8, 10)}/{row.date.slice(5, 7)}
-                </span>
-                <span className="mobile-chart-value font-semibold tabular-nums">{row.completed}</span>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+          <div
+            aria-label="Biểu đồ cột số hạng mục hoàn thành theo ngày"
+            className="mobile-daily-chart mt-3 hidden h-36 min-w-0 items-end gap-1 md:flex md:gap-2"
+            role="img"
+          >
+            {chartRows.map((row) => {
+              const height =
+                row.completed === 0 ? 8 : Math.max(16, (row.completed / scaleMax) * 128);
+              return (
+                <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5 md:gap-2" key={row.date}>
+                  <div className="mobile-daily-bar flex h-28 w-full items-end rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-1.5 ring-1 ring-[var(--border)]">
+                    <div
+                      className="w-full rounded-full bg-[var(--primary-strong)] shadow-sm"
+                      style={{ height }}
+                    />
+                  </div>
+                  <span className="mobile-chart-date font-medium text-[var(--text-muted)]">
+                    {row.date.slice(8, 10)}/{row.date.slice(5, 7)}
+                  </span>
+                  <span className="mobile-chart-value font-semibold tabular-nums">{row.completed}</span>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </section>
   );

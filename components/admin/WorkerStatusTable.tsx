@@ -226,7 +226,7 @@ export const WorkerStatusTable = ({
 
   return (
     <section className="grid min-w-0 gap-4">
-      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <section className="mobile-adaptive-grid grid grid-cols-2 gap-3 xl:grid-cols-4">
         <PersonnelMetric icon="people" label="Nhân sự" tone="info" value={filteredRows.length} />
         <PersonnelMetric icon="check" label="Đã gửi" tone="success" value={submittedCount} />
         <PersonnelMetric icon="bell" label="Còn thiếu" tone="danger" value={missingCount} />

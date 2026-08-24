@@ -91,7 +91,7 @@ export const Dialog = ({
       aria-modal="true"
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
-      className="fixed inset-0 z-[1000] flex items-end overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm sm:items-center sm:justify-center"
+      className="fixed inset-0 z-[1000] flex items-end overflow-y-auto bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -103,7 +103,7 @@ export const Dialog = ({
         ref={dialogRef}
         tabIndex={-1}
         className={cn(
-          "bottom-sheet w-full p-6 sm:max-w-lg sm:rounded-[var(--radius-card)]",
+          "bottom-sheet max-h-[calc(100dvh-var(--safe-top))] w-full overflow-y-auto px-4 pb-[max(1rem,var(--safe-bottom))] pt-5 sm:max-w-lg sm:rounded-[var(--radius-card)] sm:p-6",
           className
         )}
       >

@@ -119,12 +119,11 @@ const metricIcons: Record<MetricTone, IconName> = {
 
 export const ProgressCharts = ({
   dashboard,
-  reportDateLabel
+  reportYear
 }: {
   readonly dashboard: ExcelDashboardData;
-  readonly reportDateLabel: string;
+  readonly reportYear: string;
 }): React.ReactElement => {
-  const reportYear = reportDateLabel.match(/\d{4}/)?.[0] ?? "";
   return (
     <section
       className="mx-auto grid w-full max-w-[1680px] min-w-0 gap-3"
@@ -140,16 +139,16 @@ export const ProgressCharts = ({
               Báo cáo ngắn tiến độ BDTT {reportYear} · Tổ TB ĐL&ĐK
             </h2>
             <p className="mt-1 text-xs font-medium text-[var(--text-muted)] sm:text-sm">
-              Ngày báo cáo: {reportDateLabel} · Dữ liệu tính từ DATA A:M và báo cáo worker đã gửi đến ngày này.
+              Dữ liệu lũy kế toàn bộ kỳ · Mỗi hạng mục dùng mức tiến độ cao nhất đã ghi nhận.
             </p>
           </div>
           <DashboardExportButton
             className="min-h-9 justify-self-start px-3 py-2 text-xs"
             dashboard={dashboard}
-            reportDateLabel={reportDateLabel}
+            reportYear={reportYear}
           />
         </div>
-        <ExecutiveBoard dashboard={dashboard} reportDateLabel={reportDateLabel} />
+        <ExecutiveBoard dashboard={dashboard} />
       </header>
 
       <section className="grid min-w-0 items-stretch gap-3 xl:grid-cols-[minmax(340px,2fr)_minmax(0,3fr)]">
@@ -193,11 +192,9 @@ export const ProgressCharts = ({
 };
 
 const ExecutiveBoard = ({
-  dashboard,
-  reportDateLabel
+  dashboard
 }: {
   readonly dashboard: ExcelDashboardData;
-  readonly reportDateLabel: string;
 }): React.ReactElement => {
   const { executive, overall } = dashboard;
   return (
@@ -217,7 +214,7 @@ const ExecutiveBoard = ({
         />
         <Metric
           label="Nhân sự báo cáo"
-          note={`${formatNumber(executive.submittedWorkers)}/${formatNumber(executive.totalWorkers)} người trong ngày`}
+          note={`${formatNumber(executive.submittedWorkers)}/${formatNumber(executive.totalWorkers)} người đã từng báo cáo`}
           tone="worker"
           value={`${executive.submittedWorkers}/${executive.totalWorkers}`}
         />
@@ -230,7 +227,7 @@ const ExecutiveBoard = ({
       </div>
 
       <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)]">
-        <ExecutiveInsight dashboard={dashboard} reportDateLabel={reportDateLabel} />
+        <ExecutiveInsight dashboard={dashboard} />
         <AttentionOwnerUnits rows={dashboard.attentionOwnerUnits} />
         <AttentionLeads rows={dashboard.attentionLeads} />
       </div>
@@ -264,17 +261,15 @@ const Metric = ({
 );
 
 const ExecutiveInsight = ({
-  dashboard,
-  reportDateLabel
+  dashboard
 }: {
   readonly dashboard: ExcelDashboardData;
-  readonly reportDateLabel: string;
 }): React.ReactElement => {
   const { executive, overall } = dashboard;
   const hasUpdates = executive.updatedTasks > 0;
   const title = hasUpdates ? "Tình hình điều hành" : "Chưa có cập nhật tiến độ";
   const message = hasUpdates
-    ? `Đã ghi nhận ${formatNumber(executive.updatedTasks)} hạng mục có tiến độ đến ${reportDateLabel}. Tiến độ quy đổi toàn tổ đạt ${overall.percent}%.`
+    ? `Đã ghi nhận lũy kế ${formatNumber(executive.updatedTasks)} hạng mục có tiến độ trong toàn bộ kỳ. Tiến độ quy đổi toàn tổ đạt ${overall.percent}%.`
     : `Dashboard đang phản ánh kế hoạch gốc: ${formatNumber(executive.activeTasks)} hạng mục chưa có record tiến độ. Khi worker bấm Cập nhật, khu vực này sẽ tự chuyển sang báo cáo điều hành.`;
 
   return (
@@ -525,7 +520,7 @@ const OverallPie = ({
             <p className="mt-1 text-xs font-semibold text-[var(--text-muted)]">Hoàn thành trung bình</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="mobile-adaptive-grid grid grid-cols-2 gap-2">
           <ChartMetric label="Tổng hạng mục" tone="neutral" value={row.total} />
           <ChartMetric label="Đã thực hiện" tone="done" value={row.done} />
           <ChartMetric label="Còn lại" tone="remaining" value={row.remaining} />

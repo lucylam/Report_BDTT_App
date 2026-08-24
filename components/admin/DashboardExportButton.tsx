@@ -16,19 +16,19 @@ const EXPORT_HIDDEN_SELECTOR = "[data-export-hidden]";
 interface DashboardExportButtonProps {
   readonly className?: string;
   readonly dashboard?: ExcelDashboardData;
-  readonly reportDateLabel?: string;
+  readonly reportYear?: string;
 }
 
 export const DashboardExportButton = ({
   className,
   dashboard,
-  reportDateLabel = ""
+  reportYear = ""
 }: DashboardExportButtonProps): React.ReactElement => {
   const exportPng = async (button: HTMLButtonElement): Promise<void> => {
     await document.fonts.ready;
     await nextFrame();
     const pngBlob = dashboard
-      ? await renderCompactDashboardAsPng(dashboard, reportDateLabel)
+      ? await renderCompactDashboardAsPng(dashboard, reportYear)
       : await captureCurrentDashboardAsPng(button);
     downloadBlob(pngBlob, "bdtt-dashboard-compact-hq.png");
   };
@@ -58,11 +58,11 @@ const captureCurrentDashboardAsPng = async (button: HTMLButtonElement): Promise<
 
 const renderCompactDashboardAsPng = async (
   dashboard: ExcelDashboardData,
-  reportDateLabel: string
+  reportYear: string
 ): Promise<Blob> => {
   const report = createCompactDashboardExportSvg(
     dashboard,
-    reportDateLabel,
+    reportYear,
     readDashboardExportTheme()
   );
   const scale = exportScale(report.width, report.height);

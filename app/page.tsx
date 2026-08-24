@@ -60,8 +60,8 @@ const HomePage = (): React.ReactElement => {
   }, [isExecutive]);
 
   return (
-    <main className="min-h-dvh w-full max-w-[100vw] overflow-x-auto px-2 py-2 sm:px-3 sm:py-3 lg:p-4">
-      <section className="app-shell mx-auto flex min-h-[calc(100dvh-1rem)] w-full max-w-none flex-col overflow-hidden rounded-[var(--radius-panel)] sm:min-h-[calc(100dvh-1.5rem)] lg:min-h-[calc(100dvh-2rem)]">
+    <main className="mobile-native-page min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 py-2 sm:px-3 sm:py-3 lg:p-4">
+      <section className="app-shell mobile-native-shell mx-auto flex min-h-[calc(100dvh-1rem)] w-full max-w-none flex-col overflow-hidden rounded-[var(--radius-panel)] sm:min-h-[calc(100dvh-1.5rem)] lg:min-h-[calc(100dvh-2rem)]">
         <header className="border-b border-[var(--line)] bg-[var(--surface)] px-4 py-4 md:px-5">
           <div className="flex min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CompanyBrand className="w-full sm:flex-1" variant="sidebar" />
@@ -206,7 +206,7 @@ const ModuleCard = ({
   readonly title: string;
 }): React.ReactElement => (
   <Link
-    className="focus-ring pressable group grid min-h-20 min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_auto] items-start gap-3 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4 text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--surface-muted)]"
+    className="mobile-module-card focus-ring pressable group grid min-h-20 min-w-0 grid-cols-[2.75rem_minmax(0,1fr)_auto] items-start gap-3 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4 text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] hover:border-[var(--primary)] hover:bg-[var(--surface-muted)]"
     href={href}
   >
       <span className="inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-field)] bg-[var(--primary-soft)] text-[var(--primary-strong)]">

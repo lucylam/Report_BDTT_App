@@ -176,7 +176,7 @@ html {
   color: var(--foreground);
   -webkit-text-size-adjust: 100%;
   min-height: 100%;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
@@ -197,7 +197,9 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: auto;
 }
@@ -499,10 +501,29 @@ button:disabled {
   scroll-margin-top: calc(var(--mobile-topbar-height) + var(--safe-top));
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* Mobile accessibility: browser zoom and Android/iOS text scaling can make
      fixed/sticky chrome consume the viewport. Let the page header scroll away
      and prefer complete text over ellipsis on operational content. */
+  :root {
+    --mobile-bottom-nav-height: 6.5rem;
+  }
+
+  .mobile-native-page {
+    max-width: 100%;
+    overflow-x: clip !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .mobile-native-shell {
+    min-height: 100dvh !important;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0 !important;
+  }
+
   .mobile-shell-header,
   .mobile-topbar {
     position: static;
@@ -510,8 +531,98 @@ button:disabled {
 
   .mobile-header-actions {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+    grid-template-columns: repeat(3, minmax(2.75rem, auto));
     align-items: center;
+    justify-content: stretch;
+  }
+
+  .mobile-header-actions > :first-child {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: none;
+  }
+
+  .mobile-header-actions > :not(:first-child) {
+    justify-self: stretch;
+  }
+
+  .mobile-reflow-grid,
+  .mobile-action-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .mobile-adaptive-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)) !important;
+  }
+
+  .mobile-app-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    overflow-x: hidden !important;
+  }
+
+  .mobile-app-tabs > * {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-reflow-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mobile-reflow-row > svg {
+    align-self: center;
+  }
+
+  .mobile-card-heading {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .mobile-card-heading > :last-child {
+    justify-self: start;
+  }
+
+  .mobile-manual-percent {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mobile-manual-percent > :last-child {
+    width: 100%;
+    max-width: none;
+  }
+
+  .mobile-module-card {
+    grid-template-columns: 2.75rem minmax(0, 1fr) !important;
+  }
+
+  .mobile-module-card > :last-child {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .mobile-bottom-nav {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .mobile-bottom-nav > .floating-pill {
+    max-width: none;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    box-shadow: 0 -14px 34px -20px rgb(16 24 40 / 0.34);
+  }
+
+  .mobile-bottom-nav a,
+  .mobile-bottom-nav button {
+    height: auto;
+    min-height: 3.75rem;
   }
 
   .truncate {
@@ -562,33 +673,9 @@ button:disabled {
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 420px) {
   :root {
     --mobile-bottom-nav-height: 7rem;
-  }
-
-  .mobile-header-actions {
-    grid-template-columns: repeat(3, minmax(2.75rem, auto));
-    justify-content: end;
-  }
-
-  .mobile-header-actions > :first-child {
-    grid-column: 1 / -1;
-    width: 100%;
-    max-width: none;
-  }
-
-  .mobile-reflow-grid {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-
-  .mobile-reflow-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .mobile-reflow-row > svg {
-    align-self: center;
   }
 
   .mobile-chart-card {
@@ -610,6 +697,16 @@ button:disabled {
 
   .mobile-daily-bar {
     padding: 0.1875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-mobile-page {
+    --mobile-bottom-nav-height: 9.5rem;
+  }
+
+  .admin-bottom-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 

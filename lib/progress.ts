@@ -8,6 +8,7 @@ import type {
 import {
   getActiveTasksByAssignee,
   getReportablePersonnel,
+  hasSubmittedAnyReport,
   hasSubmittedReportForDate
 } from "@/lib/reportingPersonnel";
 
@@ -37,6 +38,18 @@ export const getTaskPercent = (
   reportDate: string
 ): ProgressPercent => {
   return getTaskProgress(progress, taskId, reportDate)?.percent ?? 0;
+};
+
+export const getTaskCumulativePercent = (
+  progress: readonly ProgressRecord[],
+  taskId: string
+): ProgressPercent => {
+  return progress
+    .filter((record) => record.taskId === taskId)
+    .reduce<ProgressPercent>(
+      (maximum, record) => (record.percent > maximum ? record.percent : maximum),
+      0
+    );
 };
 
 export const calculateMetrics = (
@@ -80,6 +93,55 @@ export const calculateMetrics = (
           progress: data.progress,
           profileId: profile.id,
           reportDate
+        })
+    ).length,
+    priorityOpen,
+    overdue,
+    overallPercent:
+      activeTasks.length === 0 ? 0 : Math.round(totalPercent / activeTasks.length)
+  };
+};
+
+export const calculateCumulativeMetrics = (
+  data: AppData,
+  overdueDate: string
+): DashboardMetrics => {
+  const activeTasks = data.tasks.filter((task) => !task.isCancelled);
+  const cancelled = data.tasks.length - activeTasks.length;
+  const percents = activeTasks.map((task) =>
+    getTaskCumulativePercent(data.progress, task.id)
+  );
+  const completed = percents.filter((percent) => percent === 100).length;
+  const inProgress = percents.filter(
+    (percent) => percent > 0 && percent < 100
+  ).length;
+  const notStarted = percents.filter((percent) => percent === 0).length;
+  const reportablePersonnel = getReportablePersonnel(data.profiles);
+  const activeTasksByAssignee = getActiveTasksByAssignee(activeTasks);
+  const priorityOpen = activeTasks.filter(
+    (task) =>
+      task.priority === 1 &&
+      getTaskCumulativePercent(data.progress, task.id) < 100
+  ).length;
+  const overdue = activeTasks.filter(
+    (task) =>
+      task.finishDate < overdueDate &&
+      getTaskCumulativePercent(data.progress, task.id) < 100
+  ).length;
+  const totalPercent = percents.reduce<number>((sum, percent) => sum + percent, 0);
+
+  return {
+    totalTasks: activeTasks.length,
+    completed,
+    inProgress,
+    notStarted,
+    cancelled,
+    unsubmittedWorkers: reportablePersonnel.filter(
+      (profile) =>
+        !hasSubmittedAnyReport({
+          activeTasks: activeTasksByAssignee.get(profile.id) ?? [],
+          progress: data.progress,
+          profileId: profile.id
         })
     ).length,
     priorityOpen,

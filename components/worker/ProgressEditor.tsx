@@ -263,7 +263,7 @@ export const ProgressEditor = ({
           className="control-pill grid gap-1 rounded-[var(--radius-field)] p-1"
           role="group"
         >
-          <div className={`grid gap-1 ${task.progressMode === "binary" ? "grid-cols-2" : "grid-cols-3 sm:grid-cols-5"}`}>
+          <div className={`grid gap-1 ${task.progressMode === "binary" ? "grid-cols-2" : "grid-cols-3 md:grid-cols-5"}`}>
             {availablePercentOptions.map((option) => (
               <button
                 aria-pressed={option === percent}
@@ -284,14 +284,14 @@ export const ProgressEditor = ({
             ))}
           </div>
           {task.progressMode !== "binary" ? <label
-            className={`flex min-h-12 min-w-0 flex-wrap items-center justify-between gap-2 rounded-[calc(var(--radius-field)-0.25rem)] border bg-[var(--surface)] px-3 shadow-sm transition focus-within:outline focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-[rgba(111,165,31,0.35)] lg:min-h-9 ${
+            className={`mobile-manual-percent flex min-h-12 min-w-0 flex-wrap items-center justify-between gap-2 rounded-[calc(var(--radius-field)-0.25rem)] border bg-[var(--surface)] px-3 py-2 shadow-sm transition focus-within:outline focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-[rgba(111,165,31,0.35)] lg:min-h-9 ${
               isManualPercent
                 ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary-strong)]"
                 : "border-transparent text-[var(--foreground)]"
             }`}
           >
             <span className="text-sm font-semibold text-[var(--text-muted)]">Nhập thủ công</span>
-            <span className="flex min-w-24 flex-1 items-center sm:max-w-32">
+            <span className="flex min-w-24 flex-1 items-center md:max-w-32">
               <input
                 aria-label="Nhập tiến độ thủ công"
                 className="min-w-0 flex-1 bg-transparent text-right text-base font-semibold tabular-nums outline-none placeholder:text-[var(--text-soft)]"
@@ -336,7 +336,7 @@ export const ProgressEditor = ({
 
       {showDetails ? (
         <section className="grid gap-3">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="mobile-action-grid grid grid-cols-2 gap-2">
             <button
               aria-expanded={isIssueFormOpen}
               className={`focus-ring pressable inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[var(--radius-field)] border border-[var(--warning)] px-3 text-center text-sm font-semibold leading-5 text-[var(--warning-strong)] ${
@@ -444,7 +444,7 @@ export const ProgressEditor = ({
               </p>
             </div>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
               <Field label="Tiêu đề">
                 <Input
                   maxLength={200}
@@ -492,7 +492,7 @@ export const ProgressEditor = ({
                   />
                 </label>
               </Field>
-              <Field className="sm:col-span-2" label="Mô tả">
+              <Field className="md:col-span-2" label="Mô tả">
                 <Textarea
                   className="min-h-36"
                   maxLength={2000}
@@ -509,7 +509,7 @@ export const ProgressEditor = ({
               </Alert>
             ) : null}
 
-            <div className="mt-5 flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-4 sm:flex-row sm:justify-end">
+            <div className="mt-5 flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-4 md:flex-row md:justify-end">
               <Button disabled={abnormalityState === "sending"} onClick={closeAbnormalityDialog} variant="secondary">
                 Đóng
               </Button>
@@ -525,7 +525,7 @@ export const ProgressEditor = ({
       {showDetails ? (
         <div>
           <div className="group/photo-actions relative">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="mobile-action-grid grid grid-cols-2 gap-2">
             <label
               className="focus-ring pressable inline-flex min-h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-field)] border border-[var(--primary)] bg-[var(--surface)] px-3 text-center text-sm font-semibold leading-5 text-[var(--primary-strong)] hover:bg-[var(--primary-soft)]"
             >
@@ -569,7 +569,7 @@ export const ProgressEditor = ({
           </div>
 
           {visiblePhotoPreviews.length > 0 ? (
-            <div className="mobile-reflow-grid mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="mobile-reflow-grid mt-3 grid grid-cols-2 gap-2 md:grid-cols-3">
               {visiblePhotoPreviews.map((photo, index) => (
                 <div className="relative min-w-0" key={photo.source}>
                   <Image

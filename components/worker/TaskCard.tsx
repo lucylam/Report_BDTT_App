@@ -43,10 +43,10 @@ export const TaskCard = ({
 
   return (
     <article className="glass-card overflow-hidden rounded-[var(--radius-card)]">
-      <div className="flex items-start gap-3 p-3">
+      <div className="mobile-reflow-row flex items-start gap-3 p-3">
         <ProgressRing cancelled={task.isCancelled} percent={percent} />
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
+          <div className="mobile-card-heading flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="break-words font-mono text-base font-semibold leading-tight text-[var(--info-strong)]">
                 {task.tagname}
@@ -66,9 +66,10 @@ export const TaskCard = ({
             <Badge solid tone="neutral">{task.duration || "N/A"}</Badge>
             {hasDetail ? <Badge solid tone="success">Có ghi nhận</Badge> : null}
           </div>
-          <p className="mt-2 text-xs font-medium leading-5 tabular-nums text-[var(--text-muted)]">
-            Start Time: {task.startDate || "N/A"} · Finish: {task.finishDate || "N/A"}
-          </p>
+          <dl className="mobile-reflow-grid mt-2 grid grid-cols-2 gap-2 text-xs font-medium leading-5 tabular-nums text-[var(--text-muted)]">
+            <div className="min-w-0"><dt className="font-semibold">Start Time</dt><dd className="break-words">{task.startDate || "N/A"}</dd></div>
+            <div className="min-w-0"><dt className="font-semibold">Finish</dt><dd className="break-words">{task.finishDate || "N/A"}</dd></div>
+          </dl>
         </div>
       </div>
 

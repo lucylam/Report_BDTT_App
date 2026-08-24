@@ -38,3 +38,16 @@ export const hasSubmittedReportForDate = ({
     (record) => record.userId === profileId && record.reportDate === reportDate
   );
 };
+
+export const hasSubmittedAnyReport = ({
+  activeTasks,
+  progress,
+  profileId
+}: {
+  readonly activeTasks: readonly Task[];
+  readonly progress: readonly ProgressRecord[];
+  readonly profileId: string;
+}): boolean => {
+  if (activeTasks.length === 0) return true;
+  return progress.some((record) => record.userId === profileId);
+};

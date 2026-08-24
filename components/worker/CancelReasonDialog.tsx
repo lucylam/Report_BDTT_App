@@ -51,7 +51,7 @@ export const CancelReasonDialog = ({
           />
         </label>
         {error ? <Alert className="mt-3">{error}</Alert> : null}
-        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+        <div className="mt-5 grid gap-2 md:grid-cols-2">
           <Button onClick={onClose} variant="secondary">
             Không hủy
           </Button>

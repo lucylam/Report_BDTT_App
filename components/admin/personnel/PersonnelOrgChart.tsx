@@ -110,7 +110,7 @@ export const PersonnelOrgChart = ({
               </div>
             ) : null}
             {directPersonnel.length > 0 ? (
-              <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+              <div className="mt-2 grid gap-1.5 md:grid-cols-2">
                 {directPersonnel.map((profile) => (
                   <PersonNode key={profile.id} onEdit={onEdit} profile={profile} />
                 ))}

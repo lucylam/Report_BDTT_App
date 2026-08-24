@@ -22,7 +22,7 @@ const kpiItems: ReadonlyArray<{
 
 export const TaskKpiStrip = ({ kpis, onSelect }: TaskKpiStripProps): React.ReactElement => {
   return (
-    <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+    <section className="mobile-adaptive-grid grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
       {kpiItems.map((item) => (
         <button
           aria-label={`Lọc theo ${item.label}: ${kpis[item.key]}`}

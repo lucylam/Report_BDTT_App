@@ -65,7 +65,7 @@ export const WorkerPendingUpdateBar = ({
         className
       )}
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-[var(--foreground)]">
             {statusTitle}
@@ -75,7 +75,7 @@ export const WorkerPendingUpdateBar = ({
           </p>
         </div>
         {pendingCount > 0 ? (
-        <div className="mobile-reflow-grid grid min-w-0 grid-cols-[1fr_1.15fr] gap-2 sm:flex sm:shrink-0">
+        <div className="mobile-reflow-grid grid min-w-0 grid-cols-[1fr_1.15fr] gap-2 md:flex md:shrink-0">
           <Button
             disabled={isSubmitting}
             className="min-h-11 px-2"

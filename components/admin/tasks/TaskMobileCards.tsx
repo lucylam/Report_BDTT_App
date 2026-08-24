@@ -27,7 +27,7 @@ export const TaskMobileCards = ({
         const { task, percent, status, progress } = row;
         return (
           <article className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4 shadow-[var(--shadow-soft-sm)]" key={task.id}>
-            <div className="flex items-center gap-3">
+            <div className="mobile-reflow-row flex items-center gap-3">
               <ProgressRing percent={task.isCancelled ? 0 : percent} />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-mono text-base font-semibold leading-tight">{task.tagname}</p>
@@ -38,7 +38,7 @@ export const TaskMobileCards = ({
                   Sec {task.section || "N/A"} · {task.donVi || "N/A"}
                 </p>
               </div>
-              <Badge className="shrink-0" solid tone={task.isCancelled ? "danger" : getStatusTone(status)}>
+              <Badge className="shrink-0 self-start" solid tone={task.isCancelled ? "danger" : getStatusTone(status)}>
                 {getProgressLabel(task, percent)}
               </Badge>
             </div>
@@ -114,7 +114,7 @@ const ProgressRing = ({ percent }: { readonly percent: number }): React.ReactEle
 };
 
 const Chip = ({ label }: { readonly label: string }): React.ReactElement => (
-  <span className="inline-block max-w-full min-w-0 truncate rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-[var(--foreground)] ring-1 ring-[var(--border)]">
+  <span className="inline-block max-w-full min-w-0 break-words rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-[var(--foreground)] ring-1 ring-[var(--border)]">
     {label}
   </span>
 );
@@ -128,6 +128,6 @@ const Info = ({
 }): React.ReactElement => (
   <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
     <p className="mobile-compact-label font-semibold uppercase text-[var(--text-soft)]">{label}</p>
-    <p className="mt-1 truncate font-semibold text-[var(--foreground)]">{value}</p>
+    <p className="mt-1 break-words font-semibold text-[var(--foreground)]">{value}</p>
   </div>
 );

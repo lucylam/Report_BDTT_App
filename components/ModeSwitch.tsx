@@ -20,7 +20,7 @@ export const ModeSwitch = ({
     <Link
       aria-label={`Chuyển sang ${targetLabel}`}
       className={cn(
-        "focus-ring group inline-flex min-h-11 w-full max-w-[18rem] min-w-0 items-center overflow-hidden rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-1 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] transition hover:bg-[var(--surface-muted)] sm:w-auto",
+        "mobile-mode-switch focus-ring group inline-flex min-h-11 w-full max-w-[18rem] min-w-0 items-center overflow-hidden rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-1 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] transition hover:bg-[var(--surface-muted)] sm:w-auto",
         className
       )}
       href={href}
