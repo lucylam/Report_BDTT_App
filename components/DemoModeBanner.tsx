@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Alert, Button, Dialog, Icon, Input } from "@/components/ui";
+import { getCurrentReportDate } from "@/lib/date";
 
 interface TrialRunStatus {
   readonly id: string;
@@ -14,6 +15,7 @@ interface DemoPreview {
   readonly tasks: number;
   readonly taskChanges: number;
   readonly progress: number;
+  readonly generatedProgress: number;
   readonly dataIssues: number;
   readonly abnormalities: number;
   readonly notifications: number;
@@ -25,13 +27,19 @@ interface DemoStatusResponse {
   readonly mode?: "trial" | "live";
   readonly run?: TrialRunStatus | null;
   readonly canManage?: boolean;
+  readonly canGenerateProgress?: boolean;
   readonly preview?: DemoPreview;
   readonly resetConfirmation?: string;
+  readonly created?: number;
+  readonly cleared?: number;
+  readonly totalDemo?: number;
+  readonly reportDate?: string;
   readonly error?: string;
 }
 
 const previewItems: readonly [keyof DemoPreview, string][] = [
-  ["progress", "Báo cáo tiến độ"],
+  ["progress", "Tổng báo cáo dùng thử"],
+  ["generatedProgress", "Báo cáo mẫu đã tạo"],
   ["tasks", "Task phát sinh"],
   ["taskChanges", "Task kế hoạch đã sửa"],
   ["dataIssues", "Báo sai dữ liệu"],
@@ -49,6 +57,9 @@ export const DemoModeBanner = (): React.ReactElement | null => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("Dùng thử trước vận hành");
   const [confirmation, setConfirmation] = useState("");
+  const [demoReportDate, setDemoReportDate] = useState(getCurrentReportDate());
+  const [mutationMessage, setMutationMessage] = useState("");
+  const [dataChanged, setDataChanged] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const previousModeKey = useRef<string | null>(null);
@@ -95,8 +106,16 @@ export const DemoModeBanner = (): React.ReactElement | null => {
   const openDialog = (): void => {
     setError("");
     setConfirmation("");
+    setMutationMessage("");
+    setDataChanged(false);
     setDialogOpen(true);
     if (status.mode === "trial") void loadStatus(true);
+  };
+
+  const closeDialog = (): void => {
+    if (busy) return;
+    setDialogOpen(false);
+    if (dataChanged) window.location.reload();
   };
 
   const startTrial = async (): Promise<void> => {
@@ -133,6 +152,48 @@ export const DemoModeBanner = (): React.ReactElement | null => {
     window.location.reload();
   };
 
+  const createDemoProgress = async (): Promise<void> => {
+    setBusy(true);
+    setError("");
+    setMutationMessage("");
+    const response = await fetch("/api/demo-mode", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reportDate: demoReportDate })
+    });
+    const result = await readResponse(response);
+    if (!response.ok) {
+      setError(result.error || "Không tạo được báo cáo demo.");
+      setBusy(false);
+      return;
+    }
+    setMutationMessage(
+      result.created
+        ? `Đã tạo ${result.created} báo cáo demo ngày ${result.reportDate}. Tổng hiện có: ${result.totalDemo}.`
+        : "Không còn task phù hợp để tạo thêm trong ngày đã chọn."
+    );
+    setDataChanged((current) => Boolean(result.created) || current);
+    await loadStatus(true);
+    setBusy(false);
+  };
+
+  const clearDemoProgress = async (): Promise<void> => {
+    setBusy(true);
+    setError("");
+    setMutationMessage("");
+    const response = await fetch("/api/demo-mode", { method: "PATCH" });
+    const result = await readResponse(response);
+    if (!response.ok) {
+      setError(result.error || "Không xóa được báo cáo demo.");
+      setBusy(false);
+      return;
+    }
+    setMutationMessage(`Đã xóa ${result.cleared ?? 0} báo cáo mẫu. Dữ liệu thật và báo cáo thử nhập tay được giữ nguyên.`);
+    setDataChanged((current) => (result.cleared ?? 0) > 0 || current);
+    await loadStatus(true);
+    setBusy(false);
+  };
+
   const isTrial = status.mode === "trial" && Boolean(status.run);
   return (
     <>
@@ -150,14 +211,14 @@ export const DemoModeBanner = (): React.ReactElement | null => {
               {isTrial ? `CHẾ ĐỘ DÙNG THỬ · ${status.run?.name}` : "Chế độ chính thức · Demo đang tắt"}
             </span>
           </div>
-          {status.canManage ? (
+          {status.canManage || (isTrial && status.canGenerateProgress) ? (
             <Button
               className={isTrial ? "border-amber-900 bg-amber-50 text-amber-950 hover:bg-white" : ""}
               onClick={openDialog}
               size="sm"
               variant="secondary"
             >
-              {isTrial ? "Quản lý" : "Bật dùng thử"}
+              {isTrial ? "Tạo / xóa demo" : "Bật dùng thử"}
             </Button>
           ) : (
             <span className="hidden shrink-0 text-xs font-bold sm:inline">Dữ liệu sẽ được xóa trước khi dùng thật</span>
@@ -169,13 +230,13 @@ export const DemoModeBanner = (): React.ReactElement | null => {
         <Dialog
           description={
             isTrial
-              ? "Task kế hoạch, nhân sự và tài khoản được giữ nguyên. Chỉ dữ liệu phát sinh trong đợt thử bị xóa."
+              ? "Tạo báo cáo mẫu trên WorkOrder sẵn có hoặc xóa riêng các báo cáo mẫu mà không ảnh hưởng dữ liệu thật."
               : "Sau khi bật, mọi thao tác BDTT phát sinh sẽ tự động được đánh dấu là dữ liệu thử."
           }
           eyebrow={isTrial ? "Đang dùng thử" : "Quản trị dữ liệu"}
           eyebrowTone={isTrial ? "danger" : "primary"}
-          onClose={() => !busy && setDialogOpen(false)}
-          title={isTrial ? "Kết thúc đợt dùng thử" : "Bật Demo Mode"}
+          onClose={closeDialog}
+          title={isTrial ? "Quản lý dữ liệu dùng thử" : "Bật Demo Mode"}
         >
           {isTrial ? (
             <div className="mt-5 space-y-4">
@@ -187,29 +248,80 @@ export const DemoModeBanner = (): React.ReactElement | null => {
                   </div>
                 ))}
               </div>
-              <Alert tone="warning">
-                Xóa dữ liệu thử sẽ phục hồi các task kế hoạch đã đổi người hoặc đã hủy. Thao tác này không thể hoàn tác.
-              </Alert>
-              <label className="block text-sm font-semibold">
-                Nhập <span className="font-bold text-[var(--danger)]">{status.resetConfirmation}</span> để xác nhận
-                <Input
-                  autoComplete="off"
-                  className="mt-2"
-                  onChange={(event) => setConfirmation(event.target.value)}
-                  value={confirmation}
-                />
-              </label>
+              {status.canGenerateProgress ? (
+                <section className="rounded-[var(--radius-card)] border border-[var(--primary-soft)] bg-[var(--primary-pale)] p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[var(--radius-field)] bg-[var(--surface)] text-[var(--primary-strong)] ring-1 ring-[var(--primary-soft)]">
+                      <Icon name="chart" />
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-semibold text-[var(--foreground)]">Báo cáo mẫu để test chart</h3>
+                      <p className="mt-1 text-xs font-medium leading-5 text-[var(--text-muted)]">
+                        Mỗi lần tạo tối đa 36 record trên task đang có, phân bổ giữa các đơn vị và nhóm trưởng. Không tạo task hoặc WorkOrder mới.
+                      </p>
+                    </div>
+                  </div>
+                  <label className="mt-4 block text-sm font-semibold">
+                    Ngày báo cáo demo
+                    <Input
+                      className="mt-2 bg-[var(--surface)]"
+                      disabled={busy}
+                      onChange={(event) => setDemoReportDate(event.target.value)}
+                      type="date"
+                      value={demoReportDate}
+                    />
+                  </label>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <Button
+                      disabled={busy || !demoReportDate}
+                      onClick={() => void createDemoProgress()}
+                    >
+                      <Icon name="demo" />
+                      {busy ? "Đang xử lý…" : "Tạo thêm báo cáo demo"}
+                    </Button>
+                    <Button
+                      disabled={busy || !status.preview?.generatedProgress}
+                      onClick={() => void clearDemoProgress()}
+                      variant="secondary"
+                    >
+                      <Icon name="database" />
+                      Xóa báo cáo mẫu
+                    </Button>
+                  </div>
+                  {mutationMessage ? <Alert className="mt-3" tone="success">{mutationMessage}</Alert> : null}
+                </section>
+              ) : null}
               {error ? <Alert tone="danger">{error}</Alert> : null}
-              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <Button disabled={busy} onClick={() => setDialogOpen(false)} variant="ghost">Đóng</Button>
-                <Button
-                  disabled={busy || confirmation.trim().toUpperCase() !== status.resetConfirmation}
-                  onClick={() => void resetTrial()}
-                  variant="danger"
-                >
-                  {busy ? "Đang xóa…" : "Xóa dữ liệu thử và dùng thật"}
-                </Button>
-              </div>
+              {status.canManage ? (
+                <>
+                  <Alert tone="warning">
+                    Xóa dữ liệu thử sẽ phục hồi các task kế hoạch đã đổi người hoặc đã hủy. Thao tác này không thể hoàn tác.
+                  </Alert>
+                  <label className="block text-sm font-semibold">
+                    Nhập <span className="font-bold text-[var(--danger)]">{status.resetConfirmation}</span> để xác nhận
+                    <Input
+                      autoComplete="off"
+                      className="mt-2"
+                      onChange={(event) => setConfirmation(event.target.value)}
+                      value={confirmation}
+                    />
+                  </label>
+                  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <Button disabled={busy} onClick={closeDialog} variant="ghost">Đóng</Button>
+                    <Button
+                      disabled={busy || confirmation.trim().toUpperCase() !== status.resetConfirmation}
+                      onClick={() => void resetTrial()}
+                      variant="danger"
+                    >
+                      {busy ? "Đang xóa…" : "Xóa dữ liệu thử và dùng thật"}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex justify-end">
+                  <Button disabled={busy} onClick={closeDialog} variant="ghost">Đóng</Button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="mt-5 space-y-4">
@@ -220,7 +332,7 @@ export const DemoModeBanner = (): React.ReactElement | null => {
               <Alert tone="info">Google Sheet chỉ đồng bộ khi DATA admin chủ động xem trước và xác nhận. Snapshot có thể bao gồm dữ liệu dùng thử.</Alert>
               {error ? <Alert tone="danger">{error}</Alert> : null}
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <Button disabled={busy} onClick={() => setDialogOpen(false)} variant="ghost">Đóng</Button>
+                <Button disabled={busy} onClick={closeDialog} variant="ghost">Đóng</Button>
                 <Button disabled={busy || name.trim().length < 3} onClick={() => void startTrial()}>
                   {busy ? "Đang bật…" : "Bật Demo Mode"}
                 </Button>

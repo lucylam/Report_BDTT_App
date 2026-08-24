@@ -64,11 +64,6 @@ const legendTextStyle = {
   fontWeight: 500,
   lineHeight: "18px"
 } as const;
-const compactLegendTextStyle = {
-  ...legendTextStyle,
-  fontSize: 12,
-  lineHeight: "18px"
-} as const;
 const tooltipStyle = {
   backgroundColor: "var(--surface)",
   border: "1px solid var(--border-strong)",
@@ -436,8 +431,8 @@ const ChartShell = ({
   readonly title: string;
 }): React.ReactElement => {
   return (
-    <section className="glass-card flex h-full min-w-0 flex-col rounded-[var(--radius-card)] p-4">
-      <div className="border-b border-[var(--line)] pb-2">
+    <section className="glass-card flex h-full min-w-0 flex-col rounded-[var(--radius-card)] p-4 sm:p-5">
+      <div>
         <SectionTitle subtitle={subtitle} title={title} />
       </div>
       {children}
@@ -453,14 +448,14 @@ const SectionTitle = ({
   readonly title: string;
 }): React.ReactElement => (
   <div className="flex min-w-0 items-start gap-3">
-    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--info-soft)] text-[var(--info-strong)]">
+    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-1 ring-[var(--primary-soft)]">
       <Icon name="chart" />
     </span>
     <div className="min-w-0">
-      <h2 className="text-balance text-base font-semibold leading-6 sm:text-lg">
+      <h2 className="text-balance text-[15px] font-semibold leading-5 sm:text-base">
         {title}
       </h2>
-      <p className="mt-0.5 text-sm font-normal leading-5 text-[var(--text-muted)]">{subtitle}</p>
+      <p className="mt-1 text-xs font-medium leading-5 text-[var(--text-muted)]">{subtitle}</p>
     </div>
   </div>
 );
@@ -491,62 +486,72 @@ const OverallPie = ({
       subtitle={`${formatNumber(row.total)} hạng mục · ${formatNumber(executive.updatedTasks)} hạng mục đã có cập nhật`}
       title={`Tiến độ BDTT ${reportYear} · Tổ TB ĐL&ĐK`}
     >
-      <div className="flex flex-1 items-center justify-center pt-3">
+      <div className="grid flex-1 content-center gap-4 pt-4 sm:grid-cols-[minmax(13rem,0.9fr)_minmax(0,1.1fr)] sm:items-center">
         <div
           aria-label={`Tiến độ hoàn thành trung bình ${row.percent}%`}
-          className="grid h-[260px] w-full grid-rows-[minmax(0,1fr)_auto] px-2"
+          className="relative mx-auto h-[240px] w-full max-w-[280px] rounded-[var(--radius-card)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]"
           role="img"
         >
-          <div className="relative min-h-0">
-            <ResponsiveContainer height="100%" width="100%">
-              <PieChart>
-                <Pie
-                  cx="50%"
-                  cy="88%"
-                  data={chartData}
-                  dataKey="value"
-                  endAngle={0}
-                  innerRadius={58}
-                  nameKey="name"
-                  outerRadius={84}
-                  paddingAngle={0}
-                  startAngle={180}
-                  stroke="var(--card)"
-                  strokeWidth={3}
-                >
-                  <Cell fill={doneFill} fillOpacity={1} />
-                  <Cell fill={remainingFill} fillOpacity={0.92} />
-                </Pie>
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  formatter={(value) => [formatNumber(Number(value)), "Hạng mục quy đổi"]}
-                  itemStyle={tooltipItemStyle}
-                  labelStyle={tooltipLabelStyle}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 text-center">
-              <p className="font-mono text-3xl font-semibold tabular-nums">{row.percent}%</p>
-              <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
-                Hoàn thành TB
-              </p>
-            </div>
+          <ResponsiveContainer height="100%" width="100%">
+            <PieChart>
+              <Pie
+                cornerRadius={8}
+                cx="50%"
+                cy="50%"
+                data={chartData}
+                dataKey="value"
+                endAngle={-270}
+                innerRadius={70}
+                nameKey="name"
+                outerRadius={92}
+                paddingAngle={2}
+                startAngle={90}
+                stroke="var(--surface-muted)"
+                strokeWidth={3}
+              >
+                <Cell fill={doneFill} fillOpacity={1} />
+                <Cell fill="var(--chart-remaining-soft)" fillOpacity={1} />
+              </Pie>
+              <Tooltip
+                contentStyle={tooltipStyle}
+                formatter={(value) => [formatNumber(Number(value)), "Hạng mục quy đổi"]}
+                itemStyle={tooltipItemStyle}
+                labelStyle={tooltipLabelStyle}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+            <p className="text-4xl font-semibold tabular-nums text-[var(--primary-strong)]">{row.percent}%</p>
+            <p className="mt-1 text-xs font-semibold text-[var(--text-muted)]">Hoàn thành trung bình</p>
           </div>
-          <div className="grid grid-cols-2 border-t border-[var(--line)] pt-2 text-xs font-medium text-[var(--foreground)]">
-            <span className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="h-2.5 w-3 rounded-full bg-[var(--chart-done-strong)]" />
-              Đã thực hiện
-            </span>
-            <span className="inline-flex items-center justify-end gap-2">
-              <span aria-hidden="true" className="h-2.5 w-3 rounded-full bg-[var(--chart-remaining-strong)]" />
-              Còn lại
-            </span>
-          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <ChartMetric label="Tổng hạng mục" tone="neutral" value={row.total} />
+          <ChartMetric label="Đã thực hiện" tone="done" value={row.done} />
+          <ChartMetric label="Còn lại" tone="remaining" value={row.remaining} />
+          <ChartMetric label="Đã cập nhật" tone="progress" value={executive.updatedTasks} />
         </div>
       </div>
     </ChartShell>
   );
 };
+
+const ChartMetric = ({
+  label,
+  tone,
+  value
+}: {
+  readonly label: string;
+  readonly tone: "done" | "neutral" | "progress" | "remaining";
+  readonly value: number;
+}): React.ReactElement => (
+  <div className="rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[var(--shadow-soft-sm)]">
+    <p className="text-xs font-medium leading-4 text-[var(--text-muted)]">{label}</p>
+    <p className={cn("mt-2 text-xl font-semibold tabular-nums", metricToneClasses[tone])}>
+      {formatNumber(value)}
+    </p>
+  </div>
+);
 
 const UnitProgressDotPlot = ({
   data,
@@ -568,10 +573,10 @@ const UnitProgressDotPlot = ({
     <ChartShell subtitle={subtitle} title={title}>
       <div
         aria-label={`So sánh phần trăm hoàn thành của ${rows.length} đơn vị. Mức hoàn thành chung là ${overallPercent}%.`}
-        className="mt-3 min-w-0"
+        className="mt-4 min-w-0"
         role="img"
       >
-        <div className="grid grid-cols-[minmax(5rem,1fr)_minmax(9rem,3fr)_auto] items-end gap-3 border-b border-[var(--line)] pb-2 text-xs font-medium text-[var(--text-muted)]">
+        <div className="hidden grid-cols-[minmax(7rem,1fr)_minmax(10rem,2.5fr)_auto] items-center gap-3 px-3 text-[11px] font-medium text-[var(--text-muted)] sm:grid">
           <span>Đơn vị</span>
           <div className="grid grid-cols-5 font-mono tabular-nums">
             {[0, 25, 50, 75, 100].map((tick) => (
@@ -583,53 +588,56 @@ const UnitProgressDotPlot = ({
               </span>
             ))}
           </div>
-          <span className="text-right">Đã làm/Tổng</span>
+          <span className="min-w-[5.5rem] text-right">Đã làm / Tổng</span>
         </div>
 
-        <div className="divide-y divide-[var(--line-soft)]">
+        <div className="mt-2 grid gap-2">
           {rows.map((row) => {
             const markerPosition = Math.max(1, Math.min(99, row.percent));
             return (
-              <div
-                className="grid min-h-11 grid-cols-[minmax(5rem,1fr)_minmax(9rem,3fr)_auto] items-center gap-3 py-2"
+              <article
+                className="grid min-w-0 gap-2 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] p-3 sm:grid-cols-[minmax(7rem,1fr)_minmax(10rem,2.5fr)_auto] sm:items-center sm:gap-3"
                 key={row.name}
               >
-                <span className="min-w-0 break-words text-sm font-semibold leading-5">
-                  {row.name}
-                </span>
+                <div className="flex min-w-0 items-center justify-between gap-2 sm:block">
+                  <span className="min-w-0 break-words text-sm font-semibold leading-5">{row.name}</span>
+                  <span className="shrink-0 text-xs font-semibold tabular-nums text-[var(--primary-strong)] sm:hidden">
+                    {row.percent}%
+                  </span>
+                </div>
                 <div className="relative h-7" title={`${row.name}: ${row.percent}%`}>
-                  <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[var(--border-strong)]" />
+                  <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[var(--line-soft)]" />
                   {[0, 25, 50, 75, 100].map((tick) => (
                     <span
                       aria-hidden="true"
-                      className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-[var(--chart-grid)]"
+                      className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-[var(--border-strong)]"
                       key={tick}
                       style={{ left: `${tick}%` }}
                     />
                   ))}
                   <span
                     aria-hidden="true"
-                    className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--surface)] bg-[var(--chart-primary)] ring-1 ring-[var(--border-strong)]"
+                    className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-[0.3rem] border-2 border-[var(--surface)] bg-[var(--chart-primary)] shadow-[var(--shadow-soft-sm)] ring-1 ring-[var(--primary-strong)]"
                     style={{ left: `${markerPosition}%` }}
                   />
                   <span
-                    className="absolute -top-1 -translate-x-1/2 bg-[var(--surface)] px-1 font-mono text-xs font-semibold tabular-nums text-[var(--foreground)]"
+                    className="absolute -top-1 hidden -translate-x-1/2 rounded-[0.25rem] bg-[var(--surface)] px-1 font-mono text-[11px] font-semibold tabular-nums text-[var(--foreground)] sm:block"
                     style={{ left: `${markerPosition}%` }}
                   >
                     {row.percent}%
                   </span>
                 </div>
-                <span className="min-w-[4.75rem] text-right font-mono text-xs font-semibold tabular-nums text-[var(--foreground)]">
-                  {formatNumber(row.done)}/{formatNumber(row.total)}
+                <span className="min-w-[5.5rem] text-right text-xs font-semibold tabular-nums text-[var(--foreground)]">
+                  {formatNumber(row.done)} / {formatNumber(row.total)}
                 </span>
-              </div>
+              </article>
             );
           })}
         </div>
 
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--line)] pt-2 text-xs text-[var(--text-muted)]">
-          <span>Ô vuông = vị trí % hoàn thành của từng đơn vị</span>
-          <span className="font-mono font-semibold tabular-nums text-[var(--foreground)]">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-field)] bg-[var(--primary-pale)] px-3 py-2.5 text-xs text-[var(--primary-strong)]">
+          <span>Marker vuông thể hiện vị trí hoàn thành trên thang 0–100%</span>
+          <span className="font-semibold tabular-nums">
             Toàn tổ: {overallPercent}%
           </span>
         </div>
@@ -809,7 +817,7 @@ const UnitLeadChart = ({
       subtitle="Mỗi ô là % hoàn thành trong đúng cụm đơn vị–nhóm trưởng; số nhỏ là lượng task được tính."
       title={title}
     >
-      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 border-y border-[var(--line)] py-2 text-xs text-[var(--text-muted)]">
+      <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-2.5 text-xs font-medium text-[var(--text-muted)] ring-1 ring-[var(--border)]">
         <HeatLegend className="bg-[var(--danger-soft)]" label="1–24%" />
         <HeatLegend className="bg-[var(--warning-soft)]" label="25–49%" />
         <HeatLegend className="bg-[var(--info-soft)]" label="50–74%" />
@@ -819,16 +827,16 @@ const UnitLeadChart = ({
 
       <div
         aria-label={`Ma trận tiến độ gồm ${rows.length} đơn vị và ${visibleLeads.length} nhóm trưởng.`}
-        className="mt-3"
+        className="mt-3 grid gap-2"
         role="table"
       >
-        <div className={cn("hidden border-b border-[var(--line)] md:grid", desktopGridClass)} role="row">
-          <div className="p-2 text-xs font-semibold uppercase text-[var(--text-muted)]" role="columnheader">
+        <div className={cn("hidden gap-2 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-2 md:grid", desktopGridClass)} role="row">
+          <div className="p-2 text-xs font-semibold text-[var(--text-muted)]" role="columnheader">
             Đơn vị
           </div>
           {visibleLeads.map((lead) => (
             <div
-              className="min-w-0 break-words border-l border-[var(--line)] p-2 text-xs font-semibold leading-5 text-[var(--foreground)]"
+              className="min-w-0 break-words p-2 text-xs font-semibold leading-5 text-[var(--foreground)]"
               key={lead}
               role="columnheader"
             >
@@ -837,15 +845,15 @@ const UnitLeadChart = ({
           ))}
         </div>
 
-        <div className="divide-y divide-[var(--line)] border-b border-[var(--line)]">
+        <div className="grid gap-2">
           {rows.map((row) => (
             <div
-              className={cn("grid grid-cols-2 gap-2 py-3 md:gap-0 md:py-0", desktopGridClass)}
+              className={cn("grid grid-cols-2 gap-2 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-2 shadow-[var(--shadow-soft-sm)]", desktopGridClass)}
               key={row.name}
               role="row"
             >
               <div
-                className="col-span-2 min-w-0 break-words text-sm font-semibold leading-5 md:col-span-1 md:flex md:items-center md:p-2"
+                className="col-span-2 min-w-0 break-words px-1 py-2 text-sm font-semibold leading-5 md:col-span-1 md:flex md:items-center md:p-2"
                 role="rowheader"
               >
                 {row.name}
@@ -856,9 +864,9 @@ const UnitLeadChart = ({
                 return (
                   <div
                     className={cn(
-                      "min-h-14 min-w-0 border-l-4 p-2 md:flex md:min-h-16 md:flex-col md:justify-center md:border-b-0 md:border-l md:border-[var(--line)]",
+                      "min-h-14 min-w-0 rounded-[var(--radius-field)] border p-2 md:flex md:min-h-16 md:flex-col md:justify-center",
                       taskCount === 0
-                        ? "border-l-[var(--line)] bg-[var(--surface-muted)] text-[var(--text-muted)]"
+                        ? "border-[var(--line)] bg-[var(--surface-muted)] text-[var(--text-muted)]"
                         : getHeatCellClass(percent)
                     )}
                     key={lead}
@@ -906,21 +914,21 @@ const HeatLegend = ({
 
 const getHeatCellClass = (percent: number): string => {
   if (percent >= 100) {
-    return "border-l-[var(--success-strong)] bg-[var(--success-soft)] text-[var(--success-strong)]";
+    return "border-[var(--success)] bg-[var(--success-soft)] text-[var(--success-strong)]";
   }
   if (percent >= 75) {
-    return "border-l-[var(--primary-strong)] bg-[var(--primary-soft)] text-[var(--primary-strong)]";
+    return "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary-strong)]";
   }
   if (percent >= 50) {
-    return "border-l-[var(--info-strong)] bg-[var(--info-soft)] text-[var(--info-strong)]";
+    return "border-[var(--info)] bg-[var(--info-soft)] text-[var(--info-strong)]";
   }
   if (percent >= 25) {
-    return "border-l-[var(--warning-strong)] bg-[var(--warning-soft)] text-[var(--warning-strong)]";
+    return "border-[var(--warning)] bg-[var(--warning-soft)] text-[var(--warning-strong)]";
   }
   if (percent > 0) {
-    return "border-l-[var(--danger-strong)] bg-[var(--danger-soft)] text-[var(--danger-strong)]";
+    return "border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger-strong)]";
   }
-  return "border-l-[var(--border-strong)] bg-[var(--surface-muted)] text-[var(--foreground)]";
+  return "border-[var(--line)] bg-[var(--surface-muted)] text-[var(--foreground)]";
 };
 
 const LeadStatusChart = ({
@@ -940,80 +948,88 @@ const LeadStatusChart = ({
     );
   }
   const visibleRows = data.slice(0, 10);
-  const categoryAxisWidth = getCategoryAxisWidth(
-    visibleRows.map((row) => row.name),
-    132
-  );
   return (
     <ChartShell
-      subtitle="Cơ cấu trạng thái theo nhóm trưởng: vàng đất là chưa thực hiện, xanh lam là đang thực hiện, xanh lá là hoàn thành."
+      subtitle="Cơ cấu trạng thái theo nhóm trưởng; mỗi hàng hiển thị trực tiếp tỷ lệ hoàn thành và khối lượng công việc."
       title="Thống kê tiến độ theo các nhóm"
     >
-      <div className="mt-3 h-[280px] min-w-0">
-        <ResponsiveContainer height="100%" width="100%">
-          <BarChart
-            barCategoryGap={8}
-            data={visibleRows}
-            layout="vertical"
-            margin={{ bottom: 8, left: 4, right: 32, top: 4 }}
-          >
-            <CartesianGrid {...softGridProps} horizontal={false} />
-            <XAxis {...softAxisProps} allowDecimals={false} tickMargin={8} type="number" />
-            <YAxis
-              {...categoryAxisProps}
-              dataKey="name"
-              tickFormatter={formatAxisName}
-              tickMargin={8}
-              type="category"
-              width={categoryAxisWidth}
-            />
-            <Tooltip
-              contentStyle={tooltipStyle}
-              itemStyle={tooltipItemStyle}
-              labelFormatter={formatAxisName}
-              labelStyle={tooltipLabelStyle}
-            />
-            <Legend iconSize={10} iconType="square" wrapperStyle={compactLegendTextStyle} />
-            <Bar
-              barSize={14}
-              dataKey="completed"
-              fill={statusColors.completed}
-              fillOpacity={0.96}
-              name="Hoàn thành"
-              radius={[6, 0, 0, 6]}
-              stackId="a"
-            />
-            <Bar
-              barSize={14}
-              dataKey="inProgress"
-              fill={statusColors.inProgress}
-              fillOpacity={0.96}
-              name="Đang thực hiện"
-              stackId="a"
-            />
-            <Bar
-              barSize={14}
-              dataKey="cancelled"
-              fill={statusColors.cancelled}
-              fillOpacity={0.96}
-              name="Hủy"
-              stackId="a"
-            />
-            <Bar
-              barSize={14}
-              dataKey="notStarted"
-              fill={statusColors.notStarted}
-              fillOpacity={0.92}
-              name="Chưa thực hiện"
-              radius={[0, 6, 6, 0]}
-              stackId="a"
-            />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-2.5 text-xs font-medium text-[var(--text-muted)] ring-1 ring-[var(--border)]">
+        <StatusLegend color={statusColors.completed} label="Hoàn thành" />
+        <StatusLegend color={statusColors.inProgress} label="Đang thực hiện" />
+        <StatusLegend color={statusColors.notStarted} label="Chưa thực hiện" />
+        <StatusLegend color={statusColors.cancelled} label="Hủy" />
+      </div>
+      <div className="mt-3 grid min-w-0 gap-2">
+        {visibleRows.map((row) => {
+          const total = Math.max(0, row.completed + row.inProgress + row.cancelled + row.notStarted);
+          const percent = total === 0 ? 0 : Math.round((row.completed / total) * 100);
+          const segments = [
+            { color: statusColors.completed, label: "Hoàn thành", value: row.completed },
+            { color: statusColors.inProgress, label: "Đang thực hiện", value: row.inProgress },
+            { color: statusColors.notStarted, label: "Chưa thực hiện", value: row.notStarted },
+            { color: statusColors.cancelled, label: "Hủy", value: row.cancelled }
+          ];
+
+          return (
+            <article
+              className="rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[var(--shadow-soft-sm)]"
+              key={row.name}
+            >
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="break-words text-sm font-semibold leading-5 text-[var(--foreground)]">
+                    {formatAxisName(row.name)}
+                  </p>
+                  <p className="mt-0.5 text-xs font-medium text-[var(--text-muted)]">
+                    {formatNumber(row.completed)} hoàn thành / {formatNumber(total)} hạng mục
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-[var(--radius-field)] bg-[var(--primary-pale)] px-2 py-1 text-sm font-semibold tabular-nums text-[var(--primary-strong)]">
+                  {percent}%
+                </span>
+              </div>
+              <div
+                aria-label={`${formatAxisName(row.name)}: ${formatNumber(row.completed)} hoàn thành, ${formatNumber(row.inProgress)} đang thực hiện, ${formatNumber(row.notStarted)} chưa thực hiện, ${formatNumber(row.cancelled)} đã hủy`}
+                className="mt-3 flex h-3 overflow-hidden rounded-full bg-[var(--line-soft)]"
+                role="img"
+              >
+                {segments.map((segment) =>
+                  segment.value > 0 ? (
+                    <span
+                      key={segment.label}
+                      style={{
+                        backgroundColor: segment.color,
+                        width: `${total === 0 ? 0 : (segment.value / total) * 100}%`
+                      }}
+                      title={`${segment.label}: ${formatNumber(segment.value)}`}
+                    />
+                  ) : null
+                )}
+              </div>
+            </article>
+          );
+        })}
       </div>
     </ChartShell>
   );
 };
+
+const StatusLegend = ({
+  color,
+  label
+}: {
+  readonly color: string;
+  readonly label: string;
+}): React.ReactElement => (
+  <span className="inline-flex items-center gap-1.5">
+    <span
+      aria-hidden="true"
+      className="h-3 w-3 rounded-[0.25rem] border border-[var(--border-strong)]"
+      style={{ backgroundColor: color }}
+    />
+    {label}
+  </span>
+);
 
 const ResourceGroupChart = ({
   group

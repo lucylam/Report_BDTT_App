@@ -13,8 +13,10 @@ import {
 } from "@/components/worker/progressDrafts";
 import {
   matchesWorkerTaskDate,
+  matchesWorkerTaskPriority,
   matchesWorkerTaskQuery,
-  sortWorkerTasks
+  sortWorkerTasks,
+  type WorkerPriorityFilter
 } from "@/components/worker/taskView";
 import type {
   QueueSyncState,
@@ -202,6 +204,7 @@ const WorkerPage = (): React.ReactElement => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedUnit, setSelectedUnit] = useState<string>("");
   const [selectedTaskDate, setSelectedTaskDate] = useState<string>("");
+  const [selectedPriority, setSelectedPriority] = useState<WorkerPriorityFilter>("");
   const [cancelTaskId, setCancelTaskId] = useState<string | null>(null);
   const [draftUpdates, setDraftUpdates] = useState<WorkerProgressDraftMap>({});
   const [isSubmittingUpdates, setIsSubmittingUpdates] = useState<boolean>(false);
@@ -391,6 +394,7 @@ const WorkerPage = (): React.ReactElement => {
         return (
           matchesFilter(task, percent, filter, filterDate) &&
           matchesWorkerTaskDate(task, selectedTaskDate) &&
+          matchesWorkerTaskPriority(task, selectedPriority) &&
           (!selectedUnit || task.donVi === selectedUnit) &&
           matchesWorkerTaskQuery(task, searchQuery)
         );
@@ -398,7 +402,16 @@ const WorkerPage = (): React.ReactElement => {
       data.progress,
       reportDate
     );
-  }, [allWorkerTasks, data, filter, reportDate, searchQuery, selectedTaskDate, selectedUnit]);
+  }, [
+    allWorkerTasks,
+    data,
+    filter,
+    reportDate,
+    searchQuery,
+    selectedPriority,
+    selectedTaskDate,
+    selectedUnit
+  ]);
 
   if (!data || !currentAccount || !worker || currentAccount.mustChangePassword) {
     return (
@@ -661,6 +674,7 @@ const WorkerPage = (): React.ReactElement => {
         onFilterChange={setFilter}
         onLogout={logout}
         onSearchChange={setSearchQuery}
+        onPriorityChange={setSelectedPriority}
         onTaskDateChange={handleTaskDateChange}
         onUnitChange={setSelectedUnit}
         onSubmitUpdates={() => {
@@ -674,6 +688,7 @@ const WorkerPage = (): React.ReactElement => {
         reportDate={reportDate}
         saveStates={saveStates}
         searchQuery={searchQuery}
+        selectedPriority={selectedPriority}
         selectedTaskDate={selectedTaskDate}
         selectedUnit={selectedUnit}
       />
@@ -692,6 +707,7 @@ const WorkerPage = (): React.ReactElement => {
         onFilterChange={setFilter}
         onLogout={logout}
         onSearchChange={setSearchQuery}
+        onPriorityChange={setSelectedPriority}
         onTaskDateChange={handleTaskDateChange}
         onUnitChange={setSelectedUnit}
         onSubmitUpdates={() => {
@@ -705,6 +721,7 @@ const WorkerPage = (): React.ReactElement => {
         reportDate={reportDate}
         saveStates={saveStates}
         searchQuery={searchQuery}
+        selectedPriority={selectedPriority}
         selectedTaskDate={selectedTaskDate}
         selectedUnit={selectedUnit}
         worker={worker}

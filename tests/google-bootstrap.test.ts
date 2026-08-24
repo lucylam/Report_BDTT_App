@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseBootstrapSheet } from "@/lib/google/bootstrap";
+import { getBootstrapLockState, parseBootstrapSheet } from "@/lib/google/bootstrap";
 
 const headers = Array.from({ length: 33 }, () => "");
 headers[0] = "Stt";
@@ -15,6 +15,20 @@ headers[12] = "Nhóm trưởng";
 headers[32] = "Chế độ tiến độ";
 
 describe("Google Sheet bootstrap", () => {
+  it("cho khởi tạo lại khi đã có task nhưng chưa có tiến độ", () => {
+    expect(getBootstrapLockState(2039, 0)).toMatchObject({
+      isLocked: false,
+      canReinitialize: true
+    });
+  });
+
+  it("khóa khởi tạo lại ngay khi có bất kỳ báo cáo tiến độ nào", () => {
+    expect(getBootstrapLockState(2039, 1)).toMatchObject({
+      isLocked: true,
+      canReinitialize: false
+    });
+  });
+
   it("đọc A:AG, ánh xạ nhân sự và phát hiện trùng Tag + WO", () => {
     const row = Array.from({ length: 33 }, () => "") as Array<string | number>;
     row[0] = 1;

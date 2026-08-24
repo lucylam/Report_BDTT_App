@@ -10,6 +10,9 @@ import { useAppData } from "@/hooks/useAppData";
 
 interface BootstrapPreview {
   readonly initialized: boolean;
+  readonly taskCount?: number;
+  readonly progressCount?: number;
+  readonly canReinitialize?: boolean;
   readonly checksum?: string;
   readonly rowCount: number;
   readonly duplicateKeys?: string[];
@@ -166,9 +169,10 @@ const AdminUploadPage = (): React.ReactElement => {
       {message ? <Alert tone="info">{message}</Alert> : null}
       <section className="grid items-start gap-3 xl:grid-cols-2">
         <Widget>
-          <WidgetHeader icon="upload" subtitle="Chỉ khả dụng khi database chưa có task kế hoạch" title="1. Khởi tạo từ Google Sheet" />
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <WidgetHeader icon="upload" subtitle="Có thể khởi tạo hoặc thay thế kế hoạch khi chưa có báo cáo tiến độ" title="1. Khởi tạo từ Google Sheet" />
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
             <Metric label="Task trong database" value={String(data.tasks.length)} />
+            <Metric label="Báo cáo tiến độ" value={String(data.progress.length)} />
             <Metric label="Khởi tạo gần nhất" value={formatTimestamp(data.planVersion?.importedAt)} />
           </div>
           <div className="mt-3 flex flex-wrap justify-end gap-2">
@@ -176,7 +180,11 @@ const AdminUploadPage = (): React.ReactElement => {
               {busy === "bootstrap-preview" ? "Đang đọc..." : "Đọc và xem trước"}
             </Button>
             <Button disabled={!bootstrap?.checksum || bootstrap.initialized || bootstrap.hasBlockingErrors || busy !== ""} onClick={() => void applyBootstrap()}>
-              {busy === "bootstrap-apply" ? "Đang khởi tạo..." : "Xác nhận khởi tạo"}
+              {busy === "bootstrap-apply"
+                ? "Đang khởi tạo..."
+                : (bootstrap?.taskCount ?? 0) > 0
+                  ? "Xác nhận khởi tạo lại"
+                  : "Xác nhận khởi tạo"}
             </Button>
           </div>
           {bootstrap ? <BootstrapPanel preview={bootstrap} /> : null}
@@ -213,10 +221,23 @@ const AdminUploadPage = (): React.ReactElement => {
 const BootstrapPanel = ({ preview }: { readonly preview: BootstrapPreview }): React.ReactElement => (
   <div className="mt-3 border-t border-[var(--line)] pt-3">
     <div className="flex flex-wrap items-center gap-2">
-      <Badge tone={preview.initialized ? "success" : preview.hasBlockingErrors ? "danger" : "info"}>{preview.initialized ? "Đã khóa khởi tạo" : preview.hasBlockingErrors ? "Cần sửa Sheet" : "Sẵn sàng"}</Badge>
+      <Badge tone={preview.initialized ? "danger" : preview.hasBlockingErrors ? "danger" : preview.canReinitialize ? "warning" : "info"}>
+        {preview.initialized
+          ? "Đã khóa vì có tiến độ"
+          : preview.hasBlockingErrors
+            ? "Cần sửa Sheet"
+            : preview.canReinitialize
+              ? "Có thể khởi tạo lại"
+              : "Sẵn sàng"}
+      </Badge>
       <span className="text-sm font-semibold">{preview.rowCount} dòng</span>
     </div>
     {preview.message ? <p className="mt-2 text-sm text-[var(--text-muted)]">{preview.message}</p> : null}
+    {preview.canReinitialize && !preview.hasBlockingErrors ? (
+      <Alert className="mt-3" tone="warning">
+        Xác nhận khởi tạo lại sẽ xóa các task kế hoạch hiện có và thay bằng dữ liệu đang đọc từ Google Sheet. Task phát sinh được giữ nguyên.
+      </Alert>
+    ) : null}
     {!preview.initialized ? (
       <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         <Metric label="Key trùng Tag + WO" value={String(preview.duplicateKeys?.length ?? 0)} />

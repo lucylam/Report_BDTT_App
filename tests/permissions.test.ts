@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getOrgScopeKey } from "@/lib/org2026";
 import {
+  canGenerateDemoProgress,
   canManageBdttTasks,
   canManagePersonnelOrg,
   canViewProfile,
@@ -124,6 +125,39 @@ describe("canManageBdttTasks", () => {
     expect(
       canManageBdttTasks(
         makeAccount({ username: "worker-a", role: "worker", orgRole: "member" })
+      )
+    ).toBe(false);
+  });
+});
+
+describe("canGenerateDemoProgress", () => {
+  it("cho phép DATA admin, tổ trưởng và giám sát có quyền admin", () => {
+    expect(
+      canGenerateDemoProgress(
+        makeAccount({ username: "vinhlpp", role: "admin", orgRole: "member" })
+      )
+    ).toBe(true);
+    expect(
+      canGenerateDemoProgress(
+        makeAccount({ username: "leader", role: "admin", orgRole: "toTruong" })
+      )
+    ).toBe(true);
+    expect(
+      canGenerateDemoProgress(
+        makeAccount({ username: "supervisor", role: "admin", orgRole: "supervisor" })
+      )
+    ).toBe(true);
+  });
+
+  it("không cho worker hoặc admin phạm vi nhóm tạo dữ liệu chart toàn tổ", () => {
+    expect(
+      canGenerateDemoProgress(
+        makeAccount({ username: "worker", role: "worker", orgRole: "supervisor" })
+      )
+    ).toBe(false);
+    expect(
+      canGenerateDemoProgress(
+        makeAccount({ username: "lead", role: "admin", orgRole: "nhomTruong" })
       )
     ).toBe(false);
   });

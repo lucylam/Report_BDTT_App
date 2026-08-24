@@ -15,7 +15,8 @@ import { WorkerSearchControls } from "@/components/worker/WorkerSearchControls";
 import {
   getTaskUnitOptions,
   groupWorkerTasks,
-  type WorkerGroupMode
+  type WorkerGroupMode,
+  type WorkerPriorityFilter
 } from "@/components/worker/taskView";
 import type {
   QueueSyncState,
@@ -37,6 +38,7 @@ interface WorkerMobileViewProps {
   readonly filter: WorkerFilter;
   readonly searchQuery: string;
   readonly selectedTaskDate: string;
+  readonly selectedPriority: WorkerPriorityFilter;
   readonly selectedUnit: string;
   readonly isOnline: boolean;
   readonly lastSyncedAt: string | null;
@@ -49,6 +51,7 @@ interface WorkerMobileViewProps {
   readonly onFilterChange: (filter: WorkerFilter) => void;
   readonly onSearchChange: (query: string) => void;
   readonly onTaskDateChange: (date: string) => void;
+  readonly onPriorityChange: (priority: WorkerPriorityFilter) => void;
   readonly onUnitChange: (unit: string) => void;
   readonly onChange: (taskId: string, update: WorkerProgressUpdate) => void;
   readonly onCancel: (taskId: string) => void;
@@ -86,6 +89,7 @@ export const WorkerMobileView = ({
   filter,
   searchQuery,
   selectedTaskDate,
+  selectedPriority,
   selectedUnit,
   isOnline,
   lastSyncedAt,
@@ -98,6 +102,7 @@ export const WorkerMobileView = ({
   onFilterChange,
   onSearchChange,
   onTaskDateChange,
+  onPriorityChange,
   onUnitChange,
   onChange,
   onCancel,
@@ -228,10 +233,12 @@ export const WorkerMobileView = ({
               onFilterChange={onFilterChange}
               onGroupModeChange={setGroupMode}
               onSearchChange={onSearchChange}
+              onPriorityChange={onPriorityChange}
               onTaskDateChange={onTaskDateChange}
               onUnitChange={onUnitChange}
               resultLabel={`${filteredTasks.length}/${allTasks.length} hạng mục`}
               searchQuery={searchQuery}
+              selectedPriority={selectedPriority}
               selectedTaskDate={selectedTaskDate}
               taskDateOptions={taskDateOptions}
               selectedUnit={selectedUnit}

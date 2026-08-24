@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { matchesWorkerTaskDate } from "@/components/worker/taskView";
+import {
+  matchesWorkerTaskDate,
+  matchesWorkerTaskPriority
+} from "@/components/worker/taskView";
 import type { Task } from "@/types/domain";
 
 const createTask = (startDate: string, finishDate: string): Task => ({
@@ -34,5 +37,19 @@ describe("Worker task date filter", () => {
 
   it("không giới hạn task khi chọn Tất cả ngày", () => {
     expect(matchesWorkerTaskDate(createTask("2026-09-15", "2026-09-16"), "")).toBe(true);
+  });
+});
+
+describe("Worker task priority filter", () => {
+  const task = createTask("2026-09-15", "2026-09-16");
+
+  it("không giới hạn task khi chọn Tất cả mức", () => {
+    expect(matchesWorkerTaskPriority(task, "")).toBe(true);
+  });
+
+  it("chỉ hiển thị task đúng mức ưu tiên đã chọn", () => {
+    expect(matchesWorkerTaskPriority(task, "2")).toBe(true);
+    expect(matchesWorkerTaskPriority(task, "1")).toBe(false);
+    expect(matchesWorkerTaskPriority(task, "3")).toBe(false);
   });
 });

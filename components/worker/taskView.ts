@@ -3,6 +3,7 @@ import { getTaskPercent } from "@/lib/progress";
 import type { ProgressPercent, ProgressRecord, Task } from "@/types/domain";
 
 export type WorkerGroupMode = "unit" | "section";
+export type WorkerPriorityFilter = "" | "1" | "2" | "3";
 
 export interface WorkerTaskGroup {
   readonly key: string;
@@ -51,6 +52,13 @@ export const matchesWorkerTaskDate = (
   if (task.startDate && selectedDate < task.startDate) return false;
   if (task.finishDate && selectedDate > task.finishDate) return false;
   return true;
+};
+
+export const matchesWorkerTaskPriority = (
+  task: Task,
+  selectedPriority: WorkerPriorityFilter
+): boolean => {
+  return !selectedPriority || task.priority === Number(selectedPriority);
 };
 
 export const getWorkerTaskStatusWeight = (

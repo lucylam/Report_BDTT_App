@@ -37,6 +37,39 @@ export interface BootstrapPreview {
   readonly progressModeHeaderMissing: boolean;
 }
 
+export interface BootstrapLockState {
+  readonly isLocked: boolean;
+  readonly canReinitialize: boolean;
+  readonly message: string;
+}
+
+export const getBootstrapLockState = (
+  taskCount: number,
+  progressCount: number
+): BootstrapLockState => {
+  const safeTaskCount = Math.max(0, Math.floor(taskCount));
+  const safeProgressCount = Math.max(0, Math.floor(progressCount));
+  if (safeProgressCount > 0) {
+    return {
+      isLocked: true,
+      canReinitialize: false,
+      message: `Đã có ${safeProgressCount} báo cáo tiến độ. Chức năng khởi tạo lại đã được khóa.`
+    };
+  }
+  if (safeTaskCount > 0) {
+    return {
+      isLocked: false,
+      canReinitialize: true,
+      message: `Database có ${safeTaskCount} task nhưng chưa có báo cáo tiến độ. Có thể thay thế kế hoạch từ Google Sheet.`
+    };
+  }
+  return {
+    isLocked: false,
+    canReinitialize: false,
+    message: "Database chưa có task kế hoạch. Có thể khởi tạo từ Google Sheet."
+  };
+};
+
 const cell = (value: ExportCellValue | undefined): string =>
   value === undefined || value === null ? "" : String(value).trim();
 

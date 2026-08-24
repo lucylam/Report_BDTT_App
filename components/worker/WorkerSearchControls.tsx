@@ -1,5 +1,8 @@
 import { Select } from "@/components/ui";
-import type { WorkerGroupMode } from "@/components/worker/taskView";
+import type {
+  WorkerGroupMode,
+  WorkerPriorityFilter
+} from "@/components/worker/taskView";
 import type { WorkerFilter } from "@/components/worker/types";
 import { formatViDate } from "@/lib/date";
 
@@ -23,12 +26,14 @@ interface WorkerSearchControlsProps {
   readonly unitOptions: readonly string[];
   readonly selectedUnit: string;
   readonly selectedTaskDate: string;
+  readonly selectedPriority: WorkerPriorityFilter;
   readonly taskDateOptions: readonly string[];
   readonly filter: WorkerFilter;
   readonly groupMode: WorkerGroupMode;
   readonly onFilterChange: (value: WorkerFilter) => void;
   readonly onSearchChange: (value: string) => void;
   readonly onTaskDateChange: (value: string) => void;
+  readonly onPriorityChange: (value: WorkerPriorityFilter) => void;
   readonly onUnitChange: (value: string) => void;
   readonly onGroupModeChange: (value: WorkerGroupMode) => void;
 }
@@ -40,18 +45,21 @@ export const WorkerSearchControls = ({
   unitOptions,
   selectedUnit,
   selectedTaskDate,
+  selectedPriority,
   taskDateOptions,
   filter,
   groupMode,
   onFilterChange,
   onSearchChange,
   onTaskDateChange,
+  onPriorityChange,
   onUnitChange,
   onGroupModeChange
 }: WorkerSearchControlsProps): React.ReactElement => {
   const hasCustomFilter =
     searchQuery.trim().length > 0 ||
     selectedTaskDate.length > 0 ||
+    selectedPriority.length > 0 ||
     selectedUnit.length > 0 ||
     filter !== "today" ||
     groupMode !== "unit";
@@ -59,6 +67,7 @@ export const WorkerSearchControls = ({
   const resetFilters = (): void => {
     onSearchChange("");
     onTaskDateChange("");
+    onPriorityChange("");
     onUnitChange("");
     onFilterChange("today");
     onGroupModeChange("unit");
@@ -66,7 +75,7 @@ export const WorkerSearchControls = ({
 
   return (
     <div className="min-w-0">
-      <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_160px_170px_170px_170px_auto] xl:items-end">
+      <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3 xl:items-end 2xl:grid-cols-[minmax(240px,1fr)_160px_170px_150px_170px_170px_auto]">
         <label className="min-w-0 sm:col-span-2 xl:col-span-1" htmlFor={inputId}>
           <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
             Tìm kiếm
@@ -114,6 +123,24 @@ export const WorkerSearchControls = ({
                 {option.label}
               </option>
             ))}
+          </Select>
+        </label>
+
+        <label className="min-w-0">
+          <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+            Mức ưu tiên
+          </span>
+          <Select
+            className="min-h-11 lg:min-h-11"
+            onChange={(event) =>
+              onPriorityChange(event.target.value as WorkerPriorityFilter)
+            }
+            value={selectedPriority}
+          >
+            <option value="">Tất cả mức</option>
+            <option value="1">P1</option>
+            <option value="2">P2</option>
+            <option value="3">P3</option>
           </Select>
         </label>
 

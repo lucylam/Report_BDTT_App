@@ -56,6 +56,10 @@ export const canManageBdttTasks = (account: ScopeAccount | null): boolean => {
   );
 };
 
+export const canGenerateDemoProgress = (account: ScopeAccount | null): boolean => {
+  return Boolean(account?.role === "admin" && hasFullOrgScope(account));
+};
+
 export const canViewProfile = (
   account: ScopeAccount | null,
   profile: Profile

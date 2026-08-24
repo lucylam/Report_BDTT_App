@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { getAuthenticatedDataAdmin } from "@/lib/api/session";
 import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
-import { parseBootstrapSheet } from "@/lib/google/bootstrap";
+import { getBootstrapLockState, parseBootstrapSheet } from "@/lib/google/bootstrap";
 import { computeSheetChecksum, readDataSheetValues } from "@/lib/google/sheets";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
@@ -50,26 +50,36 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   let checksumForLog = "unavailable";
   let rowCountForLog = 0;
   try {
-    const [{ count, error: countError }, profileResult, values] = await Promise.all([
+    const [taskCountResult, progressCountResult, profileResult, values] = await Promise.all([
       supabase
         .from("tasks")
         .select("id", { count: "exact", head: true })
         .eq("task_source", "plan"),
+      supabase
+        .from("progress")
+        .select("id", { count: "exact", head: true }),
       supabase
         .from("profiles")
         .select("id, username, resource_name, role, org_group, subgroup, org_role")
         .eq("is_active", true),
       readDataSheetValues("A2:AG")
     ]);
-    if (countError) throw new Error(countError.message);
+    if (taskCountResult.error) throw new Error(taskCountResult.error.message);
+    if (progressCountResult.error) throw new Error(progressCountResult.error.message);
     if (profileResult.error) throw new Error(profileResult.error.message);
-    if ((count ?? 0) > 0) {
+    const taskCount = taskCountResult.count ?? 0;
+    const progressCount = progressCountResult.count ?? 0;
+    const lockState = getBootstrapLockState(taskCount, progressCount);
+    if (lockState.isLocked) {
       return NextResponse.json({
         ok: true,
         initialized: true,
         action,
-        rowCount: count,
-        message: "Database đã có kế hoạch. Chức năng khởi tạo từ Sheet đã được khóa."
+        rowCount: taskCount,
+        taskCount,
+        progressCount,
+        canReinitialize: false,
+        message: lockState.message
       });
     }
 
@@ -97,6 +107,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       return NextResponse.json({
         ok: true,
         initialized: false,
+        taskCount,
+        progressCount,
+        canReinitialize: lockState.canReinitialize,
+        message: lockState.message,
         checksum,
         rowCount: preview.rowCount,
         duplicateKeys: preview.duplicateKeys,
@@ -143,10 +157,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
     return NextResponse.json({
       ok: true,
-      initialized: true,
+      initialized: false,
       action,
-      checksum,
+      taskCount: preview.rowCount,
+      progressCount: 0,
+      canReinitialize: preview.rowCount > 0,
       rowCount: preview.rowCount,
+      message: `Đã thay thế kế hoạch bằng ${preview.rowCount} task từ Google Sheet. Có thể khởi tạo lại khi chưa có tiến độ.`,
       completedAt: new Date().toISOString()
     });
   } catch (error) {
