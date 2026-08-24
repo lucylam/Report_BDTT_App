@@ -133,6 +133,7 @@ const AdminPersonnelPage = (): React.ReactElement => {
 
       {selectedProfile ? (
         <PersonnelEditorDialog
+          canResetPassword={currentAccount.role === "admin"}
           key={selectedProfile.id}
           onClose={() => setSelectedProfile(null)}
           onSaved={async () => {

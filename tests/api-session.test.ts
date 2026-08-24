@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  getAuthenticatedAdmin,
   getAuthenticatedDataAdmin,
   getLocalAccountIdForUsername,
   isSessionProfileReference
@@ -77,6 +78,22 @@ describe("api session helpers", () => {
     );
 
     expect(dataAdmin.ok).toBe(true);
+    expect(worker).toMatchObject({ ok: false, status: 403 });
+  });
+
+  it("allows only admin accounts for admin write routes", async () => {
+    process.env.BDTT_AUTH_SESSION_SECRET = "test-secret";
+
+    const admin = await getAuthenticatedAdmin(
+      await createRequestForUser("vinhlpp"),
+      createSupabaseProfileClient("vinhlpp")
+    );
+    const worker = await getAuthenticatedAdmin(
+      await createRequestForUser("worker01"),
+      createSupabaseProfileClient("worker01")
+    );
+
+    expect(admin.ok).toBe(true);
     expect(worker).toMatchObject({ ok: false, status: 403 });
   });
 });

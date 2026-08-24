@@ -196,6 +196,24 @@ export const getAuthenticatedDataAdmin = async (
   return auth;
 };
 
+export const getAuthenticatedAdmin = async (
+  request: Request,
+  supabase: SupabaseClient
+): Promise<ApiAccountAuthResult> => {
+  const auth = await getAuthenticatedAccount(request, supabase);
+  if (!auth.ok) return auth;
+
+  if (auth.account.role !== "admin") {
+    return {
+      ok: false,
+      status: 403,
+      error: "Chi tai khoan admin moi duoc thuc hien thao tac nay."
+    };
+  }
+
+  return auth;
+};
+
 export const getAuthenticatedPersonnelAdmin = async (
   request: Request,
   supabase: SupabaseClient

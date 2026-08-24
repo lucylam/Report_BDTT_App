@@ -20,6 +20,7 @@ import type { OrgRole, Profile } from "@/types/domain";
 
 interface PersonnelEditorDialogProps {
   readonly profile: Profile;
+  readonly canResetPassword: boolean;
   readonly onClose: () => void;
   readonly onSaved: () => Promise<void>;
 }
@@ -33,15 +34,16 @@ const groupLevelRoles: readonly OrgRole[] = [
 
 const editableRoles = ORG_ROLE_VALUES;
 
-const readError = async (response: Response): Promise<string> => {
+const readError = async (response: Response, fallback: string): Promise<string> => {
   const payload = (await response.json().catch(() => null)) as
     | { readonly error?: string }
     | null;
-  return payload?.error || "Không cập nhật được cơ cấu nhân sự.";
+  return payload?.error || fallback;
 };
 
 export const PersonnelEditorDialog = ({
   profile,
+  canResetPassword,
   onClose,
   onSaved
 }: PersonnelEditorDialogProps): React.ReactElement => {
@@ -50,6 +52,10 @@ export const PersonnelEditorDialog = ({
   const [orgRole, setOrgRole] = useState<OrgRole>(profile.orgRole);
   const [status, setStatus] = useState<"idle" | "saving" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [resetStatus, setResetStatus] = useState<
+    "idle" | "confirming" | "saving" | "success" | "error"
+  >("idle");
+  const [resetMessage, setResetMessage] = useState("");
   const subgroupOptions = useMemo(() => getOrgSubgroups(orgGroup), [orgGroup]);
   const preview = deriveOrgMetadata(
     profile.username,
@@ -92,7 +98,11 @@ export const PersonnelEditorDialog = ({
           orgRole
         })
       });
-      if (!response.ok) throw new Error(await readError(response));
+      if (!response.ok) {
+        throw new Error(
+          await readError(response, "Không cập nhật được cơ cấu nhân sự.")
+        );
+      }
       await onSaved();
     } catch (error) {
       setStatus("error");
@@ -102,12 +112,40 @@ export const PersonnelEditorDialog = ({
     }
   };
 
+  const resetPassword = async (): Promise<void> => {
+    setResetStatus("saving");
+    setResetMessage("");
+    try {
+      const response = await fetch("/api/auth/admin-reset-password", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username: profile.username })
+      });
+      if (!response.ok) {
+        throw new Error(
+          await readError(response, "Không đặt lại được mật khẩu.")
+        );
+      }
+      setResetStatus("success");
+      setResetMessage(
+        `Đã đặt lại mật khẩu ${profile.username} về 123456. Người dùng phải đổi mật khẩu khi đăng nhập.`
+      );
+    } catch (error) {
+      setResetStatus("error");
+      setResetMessage(
+        error instanceof Error ? error.message : "Không đặt lại được mật khẩu."
+      );
+    }
+  };
+
+  const isBusy = status === "saving" || resetStatus === "saving";
+
   return (
     <Dialog
       className="max-h-[calc(100dvh-1rem)] overflow-y-auto sm:max-w-xl"
       description="Thay đổi này cập nhật phạm vi tổ chức và quyền quản lý BDTT của nhân sự."
       eyebrow="Quản trị nhân sự"
-      onClose={status === "saving" ? () => undefined : onClose}
+      onClose={isBusy ? () => undefined : onClose}
       title="Chỉnh vai trò và phân nhóm"
     >
       <form className="mt-5" onSubmit={(event) => void submit(event)}>
@@ -176,11 +214,75 @@ export const PersonnelEditorDialog = ({
         </Alert>
         {message ? <Alert className="mt-3" tone="danger">{message}</Alert> : null}
 
+        {canResetPassword ? (
+          <section className="mt-4 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-4">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--danger-soft)] text-[var(--danger)]">
+                <Icon name="shield" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-[var(--foreground)]">
+                  Mật khẩu đăng nhập
+                </p>
+                <p className="mt-1 break-words text-sm text-[var(--text-muted)]">
+                  Tài khoản: {profile.username}
+                </p>
+              </div>
+            </div>
+
+            {resetStatus === "confirming" ? (
+              <div className="mt-4 rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--danger-soft)] p-3">
+                <p className="text-sm font-semibold leading-5 text-[var(--danger)]">
+                  Đặt mật khẩu của {profile.fullName} về 123456?
+                </p>
+                <div className="mt-3 flex flex-wrap justify-end gap-2">
+                  <Button
+                    onClick={() => setResetStatus("idle")}
+                    size="sm"
+                    variant="secondary"
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={() => void resetPassword()}
+                    size="sm"
+                    variant="danger"
+                  >
+                    Xác nhận đặt lại
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                className="mt-4"
+                disabled={isBusy}
+                onClick={() => {
+                  setResetMessage("");
+                  setResetStatus("confirming");
+                }}
+                size="sm"
+                variant="danger"
+              >
+                Đặt lại mật khẩu
+              </Button>
+            )}
+
+            {resetMessage ? (
+              <Alert
+                className="mt-3"
+                tone={resetStatus === "success" ? "success" : "danger"}
+              >
+                {resetMessage}
+              </Alert>
+            ) : null}
+          </section>
+        ) : null}
+
         <div className="mt-5 flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-4 md:flex-row md:justify-end">
-          <Button disabled={status === "saving"} onClick={onClose} variant="secondary">
+          <Button disabled={isBusy} onClick={onClose} variant="secondary">
             Đóng
           </Button>
-          <Button disabled={status === "saving"} type="submit">
+          <Button disabled={isBusy} type="submit">
             <Icon
               className={status === "saving" ? "motion-safe:animate-spin" : undefined}
               name={status === "saving" ? "loading" : "check"}
