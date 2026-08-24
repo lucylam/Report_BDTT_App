@@ -28,12 +28,12 @@ export const PageHeader = ({
           {title}
         </h1>
         {description ? (
-          <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-[var(--text-muted)]">
+          <p className="mt-1 break-words text-sm font-semibold leading-5 text-[var(--text-muted)]">
             {description}
           </p>
         ) : null}
       </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="flex min-w-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   );
 };

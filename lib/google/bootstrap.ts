@@ -48,12 +48,25 @@ const normalizeResource = (value: string): string =>
 
 const normalizeDate = (value: ExportCellValue | undefined): string => {
   if (typeof value === "number" && Number.isFinite(value)) return excelSerialToDate(value);
-  const source = cell(value);
+  const source = cell(value).replace(/^(?:mon|tue|wed|thu|fri|sat|sun)\s+/i, "");
   if (/^\d{4}-\d{2}-\d{2}$/.test(source)) return source;
   const match = source.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
-  if (!match) return "";
-  const year = match[3].length === 2 ? `20${match[3]}` : match[3];
-  return `${year}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
+  if (match) {
+    const year = match[3].length === 2 ? `20${match[3]}` : match[3];
+    return `${year}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
+  }
+
+  const namedMonthMatch = source.match(/^(\d{1,2})[\s/-]([a-z]{3})[\s/-](\d{2,4})$/i);
+  if (!namedMonthMatch) return "";
+  const month = [
+    "jan", "feb", "mar", "apr", "may", "jun",
+    "jul", "aug", "sep", "oct", "nov", "dec"
+  ].indexOf(namedMonthMatch[2].toLowerCase()) + 1;
+  if (month === 0) return "";
+  const year = namedMonthMatch[3].length === 2
+    ? `20${namedMonthMatch[3]}`
+    : namedMonthMatch[3];
+  return `${year}-${String(month).padStart(2, "0")}-${namedMonthMatch[1].padStart(2, "0")}`;
 };
 
 const toPriority = (value: ExportCellValue | undefined): 1 | 2 | 3 => {
@@ -81,11 +94,15 @@ export const parseBootstrapSheet = (
 ): BootstrapPreview => {
   const headers = values[0] ?? [];
   const required = [
-    [0, "Stt"],
     [1, "Task Name"],
     [2, "WO"],
     [3, "Tagname"],
-    [11, "Resource Names"]
+    [4, "Nhóm"],
+    [7, "Duration"],
+    [9, "Start"],
+    [10, "Finish"],
+    [11, "Resource Names"],
+    [12, "Nhóm trưởng"]
   ] as const;
   const missingColumns = required
     .filter(([index, label]) => comparable(cell(headers[index])) !== comparable(label))
@@ -94,26 +111,48 @@ export const parseBootstrapSheet = (
   const unmapped = new Set<string>();
   const incompleteRows: number[] = [];
   const tasks = values.slice(1).flatMap((row, index): BootstrapTaskRow[] => {
+    const hasData = row.slice(0, 13).some((value) => Boolean(cell(value)));
+    if (!hasData) return [];
+
+    const taskName = cell(row[1]);
+    const wo = cell(row[2]);
     const tagname = cell(row[3]);
-    if (!tagname) return [];
+    const nhom = cell(row[4]);
+    const duration = cell(row[7]);
+    const startDate = normalizeDate(row[9]);
+    const finishDate = normalizeDate(row[10]);
     const resourceName = cell(row[11]);
-    if (!cell(row[1]) || !cell(row[2]) || !resourceName) incompleteRows.push(index + 3);
+    const nhomTruong = cell(row[12]);
+    const requiredValues = [
+      tagname,
+      resourceName,
+      nhomTruong,
+      startDate,
+      finishDate,
+      nhom,
+      duration,
+      wo,
+      taskName
+    ];
+    if (requiredValues.some((value) => !value)) incompleteRows.push(index + 3);
+    if (!tagname) return [];
+
     const assignedTo = findProfile(profiles, resourceName);
     if (resourceName && !assignedTo) unmapped.add(resourceName);
     return [{
       stt: Number(row[0]) || index + 1,
-      taskName: cell(row[1]),
-      wo: cell(row[2]),
+      taskName,
+      wo,
       tagname,
-      nhom: cell(row[4]),
+      nhom,
       donVi: cell(row[5]),
       section: cell(row[6]),
-      duration: cell(row[7]),
+      duration,
       priority: toPriority(row[8]),
-      startDate: normalizeDate(row[9]),
-      finishDate: normalizeDate(row[10]),
+      startDate,
+      finishDate,
       resourceName,
-      nhomTruong: cell(row[12]),
+      nhomTruong,
       assignedTo,
       progressMode: normalizeProgressMode(row[32])
     }];

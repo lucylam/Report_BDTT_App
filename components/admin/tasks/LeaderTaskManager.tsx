@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Alert, Button, Dialog, Field, Input, Select, Textarea } from "@/components/ui";
 import type { TaskRow } from "@/components/admin/tasks/taskTableModel";
 import { DEFAULT_REPORT_DATE } from "@/lib/date";
+import { getMissingLeaderTaskCreateFields } from "@/lib/leaderTaskCreate";
 import type { AppData, Profile } from "@/types/domain";
 
 interface LeaderTaskManagerProps {
@@ -90,6 +91,25 @@ export const LeaderTaskManager = ({
 
   const submit = async (): Promise<void> => {
     if (!mode) return;
+    if (mode === "create") {
+      const missingFields = getMissingLeaderTaskCreateFields({
+        taskName,
+        tagname,
+        wo,
+        donVi: unit,
+        section,
+        priority,
+        progressMode,
+        startDate,
+        finishDate,
+        assigneeUsername,
+        reporterUsername
+      });
+      if (missingFields.length > 0) {
+        setError(`Cần nhập hoặc chọn đầy đủ: ${missingFields.join(", ")}.`);
+        return;
+      }
+    }
     setSubmitting(true);
     setError("");
     try {
@@ -192,41 +212,51 @@ export const LeaderTaskManager = ({
           onClose={close}
           title={getTitle(mode)}
         >
-          <div className="mt-5 grid gap-4">
+          <form
+            className="mt-5 grid gap-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submit();
+            }}
+          >
             {error ? <Alert tone="danger">{error}</Alert> : null}
             {mode === "create" ? (
               <>
-                <Field label="Tên công việc">
-                  <Input onChange={(event) => setTaskName(event.target.value)} value={taskName} />
+                <p className="text-sm font-semibold text-[var(--text-muted)]">
+                  Tất cả thông tin dưới đây đều bắt buộc.
+                </p>
+                <Field label="Tên công việc *">
+                  <Input required onChange={(event) => setTaskName(event.target.value)} value={taskName} />
                 </Field>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="Tagname">
-                    <Input onChange={(event) => setTagname(event.target.value)} value={tagname} />
+                  <Field label="Tagname *">
+                    <Input required onChange={(event) => setTagname(event.target.value)} value={tagname} />
                   </Field>
-                  <Field label="WorkOrder">
-                    <Input onChange={(event) => setWo(event.target.value)} value={wo} />
+                  <Field label="WorkOrder *">
+                    <Input required onChange={(event) => setWo(event.target.value)} value={wo} />
                   </Field>
-                  <Field label="Đơn vị chủ quản">
-                    <Input onChange={(event) => setUnit(event.target.value)} value={unit} />
+                  <Field label="Đơn vị chủ quản *">
+                    <Input required onChange={(event) => setUnit(event.target.value)} value={unit} />
                   </Field>
-                  <Field label="Section">
-                    <Input onChange={(event) => setSection(event.target.value)} value={section} />
+                  <Field label="Section *">
+                    <Input required onChange={(event) => setSection(event.target.value)} value={section} />
                   </Field>
-                  <Field label="Ngày bắt đầu">
-                    <Input onChange={(event) => setStartDate(event.target.value)} type="date" value={startDate} />
+                  <Field label="Ngày bắt đầu *">
+                    <Input required onChange={(event) => setStartDate(event.target.value)} type="date" value={startDate} />
                   </Field>
-                  <Field label="Ngày kết thúc">
-                    <Input onChange={(event) => setFinishDate(event.target.value)} type="date" value={finishDate} />
+                  <Field label="Ngày kết thúc *">
+                    <Input required onChange={(event) => setFinishDate(event.target.value)} type="date" value={finishDate} />
                   </Field>
-                  <Field label="Mức ưu tiên">
-                    <Select onChange={(event) => setPriority(event.target.value)} value={priority}>
+                  <Field label="Mức ưu tiên *">
+                    <Select required onChange={(event) => setPriority(event.target.value)} value={priority}>
                       <option value="1">P1</option>
                       <option value="2">P2</option>
                       <option value="3">P3</option>
                     </Select>
                   </Field>
-                  <Field label="Chế độ tiến độ">
+                  <Field label="Chế độ tiến độ *">
                     <Select
+                      required
                       onChange={(event) =>
                         setProgressMode(event.target.value as "continuous" | "binary")
                       }
@@ -242,8 +272,8 @@ export const LeaderTaskManager = ({
 
             {mode === "create" || mode === "reassign" ? (
               <div className="grid gap-3 sm:grid-cols-2">
-                <MemberField label="Người thực hiện" members={members} onChange={setAssigneeUsername} value={assigneeUsername} />
-                <MemberField label="Người báo cáo" members={members} onChange={setReporterUsername} value={reporterUsername} />
+                <MemberField label={mode === "create" ? "Người thực hiện *" : "Người thực hiện"} members={members} onChange={setAssigneeUsername} required value={assigneeUsername} />
+                <MemberField label={mode === "create" ? "Người báo cáo *" : "Người báo cáo"} members={members} onChange={setReporterUsername} required value={reporterUsername} />
               </div>
             ) : null}
 
@@ -290,27 +320,28 @@ export const LeaderTaskManager = ({
                   submitting ||
                   (mode !== "cancel" && members.length === 0)
                 }
-                onClick={() => void submit()}
+                type="submit"
                 variant={mode === "cancel" ? "danger" : "primary"}
               >
                 {submitting ? "Đang lưu..." : getSubmitLabel(mode)}
               </Button>
             </div>
-          </div>
+          </form>
         </Dialog>
       ) : null}
     </>
   );
 };
 
-const MemberField = ({ label, members, onChange, value }: {
+const MemberField = ({ label, members, onChange, required, value }: {
   readonly label: string;
   readonly members: readonly Profile[];
   readonly onChange: (value: string) => void;
+  readonly required?: boolean;
   readonly value: string;
 }): React.ReactElement => (
   <Field label={label}>
-    <Select onChange={(event) => onChange(event.target.value)} value={value}>
+    <Select required={required} onChange={(event) => onChange(event.target.value)} value={value}>
       {members.map((member) => (
         <option key={member.id} value={member.username}>
           {member.fullName} · {member.orgTitle}

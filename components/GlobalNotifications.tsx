@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Badge, Icon } from "@/components/ui";
+import { Alert, Badge, Icon } from "@/components/ui";
 import type { AppNotification } from "@/lib/notifications";
 import {
   getNotificationHref,
@@ -115,11 +115,7 @@ export const GlobalNotifications = ({
             </div>
           </div>
 
-          {error ? (
-            <p role="alert" className="mt-3 rounded-[var(--radius-field)] bg-[var(--warning-soft)] p-3 text-xs font-semibold leading-5 text-[var(--warning)]">
-              {error}
-            </p>
-          ) : null}
+          {error ? <Alert className="mt-3 text-xs" tone="warning">{error}</Alert> : null}
 
           <div className="mt-3 space-y-2">
             {notifications.length > 0 ? (
@@ -131,7 +127,7 @@ export const GlobalNotifications = ({
                       "focus-ring pressable block rounded-[var(--radius-field)] border border-[var(--line)] p-3",
                       notification.readAt
                         ? "bg-[var(--surface-muted)]"
-                        : "border-l-[3px] border-l-[var(--info)] bg-[var(--info-soft)]"
+                        : "border-[var(--info)] bg-[var(--info-soft)] ring-1 ring-[var(--info)]"
                     )}
                     href={getNotificationHref(notification.module, notification.entityId, notification.href)}
                     key={notification.id}

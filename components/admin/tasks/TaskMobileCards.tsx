@@ -52,7 +52,7 @@ export const TaskMobileCards = ({
               <Chip label={task.resourceName || "N/A"} />
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+            <div className="mobile-reflow-grid mt-3 grid grid-cols-2 gap-2 text-sm">
               <Info label="Finish" value={task.finishDate || "N/A"} />
               <Info label="Trạng thái" value={getStatusLabel(status)} />
             </div>

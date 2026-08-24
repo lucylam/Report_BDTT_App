@@ -84,6 +84,8 @@ export const DataIssueQueue = ({ data }: { readonly data: AppData }): React.Reac
   return (
     <Widget>
       <WidgetHeader
+        icon="data"
+        tone="warning"
         subtitle={`${openCount} mục đang chờ · xử lý trong đúng phạm vi phụ trách`}
         title="Báo sai dữ liệu"
       />
@@ -118,7 +120,7 @@ export const DataIssueQueue = ({ data }: { readonly data: AppData }): React.Reac
                   <p><span className="font-semibold">Hiện tại:</span> {item.current_value || "—"}</p>
                   <p><span className="font-semibold">Đề xuất:</span> {item.suggested_value || "—"}</p>
                   {item.note ? <p className="text-[var(--text-muted)]">{item.note}</p> : null}
-                  {item.resolution_note ? <p className="mt-1 border-l-2 border-[var(--success)] pl-2">{item.resolution_note}</p> : null}
+                  {item.resolution_note ? <p className="mt-2 rounded-[var(--radius-field)] bg-[var(--success-soft)] px-3 py-2 text-[var(--success)] ring-1 ring-[var(--success)]">{item.resolution_note}</p> : null}
                 </div>
                 <div className="min-w-0">
                   {!terminal ? (

@@ -179,7 +179,7 @@ export const AbnormalityBoard = ({
   return (
     <div className="grid gap-3">
       <Widget>
-        <WidgetHeader subtitle="Ghi nhận độc lập với báo cáo tiến độ; có thể liên kết một WorkOrder" title="Ghi nhận bất thường" />
+        <WidgetHeader icon="bell" tone="danger" subtitle="Ghi nhận độc lập với báo cáo tiến độ; có thể liên kết một WorkOrder" title="Ghi nhận bất thường" />
         <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Input aria-label="Tiêu đề bất thường" onChange={(event) => setTitle(event.target.value)} placeholder="Tiêu đề bất thường" value={title} />
           <Input aria-label="Vị trí" onChange={(event) => setLocation(event.target.value)} placeholder="Vị trí/khu vực" value={location} />
@@ -200,7 +200,7 @@ export const AbnormalityBoard = ({
       </Widget>
 
       <Widget>
-        <WidgetHeader subtitle={`${activeCount} mục chưa đóng`} title="Danh sách bất thường" />
+        <WidgetHeader icon="list" tone="danger" subtitle={`${activeCount} mục chưa đóng`} title="Danh sách bất thường" />
         {message ? <Alert className="mt-3" tone="warning">{message}</Alert> : null}
         {isLoading ? (
           <p className="mt-4 text-sm text-[var(--text-muted)]">Đang tải bất thường...</p>
@@ -226,7 +226,7 @@ export const AbnormalityBoard = ({
                   <div className="text-sm leading-6">
                     <p>{item.description || "Không có mô tả bổ sung."}</p>
                     <p className="mt-1 text-[var(--text-muted)]">Người ghi nhận: {reporter?.fullName || "—"} · {new Date(item.created_at).toLocaleString("vi-VN")}</p>
-                    {item.resolution_note ? <p className="mt-2 border-l-2 border-[var(--success)] pl-2">{item.resolution_note}</p> : null}
+                    {item.resolution_note ? <p className="mt-2 rounded-[var(--radius-field)] bg-[var(--success-soft)] px-3 py-2 text-[var(--success)] ring-1 ring-[var(--success)]">{item.resolution_note}</p> : null}
                     <PhotoStrip paths={item.photo_paths} />
                   </div>
                   <div>

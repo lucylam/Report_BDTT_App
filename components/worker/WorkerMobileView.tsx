@@ -6,7 +6,7 @@ import { GlobalNotifications } from "@/components/GlobalNotifications";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { ModuleSwitcher } from "@/components/ModuleSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Icon, PageHeader, type IconName } from "@/components/ui";
+import { Alert, Badge, Icon, PageHeader, type IconName } from "@/components/ui";
 import { CountdownBanner } from "@/components/worker/CountdownBanner";
 import { SummaryPills } from "@/components/worker/SummaryPills";
 import { WorkerGroupedTaskList } from "@/components/worker/WorkerGroupedTaskList";
@@ -150,10 +150,10 @@ export const WorkerMobileView = ({
 
   return (
     <main
-      className="worker-mobile-view min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 lg:hidden"
+      className="worker-mobile-view min-h-dvh w-full max-w-[100vw] overflow-x-auto px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 lg:hidden"
       style={{ "--mobile-topbar-height": "10.5rem" } as React.CSSProperties}
     >
-      <div className="app-shell min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[22px]">
+      <div className="app-shell min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)]">
       <header className="mobile-topbar sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)] px-3 pb-3">
         <ModuleSwitcher
           activeModule="bdtt"
@@ -171,7 +171,7 @@ export const WorkerMobileView = ({
           </p>
         ) : null}
 
-        <div className="mt-2 flex items-center gap-2">
+        <div className="mobile-header-actions mt-2 gap-2">
           {isAdminAccount ? (
             <ModeSwitch
               activeMode="workspace"
@@ -239,7 +239,18 @@ export const WorkerMobileView = ({
 
       {tab === "overview" ? (
         <section className="space-y-3 px-3 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+4rem)] pt-3">
-          <SummaryPills percents={percents} />
+          <section className="glass-card rounded-[var(--radius-card)] p-3">
+            <div className="mb-3 flex min-w-0 items-start gap-3">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--info-soft)] text-[var(--info-strong)]">
+                <Icon name="chart" />
+              </span>
+              <div className="min-w-0">
+                <h2 className="font-semibold">Cơ cấu tiến độ</h2>
+                <p className="mt-0.5 text-sm text-[var(--text-muted)]">{activeTasks.length} hạng mục chưa cancel</p>
+              </div>
+            </div>
+            <SummaryPills percents={percents} />
+          </section>
           <ProgressDonutChart
             completed={completedCount}
             inProgress={inProgressCount}
@@ -248,12 +259,20 @@ export const WorkerMobileView = ({
             total={activeTasks.length}
           />
           <DailyCompletionChart rows={historyRows} />
-          <div className="border-l-2 border-[var(--primary)] bg-[var(--surface-muted)] px-3 py-2.5">
-            <h2 className="text-lg font-semibold">Tổng quan cá nhân</h2>
-            <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
+          <section className="glass-card rounded-[var(--radius-card)] p-3">
+            <div className="mb-3 flex min-w-0 items-start gap-3">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--warning-soft)] text-[var(--warning-strong)]">
+                <Icon name="bell" />
+              </span>
+              <div className="min-w-0">
+                <h2 className="font-semibold">Tổng quan cá nhân</h2>
+                <p className="mt-0.5 text-sm text-[var(--text-muted)]">Theo ngày báo cáo hiện tại</p>
+              </div>
+            </div>
+            <Alert tone={p1Open > 0 ? "warning" : "success"}>
               Hạng mục P1 chưa xong: <strong>{p1Open}</strong>. Dữ liệu tính theo ngày báo cáo hiện tại.
-            </p>
-          </div>
+            </Alert>
+          </section>
         </section>
       ) : null}
 
@@ -352,15 +371,20 @@ export const ProgressDonutChart = ({
 
   return (
     <section className="glass-card mobile-chart-card rounded-[var(--radius-card)] p-3">
-      <div className="flex min-w-0 items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
-            Tiến độ tổng
-          </p>
-          <h2 className="mt-1 text-lg font-semibold">Tỉ lệ hoàn thành</h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">
-            {total} hạng mục đang theo dõi
-          </p>
+      <div className="mobile-reflow-row flex min-w-0 items-center justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--primary-soft)] text-[var(--primary-strong)]">
+            <Icon name="chart" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
+              Tiến độ tổng
+            </p>
+            <h2 className="mt-1 text-lg font-semibold">Tỉ lệ hoàn thành</h2>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              {total} hạng mục đang theo dõi
+            </p>
+          </div>
         </div>
         <svg
           aria-label={`Tiến độ trung bình ${overallPercent}%`}
@@ -409,7 +433,7 @@ export const ProgressDonutChart = ({
         </svg>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-1.5">
+      <div className="mobile-reflow-grid mt-3 grid grid-cols-3 gap-1.5">
         <ChartStat label="Xong" tone="success" value={completed} />
         <ChartStat label="Đang làm" tone="accent" value={inProgress} />
         <ChartStat label="Chưa làm" tone="warning" value={notStarted} />
@@ -430,21 +454,24 @@ export const DailyCompletionChart = ({
   return (
     <section className="glass-card mobile-chart-card rounded-[var(--radius-card)] p-3">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
-            Hoàn thành theo ngày
-          </p>
-          <h2 className="mt-1 text-lg font-semibold">7 ngày gần nhất</h2>
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--info-soft)] text-[var(--info-strong)]">
+            <Icon name="calendar" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase text-[var(--info-strong)]">
+              Hoàn thành theo ngày
+            </p>
+            <h2 className="mt-1 text-lg font-semibold">7 ngày gần nhất</h2>
+          </div>
         </div>
-        <p className="rounded-[var(--radius-field)] border-l-2 border-[var(--primary)] bg-[var(--primary-pale)] px-3 py-1 text-sm font-semibold text-[var(--primary-strong)]">
-          Max {maxCompleted}
-        </p>
+        <Badge tone="primary">Max {maxCompleted}</Badge>
       </div>
 
       {maxCompleted === 0 ? (
-        <div className="mt-3 border-l-2 border-[var(--warning)] bg-[var(--warning-soft)] px-3 py-2.5 text-sm font-medium text-[var(--warning-strong)]">
+        <Alert className="mt-3" tone="warning">
           Chưa có hạng mục hoàn thành trong 7 ngày gần nhất.
-        </div>
+        </Alert>
       ) : (
         <div
           aria-label="Biểu đồ cột số hạng mục hoàn thành theo ngày"
@@ -456,9 +483,9 @@ export const DailyCompletionChart = ({
               row.completed === 0 ? 8 : Math.max(16, (row.completed / scaleMax) * 128);
             return (
               <div className="flex min-w-0 flex-1 flex-col items-center gap-1.5 sm:gap-2" key={row.date}>
-                <div className="mobile-daily-bar flex h-28 w-full items-end rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-1 ring-1 ring-[var(--border)]">
+                <div className="mobile-daily-bar flex h-28 w-full items-end rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-1.5 ring-1 ring-[var(--border)]">
                   <div
-                    className="w-full rounded-[calc(var(--radius-field)-0.25rem)] bg-[var(--primary-strong)] shadow-sm"
+                    className="w-full rounded-full bg-[var(--primary-strong)] shadow-sm"
                     style={{ height }}
                   />
                 </div>
@@ -504,15 +531,15 @@ export const HistoryUpdateList = ({
                 {task.taskName}
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5 text-xs font-semibold">
-                <span className="rounded bg-[var(--danger)] px-2 py-1 text-[var(--on-danger)]">
+                <Badge solid tone="danger">
                   P{task.priority}
-                </span>
-                <span className="rounded bg-[var(--info)] px-2 py-1 text-[var(--on-info)]">
+                </Badge>
+                <Badge solid tone="info">
                   {task.donVi || "N/A"}
-                </span>
-                <span className="rounded bg-[var(--surface)] px-2 py-1 text-[var(--foreground)] ring-1 ring-[var(--border-strong)]">
+                </Badge>
+                <Badge solid tone="neutral">
                   WO {task.wo || "N/A"}
-                </span>
+                </Badge>
               </div>
             </div>
             <span className="shrink-0 rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-3 py-2 text-sm font-semibold text-[var(--primary-contrast)] tabular-nums">
@@ -541,15 +568,23 @@ const ChartStat = ({
 }): React.ReactElement => {
   const toneClass =
     tone === "success"
-      ? "bg-[var(--success-soft)] text-[var(--success)]"
+      ? "text-[var(--success-strong)]"
       : tone === "accent"
-        ? "bg-[var(--surface-warm)] text-[var(--accent-strong)]"
-        : "bg-[var(--warning-soft)] text-[var(--warning-strong)] ring-1 ring-[var(--warning)]";
+        ? "text-[var(--accent-strong)]"
+        : "text-[var(--warning-strong)]";
+  const iconName: Record<typeof tone, IconName> = {
+    success: "check",
+    accent: "chart",
+    warning: "list"
+  };
 
   return (
-    <div className={`mobile-chart-stat rounded-[var(--radius-field)] p-3 text-center ${toneClass}`}>
-      <p className="text-xl font-semibold tabular-nums">{value}</p>
-      <p className="mobile-button-label mt-1 text-xs font-semibold leading-tight">{label}</p>
+    <div className={`metric-card mobile-chart-stat min-w-0 rounded-[var(--radius-card)] p-3 text-left ${toneClass}`}>
+      <div className="flex min-w-0 items-center gap-2 pr-5">
+        <Icon name={iconName[tone]} />
+        <p className="mobile-button-label min-w-0 text-xs font-semibold leading-tight [overflow-wrap:anywhere]">{label}</p>
+      </div>
+      <p className="mt-2 text-xl font-semibold tabular-nums text-current">{value}</p>
     </div>
   );
 };

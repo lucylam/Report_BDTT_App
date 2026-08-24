@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
-import { Alert, Textarea } from "@/components/ui";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, Button, Dialog, Field, Icon, Input, Select, Textarea } from "@/components/ui";
 import { SaveStatus } from "@/components/worker/SaveStatus";
 import type { SaveState, WorkerProgressUpdate } from "@/components/worker/types";
 import {
@@ -70,6 +70,8 @@ export const ProgressEditor = ({
   const isManualPercent = !percentOptions.includes(percent);
   const availablePercentOptions =
     task.progressMode === "binary" ? ([0, 100] as const) : percentOptions;
+  const photoHint = `Tối đa ${MAX_PHOTOS_PER_REPORT} ảnh, mỗi ảnh nguồn tối đa ${MAX_SOURCE_PHOTO_MEGABYTES}MB. Ảnh được thu về khoảng 1600px và nén JPEG trước khi gửi.`;
+  const photoHintId = `photo-hint-${task.id}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -167,6 +169,10 @@ export const ProgressEditor = ({
     stageChange(percent, note, photoPaths.filter((item) => item !== photoPath));
   };
 
+  const closeAbnormalityDialog = useCallback((): void => {
+    setIsAbnormalityFormOpen(false);
+  }, []);
+
   const submitDataIssue = async (): Promise<void> => {
     if (!suggestedTag.trim() && !issueNote.trim()) {
       setIssueState("error");
@@ -254,54 +260,56 @@ export const ProgressEditor = ({
         </div>
         <div
           aria-label={`Chọn phần trăm hoàn thành cho ${task.tagname}`}
-          className={`control-pill grid gap-1 rounded-[var(--radius-field)] p-1 ${
-            task.progressMode === "binary" ? "grid-cols-2" : "grid-cols-3 sm:grid-cols-6"
-          }`}
+          className="control-pill grid gap-1 rounded-[var(--radius-field)] p-1"
           role="group"
         >
-          {availablePercentOptions.map((option) => (
-            <button
-              aria-pressed={option === percent}
-              className={`focus-ring pressable min-h-12 rounded-[calc(var(--radius-field)-0.25rem)] border text-sm font-semibold tabular-nums lg:min-h-9 ${
-                option === percent
-                  ? "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)]"
-                  : "border-transparent bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-              }`}
-              key={option}
-              onClick={() => {
-                setManualState({ taskId: task.id, value: String(option) });
-                stageChange(option);
-              }}
-              type="button"
-            >
-              {option}%
-            </button>
-          ))}
+          <div className={`grid gap-1 ${task.progressMode === "binary" ? "grid-cols-2" : "grid-cols-3 sm:grid-cols-5"}`}>
+            {availablePercentOptions.map((option) => (
+              <button
+                aria-pressed={option === percent}
+                className={`focus-ring pressable min-h-12 rounded-[calc(var(--radius-field)-0.25rem)] border text-sm font-semibold tabular-nums lg:min-h-9 ${
+                  option === percent
+                    ? "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)]"
+                    : "border-transparent bg-[var(--surface)] text-[var(--foreground)] hover:border-[var(--primary)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
+                }`}
+                key={option}
+                onClick={() => {
+                  setManualState({ taskId: task.id, value: String(option) });
+                  stageChange(option);
+                }}
+                type="button"
+              >
+                {option}%
+              </button>
+            ))}
+          </div>
           {task.progressMode !== "binary" ? <label
-            className={`flex min-h-12 min-w-0 items-center rounded-[calc(var(--radius-field)-0.25rem)] border bg-[var(--surface)] px-2 shadow-sm transition focus-within:outline focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-[rgba(111,165,31,0.35)] lg:min-h-9 ${
+            className={`flex min-h-12 min-w-0 flex-wrap items-center justify-between gap-2 rounded-[calc(var(--radius-field)-0.25rem)] border bg-[var(--surface)] px-3 shadow-sm transition focus-within:outline focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-[rgba(111,165,31,0.35)] lg:min-h-9 ${
               isManualPercent
                 ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary-strong)]"
                 : "border-transparent text-[var(--foreground)]"
             }`}
           >
-            <span className="sr-only">Nhập tiến độ thủ công</span>
-            <input
-              aria-label="Nhập tiến độ thủ công"
-              className="min-w-0 flex-1 bg-transparent text-center text-sm font-medium tabular-nums outline-none placeholder:text-[var(--text-soft)]"
-              inputMode="numeric"
-              max={100}
-              min={0}
-              onBlur={() => {
-                if (manualPercent.trim() === "") {
-                  setManualState({ taskId: task.id, value: String(percent) });
-                }
-              }}
-              onChange={(event) => stageManualPercent(event.target.value)}
-              placeholder="Khác"
-              type="number"
-              value={manualPercent}
-            />
-            <span className="shrink-0 text-sm font-semibold">%</span>
+            <span className="text-sm font-semibold text-[var(--text-muted)]">Nhập thủ công</span>
+            <span className="flex min-w-24 flex-1 items-center sm:max-w-32">
+              <input
+                aria-label="Nhập tiến độ thủ công"
+                className="min-w-0 flex-1 bg-transparent text-right text-base font-semibold tabular-nums outline-none placeholder:text-[var(--text-soft)]"
+                inputMode="numeric"
+                max={100}
+                min={0}
+                onBlur={() => {
+                  if (manualPercent.trim() === "") {
+                    setManualState({ taskId: task.id, value: String(percent) });
+                  }
+                }}
+                onChange={(event) => stageManualPercent(event.target.value)}
+                placeholder="0–100"
+                type="number"
+                value={manualPercent}
+              />
+              <span className="ml-1 shrink-0 text-base font-semibold">%</span>
+            </span>
           </label> : null}
         </div>
         <p className="mt-2 text-sm text-[var(--text-muted)]">
@@ -327,26 +335,46 @@ export const ProgressEditor = ({
       ) : null}
 
       {showDetails ? (
-        <section className="border-l-2 border-[var(--warning)] bg-[var(--warning-soft)] p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-[var(--foreground)]">Tag hiện tại: {task.tagname || "Chưa có"}</p>
-              <p className="mt-0.5 text-xs font-normal text-[var(--text-muted)]">Không tự sửa dữ liệu kế hoạch. Gửi giám sát kiểm tra trước.</p>
-            </div>
+        <section className="grid gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <button
-              className="focus-ring pressable min-h-11 border border-[var(--warning)] bg-[var(--surface)] px-3 text-sm font-medium text-[var(--foreground)]"
+              aria-expanded={isIssueFormOpen}
+              className={`focus-ring pressable inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[var(--radius-field)] border border-[var(--warning)] px-3 text-center text-sm font-semibold leading-5 text-[var(--warning-strong)] ${
+                isIssueFormOpen
+                  ? "bg-[var(--warning-soft)]"
+                  : "bg-[var(--surface)] hover:bg-[var(--warning-soft)]"
+              }`}
               onClick={() => setIsIssueFormOpen((current) => !current)}
               type="button"
             >
-              Báo sai dữ liệu
+              <Icon name="data" />
+              <span>Báo sai dữ liệu</span>
+            </button>
+            <button
+              aria-expanded={isAbnormalityFormOpen}
+              aria-haspopup="dialog"
+              className={`focus-ring pressable inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-[var(--radius-field)] border border-[var(--danger)] px-3 text-center text-sm font-semibold leading-5 text-[var(--danger-strong)] ${
+                isAbnormalityFormOpen
+                  ? "bg-[var(--danger-soft)]"
+                  : "bg-[var(--surface)] hover:bg-[var(--danger-soft)]"
+              }`}
+              onClick={() => {
+                setIsIssueFormOpen(false);
+                setIsAbnormalityFormOpen(true);
+              }}
+              type="button"
+            >
+              <Icon name="bell" />
+              <span>Báo bất thường</span>
             </button>
           </div>
+
           {isIssueFormOpen ? (
-            <div className="mt-3 grid gap-2 border-t border-[var(--warning)] pt-3">
+            <div className="glass-card grid gap-3 rounded-[var(--radius-card)] p-4">
               <label className="grid gap-1 text-sm font-medium text-[var(--foreground)]">
                 Loại dữ liệu cần kiểm tra
                 <select
-                  className="focus-ring min-h-11 border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-base"
+                  className="focus-ring min-h-11 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-base"
                   onChange={(event) => setIssueType(event.target.value as typeof issueType)}
                   value={issueType}
                 >
@@ -359,7 +387,7 @@ export const ProgressEditor = ({
               <label className="grid gap-1 text-sm font-medium text-[var(--foreground)]">
                 Tag đề xuất
                 <input
-                  className="focus-ring min-h-11 border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-base font-normal"
+                  className="focus-ring min-h-11 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-base font-normal"
                   maxLength={160}
                   onChange={(event) => setSuggestedTag(event.target.value)}
                   placeholder="Nhập tag đúng nếu đã biết"
@@ -376,7 +404,7 @@ export const ProgressEditor = ({
                 />
               </label>
               <button
-                className="focus-ring pressable min-h-11 justify-self-start bg-[var(--primary-strong)] px-4 text-sm font-medium text-[var(--primary-contrast)] disabled:opacity-60"
+                className="focus-ring pressable min-h-11 justify-self-start rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 text-sm font-semibold text-[var(--primary-contrast)] disabled:opacity-60"
                 disabled={issueState === "sending" || issueState === "sent"}
                 onClick={() => void submitDataIssue()}
                 type="button"
@@ -388,83 +416,138 @@ export const ProgressEditor = ({
               ) : null}
             </div>
           ) : null}
+
         </section>
       ) : null}
 
-      {showDetails ? (
-        <section className="border-l-2 border-[var(--danger)] bg-[var(--surface-muted)] p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-semibold text-[var(--foreground)]">Ghi nhận bất thường</p>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">Tạo hồ sơ riêng, có trạng thái xử lý và tối đa 5 ảnh.</p>
+      {showDetails && isAbnormalityFormOpen ? (
+        <Dialog
+          className="max-h-[calc(100dvh-1rem)] overflow-y-auto sm:max-w-2xl"
+          description={`Hạng mục ${task.tagname} · ${task.wo}. Hồ sơ sẽ được gửi riêng đến người giám sát.`}
+          eyebrow="Ghi nhận bất thường"
+          eyebrowTone="danger"
+          onClose={closeAbnormalityDialog}
+          title="Báo bất thường"
+        >
+          <form
+            className="mt-5"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void submitAbnormality();
+            }}
+          >
+            <div className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3 sm:p-4">
+              <p className="text-xs font-semibold uppercase text-[var(--danger-strong)]">Hạng mục đang báo cáo</p>
+              <p className="mt-1 break-words text-base font-semibold text-[var(--foreground)]">{task.taskName}</p>
+              <p className="mt-1 break-words text-sm font-medium text-[var(--text-muted)]">
+                Tag {task.tagname} · WorkOrder {task.wo}
+              </p>
             </div>
-            <button
-              className="focus-ring pressable min-h-11 border border-[var(--danger)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--danger)]"
-              onClick={() => setIsAbnormalityFormOpen((current) => !current)}
-              type="button"
-            >
-              {isAbnormalityFormOpen ? "Đóng biểu mẫu" : "Báo bất thường"}
-            </button>
-          </div>
-          {isAbnormalityFormOpen ? (
-            <div className="mt-3 grid gap-2 border-t border-[var(--line)] pt-3 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm font-medium">
-                Tiêu đề
-                <input className="focus-ring min-h-11 border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-base" maxLength={200} onChange={(event) => setAbnormalityTitle(event.target.value)} value={abnormalityTitle} />
-              </label>
-              <label className="grid gap-1 text-sm font-medium">
-                Vị trí
-                <input className="focus-ring min-h-11 border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-base" maxLength={300} onChange={(event) => setAbnormalityLocation(event.target.value)} value={abnormalityLocation} />
-              </label>
-              <label className="grid gap-1 text-sm font-medium">
-                Mức độ
-                <select className="focus-ring min-h-11 border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-base" onChange={(event) => setAbnormalitySeverity(event.target.value as typeof abnormalitySeverity)} value={abnormalitySeverity}>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <Field label="Tiêu đề">
+                <Input
+                  maxLength={200}
+                  minLength={3}
+                  onChange={(event) => setAbnormalityTitle(event.target.value)}
+                  placeholder="Tóm tắt dấu hiệu bất thường"
+                  required
+                  value={abnormalityTitle}
+                />
+              </Field>
+              <Field label="Vị trí">
+                <Input
+                  maxLength={300}
+                  onChange={(event) => setAbnormalityLocation(event.target.value)}
+                  placeholder="Khu vực hoặc vị trí thiết bị"
+                  value={abnormalityLocation}
+                />
+              </Field>
+              <Field label="Mức độ">
+                <Select
+                  onChange={(event) => setAbnormalitySeverity(event.target.value as typeof abnormalitySeverity)}
+                  value={abnormalitySeverity}
+                >
                   <option value="low">Thấp</option>
                   <option value="medium">Trung bình</option>
                   <option value="high">Cao</option>
                   <option value="critical">Khẩn cấp</option>
-                </select>
-              </label>
-              <label className="focus-ring flex min-h-11 cursor-pointer items-center border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-sm font-semibold">
-                Chọn ảnh ({abnormalityFiles.length}/5)
-                <input
-                  accept="image/*"
-                  className="sr-only"
-                  multiple
-                  onChange={(event) => setAbnormalityFiles(Array.from(event.target.files ?? []).slice(0, 5))}
-                  type="file"
+                </Select>
+              </Field>
+              <Field hint="Tối đa 5 ảnh." label="Ảnh hiện trường">
+                <label className="focus-ring pressable flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--surface-muted)]">
+                  <span className="inline-flex min-w-0 items-center gap-2">
+                    <Icon name="camera" />
+                    <span className="break-words">Chọn ảnh</span>
+                  </span>
+                  <span className="shrink-0 rounded-full bg-[var(--danger-soft)] px-2.5 py-1 text-xs tabular-nums text-[var(--danger-strong)]">
+                    {abnormalityFiles.length}/5
+                  </span>
+                  <input
+                    accept="image/*"
+                    className="sr-only"
+                    multiple
+                    onChange={(event) => setAbnormalityFiles(Array.from(event.target.files ?? []).slice(0, 5))}
+                    type="file"
+                  />
+                </label>
+              </Field>
+              <Field className="sm:col-span-2" label="Mô tả">
+                <Textarea
+                  className="min-h-36"
+                  maxLength={2000}
+                  onChange={(event) => setAbnormalityDescription(event.target.value)}
+                  placeholder="Mô tả hiện tượng, thời điểm phát hiện và thông tin cần người giám sát lưu ý"
+                  value={abnormalityDescription}
                 />
-              </label>
-              <label className="grid gap-1 text-sm font-medium sm:col-span-2">
-                Mô tả
-                <Textarea maxLength={2000} onChange={(event) => setAbnormalityDescription(event.target.value)} value={abnormalityDescription} />
-              </label>
-              <button className="focus-ring pressable min-h-11 justify-self-start bg-[var(--danger-strong)] px-4 text-sm font-semibold text-[var(--on-danger)] disabled:opacity-60" disabled={abnormalityState === "sending" || abnormalityState === "sent"} onClick={() => void submitAbnormality()} type="button">
-                {abnormalityState === "sending" ? "Đang gửi..." : abnormalityState === "sent" ? "Đã ghi nhận" : "Gửi bất thường"}
-              </button>
-              {abnormalityMessage ? <Alert className="sm:col-span-2" tone={abnormalityState === "error" ? "danger" : "success"}>{abnormalityMessage}</Alert> : null}
+              </Field>
             </div>
-          ) : null}
-        </section>
+
+            {abnormalityMessage ? (
+              <Alert className="mt-4" tone={abnormalityState === "error" ? "danger" : "success"}>
+                {abnormalityMessage}
+              </Alert>
+            ) : null}
+
+            <div className="mt-5 flex flex-col-reverse gap-2 border-t border-[var(--line)] pt-4 sm:flex-row sm:justify-end">
+              <Button disabled={abnormalityState === "sending"} onClick={closeAbnormalityDialog} variant="secondary">
+                Đóng
+              </Button>
+              <Button disabled={abnormalityState === "sending" || abnormalityState === "sent"} type="submit" variant="danger">
+                <Icon name={abnormalityState === "sending" ? "loading" : abnormalityState === "sent" ? "check" : "bell"} className={abnormalityState === "sending" ? "motion-safe:animate-spin" : undefined} />
+                {abnormalityState === "sending" ? "Đang gửi..." : abnormalityState === "sent" ? "Đã ghi nhận" : "Gửi bất thường"}
+              </Button>
+            </div>
+          </form>
+        </Dialog>
       ) : null}
 
       {showDetails ? (
         <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="focus-ring pressable inline-flex min-h-12 min-w-0 cursor-pointer items-center justify-center rounded-[var(--radius-field)] border border-[var(--primary)] bg-[var(--surface)] px-3 text-center text-sm font-semibold text-[var(--primary-strong)] hover:bg-[var(--primary-soft)] lg:min-h-10">
+          <div className="group/photo-actions relative">
+            <div className="grid grid-cols-2 gap-2">
+            <label
+              className="focus-ring pressable inline-flex min-h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-field)] border border-[var(--primary)] bg-[var(--surface)] px-3 text-center text-sm font-semibold leading-5 text-[var(--primary-strong)] hover:bg-[var(--primary-soft)]"
+            >
+              <Icon name="upload" />
               {photoPaths.length > 0 ? "Thêm từ thư viện" : "Chọn từ thư viện"}
               <input
                 accept="image/*"
+                aria-describedby={photoHintId}
                 className="sr-only"
                 multiple
                 onChange={handlePhotoInput}
                 type="file"
               />
             </label>
-            <label className="focus-ring pressable inline-flex min-h-12 min-w-0 cursor-pointer items-center justify-center rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-center text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--surface-muted)] lg:min-h-10">
+            <label
+              className="focus-ring pressable inline-flex min-h-12 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-center text-sm font-semibold leading-5 text-[var(--foreground)] hover:bg-[var(--surface-muted)]"
+            >
+              <Icon name="camera" />
               Chụp ảnh
               <input
                 accept="image/*"
+                aria-describedby={photoHintId}
                 capture="environment"
                 className="sr-only"
                 onChange={handlePhotoInput}
@@ -472,15 +555,21 @@ export const ProgressEditor = ({
               />
             </label>
             {isProcessingPhoto ? (
-              <span className="text-sm font-semibold text-[var(--info)]">Đang xử lý ảnh...</span>
+              <span className="col-span-2 text-sm font-semibold text-[var(--info)]">Đang xử lý ảnh...</span>
             ) : null}
+            </div>
+            <span className="sr-only" id={photoHintId}>{photoHint}</span>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-[calc(100%+0.5rem)] left-0 z-30 invisible w-full translate-y-1 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--foreground)] px-3 py-2 text-xs font-medium leading-5 text-[var(--surface)] opacity-0 shadow-[var(--shadow-floating)] transition duration-150 group-hover/photo-actions:visible group-hover/photo-actions:translate-y-0 group-hover/photo-actions:opacity-100 group-focus-within/photo-actions:visible group-focus-within/photo-actions:translate-y-0 group-focus-within/photo-actions:opacity-100"
+              role="tooltip"
+            >
+              {photoHint}
+            </div>
           </div>
-          <p className="mt-2 text-xs text-[var(--text-muted)]">
-            Tối đa {MAX_PHOTOS_PER_REPORT} ảnh, mỗi ảnh nguồn tối đa {MAX_SOURCE_PHOTO_MEGABYTES}MB. Ảnh được thu về khoảng 1600px và nén JPEG trước khi gửi.
-          </p>
 
           {visiblePhotoPreviews.length > 0 ? (
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="mobile-reflow-grid mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {visiblePhotoPreviews.map((photo, index) => (
                 <div className="relative min-w-0" key={photo.source}>
                   <Image

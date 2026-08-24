@@ -10,7 +10,7 @@ const variantClass: Record<ButtonVariant, string> = {
   secondary:
     "border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-muted)]",
   danger:
-    "bg-[var(--danger)] text-white shadow-[var(--shadow-soft-sm)] hover:bg-[var(--danger-strong)]",
+    "bg-[var(--danger)] text-[var(--on-danger)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--danger-strong)]",
   ghost:
     "text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
 };

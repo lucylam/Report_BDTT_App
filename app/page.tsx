@@ -59,12 +59,12 @@ const HomePage = (): React.ReactElement => {
   }, [isExecutive]);
 
   return (
-    <main className="min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 py-2 sm:px-3 sm:py-3 lg:p-4">
-      <section className="app-shell mx-auto flex min-h-[calc(100dvh-1rem)] w-full max-w-none flex-col overflow-hidden rounded-[22px] sm:min-h-[calc(100dvh-1.5rem)] lg:min-h-[calc(100dvh-2rem)]">
+    <main className="min-h-dvh w-full max-w-[100vw] overflow-x-auto px-2 py-2 sm:px-3 sm:py-3 lg:p-4">
+      <section className="app-shell mx-auto flex min-h-[calc(100dvh-1rem)] w-full max-w-none flex-col overflow-hidden rounded-[var(--radius-panel)] sm:min-h-[calc(100dvh-1.5rem)] lg:min-h-[calc(100dvh-2rem)]">
         <header className="border-b border-[var(--line)] bg-[var(--surface)] px-4 py-4 md:px-5">
-          <div className="flex min-w-0 items-center justify-between gap-3">
-            <CompanyBrand className="min-w-0 flex-1" variant="sidebar" />
-            <div className="flex shrink-0 items-center gap-2">
+          <div className="flex min-w-0 flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CompanyBrand className="w-full sm:flex-1" variant="sidebar" />
+            <div className="flex shrink-0 items-center justify-end gap-2">
               {currentAccount ? <GlobalNotifications /> : null}
               <ThemeToggle className="shrink-0" />
               {currentAccount ? (
@@ -187,7 +187,7 @@ const StatusTile = ({
 }): React.ReactElement => (
   <div className="flex items-center justify-between gap-3 py-2.5">
     <dt className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--text-soft)]">{label}</dt>
-    <dd className="truncate text-sm font-semibold text-[var(--foreground)]">{value}</dd>
+    <dd className="min-w-0 break-words text-right text-sm font-semibold text-[var(--foreground)]">{value}</dd>
   </div>
 );
 
@@ -212,11 +212,11 @@ const ModuleCard = ({
         <Icon name={icon} />
       </span>
     <span className="block min-w-0">
-      <span className="flex min-w-0 items-center gap-2">
-        <span className="truncate text-base font-semibold">{title}</span>
+      <span className="flex min-w-0 flex-wrap items-center gap-2">
+        <span className="min-w-0 break-words text-base font-semibold">{title}</span>
         <Badge tone="neutral">{shortLabel}</Badge>
       </span>
-      <span className="mt-0.5 line-clamp-2 block text-sm font-normal leading-5 text-[var(--text-muted)]">
+      <span className="mt-0.5 block break-words text-sm font-normal leading-5 text-[var(--text-muted)]">
         {description}
       </span>
     </span>
@@ -277,8 +277,8 @@ const ModuleCardSkeleton = (): React.ReactElement => (
     aria-label="Đang tải công tác"
     className="min-h-16 animate-pulse border-b border-r border-[var(--line)] bg-[var(--surface-muted)] p-2.5"
   >
-    <div className="h-4 w-2/3 rounded-sm bg-[var(--line)]" />
-    <div className="mt-3 h-3 w-full rounded-sm bg-[var(--line)]" />
+    <div className="h-4 w-2/3 rounded-full bg-[var(--line)]" />
+    <div className="mt-3 h-3 w-full rounded-full bg-[var(--line)]" />
   </div>
 );
 

@@ -51,11 +51,11 @@ export const ProgressBar = ({
         aria-valuemax={100}
         aria-valuemin={0}
         aria-valuenow={clamped}
-        className={cn("h-4 overflow-hidden rounded-sm bg-[var(--line)]", className)}
+        className={cn("h-2.5 overflow-hidden rounded-full bg-[var(--line)] ring-1 ring-[var(--border)]", className)}
         role="progressbar"
       >
         <div
-          className={cn("h-full rounded-sm", stripeClass[tone])}
+          className={cn("h-full rounded-full", stripeClass[tone])}
           style={{ width: `${clamped}%` }}
         />
       </div>

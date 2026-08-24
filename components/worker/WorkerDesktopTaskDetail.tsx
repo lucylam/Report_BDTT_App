@@ -1,4 +1,4 @@
-import { EmptyState } from "@/components/ui";
+import { Alert, EmptyState, Icon } from "@/components/ui";
 import { ProgressEditor } from "@/components/worker/ProgressEditor";
 import type {
   SaveState,
@@ -47,14 +47,14 @@ export const WorkerDesktopTaskDetail = ({
       </div>
       <div className="mt-3 border-t border-[var(--line)] pt-3">
         {task.isCancelled ? (
-          <div className="border-l-2 border-[var(--danger)] bg-[var(--danger-soft)] px-3 py-2.5 text-sm font-semibold text-[var(--danger)]">
+          <Alert tone="danger">
             Hạng mục này đã được hủy và đã báo cho admin.
             {task.cancelReason ? (
               <span className="mt-2 block font-medium text-[var(--text-muted)]">
                 Lý do: {task.cancelReason}
               </span>
             ) : null}
-          </div>
+          </Alert>
         ) : (
           <>
             <ProgressEditor
@@ -65,10 +65,11 @@ export const WorkerDesktopTaskDetail = ({
               task={task}
             />
             <button
-              className="focus-ring pressable mt-3 min-h-10 rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)]"
+              className="focus-ring pressable mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)]"
               onClick={() => onCancel(task.id)}
               type="button"
             >
+              <Icon name="close" />
               Hủy hạng mục
             </button>
           </>

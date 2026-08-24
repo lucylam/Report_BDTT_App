@@ -24,13 +24,13 @@ const softClass: Record<BubbleTone, string> = {
 
 const solidClass: Record<BubbleTone, string> = {
   primary: "bg-[var(--primary-strong)] text-[var(--primary-contrast)]",
-  success: "bg-[var(--success)] text-white",
-  accent: "bg-[var(--accent-strong)] text-white",
-  warning: "bg-[var(--warning)] text-white",
-  danger: "bg-[var(--danger)] text-white",
-  info: "bg-[var(--info)] text-white",
-  yellow: "bg-[var(--yellow-strong)] text-white",
-  neutral: "bg-[var(--text-soft)] text-white"
+  success: "bg-[var(--success)] text-[var(--on-success)]",
+  accent: "bg-[var(--accent-strong)] text-[var(--on-accent)]",
+  warning: "bg-[var(--warning)] text-[var(--on-warning)]",
+  danger: "bg-[var(--danger)] text-[var(--on-danger)]",
+  info: "bg-[var(--info)] text-[var(--on-info)]",
+  yellow: "bg-[var(--yellow-strong)] text-[var(--on-yellow)]",
+  neutral: "bg-[var(--foreground)] text-[var(--surface)]"
 };
 
 interface BubbleIconProps {

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Alert, Button, Field, Icon, Input } from "@/components/ui";
+import { Alert, AppLoadingState, Button, Field, Icon, Input } from "@/components/ui";
 import { useAppData } from "@/hooks/useAppData";
 
 const ChangePasswordPage = (): React.ReactElement => {
@@ -40,11 +40,11 @@ const ChangePasswordPage = (): React.ReactElement => {
 
   if (!data) {
     return (
-      <main className="flex min-h-dvh items-center justify-center px-4">
-        <p className="text-sm font-semibold text-[var(--text-muted)]">
-          Đang kiểm tra đăng nhập...
-        </p>
-      </main>
+      <AppLoadingState
+        description="Đang xác nhận phiên đăng nhập trước khi đổi mật khẩu."
+        icon="shield"
+        title="Đang kiểm tra tài khoản"
+      />
     );
   }
 
@@ -64,7 +64,7 @@ const ChangePasswordPage = (): React.ReactElement => {
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-8">
-      <section className="app-shell w-full max-w-lg overflow-hidden rounded-[22px] p-4">
+      <section className="app-shell w-full max-w-lg overflow-hidden rounded-[var(--radius-panel)] p-4">
         <div className="rounded-[var(--radius-card)] bg-[var(--surface)] p-5 shadow-[var(--shadow-soft-sm)] md:p-7">
           <div className="flex items-start justify-between gap-4">
             <CompanyBrand

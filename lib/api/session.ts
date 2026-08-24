@@ -1,11 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createSeedAccounts, getLoginUsername } from "@/lib/accounts";
+import {
+  applyAccountProfileOverrides,
+  createSeedAccounts,
+  getLoginUsername
+} from "@/lib/accounts";
 import {
   AUTH_SESSION_COOKIE,
   getRequestCookie,
   verifyAuthSessionToken
 } from "@/lib/authSession";
-import { isDataAdminAccount } from "@/lib/permissions";
+import { canManagePersonnelOrg, isDataAdminAccount } from "@/lib/permissions";
 import type { AuthAccount, Task, UserRole } from "@/types/domain";
 
 interface DbProfile {
@@ -13,6 +17,9 @@ interface DbProfile {
   readonly username: string | null;
   readonly role: UserRole | null;
   readonly is_active: boolean | null;
+  readonly org_group?: string | null;
+  readonly subgroup?: string | null;
+  readonly org_role?: string | null;
 }
 
 interface DbTaskOwnership {
@@ -27,6 +34,9 @@ export interface AuthenticatedProfile {
   readonly id: string;
   readonly username: string;
   readonly role: UserRole;
+  readonly org_group?: string | null;
+  readonly subgroup?: string | null;
+  readonly org_role?: string | null;
 }
 
 export type ApiAuthResult =
@@ -74,15 +84,33 @@ export const getAuthenticatedProfile = async (
     };
   }
 
-  const { data, error } = await supabase
+  const profileResult = await supabase
     .from("profiles")
-    .select("id, username, role, is_active")
+    .select("id, username, role, is_active, org_group, subgroup, org_role")
     .eq("id", session.profileId)
     .maybeSingle();
+  let profile = profileResult.data as DbProfile | null;
+  let profileError = profileResult.error;
 
-  if (error) return { ok: false, status: 500, error: error.message };
+  if (
+    profileError &&
+    ["org_group", "subgroup", "org_role"].some((column) =>
+      profileError?.message.toLowerCase().includes(column)
+    )
+  ) {
+    const fallback = await supabase
+      .from("profiles")
+      .select("id, username, role, is_active")
+      .eq("id", session.profileId)
+      .maybeSingle();
+    profile = fallback.data as DbProfile | null;
+    profileError = fallback.error;
+  }
 
-  const profile = data as DbProfile | null;
+  if (profileError) {
+    return { ok: false, status: 500, error: profileError.message };
+  }
+
   if (!profile?.id || !profile.username) {
     return { ok: false, status: 401, error: "Khong tim thay profile dang nhap." };
   }
@@ -98,7 +126,10 @@ export const getAuthenticatedProfile = async (
     profile: {
       id: profile.id,
       username: getLoginUsername(profile.username),
-      role: profile.role ?? "worker"
+      role: profile.role ?? "worker",
+      org_group: profile.org_group,
+      subgroup: profile.subgroup,
+      org_role: profile.org_role
     }
   };
 };
@@ -110,10 +141,21 @@ export const getAuthenticatedAccount = async (
   const auth = await getAuthenticatedProfile(request, supabase);
   if (!auth.ok) return auth;
 
-  const account =
+  const seededAccount =
     createSeedAccounts().find(
       (item) => getLoginUsername(item.username) === auth.profile.username
     ) ?? null;
+  if (!seededAccount) {
+    return {
+      ok: false,
+      status: 403,
+      error: "Tai khoan chua co trong danh sach noi bo."
+    };
+  }
+  const account = applyAccountProfileOverrides(
+    [seededAccount],
+    [auth.profile]
+  )[0];
   if (!account) {
     return {
       ok: false,
@@ -148,6 +190,24 @@ export const getAuthenticatedDataAdmin = async (
       ok: false,
       status: 403,
       error: "Chi tai khoan DATA admin moi duoc thuc hien thao tac nay."
+    };
+  }
+
+  return auth;
+};
+
+export const getAuthenticatedPersonnelAdmin = async (
+  request: Request,
+  supabase: SupabaseClient
+): Promise<ApiAccountAuthResult> => {
+  const auth = await getAuthenticatedAccount(request, supabase);
+  if (!auth.ok) return auth;
+
+  if (!canManagePersonnelOrg(auth.account)) {
+    return {
+      ok: false,
+      status: 403,
+      error: "Chỉ vinhlpp và kiaq được quản lý sơ đồ nhân sự."
     };
   }
 

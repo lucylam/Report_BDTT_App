@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createProfilesFromAccounts, createSeedAccounts, getLoginUsername } from "@/lib/accounts";
+import {
+  applyAccountProfileOverrides,
+  createProfilesFromAccounts,
+  createSeedAccounts,
+  getLoginUsername
+} from "@/lib/accounts";
 import type { AppData, Profile, ProgressRecord, Task } from "@/types/domain";
 
 const PAGE_SIZE = 1000;
@@ -13,6 +18,9 @@ interface DbProfile {
   readonly resource_name: string | null;
   readonly role: "admin" | "worker" | null;
   readonly must_change_password: boolean | null;
+  readonly org_group?: string | null;
+  readonly subgroup?: string | null;
+  readonly org_role?: string | null;
 }
 
 interface DbTask {
@@ -77,8 +85,29 @@ const listAll = async <TRow>(
   return rows;
 };
 
+const listProfiles = async (supabase: SupabaseClient): Promise<DbProfile[]> => {
+  const baseColumns =
+    "id, username, email, employee_code, full_name, resource_name, role, must_change_password";
+  try {
+    return await listAll<DbProfile>(
+      supabase,
+      "profiles",
+      `${baseColumns}, org_group, subgroup, org_role`,
+      "username"
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : "";
+    if (!["org_group", "subgroup", "org_role"].some((column) => message.includes(column))) {
+      throw error;
+    }
+    return listAll<DbProfile>(supabase, "profiles", baseColumns, "username");
+  }
+};
+
 const buildProfiles = (rows: readonly DbProfile[]): Profile[] => {
-  const seeded = createProfilesFromAccounts(createSeedAccounts());
+  const seeded = createProfilesFromAccounts(
+    applyAccountProfileOverrides(createSeedAccounts(), rows)
+  );
   const byUsername = new Map(seeded.map((profile) => [profile.username, profile]));
   return rows.map((row) => {
     const username = getLoginUsername(text(row.username) || text(row.email));
@@ -124,12 +153,7 @@ const toPriority = (value: number | null): 1 | 2 | 3 =>
 
 export const loadBdttSnapshot = async (supabase: SupabaseClient): Promise<AppData> => {
   const [profileRows, taskRows, progressRows, latestBatchResult] = await Promise.all([
-    listAll<DbProfile>(
-      supabase,
-      "profiles",
-      "id, username, email, employee_code, full_name, resource_name, role, must_change_password",
-      "username"
-    ),
+    listProfiles(supabase),
     listAll<DbTask>(
       supabase,
       "tasks",

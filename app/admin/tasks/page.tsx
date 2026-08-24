@@ -9,7 +9,7 @@ import { WorkerStatusTable } from "@/components/admin/WorkerStatusTable";
 import { AbnormalityBoard } from "@/components/admin/workorder/AbnormalityBoard";
 import { DataIssueQueue } from "@/components/admin/workorder/DataIssueQueue";
 import { WorkOrderTabs, type WorkOrderTab } from "@/components/admin/workorder/WorkOrderTabs";
-import { Icon } from "@/components/ui";
+import { AppLoadingState, Icon } from "@/components/ui";
 import { useAppData } from "@/hooks/useAppData";
 import { canManageBdttTasks, getOrgScopeLabel, getScopedAppData } from "@/lib/permissions";
 
@@ -30,7 +30,13 @@ const AdminTasksContent = (): React.ReactElement => {
   }, [currentAccount, data, router]);
 
   if (!currentAccount || currentAccount.mustChangePassword) {
-    return <main className="min-h-dvh p-6"><p className="text-sm text-[var(--text-muted)]">Đang kiểm tra đăng nhập...</p></main>;
+    return (
+      <AppLoadingState
+        description="Đang kiểm tra phiên đăng nhập và phạm vi công việc của bạn."
+        icon="workorder"
+        title="Đang mở WorkOrder"
+      />
+    );
   }
   if (currentAccount.role !== "admin") {
     return <main className="min-h-dvh p-6"><Link className="focus-ring text-sm font-semibold text-[var(--primary)]" href="/worker">Về trang công việc</Link></main>;
@@ -77,7 +83,15 @@ const AdminTasksContent = (): React.ReactElement => {
 };
 
 const AdminTasksPage = (): React.ReactElement => (
-  <Suspense fallback={<main className="min-h-dvh p-6"><p className="text-sm text-[var(--text-muted)]">Đang tải WorkOrder...</p></main>}>
+  <Suspense
+    fallback={(
+      <AppLoadingState
+        description="Đang chuẩn bị danh sách hạng mục và bộ lọc."
+        icon="workorder"
+        title="Đang tải WorkOrder"
+      />
+    )}
+  >
     <AdminTasksContent />
   </Suspense>
 );

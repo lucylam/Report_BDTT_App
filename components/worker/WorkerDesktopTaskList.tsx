@@ -77,10 +77,10 @@ export const WorkerDesktopTaskList = ({
                 </span>
               </span>
               <span
-                className={`flex shrink-0 items-center gap-2 rounded-[var(--radius-field)] border-l-2 px-3 py-1 text-sm font-semibold ${
+                className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ring-1 ${
                   isCollapsed
-                    ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-1 ring-[var(--line)]"
-                    : "bg-black/10 text-[var(--primary-contrast)]"
+                    ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-[var(--line)]"
+                    : "bg-black/10 text-[var(--primary-contrast)] ring-white/20"
                 }`}
               >
                 {isCollapsed ? "Mở" : "Đóng"}
@@ -135,9 +135,9 @@ export const WorkerDesktopTaskList = ({
                           <p className="text-right text-base font-semibold tabular-nums">
                             {task.isCancelled ? "NA" : `${percent}%`}
                           </p>
-                          <div className="mt-2 h-1.5 overflow-hidden rounded-[1px] bg-[var(--surface-muted)] ring-1 ring-[var(--border)]">
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--surface-muted)] ring-1 ring-[var(--border)]">
                             <div
-                              className={`h-full rounded-[1px] ${percentTone(percent)}`}
+                              className={`h-full rounded-full ${percentTone(percent)}`}
                               style={{ width: `${task.isCancelled ? 0 : percent}%` }}
                             />
                           </div>

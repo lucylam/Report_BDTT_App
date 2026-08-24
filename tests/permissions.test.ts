@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getOrgScopeKey } from "@/lib/org2026";
 import {
   canManageBdttTasks,
+  canManagePersonnelOrg,
   canViewProfile,
   canViewTask,
   getScopedAppData,
@@ -96,6 +97,14 @@ describe("isDataAdminAccount", () => {
 });
 
 describe("canManageBdttTasks", () => {
+  it("giữ toàn quyền quản trị task cho vinhlpp dù là thành viên Hậu cần", () => {
+    expect(
+      canManageBdttTasks(
+        makeAccount({ username: "vinhlpp", role: "admin", orgRole: "member" })
+      )
+    ).toBe(true);
+  });
+
   it("cho phép trưởng nhóm, phó nhóm và trưởng phân nhóm quản lý đúng phạm vi", () => {
     expect(
       canManageBdttTasks(
@@ -117,6 +126,15 @@ describe("canManageBdttTasks", () => {
         makeAccount({ username: "worker-a", role: "worker", orgRole: "member" })
       )
     ).toBe(false);
+  });
+});
+
+describe("canManagePersonnelOrg", () => {
+  it("chỉ cho phép vinhlpp và kiaq chỉnh cơ cấu nhân sự", () => {
+    expect(canManagePersonnelOrg(makeAccount({ username: "vinhlpp" }))).toBe(true);
+    expect(canManagePersonnelOrg(makeAccount({ username: "KIAQ " }))).toBe(true);
+    expect(canManagePersonnelOrg(makeAccount({ username: "linhln" }))).toBe(false);
+    expect(canManagePersonnelOrg(null)).toBe(false);
   });
 });
 

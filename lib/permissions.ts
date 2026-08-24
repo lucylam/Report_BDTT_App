@@ -3,6 +3,10 @@ import type { AppData, AuthAccount, Profile, Task } from "@/types/domain";
 
 export const DATA_ADMIN_USERNAME = "vinhlpp";
 export const TOP_MANAGER_USERNAME = "kiaq";
+export const PERSONNEL_ADMIN_USERNAMES = [
+  DATA_ADMIN_USERNAME,
+  TOP_MANAGER_USERNAME
+] as const;
 
 type ScopeAccount = Pick<
   AuthAccount,
@@ -20,6 +24,15 @@ export const isDataAdminAccount = (
   account: Pick<AuthAccount, "username"> | null
 ): boolean => {
   return account?.username.trim().toLowerCase() === DATA_ADMIN_USERNAME;
+};
+
+export const canManagePersonnelOrg = (
+  account: Pick<AuthAccount, "username"> | null
+): boolean => {
+  const username = account?.username.trim().toLowerCase();
+  return Boolean(
+    username && PERSONNEL_ADMIN_USERNAMES.some((item) => item === username)
+  );
 };
 
 export const hasFullOrgScope = (account: ScopeAccount | null): boolean => {

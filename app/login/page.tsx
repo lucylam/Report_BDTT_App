@@ -60,7 +60,7 @@ const LoginPage = (): React.ReactElement => {
 
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-5 md:py-8">
-      <section className="app-shell grid w-full max-w-5xl overflow-hidden rounded-[22px] p-4 md:grid-cols-[0.92fr_1.08fr] md:p-5">
+      <section className="app-shell grid w-full max-w-5xl overflow-hidden rounded-[var(--radius-panel)] p-4 md:grid-cols-[0.92fr_1.08fr] md:p-5">
         <div className="hidden rounded-[var(--radius-card)] bg-[var(--foreground)] p-7 text-[var(--surface)] shadow-[var(--shadow-soft-md)] md:flex md:flex-col md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase opacity-75">Tiến độ BDTT 2026</p>

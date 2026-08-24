@@ -66,10 +66,10 @@ export const WorkerGroupedTaskList = ({
                   {group.tasks.length} hạng mục
                 </span>
               </span>
-              <span className={`flex shrink-0 items-center gap-2 rounded-[var(--radius-field)] border-l-2 px-3 py-1 text-sm font-semibold ${
+              <span className={`flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ring-1 ${
                 isCollapsed
-                  ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-1 ring-[var(--line)]"
-                    : "bg-black/10 text-[var(--primary-contrast)]"
+                  ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-[var(--line)]"
+                    : "bg-black/10 text-[var(--primary-contrast)] ring-white/20"
               }`}>
                 {isCollapsed ? "Mở" : "Đóng"}
                 <span

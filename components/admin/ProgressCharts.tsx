@@ -14,7 +14,7 @@ import {
   YAxis
 } from "recharts";
 import { DashboardExportButton } from "@/components/admin/DashboardExportButton";
-import { Icon, type IconName } from "@/components/ui";
+import { Badge, Icon, type IconName } from "@/components/ui";
 import type {
   CompletionRow,
   ExcelDashboardData,
@@ -72,7 +72,7 @@ const compactLegendTextStyle = {
 const tooltipStyle = {
   backgroundColor: "var(--surface)",
   border: "1px solid var(--border-strong)",
-  borderRadius: "0",
+  borderRadius: "var(--radius-field)",
   boxShadow: "var(--shadow-floating)",
   fontFamily: "var(--font-sans)",
   fontSize: "13px"
@@ -113,15 +113,6 @@ const metricToneClasses: Record<MetricTone, string> = {
   worker: "text-[var(--info-strong)]"
 };
 
-const metricToneSurfaces: Record<MetricTone, string> = {
-  attention: "bg-[var(--warning-soft)]",
-  done: "bg-[var(--success-soft)]",
-  neutral: "bg-[var(--surface)]",
-  progress: "bg-[var(--primary-soft)]",
-  remaining: "bg-[var(--surface-elevated)]",
-  worker: "bg-[var(--info-soft)]"
-};
-
 const metricIcons: Record<MetricTone, IconName> = {
   attention: "bell",
   done: "check",
@@ -144,7 +135,7 @@ export const ProgressCharts = ({
       className="mx-auto grid w-full max-w-[1680px] min-w-0 gap-3"
       data-dashboard-export-root
     >
-      <header className="glass-card overflow-hidden p-0">
+      <header className="glass-card overflow-hidden rounded-[var(--radius-card)] p-0">
         <div className="grid gap-3 border-b border-[var(--line)] bg-[var(--surface-muted)] px-4 py-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:px-5">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--primary-strong)]">
@@ -184,7 +175,7 @@ export const ProgressCharts = ({
         <LeadStatusChart data={dashboard.leadStatus} />
       </section>
 
-      <section className="glass-card min-w-0 p-4">
+      <section className="glass-card min-w-0 rounded-[var(--radius-card)] p-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <SectionTitle
             subtitle="Phân tích sâu theo prefix Resource Names. Mỗi card chỉ hiện Top resource còn khối lượng lớn."
@@ -216,7 +207,7 @@ const ExecutiveBoard = ({
   const { executive, overall } = dashboard;
   return (
     <div className="grid gap-3 px-4 py-3 lg:px-5">
-      <div className="grid grid-cols-1 overflow-hidden border border-[var(--line)] sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
           label="Tiến độ tổng"
           note={`${formatNumber(overall.done)}/${formatNumber(executive.activeTasks)} hạng mục quy đổi`}
@@ -263,15 +254,15 @@ const Metric = ({
   readonly tone: MetricTone;
   readonly value: number | string;
 }): React.ReactElement => (
-  <div className={cn("min-w-0 border-b border-r border-[var(--line)] px-3 py-2.5", metricToneClasses[tone], metricToneSurfaces[tone])}>
-    <div className="flex items-center gap-2">
+  <div className={cn("metric-card min-w-0 rounded-[var(--radius-card)] p-4", metricToneClasses[tone])}>
+    <div className="flex min-w-0 items-center gap-2 pr-6">
       <Icon name={metricIcons[tone]} />
-      <p className="truncate text-xs font-medium uppercase text-current opacity-80">
+      <p className="min-w-0 text-xs font-semibold uppercase leading-5 text-current opacity-80 [overflow-wrap:anywhere]">
         {label}
       </p>
     </div>
-    <p className="mt-1 text-xl font-semibold leading-none tabular-nums">{value}</p>
-    <p className="mt-1 line-clamp-1 text-xs font-medium leading-5 text-[var(--text-muted)]">
+    <p className="mt-2 text-2xl font-semibold leading-none tabular-nums">{value}</p>
+    <p className="mt-2 text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">
       {note}
     </p>
   </div>
@@ -391,9 +382,7 @@ const AttentionCard = <T,>({
   <section className="rounded-[var(--radius-card)] bg-[var(--surface)] p-4 ring-1 ring-[var(--border)]">
     <div className="flex items-center justify-between gap-3">
       <h3 className="text-sm font-semibold">{title}</h3>
-      <span className="rounded-[var(--radius-field)] border-l-2 border-[var(--accent)] bg-[var(--accent-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--accent-strong)]">
-        Top {Math.min(rows.length, 5)}
-      </span>
+      <Badge tone="accent">Top {Math.min(rows.length, 5)}</Badge>
     </div>
     {rows.length > 0 ? (
       <div className="mt-3 grid gap-2">{rows.slice(0, 5).map((row) => children(row))}</div>
@@ -429,9 +418,9 @@ const AttentionRow = ({
 );
 
 const MiniProgressBar = ({ percent }: { readonly percent: number }): React.ReactElement => (
-  <div className="mt-2 h-1.5 overflow-hidden rounded-[1px] bg-[var(--line)]">
+  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
     <div
-      className="h-full rounded-[1px] bg-[var(--primary-strong)]"
+      className="h-full rounded-full bg-[var(--primary-strong)]"
       style={{ width: `${Math.max(0, Math.min(100, percent))}%` }}
     />
   </div>
@@ -447,7 +436,7 @@ const ChartShell = ({
   readonly title: string;
 }): React.ReactElement => {
   return (
-    <section className="glass-card flex h-full min-w-0 flex-col p-4">
+    <section className="glass-card flex h-full min-w-0 flex-col rounded-[var(--radius-card)] p-4">
       <div className="border-b border-[var(--line)] pb-2">
         <SectionTitle subtitle={subtitle} title={title} />
       </div>
@@ -463,11 +452,16 @@ const SectionTitle = ({
   readonly subtitle: string;
   readonly title: string;
 }): React.ReactElement => (
-  <div className="min-w-0">
-    <h2 className="text-balance text-base font-semibold leading-6 sm:text-lg">
-      {title}
-    </h2>
-    <p className="mt-0.5 text-sm font-normal leading-5 text-[var(--text-muted)]">{subtitle}</p>
+  <div className="flex min-w-0 items-start gap-3">
+    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--info-soft)] text-[var(--info-strong)]">
+      <Icon name="chart" />
+    </span>
+    <div className="min-w-0">
+      <h2 className="text-balance text-base font-semibold leading-6 sm:text-lg">
+        {title}
+      </h2>
+      <p className="mt-0.5 text-sm font-normal leading-5 text-[var(--text-muted)]">{subtitle}</p>
+    </div>
   </div>
 );
 
@@ -540,11 +534,11 @@ const OverallPie = ({
           </div>
           <div className="grid grid-cols-2 border-t border-[var(--line)] pt-2 text-xs font-medium text-[var(--foreground)]">
             <span className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="h-2.5 w-3 bg-[var(--chart-done-strong)]" />
+              <span aria-hidden="true" className="h-2.5 w-3 rounded-full bg-[var(--chart-done-strong)]" />
               Đã thực hiện
             </span>
             <span className="inline-flex items-center justify-end gap-2">
-              <span aria-hidden="true" className="h-2.5 w-3 bg-[var(--chart-remaining-strong)]" />
+              <span aria-hidden="true" className="h-2.5 w-3 rounded-full bg-[var(--chart-remaining-strong)]" />
               Còn lại
             </span>
           </div>
@@ -615,7 +609,7 @@ const UnitProgressDotPlot = ({
                   ))}
                   <span
                     aria-hidden="true"
-                    className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 border-2 border-[var(--surface)] bg-[var(--chart-primary)] ring-1 ring-[var(--border-strong)]"
+                    className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[var(--surface)] bg-[var(--chart-primary)] ring-1 ring-[var(--border-strong)]"
                     style={{ left: `${markerPosition}%` }}
                   />
                   <span
@@ -705,7 +699,7 @@ const CompletionChart = ({
               fill={doneFill}
               fillOpacity={0.98}
               name="Đã thực hiện"
-              radius={0}
+              radius={[6, 0, 0, 6]}
               stackId="a"
             />
             <Bar
@@ -714,7 +708,7 @@ const CompletionChart = ({
               fill={remainingFill}
               fillOpacity={0.84}
               name="Còn lại"
-              radius={0}
+              radius={[0, 6, 6, 0]}
               stackId="a"
             />
           </BarChart>
@@ -755,15 +749,15 @@ const CompactCompletionBars = ({
               <div className="grid w-28 shrink-0 grid-cols-[1fr_auto] items-center gap-2">
                 <div
                   aria-label={`${row.name}: ${formatNumber(row.done)} đã thực hiện, ${formatNumber(row.remaining)} còn lại, ${row.percent}% hoàn thành`}
-                  className="h-2 overflow-hidden bg-[var(--line)]"
+                  className="h-2 overflow-hidden rounded-full bg-[var(--line)]"
                   role="img"
                 >
                   <div
-                    className="h-full max-w-full overflow-hidden bg-[var(--chart-remaining-soft)]"
+                    className="h-full max-w-full overflow-hidden rounded-full bg-[var(--chart-remaining-soft)]"
                     style={{ width: totalWidth }}
                   >
                     <div
-                      className="h-full bg-[var(--chart-done-strong)]"
+                      className="h-full rounded-full bg-[var(--chart-done-strong)]"
                       style={{ width: doneWidth }}
                     />
                   </div>
@@ -905,7 +899,7 @@ const HeatLegend = ({
   readonly label: string;
 }): React.ReactElement => (
   <span className="inline-flex items-center gap-1.5">
-    <span aria-hidden="true" className={cn("h-3 w-3 border border-[var(--border-strong)]", className)} />
+    <span aria-hidden="true" className={cn("h-3 w-3 rounded-[0.25rem] border border-[var(--border-strong)]", className)} />
     {label}
   </span>
 );
@@ -986,7 +980,7 @@ const LeadStatusChart = ({
               fill={statusColors.completed}
               fillOpacity={0.96}
               name="Hoàn thành"
-              radius={0}
+              radius={[6, 0, 0, 6]}
               stackId="a"
             />
             <Bar
@@ -1011,7 +1005,7 @@ const LeadStatusChart = ({
               fill={statusColors.notStarted}
               fillOpacity={0.92}
               name="Chưa thực hiện"
-              radius={0}
+              radius={[0, 6, 6, 0]}
               stackId="a"
             />
           </BarChart>
@@ -1049,7 +1043,7 @@ const EmptyChart = ({
   readonly title: string;
 }): React.ReactElement => (
   <ChartShell subtitle={subtitle} title={title}>
-    <div className="mt-4 flex min-h-[260px] flex-1 items-center justify-center border-y border-dashed border-[var(--line)] p-4 text-center text-sm font-medium text-[var(--text-muted)]">
+    <div className="mt-4 flex min-h-[260px] flex-1 items-center justify-center rounded-[var(--radius-card)] border border-dashed border-[var(--line)] bg-[var(--surface-muted)] p-4 text-center text-sm font-medium text-[var(--text-muted)]">
       Không có dữ liệu đủ ý nghĩa để hiển thị chart.
     </div>
   </ChartShell>

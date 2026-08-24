@@ -2,6 +2,7 @@ import {
   BarChart3,
   Bell,
   BriefcaseBusiness,
+  Camera,
   CalendarDays,
   CheckCircle2,
   ChevronDown,
@@ -34,6 +35,7 @@ import { cn } from "@/lib/ui";
 export type IconName =
   | "account"
   | "bell"
+  | "camera"
   | "calendar"
   | "chart"
   | "check"
@@ -70,6 +72,7 @@ interface IconProps {
 const iconMap: Record<IconName, LucideIcon> = {
   account: UserCircle,
   bell: Bell,
+  camera: Camera,
   calendar: CalendarDays,
   chart: BarChart3,
   check: CheckCircle2,

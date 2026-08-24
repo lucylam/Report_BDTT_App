@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  applyAccountProfileOverrides,
   applyAccountPasswordRequirements,
   createProfilesFromAccounts,
   createSeedAccounts
@@ -54,6 +55,10 @@ interface DbProfile {
   readonly resource_name: string | null;
   readonly must_change_password: boolean | null;
   readonly password_hash: string | null;
+  readonly role: AuthAccount["role"] | null;
+  readonly org_group?: string | null;
+  readonly subgroup?: string | null;
+  readonly org_role?: string | null;
 }
 
 interface DbTask {
@@ -150,6 +155,39 @@ const sanitizeAccounts = (
       canLogin: account.canLogin,
       mustChangePassword: account.mustChangePassword
     }));
+
+const listProfiles = async (
+  supabase: NonNullable<Awaited<ReturnType<typeof createServerSupabaseClient>>>
+): Promise<{ readonly data: DbProfile[]; readonly error: string | null }> => {
+  const baseColumns = [
+    "id",
+    "username",
+    "resource_name",
+    "must_change_password",
+    "password_hash",
+    "role"
+  ];
+  const orgColumns = ["org_group", "subgroup", "org_role"];
+  const result = await supabase
+    .from("profiles")
+    .select([...baseColumns, ...orgColumns].join(", "));
+
+  if (
+    result.error &&
+    orgColumns.some((column) =>
+      result.error?.message.toLowerCase().includes(column)
+    )
+  ) {
+    const fallback = await supabase.from("profiles").select(baseColumns.join(", "));
+    return fallback.error
+      ? { data: [], error: fallback.error.message }
+      : { data: (fallback.data ?? []) as unknown as DbProfile[], error: null };
+  }
+
+  return result.error
+    ? { data: [], error: result.error.message }
+    : { data: (result.data ?? []) as unknown as DbProfile[], error: null };
+};
 
 const listTasks = async (
   supabase: NonNullable<Awaited<ReturnType<typeof createServerSupabaseClient>>>
@@ -381,15 +419,13 @@ export const GET = async (request: Request): Promise<NextResponse> => {
   if (!auth.ok) return toErrorResponse(auth.error, auth.status);
 
   const [
-    { data: dbProfiles, error: profilesError },
+    profilesResult,
     tasksResult,
     progressResult,
     { data: latestBatch, error: batchError }
   ] =
     await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, username, resource_name, must_change_password, password_hash"),
+      listProfiles(supabase),
       listTasks(supabase),
       listProgress(supabase),
       supabase
@@ -401,8 +437,8 @@ export const GET = async (request: Request): Promise<NextResponse> => {
         .maybeSingle()
     ]);
 
-  if (profilesError) {
-    return NextResponse.json({ ok: false, error: profilesError.message }, { status: 500 });
+  if (profilesResult.error) {
+    return NextResponse.json({ ok: false, error: profilesResult.error }, { status: 500 });
   }
   if (tasksResult.error) {
     return NextResponse.json({ ok: false, error: tasksResult.error }, { status: 500 });
@@ -414,16 +450,19 @@ export const GET = async (request: Request): Promise<NextResponse> => {
     return NextResponse.json({ ok: false, error: batchError.message }, { status: 500 });
   }
 
-  const typedDbProfiles = (dbProfiles ?? []) as DbProfile[];
-  const accounts = applyAccountPasswordRequirements(
-    createSeedAccounts(),
+  const typedDbProfiles = profilesResult.data;
+  const accounts = applyAccountProfileOverrides(
+    applyAccountPasswordRequirements(
+      createSeedAccounts(),
+      typedDbProfiles
+        .filter((profile) => Boolean(profile.username))
+        .map((profile) => ({
+          username: profile.username ?? "",
+          mustChangePassword:
+            Boolean(profile.must_change_password) || !normalizeText(profile.password_hash)
+        }))
+    ),
     typedDbProfiles
-      .filter((profile) => Boolean(profile.username))
-      .map((profile) => ({
-        username: profile.username ?? "",
-        mustChangePassword:
-          Boolean(profile.must_change_password) || !normalizeText(profile.password_hash)
-      }))
   );
   const profiles = createProfilesFromAccounts(accounts);
   const dbProfileIdToLocalId = createDbProfileMap(

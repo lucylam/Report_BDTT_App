@@ -1,3 +1,4 @@
+import { Icon } from "@/components/ui";
 import type { DailySnapshot } from "@/types/domain";
 
 interface SnapshotPanelProps {
@@ -13,18 +14,18 @@ export const SnapshotPanel = ({
 
   if (!latest) {
     return (
-      <section className="glass-card border-dashed p-5">
-        <h2 className="text-lg font-semibold">Snapshot ngày</h2>
-        <p className="mt-2 text-sm text-[var(--text-muted)]">
-          Chưa có snapshot. Worker hoặc admin có thể ghi nhận snapshot báo cáo ngày.
-        </p>
+      <section className="glass-card rounded-[var(--radius-card)] border-dashed p-5">
+        <div className="flex items-start gap-3">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--info-soft)] text-[var(--info-strong)]"><Icon name="calendar" /></span>
+          <div><h2 className="text-lg font-semibold">Snapshot ngày</h2><p className="mt-1 text-sm text-[var(--text-muted)]">Chưa có snapshot. Worker hoặc admin có thể ghi nhận snapshot báo cáo ngày.</p></div>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="glass-card p-5">
-      <h2 className="text-lg font-semibold">Snapshot gần nhất</h2>
+    <section className="glass-card rounded-[var(--radius-card)] p-5">
+      <div className="flex items-center gap-3"><span className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-field)] bg-[var(--success-soft)] text-[var(--success-strong)]"><Icon name="calendar" /></span><h2 className="text-lg font-semibold">Snapshot gần nhất</h2></div>
       <div className="mt-3 grid gap-3 sm:grid-cols-4">
         <SnapshotMetric label="Ngày" value={latest.snapshotDate} />
         <SnapshotMetric label="Tổng" value={String(latest.totalTasks)} />
@@ -43,7 +44,7 @@ const SnapshotMetric = ({
   readonly value: string;
 }): React.ReactElement => {
   return (
-    <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
+    <div className="metric-card rounded-[var(--radius-card)] p-3">
       <p className="text-xs font-semibold uppercase text-[var(--text-soft)]">{label}</p>
       <p className="mt-1 text-lg font-semibold">{value}</p>
     </div>

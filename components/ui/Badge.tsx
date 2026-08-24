@@ -11,11 +11,11 @@ export type BadgeTone =
   | "primary";
 
 const solidClass: Record<BadgeTone, string> = {
-  success: "bg-[var(--success)] text-white shadow-sm",
-  warning: "bg-[var(--warning)] text-white shadow-sm",
-  accent: "bg-[var(--accent)] text-white shadow-sm",
-  danger: "bg-[var(--danger)] text-white shadow-sm",
-  info: "bg-[var(--info)] text-white shadow-sm",
+  success: "bg-[var(--success)] text-[var(--on-success)] shadow-sm",
+  warning: "bg-[var(--warning)] text-[var(--on-warning)] shadow-sm",
+  accent: "bg-[var(--accent)] text-[var(--on-accent)] shadow-sm",
+  danger: "bg-[var(--danger)] text-[var(--on-danger)] shadow-sm",
+  info: "bg-[var(--info)] text-[var(--on-info)] shadow-sm",
   neutral: "bg-[var(--surface)] text-[var(--foreground)] shadow-sm ring-1 ring-[var(--border-strong)]",
   primary: "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-sm"
 };
@@ -46,7 +46,7 @@ export const Badge = ({
   return (
     <span
       className={cn(
-        "inline-flex min-h-7 max-w-full min-w-0 items-center overflow-hidden whitespace-nowrap rounded-full px-2.5 text-xs font-semibold tabular-nums",
+        "inline-flex min-h-7 max-w-full min-w-0 items-center justify-center rounded-full px-2.5 py-1 text-center text-xs font-semibold leading-tight tabular-nums [overflow-wrap:anywhere]",
         solid ? solidClass[tone] : softClass[tone],
         className
       )}

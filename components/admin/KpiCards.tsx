@@ -1,3 +1,4 @@
+import { Icon, type IconName } from "@/components/ui";
 import type { DashboardMetrics } from "@/types/domain";
 
 interface KpiCardsProps {
@@ -12,36 +13,42 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
       label: "Tổng tiến độ",
       value: formatPercent(metrics.overallPercent),
       helper: `${metrics.completed}/${metrics.totalTasks} hoàn thành`,
+      icon: "chart" as IconName,
       emphasis: "primary"
     },
     {
       label: "Chưa báo cáo",
       value: String(metrics.unsubmittedWorkers),
       helper: "Thành viên cần nhắc",
+      icon: "people" as IconName,
       emphasis: metrics.unsubmittedWorkers > 0 ? "danger" : "success"
     },
     {
       label: "P1 chưa xong",
       value: String(metrics.priorityOpen),
       helper: "Ưu tiên cao",
+      icon: "bell" as IconName,
       emphasis: metrics.priorityOpen > 0 ? "danger" : "success"
     },
     {
       label: "Cancel",
       value: String(metrics.cancelled),
       helper: "WorkOrder đã báo hủy",
+      icon: "logout" as IconName,
       emphasis: metrics.cancelled > 0 ? "danger" : "neutral"
     },
     {
       label: "Quá hạn",
       value: String(metrics.overdue),
       helper: "Finish date đã qua",
+      icon: "calendar" as IconName,
       emphasis: metrics.overdue > 0 ? "danger" : "success"
     },
     {
       label: "Đang làm",
       value: String(metrics.inProgress),
       helper: "0 < % < 100",
+      icon: "list" as IconName,
       emphasis: "accent"
     }
   ];
@@ -50,12 +57,15 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
     <section className="grid grid-cols-2 gap-3 xl:grid-cols-6">
       {cards.map((card) => (
         <div
-          className={`min-h-28 rounded-[var(--radius-card)] border p-4 shadow-[var(--shadow-soft-sm)] sm:min-h-32 ${toneClass(card.emphasis)}`}
+          className={`metric-card min-h-28 rounded-[var(--radius-card)] p-4 sm:min-h-32 ${toneClass(card.emphasis)}`}
           key={card.label}
         >
-          <p className="text-xs font-semibold uppercase opacity-70">{card.label}</p>
+          <div className="flex min-w-0 items-center gap-2 pr-6">
+            <Icon name={card.icon} />
+            <p className="min-w-0 text-xs font-semibold uppercase leading-5 opacity-80 [overflow-wrap:anywhere]">{card.label}</p>
+          </div>
           <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">{card.value}</p>
-          <p className="mt-2 text-xs font-semibold leading-5 opacity-70">{card.helper}</p>
+          <p className="mt-2 text-xs font-semibold leading-5 text-[var(--text-muted)]">{card.helper}</p>
         </div>
       ))}
     </section>
@@ -64,19 +74,19 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
 
 const toneClass = (emphasis: string): string => {
   if (emphasis === "primary") {
-    return "border-[var(--primary-strong)] bg-[var(--primary-strong)] text-[var(--primary-contrast)]";
+    return "text-[var(--primary-strong)]";
   }
   if (emphasis === "danger") {
-    return "border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)]";
+    return "text-[var(--danger-strong)]";
   }
   if (emphasis === "warning") {
-    return "border-[var(--warning)] bg-[var(--warning-soft)] text-[var(--warning-strong)]";
+    return "text-[var(--warning-strong)]";
   }
   if (emphasis === "accent") {
-    return "border-[var(--accent)] bg-[var(--surface-warm)] text-[var(--accent-strong)]";
+    return "text-[var(--accent-strong)]";
   }
   if (emphasis === "success") {
-    return "border-[var(--success)] bg-[var(--success-soft)] text-[var(--success)]";
+    return "text-[var(--success-strong)]";
   }
-  return "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)]";
+  return "text-[var(--foreground)]";
 };

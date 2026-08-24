@@ -12,12 +12,12 @@ const kpiItems: ReadonlyArray<{
   readonly label: string;
   readonly className: string;
 }> = [
-  { key: "total", icon: "workorder", label: "Tổng hạng mục", className: "bg-[var(--surface)] text-[var(--foreground)]" },
-  { key: "p1Open", icon: "bell", label: "P1 chưa xong", className: "bg-[var(--danger-soft)] text-[var(--danger-strong)]" },
-  { key: "notStarted", icon: "list", label: "Chưa thực hiện", className: "bg-[var(--warning-soft)] text-[var(--warning-strong)]" },
-  { key: "inProgress", icon: "chart", label: "Đang thực hiện", className: "bg-[var(--info-soft)] text-[var(--info-strong)]" },
-  { key: "cancelled", icon: "logout", label: "Cancel", className: "bg-[var(--danger-soft)] text-[var(--danger-strong)]" },
-  { key: "completed", icon: "check", label: "Hoàn thành", className: "bg-[var(--success-soft)] text-[var(--success-strong)]" }
+  { key: "total", icon: "workorder", label: "Tổng hạng mục", className: "text-[var(--foreground)]" },
+  { key: "p1Open", icon: "bell", label: "P1 chưa xong", className: "text-[var(--danger-strong)]" },
+  { key: "notStarted", icon: "list", label: "Chưa thực hiện", className: "text-[var(--warning-strong)]" },
+  { key: "inProgress", icon: "chart", label: "Đang thực hiện", className: "text-[var(--info-strong)]" },
+  { key: "cancelled", icon: "logout", label: "Cancel", className: "text-[var(--danger-strong)]" },
+  { key: "completed", icon: "check", label: "Hoàn thành", className: "text-[var(--success-strong)]" }
 ];
 
 export const TaskKpiStrip = ({ kpis, onSelect }: TaskKpiStripProps): React.ReactElement => {

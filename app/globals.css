@@ -9,73 +9,73 @@
   /* Giao diện BDTT cũ: nền xám ấm, thẻ trắng, điểm nhấn lime/cam. */
   --background: #f2f2f0;
   --foreground: #111111;
-  --text-muted: #5f625a;
-  --text-soft: #74786f;
+  --text-muted: #565a50;
+  --text-soft: #666b60;
   --surface: #ffffff;
-  --surface-muted: #f7f7f4;
-  --surface-elevated: #f7f7f4;
+  --surface-muted: #f0f2eb;
+  --surface-elevated: #f3f4ef;
   --surface-glass: #ffffff;
-  --surface-warm: #fff0dc;
+  --surface-warm: #f5d5ad;
   --sidebar: #ffffff;
   --card: #ffffff;
-  --line: #ececea;
-  --line-soft: #f1f1ee;
-  --border: rgba(17, 17, 17, 0.07);
-  --border-strong: rgba(17, 17, 17, 0.12);
+  --line: #d8dcd2;
+  --line-soft: #e2e5dd;
+  --border: rgba(17, 17, 17, 0.12);
+  --border-strong: rgba(17, 17, 17, 0.2);
 
-  --primary: #9bd13b;
-  --primary-strong: #6fa51f;
+  --primary: #537f16;
+  --primary-strong: #466b12;
   --primary-contrast: #ffffff;
-  --primary-soft: #edf8d5;
-  --primary-pale: #f5fbe8;
+  --primary-soft: #d6e8a8;
+  --primary-pale: #e3efc4;
 
-  --accent: #f2a24a;
-  --accent-strong: #d76635;
-  --accent-soft: #fff0dc;
+  --accent: #ad481b;
+  --accent-strong: #9f3e17;
+  --accent-soft: #f5d5ad;
   --on-accent: #ffffff;
 
-  --warning: #b18416;
-  --warning-strong: #8a6510;
-  --warning-soft: #fff7c7;
+  --warning: #805605;
+  --warning-strong: #704b06;
+  --warning-soft: #f4e19a;
   --on-warning: #ffffff;
 
-  --danger: #df5b3a;
-  --danger-strong: #c2452a;
-  --danger-soft: #fde7e0;
+  --danger: #a6321d;
+  --danger-strong: #8f2918;
+  --danger-soft: #f4c9be;
   --on-danger: #ffffff;
 
-  --success: #6fa51f;
-  --success-strong: #5a8718;
-  --success-soft: #edf8d5;
+  --success: #466b12;
+  --success-strong: #3b5c0d;
+  --success-soft: #d6e8a8;
   --on-success: #ffffff;
 
-  --info: #4a90d9;
-  --info-strong: #2f6fb5;
-  --info-soft: #e7f0fb;
+  --info: #285f9c;
+  --info-strong: #204f84;
+  --info-soft: #cfe2f5;
   --on-info: #ffffff;
 
   --yellow: #e7e94a;
-  --yellow-strong: #c9b735;
-  --yellow-soft: #fff7c7;
-  --on-yellow: #171820;
+  --yellow-strong: #746400;
+  --yellow-soft: #f4e19a;
+  --on-yellow: #ffffff;
 
   --purple: #7c5cff;
   --purple-soft: #f0edff;
 
-  --gradient-primary: linear-gradient(135deg, #9bd13b, #6fa51f);
-  --gradient-panel: linear-gradient(135deg, #ffffff, #f7f7f4);
+  --gradient-primary: linear-gradient(135deg, #537f16, #3b5c0d);
+  --gradient-panel: linear-gradient(135deg, #ffffff, #f0f2eb);
 
-  --chart-primary: #6fa51f;
-  --chart-primary-soft: #dfeec4;
-  --chart-done-strong: #6fa51f;
-  --chart-remaining-strong: #b8b8af;
-  --chart-remaining-soft: #e8e8e2;
-  --chart-accent: #f2a24a;
-  --chart-warning: #b18416;
-  --chart-danger: #df5b3a;
-  --chart-info: #4a90d9;
-  --chart-muted: #a6a69e;
-  --chart-grid: rgba(17, 17, 17, 0.08);
+  --chart-primary: #466b12;
+  --chart-primary-soft: #c9dda0;
+  --chart-done-strong: #3b5c0d;
+  --chart-remaining-strong: #777b71;
+  --chart-remaining-soft: #d7dad2;
+  --chart-accent: #ad481b;
+  --chart-warning: #805605;
+  --chart-danger: #a6321d;
+  --chart-info: #285f9c;
+  --chart-muted: #72766d;
+  --chart-grid: rgba(17, 17, 17, 0.14);
 
   --shadow-soft-sm: 0 12px 30px rgb(16 24 40 / 0.05);
   --shadow-soft-md: 0 16px 36px -8px rgb(16 24 40 / 0.08);
@@ -176,7 +176,7 @@ html {
   color: var(--foreground);
   -webkit-text-size-adjust: 100%;
   min-height: 100%;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
 }
 
@@ -197,7 +197,7 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: auto;
   overscroll-behavior-y: auto;
 }
@@ -434,9 +434,10 @@ button:disabled {
 .floating-pill button span {
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .mobile-safe-text {
@@ -499,6 +500,35 @@ button:disabled {
 }
 
 @media (max-width: 640px) {
+  /* Mobile accessibility: browser zoom and Android/iOS text scaling can make
+     fixed/sticky chrome consume the viewport. Let the page header scroll away
+     and prefer complete text over ellipsis on operational content. */
+  .mobile-shell-header,
+  .mobile-topbar {
+    position: static;
+  }
+
+  .mobile-header-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+    align-items: center;
+  }
+
+  .truncate {
+    overflow: visible !important;
+    overflow-wrap: anywhere !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+  }
+
+  .line-clamp-2,
+  .line-clamp-3 {
+    display: block !important;
+    overflow: visible !important;
+    -webkit-box-orient: initial !important;
+    -webkit-line-clamp: unset !important;
+  }
+
   .worker-mobile-view {
     font-size: 1rem;
     line-height: 1.5;
@@ -533,6 +563,34 @@ button:disabled {
 }
 
 @media (max-width: 380px) {
+  :root {
+    --mobile-bottom-nav-height: 7rem;
+  }
+
+  .mobile-header-actions {
+    grid-template-columns: repeat(3, minmax(2.75rem, auto));
+    justify-content: end;
+  }
+
+  .mobile-header-actions > :first-child {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: none;
+  }
+
+  .mobile-reflow-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .mobile-reflow-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mobile-reflow-row > svg {
+    align-self: center;
+  }
+
   .mobile-chart-card {
     padding: 1rem;
   }

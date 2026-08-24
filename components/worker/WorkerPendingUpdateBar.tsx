@@ -75,7 +75,7 @@ export const WorkerPendingUpdateBar = ({
           </p>
         </div>
         {pendingCount > 0 ? (
-        <div className="grid min-w-0 grid-cols-[1fr_1.15fr] gap-2 sm:flex sm:shrink-0">
+        <div className="mobile-reflow-grid grid min-w-0 grid-cols-[1fr_1.15fr] gap-2 sm:flex sm:shrink-0">
           <Button
             disabled={isSubmitting}
             className="min-h-11 px-2"

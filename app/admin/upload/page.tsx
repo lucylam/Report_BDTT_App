@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Alert, Badge, Button, Icon, Widget, WidgetHeader } from "@/components/ui";
+import { Alert, AppLoadingState, Badge, Button, Icon, Widget, WidgetHeader } from "@/components/ui";
 import { OFFICIAL_DEMO_NOTE_PREFIX, isOfficialDemoProgress } from "@/lib/demoProgress";
 import { isDataAdminAccount } from "@/lib/permissions";
 import { useAppData } from "@/hooks/useAppData";
@@ -82,7 +82,13 @@ const AdminUploadPage = (): React.ReactElement => {
   }, [currentAccount, data, router]);
 
   if (!data || !currentAccount || currentAccount.mustChangePassword) {
-    return <main className="min-h-dvh p-6"><p className="text-sm text-[var(--text-muted)]">Đang kiểm tra đăng nhập...</p></main>;
+    return (
+      <AppLoadingState
+        description="Đang kiểm tra quyền truy cập và trạng thái đồng bộ dữ liệu."
+        icon="spreadsheet"
+        title="Đang chuẩn bị dữ liệu"
+      />
+    );
   }
   if (currentAccount.role !== "admin" || !isDataAdminAccount(currentAccount)) {
     return (
@@ -167,8 +173,8 @@ const AdminUploadPage = (): React.ReactElement => {
       {message ? <Alert tone="info">{message}</Alert> : null}
       <section className="grid items-start gap-3 xl:grid-cols-2">
         <Widget>
-          <WidgetHeader action={<Icon name="upload" />} subtitle="Chỉ khả dụng khi database chưa có task kế hoạch" title="1. Khởi tạo từ Google Sheet" />
-          <div className="mt-3 grid grid-cols-2 border-y border-[var(--line)]">
+          <WidgetHeader icon="upload" subtitle="Chỉ khả dụng khi database chưa có task kế hoạch" title="1. Khởi tạo từ Google Sheet" />
+          <div className="mt-3 grid grid-cols-2 gap-2">
             <Metric label="Task trong database" value={String(data.tasks.length)} />
             <Metric label="Khởi tạo gần nhất" value={formatTimestamp(data.planVersion?.importedAt)} />
           </div>
@@ -184,13 +190,13 @@ const AdminUploadPage = (): React.ReactElement => {
         </Widget>
 
         <Widget>
-          <WidgetHeader action={<Icon name="spreadsheet" />} subtitle="Server tạo snapshot A:AG từ database; không nhận dữ liệu từ trình duyệt" title="2. Đồng bộ đầu ra" />
-          <div className="mt-3 grid grid-cols-2 border-y border-[var(--line)]">
+          <WidgetHeader icon="spreadsheet" tone="info" subtitle="Server tạo snapshot A:AG từ database; không nhận dữ liệu từ trình duyệt" title="2. Đồng bộ đầu ra" />
+          <div className="mt-3 grid grid-cols-2 gap-2">
             <Metric label="Trạng thái" value={sync ? syncStatusLabel(sync.status) : "Chưa kiểm tra"} />
             <Metric label="Lần đồng bộ cuối" value={formatTimestamp(sync?.lastSyncedAt)} />
           </div>
           <div className="mt-3 flex flex-wrap justify-end gap-2">
-            <a className="focus-ring inline-flex min-h-11 items-center gap-2 border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] no-underline" href="/api/exports/tasks"><Icon name="download" /> Xuất Excel</a>
+            <a className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] no-underline hover:bg-[var(--surface-muted)]" href="/api/exports/tasks"><Icon name="download" /> Xuất Excel</a>
             <Button disabled={data.tasks.length === 0 || busy !== ""} onClick={() => void loadSync()} variant="secondary">
               {busy === "sync-preview" ? "Đang so sánh..." : "Xem thay đổi"}
             </Button>
@@ -203,7 +209,7 @@ const AdminUploadPage = (): React.ReactElement => {
       </section>
 
       <Widget>
-        <WidgetHeader subtitle={`Marker an toàn ${OFFICIAL_DEMO_NOTE_PREFIX}; không tác động task thật`} title="Dữ liệu demo trình bày" />
+        <WidgetHeader icon="database" tone="warning" subtitle={`Marker an toàn ${OFFICIAL_DEMO_NOTE_PREFIX}; không tác động task thật`} title="Dữ liệu demo trình bày" />
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Metric label="Record demo hiện có" value={String(demoCount)} />
           <div className="flex flex-wrap gap-2">
@@ -228,7 +234,13 @@ const BootstrapPanel = ({ preview }: { readonly preview: BootstrapPreview }): Re
         <Metric label="Key trùng Tag + WO" value={String(preview.duplicateKeys?.length ?? 0)} />
         <Metric label="Resource chưa map" value={String(preview.unmappedResourceNames?.length ?? 0)} />
         <Metric label="Cột thiếu" value={String(preview.missingColumns?.length ?? 0)} />
-        <Metric label="Dòng thiếu dữ liệu" value={String(preview.incompleteRows?.length ?? 0)} />
+        <Metric label="Dòng thiếu trường bắt buộc" value={String(preview.incompleteRows?.length ?? 0)} />
+        {preview.incompleteRows?.length ? (
+          <p className="text-sm font-medium text-[var(--danger-strong)] sm:col-span-2 xl:col-span-4">
+            Cần bổ sung tại dòng: {preview.incompleteRows.slice(0, 20).join(", ")}
+            {preview.incompleteRows.length > 20 ? "…" : ""}
+          </p>
+        ) : null}
         {preview.progressModeHeaderMissing ? (
           <p className="text-sm text-[var(--text-muted)] sm:col-span-2 xl:col-span-4">
             Sheet cũ chưa có tiêu đề AG. Hệ thống sẽ mặc định các task là 0-100 và tạo cột AG khi đồng bộ đầu ra.
@@ -247,7 +259,7 @@ const BootstrapPanel = ({ preview }: { readonly preview: BootstrapPreview }): Re
 const SyncPanel = ({ preview }: { readonly preview: SyncPreview }): React.ReactElement => (
   <div className="mt-3 border-t border-[var(--line)] pt-3">
     <div className="flex flex-wrap items-center gap-2"><Badge tone={preview.status === "synced" ? "success" : preview.status === "failed" ? "danger" : "warning"}>{syncStatusLabel(preview.status)}</Badge><span className="font-mono text-sm">{preview.range}</span></div>
-    <div className="mt-3 grid grid-cols-2 gap-px bg-[var(--line)] sm:grid-cols-4">
+    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
       <Metric label="Task mới" value={String(preview.stats.newTasks)} />
       <Metric label="Task thay đổi" value={String(preview.stats.changedTasks)} />
       <Metric label="Đổi phân công" value={String(preview.stats.changedAssignments)} />
@@ -262,7 +274,7 @@ const SyncPanel = ({ preview }: { readonly preview: SyncPreview }): React.ReactE
 );
 
 const Metric = ({ label, value }: { readonly label: string; readonly value: string }): React.ReactElement => (
-  <div className="min-w-0 bg-[var(--surface-muted)] px-3 py-2">
+  <div className="metric-card min-w-0 rounded-[var(--radius-card)] px-3 py-2">
     <p className="text-sm text-[var(--text-muted)]">{label}</p>
     <p className="mt-1 break-words text-base font-semibold tabular-nums">{value}</p>
   </div>

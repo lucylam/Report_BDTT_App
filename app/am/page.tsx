@@ -11,6 +11,7 @@ import { ModuleSwitcher } from "@/components/ModuleSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   Alert,
+  AppLoadingState,
   Badge,
   Button,
   Field,
@@ -1143,15 +1144,17 @@ const AmPage = (): React.ReactElement => {
 
   if (!data || !currentAccount || currentAccount.mustChangePassword) {
     return (
-      <main className="min-h-dvh p-4">
-        <p className="text-sm font-medium text-[var(--text-muted)]">Đang kiểm tra đăng nhập...</p>
-      </main>
+      <AppLoadingState
+        description="Đang kiểm tra phiên đăng nhập và dữ liệu tổ AM."
+        icon="settings"
+        title="Đang chuẩn bị công tác AM"
+      />
     );
   }
 
   return (
-    <main className="min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 py-2 sm:px-3 sm:py-3 lg:p-3 2xl:p-4">
-      <div className="app-shell mx-auto grid min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[22px] lg:min-h-[calc(100dvh-1.5rem)] lg:grid-cols-[218px_minmax(0,1fr)] 2xl:min-h-[calc(100dvh-2rem)]">
+    <main className="min-h-dvh w-full max-w-[100vw] overflow-x-auto px-2 py-2 sm:px-3 sm:py-3 lg:p-3 2xl:p-4">
+      <div className="app-shell mx-auto grid min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)] lg:min-h-[calc(100dvh-1.5rem)] lg:grid-cols-[218px_minmax(0,1fr)] 2xl:min-h-[calc(100dvh-2rem)]">
         <aside className="hidden border-r border-[var(--line)] bg-[var(--surface)] p-4 lg:flex lg:flex-col">
           <Link className="focus-ring rounded-[var(--radius-card)] p-1" href="/">
             <CompanyBrand variant="sidebar" />
@@ -1170,7 +1173,7 @@ const AmPage = (): React.ReactElement => {
         </aside>
 
         <section className="min-w-0">
-          <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)]/96 px-4 py-4 backdrop-blur-xl lg:static lg:border-b-0 lg:bg-transparent lg:px-5 lg:py-5 lg:backdrop-blur-0">
+          <header className="mobile-shell-header sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)]/96 px-4 py-4 backdrop-blur-xl lg:static lg:border-b-0 lg:bg-transparent lg:px-5 lg:py-5 lg:backdrop-blur-0">
             <ModuleSwitcher activeModule="am" bdttHref={bdttHref} className="mb-3 lg:hidden" compact />
             <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
               <PageHeader
@@ -1180,7 +1183,7 @@ const AmPage = (): React.ReactElement => {
                 title="Giao nhiệm vụ và báo cáo AM"
               />
 
-              <div className="flex min-w-0 items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <GlobalNotifications />
                 <ThemeToggle />
                 <AccountMenu
@@ -1243,6 +1246,7 @@ const AmPage = (): React.ReactElement => {
             {currentView === "assign" && am.permissions.canAssign ? (
               <Widget>
                 <WidgetHeader
+                  icon="list"
                   subtitle="Tạo việc từ nội dung đang giao qua Zalo, sau đó theo dõi ảnh bằng chứng ngay trong web."
                   title="Giao nhiệm vụ AM"
                 />
@@ -1311,6 +1315,8 @@ const AmPage = (): React.ReactElement => {
             {currentView === "team" && am.permissions.canManageTeam ? (
               <Widget>
                 <WidgetHeader
+                  icon="people"
+                  tone="info"
                   subtitle="Danh sách cố định do Tổ trưởng AM quản lý. Cần phân công lại task đang mở trước khi rút một thành viên."
                   title="Thiết lập thành viên Tổ AM"
                 />

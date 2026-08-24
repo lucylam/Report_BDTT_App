@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CancelReasonDialog } from "@/components/worker/CancelReasonDialog";
 import { WorkerDesktopView } from "@/components/worker/WorkerDesktopView";
 import { WorkerMobileView } from "@/components/worker/WorkerMobileView";
+import { AppLoadingState } from "@/components/ui";
 import {
   isSameProgressUpdate,
   isSameWorkerProgressUpdate,
@@ -39,6 +40,7 @@ const matchesFilter = (
   percent: ProgressPercent,
   filter: WorkerFilter
 ): boolean => {
+  if (filter === "all") return true;
   if (filter === "cancelled") return task.isCancelled;
   if (task.isCancelled) return false;
   if (filter === "today") {
@@ -48,7 +50,7 @@ const matchesFilter = (
   if (filter === "progress") return percent > 0 && percent < 100;
   if (filter === "done") return percent === 100;
   if (filter === "p1") return task.priority === 1 && percent < 100;
-  return true;
+  return false;
 };
 
 interface WorkerProgressPayload {
@@ -377,9 +379,11 @@ const WorkerPage = (): React.ReactElement => {
 
   if (!data || !currentAccount || !worker || currentAccount.mustChangePassword) {
     return (
-      <main className="min-h-dvh p-4">
-        <p className="text-sm text-[var(--text-muted)]">Đang chuyển đến đăng nhập...</p>
-      </main>
+      <AppLoadingState
+        description="Đang đồng bộ danh sách công việc và tiến độ gần nhất của bạn."
+        icon="list"
+        title="Đang mở công việc"
+      />
     );
   }
 

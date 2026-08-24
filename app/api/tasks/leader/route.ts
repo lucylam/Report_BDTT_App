@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createProfilesFromAccounts, createSeedAccounts, getLoginUsername } from "@/lib/accounts";
 import { getAuthenticatedAccount, isUuid } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
+import { getMissingLeaderTaskCreateFields } from "@/lib/leaderTaskCreate";
 import {
   canManageBdttTasks,
   canViewProfile,
@@ -229,8 +230,30 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     const taskInput = body.task;
     const taskName = normalizeText(taskInput?.taskName);
     const tagname = normalizeText(taskInput?.tagname);
+    const wo = normalizeText(taskInput?.wo);
+    const donVi = normalizeText(taskInput?.donVi);
+    const section = normalizeText(taskInput?.section);
     const startDate = normalizeText(taskInput?.startDate);
     const finishDate = normalizeText(taskInput?.finishDate);
+    const missingFields = getMissingLeaderTaskCreateFields({
+      taskName,
+      tagname,
+      wo,
+      donVi,
+      section,
+      startDate,
+      finishDate,
+      priority: taskInput?.priority,
+      progressMode: taskInput?.progressMode,
+      assigneeUsername: body.assigneeUsername,
+      reporterUsername: body.reporterUsername
+    });
+    if (missingFields.length > 0) {
+      return toErrorResponse(
+        `Cần nhập hoặc chọn đầy đủ: ${missingFields.join(", ")}.`,
+        400
+      );
+    }
     if (taskName.length < 3 || tagname.length < 2) {
       return toErrorResponse("Task phát sinh cần có tên công việc và tagname.", 400);
     }
@@ -240,10 +263,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     if (!canManageMember(auth.account, assignee) || !canManageMember(auth.account, reporter)) {
       return toErrorResponse("Không thể giao task cho người ngoài phạm vi phụ trách.", 403);
     }
-    if ((startDate && !isDateText(startDate)) || (finishDate && !isDateText(finishDate))) {
+    if (!isDateText(startDate) || !isDateText(finishDate)) {
       return toErrorResponse("Ngày bắt đầu hoặc ngày kết thúc không hợp lệ.", 400);
     }
-    if (startDate && finishDate && finishDate < startDate) {
+    if (finishDate < startDate) {
       return toErrorResponse("Ngày kết thúc phải từ ngày bắt đầu trở đi.", 400);
     }
 
@@ -254,28 +277,32 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       .limit(1)
       .maybeSingle();
     const nextStt = Number((latestTask as { stt?: number | null } | null)?.stt ?? 0) + 1;
-    const priority = isPriority(taskInput?.priority) ? taskInput.priority : 2;
+    const priority = taskInput?.priority;
+    const progressMode = taskInput?.progressMode;
+    if (!isPriority(priority) || (progressMode !== "continuous" && progressMode !== "binary")) {
+      return toErrorResponse("Mức ưu tiên hoặc chế độ tiến độ không hợp lệ.", 400);
+    }
     const now = new Date().toISOString();
     const { data: insertedTask, error } = await supabase
       .from("tasks")
       .insert({
         stt: nextStt,
-        wo: normalizeText(taskInput?.wo),
+        wo,
         tagname,
         task_name: taskName,
         nhom: normalizeText(taskInput?.nhom) || assignee.profile.subgroup || assignee.profile.orgGroup,
-        don_vi: normalizeText(taskInput?.donVi),
-        section: normalizeText(taskInput?.section),
+        don_vi: donVi,
+        section,
         duration: normalizeText(taskInput?.duration),
         priority,
-        start_date: startDate || null,
-        finish_date: finishDate || null,
+        start_date: startDate,
+        finish_date: finishDate,
         resource_name: assignee.db.resource_name || assignee.account.resourceName,
         nhom_truong: auth.account.fullName,
         assigned_to: assignee.db.id,
         reporter_id: reporter.db.id,
         task_source: "ad_hoc",
-        progress_mode: taskInput?.progressMode === "binary" ? "binary" : "continuous",
+        progress_mode: progressMode,
         created_by: auth.profile.id,
         updated_by: auth.profile.id,
         is_cancelled: false,

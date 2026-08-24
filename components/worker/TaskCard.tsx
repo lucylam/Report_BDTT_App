@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, ProgressBar } from "@/components/ui";
+import { Alert, Badge, Icon, ProgressBar } from "@/components/ui";
 import type { ProgressTone } from "@/components/ui";
 import { ProgressEditor } from "@/components/worker/ProgressEditor";
 import type { SaveState, WorkerProgressUpdate } from "@/components/worker/types";
@@ -78,14 +78,14 @@ export const TaskCard = ({
 
       <div className="p-3">
         {task.isCancelled ? (
-          <div className="border-l-2 border-[var(--danger)] bg-[var(--danger-soft)] px-3 py-2.5 text-sm font-semibold text-[var(--danger)]">
+          <Alert tone="danger">
             Hạng mục này đã được hủy và đã báo cho admin.
             {task.cancelReason ? (
               <span className="mt-2 block font-medium text-[var(--text-muted)]">
                 Lý do: {task.cancelReason}
               </span>
             ) : null}
-          </div>
+          </Alert>
         ) : (
           <>
             <ProgressEditor
@@ -105,10 +105,11 @@ export const TaskCard = ({
             </button>
             {isExpanded ? (
               <button
-                className="focus-ring pressable mt-2 min-h-12 w-full rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)]"
+                className="focus-ring pressable mt-2 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-field)] border border-[var(--danger)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--danger)] hover:bg-[var(--danger-soft)]"
                 onClick={onCancel}
                 type="button"
               >
+                <Icon name="close" />
                 Hủy hạng mục
               </button>
             ) : null}

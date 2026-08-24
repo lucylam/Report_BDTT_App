@@ -128,6 +128,7 @@ export const TasksTable = ({
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <WidgetHeader
             className="mb-0"
+            icon="list"
             subtitle={`Hiển thị ${rows.length}/${filteredRows.length} dòng phù hợp`}
             title="Danh sách hạng mục"
           />

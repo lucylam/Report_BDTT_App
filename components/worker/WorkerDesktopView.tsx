@@ -9,7 +9,7 @@ import { GlobalNotifications } from "@/components/GlobalNotifications";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { ModuleSwitcher } from "@/components/ModuleSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Icon, PageHeader, Widget, WidgetHeader, type IconName } from "@/components/ui";
+import { Alert, Icon, PageHeader, Widget, WidgetHeader, type IconName } from "@/components/ui";
 import { SummaryPills } from "@/components/worker/SummaryPills";
 import {
   DailyCompletionChart,
@@ -192,7 +192,7 @@ export const WorkerDesktopView = ({
 
   return (
     <main className="hidden min-h-dvh w-full max-w-[100vw] overflow-x-hidden p-3 lg:block 2xl:p-4">
-      <div className="app-shell mx-auto grid min-h-[calc(100dvh-1.5rem)] w-full max-w-none grid-cols-[218px_minmax(0,1fr)] overflow-hidden rounded-[22px] 2xl:min-h-[calc(100dvh-2rem)]">
+      <div className="app-shell mx-auto grid min-h-[calc(100dvh-1.5rem)] w-full max-w-none grid-cols-[218px_minmax(0,1fr)] overflow-hidden rounded-[var(--radius-panel)] 2xl:min-h-[calc(100dvh-2rem)]">
         <aside className="flex border-r border-[var(--line)] bg-[var(--surface)] p-4">
           <div className="flex min-h-full w-full flex-col">
             <Link
@@ -402,12 +402,52 @@ const TasksWorkspace = ({
 }): React.ReactElement => {
   return (
     <section className="grid min-w-0 gap-3">
-      <section className="grid overflow-hidden border border-[var(--line)] sm:grid-cols-2 xl:grid-cols-5">
-        <WorkspaceMetric label="Tổng hạng mục" value={allTasks.length} tone="neutral" />
-        <WorkspaceMetric label="Chưa làm" value={notStartedCount} tone="info" />
-        <WorkspaceMetric label="Đang làm" value={inProgressCount} tone="warning" />
-        <WorkspaceMetric label="Hoàn thành" value={completedCount} tone="success" />
-        <WorkspaceMetric label="P1 chưa xong" value={p1Open} tone="danger" />
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+        <WorkspaceMetric
+          filter="all"
+          icon="workorder"
+          label="Tổng hạng mục"
+          onFilterChange={onFilterChange}
+          selected={filter === "all"}
+          tone="neutral"
+          value={allTasks.length}
+        />
+        <WorkspaceMetric
+          filter="todo"
+          icon="list"
+          label="Chưa làm"
+          onFilterChange={onFilterChange}
+          selected={filter === "todo"}
+          tone="info"
+          value={notStartedCount}
+        />
+        <WorkspaceMetric
+          filter="progress"
+          icon="chart"
+          label="Đang làm"
+          onFilterChange={onFilterChange}
+          selected={filter === "progress"}
+          tone="warning"
+          value={inProgressCount}
+        />
+        <WorkspaceMetric
+          filter="done"
+          icon="check"
+          label="Hoàn thành"
+          onFilterChange={onFilterChange}
+          selected={filter === "done"}
+          tone="success"
+          value={completedCount}
+        />
+        <WorkspaceMetric
+          filter="p1"
+          icon="bell"
+          label="P1 chưa xong"
+          onFilterChange={onFilterChange}
+          selected={filter === "p1"}
+          tone="danger"
+          value={p1Open}
+        />
       </section>
 
       <WorkerPendingUpdateBar
@@ -423,7 +463,7 @@ const TasksWorkspace = ({
 
       <Widget>
         <WidgetHeader
-          action={<Icon className="text-[var(--primary-strong)]" name="search" />}
+          icon="search"
           subtitle="Tìm theo tag, WorkOrder, hạng mục hoặc khu vực"
           title="Bộ lọc công việc"
         />
@@ -445,6 +485,7 @@ const TasksWorkspace = ({
       <section className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Widget className="min-w-0">
           <WidgetHeader
+            icon="list"
             subtitle={`Hiển thị ${filteredTasks.length}/${allTasks.length} dòng phù hợp`}
             title="Danh sách công việc"
           />
@@ -492,11 +533,11 @@ const OverviewWorkspace = ({
   readonly percents: readonly ProgressPercent[];
 }): React.ReactElement => (
   <section className="grid gap-3">
-    <section className="grid overflow-hidden border border-[var(--line)] sm:grid-cols-2 xl:grid-cols-4">
-      <WorkspaceMetric label="Tiến độ trung bình" value={`${overallPercent}%`} tone="success" />
-      <WorkspaceMetric label="Hoàn thành" value={completedCount} tone="success" />
-      <WorkspaceMetric label="Đang làm" value={inProgressCount} tone="warning" />
-      <WorkspaceMetric label="Chưa làm" value={notStartedCount} tone="info" />
+    <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <WorkspaceMetric icon="chart" label="Tiến độ trung bình" value={`${overallPercent}%`} tone="success" />
+      <WorkspaceMetric icon="check" label="Hoàn thành" value={completedCount} tone="success" />
+      <WorkspaceMetric icon="chart" label="Đang làm" value={inProgressCount} tone="warning" />
+      <WorkspaceMetric icon="list" label="Chưa làm" value={notStartedCount} tone="info" />
     </section>
 
     <section className="grid gap-3 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -512,13 +553,13 @@ const OverviewWorkspace = ({
 
     <section className="grid gap-3 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
       <Widget>
-        <WidgetHeader title="Điểm cần chú ý" subtitle="Theo ngày báo cáo hiện tại" />
-        <p className="text-sm leading-6 text-[var(--text-muted)]">
+        <WidgetHeader icon="bell" tone="warning" title="Điểm cần chú ý" subtitle="Theo ngày báo cáo hiện tại" />
+        <Alert tone={p1Open > 0 ? "warning" : "success"}>
           Hạng mục P1 chưa xong: <strong>{p1Open}</strong>. Dữ liệu tính theo ngày báo cáo hiện tại.
-        </p>
+        </Alert>
       </Widget>
       <Widget>
-        <WidgetHeader title="Cơ cấu tiến độ" subtitle={`${activeTasks.length} hạng mục chưa cancel`} />
+        <WidgetHeader icon="chart" tone="info" title="Cơ cấu tiến độ" subtitle={`${activeTasks.length} hạng mục chưa cancel`} />
         <SummaryPills percents={percents} />
       </Widget>
     </section>
@@ -537,6 +578,7 @@ const HistoryWorkspace = ({
   <section className="grid gap-3">
     <Widget>
       <WidgetHeader
+        icon="history"
         subtitle={`${historyRows.reduce((total, row) => total + row.updates.length, 0)} cập nhật`}
         title="Lịch sử 7 ngày gần nhất"
       />
@@ -606,28 +648,70 @@ const DesktopNavButton = ({
 );
 
 const WorkspaceMetric = ({
+  filter,
+  icon,
   label,
+  onFilterChange,
+  selected = false,
   tone,
   value
 }: {
+  readonly filter?: WorkerFilter;
+  readonly icon: IconName;
   readonly label: string;
+  readonly onFilterChange?: (filter: WorkerFilter) => void;
+  readonly selected?: boolean;
   readonly tone: "neutral" | "info" | "success" | "warning" | "danger";
   readonly value: number | string;
 }): React.ReactElement => {
   const colorClass: Record<typeof tone, string> = {
-    neutral: "bg-[var(--surface)] text-[var(--foreground)]",
-    info: "bg-[var(--info-soft)] text-[var(--info-strong)]",
-    success: "bg-[var(--success-soft)] text-[var(--success-strong)]",
-    warning: "bg-[var(--warning-soft)] text-[var(--warning-strong)]",
-    danger: "bg-[var(--danger-soft)] text-[var(--danger-strong)]"
+    neutral: "text-[var(--foreground)]",
+    info: "text-[var(--info-strong)]",
+    success: "text-[var(--success-strong)]",
+    warning: "text-[var(--warning-strong)]",
+    danger: "text-[var(--danger-strong)]"
   };
+  const selectedSurfaceClass: Record<typeof tone, string> = {
+    neutral: "!bg-[var(--surface-muted)]",
+    info: "!bg-[var(--info-soft)]",
+    success: "!bg-[var(--success-soft)]",
+    warning: "!bg-[var(--warning-soft)]",
+    danger: "!bg-[var(--danger-soft)]"
+  };
+  const content = (
+    <>
+      <div className="flex min-w-0 items-center gap-2 pr-6">
+        <Icon name={icon} />
+        <span className="min-w-0 text-xs font-semibold uppercase leading-5 text-current opacity-80 [overflow-wrap:anywhere]">
+          {label}
+        </span>
+      </div>
+      <span className="mt-2 block text-2xl font-semibold tabular-nums text-current">{value}</span>
+      {selected ? <span className="sr-only">Bộ lọc đang được chọn</span> : null}
+    </>
+  );
+
+  if (filter && onFilterChange) {
+    return (
+      <button
+        aria-label={`Lọc theo ${label}: ${value} hạng mục`}
+        aria-pressed={selected}
+        className={`focus-ring pressable metric-card min-w-0 cursor-pointer rounded-[var(--radius-card)] p-4 text-left transition-colors motion-reduce:transition-none ${colorClass[tone]} ${
+          selected
+            ? `!border-current ring-2 ring-current ring-offset-2 ring-offset-[var(--background)] ${selectedSurfaceClass[tone]}`
+            : "hover:border-current hover:bg-[var(--surface-muted)]"
+        }`}
+        onClick={() => onFilterChange(filter)}
+        type="button"
+      >
+        {content}
+      </button>
+    );
+  }
 
   return (
-    <article className={`border-b border-r border-[var(--line)] px-3 py-2.5 ${colorClass[tone]}`}>
-      <p className="text-xs font-semibold uppercase text-current opacity-80">
-        {label}
-      </p>
-      <p className="mt-1 text-xl font-semibold tabular-nums text-current">{value}</p>
+    <article className={`metric-card min-w-0 rounded-[var(--radius-card)] p-4 ${colorClass[tone]}`}>
+      {content}
     </article>
   );
 };

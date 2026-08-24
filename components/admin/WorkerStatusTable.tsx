@@ -210,47 +210,51 @@ export const WorkerStatusTable = ({
 
   return (
     <section className="grid min-w-0 gap-4">
-      <section className="grid overflow-hidden border border-[var(--line)] sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <PersonnelMetric icon="people" label="Nhân sự" tone="info" value={filteredRows.length} />
         <PersonnelMetric icon="check" label="Đã gửi" tone="success" value={submittedCount} />
         <PersonnelMetric icon="bell" label="Còn thiếu" tone="danger" value={missingCount} />
         <PersonnelMetric icon="chart" label="Tiến độ TB" suffix="%" tone="warning" value={averagePercent} />
       </section>
 
-      <Widget>
-        <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <WidgetHeader
-            className="mb-0"
-            subtitle={`${filteredRows.length}/${rows.length} nhân sự · ${getDateLabel(dateFilter)}`}
-            title="Theo dõi báo cáo nhân sự"
-          />
-          <div className="grid min-w-0 gap-2 sm:grid-cols-2 lg:w-[420px] lg:max-w-[42vw]">
-            <label>
-              <span className="sr-only">Tìm nhân sự</span>
-              <Input
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Tìm tên, nhóm, username..."
-                value={query}
-              />
-            </label>
-            <label>
-              <span className="sr-only">Lọc trạng thái gửi</span>
-              <Select
-                className="text-sm"
-                onChange={(event) => setStatus(event.target.value as SubmittedFilter)}
-                value={status}
-              >
-                <option value="all">Tất cả trạng thái</option>
-                <option value="submitted">Đã gửi đủ</option>
-                <option value="missing">Còn thiếu</option>
-              </Select>
-            </label>
-          </div>
-        </div>
+      <Widget className="p-4">
+        <WidgetHeader
+          icon="people"
+          tone="info"
+          subtitle={`${filteredRows.length}/${rows.length} nhân sự · ${getDateLabel(dateFilter)}`}
+          title="Theo dõi báo cáo nhân sự"
+        />
 
-        <div className="mt-4 grid gap-2 sm:max-w-xs">
-          <label>
-            <span className="mb-1 block text-xs font-medium uppercase text-[var(--text-soft)]">
+        <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-[minmax(280px,1.5fr)_minmax(180px,0.7fr)_minmax(180px,0.7fr)]">
+          <label className="min-w-0 md:col-span-2 xl:col-span-1">
+            <span className="mb-2 block text-xs font-semibold uppercase text-[var(--primary-strong)]">
+              Tìm nhân sự
+            </span>
+            <Input
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Tên, nhóm hoặc username"
+              type="search"
+              value={query}
+            />
+          </label>
+
+          <label className="min-w-0">
+            <span className="mb-2 block text-xs font-semibold uppercase text-[var(--text-soft)]">
+              Trạng thái
+            </span>
+            <Select
+              className="text-sm"
+              onChange={(event) => setStatus(event.target.value as SubmittedFilter)}
+              value={status}
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="submitted">Đã gửi đủ</option>
+              <option value="missing">Còn thiếu</option>
+            </Select>
+          </label>
+
+          <label className="min-w-0">
+            <span className="mb-2 block text-xs font-semibold uppercase text-[var(--text-soft)]">
               Ngày báo cáo
             </span>
             <Select
@@ -323,16 +327,18 @@ const PersonnelMetric = ({
   readonly tone: "danger" | "info" | "success" | "warning";
   readonly value: number;
 }): React.ReactElement => (
-  <div className={`border-b border-r border-[var(--line)] px-3 py-2.5 ${toneText(tone)} ${toneSurface(tone)}`}>
-    <div className="flex items-center gap-2">
+  <article className={`metric-card min-h-24 rounded-[var(--radius-card)] p-4 ${toneText(tone)}`}>
+    <div className="flex min-w-0 items-center gap-2 pr-6">
       <Icon name={icon} />
-      <p className="text-[11px] font-medium uppercase text-[var(--text-soft)]">{label}</p>
+      <p className="min-w-0 break-words text-xs font-semibold uppercase leading-5 text-current opacity-80">
+        {label}
+      </p>
     </div>
-    <p className="mt-1 text-xl font-semibold tabular-nums">
+    <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight">
       {value}
       {suffix}
     </p>
-  </div>
+  </article>
 );
 
 const WorkerStatusRow = ({
@@ -395,6 +401,8 @@ const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.R
     return (
       <Widget>
         <WidgetHeader
+          icon="account"
+          tone="info"
           subtitle="Chọn một nhân sự để xem lịch gửi báo cáo và danh sách hạng mục."
           title="Chi tiết nhân sự"
         />
@@ -423,6 +431,7 @@ const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.R
       <div className="mt-5">
         <WidgetHeader
           className="mb-2"
+          icon="calendar"
           subtitle={`${row.submittedDays}/${row.totalDays} ngày có cập nhật`}
           title="Lịch gửi báo cáo"
         />
@@ -445,6 +454,8 @@ const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.R
       <div className="mt-5">
         <WidgetHeader
           className="mb-2"
+          icon="list"
+          tone="info"
           subtitle="Sắp xếp theo tiến độ cao đến thấp"
           title="Hạng mục được giao"
         />
@@ -750,11 +761,4 @@ const toneText = (tone: "danger" | "info" | "success" | "warning"): string => {
   if (tone === "warning") return "text-[var(--warning-strong)]";
   if (tone === "danger") return "text-[var(--danger-strong)]";
   return "text-[var(--info-strong)]";
-};
-
-const toneSurface = (tone: "danger" | "info" | "success" | "warning"): string => {
-  if (tone === "success") return "bg-[var(--success-soft)]";
-  if (tone === "warning") return "bg-[var(--warning-soft)]";
-  if (tone === "danger") return "bg-[var(--danger-soft)]";
-  return "bg-[var(--info-soft)]";
 };

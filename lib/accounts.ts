@@ -1,5 +1,11 @@
-import { ORG_2026_SEEDS } from "@/lib/org2026";
-import type { AuthAccount, Profile } from "@/types/domain";
+import {
+  ORG_2026_SEEDS,
+  deriveOrgMetadata,
+  getUserRoleForOrgRole,
+  isOrgRole
+} from "@/lib/org2026";
+import { isDataAdminAccount } from "@/lib/permissions";
+import type { AuthAccount, Profile, UserRole } from "@/types/domain";
 
 export const DEFAULT_INITIAL_PASSWORD = "123456";
 
@@ -55,6 +61,57 @@ export const applyAccountPasswordRequirements = (
     return mustChangePassword === undefined
       ? account
       : { ...account, mustChangePassword };
+  });
+};
+
+interface AccountProfileOverride {
+  readonly username: string | null;
+  readonly role?: UserRole | null;
+  readonly org_group?: string | null;
+  readonly subgroup?: string | null;
+  readonly org_role?: string | null;
+}
+
+export const applyAccountProfileOverrides = (
+  accounts: readonly AuthAccount[],
+  overrides: readonly AccountProfileOverride[]
+): AuthAccount[] => {
+  const overrideByUsername = new Map(
+    overrides
+      .filter((item): item is AccountProfileOverride & { readonly username: string } =>
+        Boolean(item.username)
+      )
+      .map((item) => [getLoginUsername(item.username), item])
+  );
+
+  return accounts.map((account) => {
+    const override = overrideByUsername.get(getLoginUsername(account.username));
+    if (!override) return account;
+
+    const hasOrgOverride =
+      Boolean(override.org_group?.trim()) && isOrgRole(override.org_role);
+    if (!hasOrgOverride) {
+      return override.role ? { ...account, role: override.role } : account;
+    }
+
+    const orgGroup = override.org_group?.trim() ?? account.orgGroup;
+    const subgroup = override.subgroup?.trim() ?? "";
+    const orgRole = override.org_role;
+    const metadata = deriveOrgMetadata(
+      account.username,
+      orgRole,
+      orgGroup,
+      subgroup
+    );
+
+    return {
+      ...account,
+      role: isDataAdminAccount(account) ? "admin" : getUserRoleForOrgRole(orgRole),
+      orgGroup,
+      subgroup,
+      orgRole,
+      ...metadata
+    };
   });
 };
 

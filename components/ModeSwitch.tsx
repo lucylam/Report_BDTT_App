@@ -39,7 +39,7 @@ export const ModeSwitch = ({
           )}
         >
           <Icon className="h-4 w-4 shrink-0" name="list" />
-          <span className="min-w-0 truncate">Workspace</span>
+          <span className="mobile-button-label min-w-0">Workspace</span>
         </span>
         <span
           className={cn(
@@ -48,7 +48,7 @@ export const ModeSwitch = ({
           )}
         >
           <Icon className="h-4 w-4 shrink-0" name="dashboard" />
-          Giám sát
+          <span className="mobile-button-label min-w-0">Giám sát</span>
         </span>
       </span>
     </Link>

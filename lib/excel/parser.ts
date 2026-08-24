@@ -1,26 +1,23 @@
 import * as XLSX from "xlsx";
 import { DEFAULT_REPORT_DATE } from "@/lib/date";
+import { DATA_BASE_HEADERS } from "@/lib/excel/exporter";
 import type { ImportPreview, Profile, Task } from "@/types/domain";
 
 const REQUIRED_HEADERS = [
-  "Stt",
   "Task Name",
   "WO",
   "Tagname",
   "Nhóm",
-  "Đơn vị chủ quản",
-  "Section",
   "Duration",
-  "Priority",
   "Start",
   "Finish",
   "Resource Names",
   "Nhóm trưởng"
 ] as const;
 
-type RequiredHeader = (typeof REQUIRED_HEADERS)[number];
+type DataHeader = (typeof DATA_BASE_HEADERS)[number];
 
-type DataRow = Record<RequiredHeader, unknown>;
+type DataRow = Record<DataHeader, unknown>;
 
 const normalizeHeader = (value: string): string => value.trim().toLowerCase();
 

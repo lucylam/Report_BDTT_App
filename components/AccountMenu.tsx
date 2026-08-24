@@ -34,7 +34,7 @@ export const AccountMenu = ({
         onClick={() => setIsOpen(true)}
         type="button"
       >
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-sm font-semibold text-white">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-sm font-semibold text-[var(--on-accent)]">
           {getInitials(account.fullName)}
         </span>
         <span className="hidden min-w-0 sm:block">

@@ -1,5 +1,6 @@
 export { Alert } from "./Alert";
 export type { AlertTone } from "./Alert";
+export { AppLoadingState } from "./AppLoadingState";
 export { Badge } from "./Badge";
 export type { BadgeTone } from "./Badge";
 export { BubbleIcon } from "./BubbleIcon";

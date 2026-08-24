@@ -6,7 +6,7 @@ export type CardPadding = "none" | "sm" | "md" | "lg";
 
 const variantClass: Record<CardVariant, string> = {
   glass: "glass-card",
-  solid: "border border-[var(--border)] bg-white shadow-[var(--shadow-soft-sm)]",
+  solid: "border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft-sm)]",
   metric: "metric-card"
 };
 

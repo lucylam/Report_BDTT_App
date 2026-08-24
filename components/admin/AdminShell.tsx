@@ -12,7 +12,7 @@ import { ModuleSwitcher } from "@/components/ModuleSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Icon, PageHeader } from "@/components/ui";
 import { DEFAULT_REPORT_DATE } from "@/lib/date";
-import { isDataAdminAccount } from "@/lib/permissions";
+import { canManagePersonnelOrg, isDataAdminAccount } from "@/lib/permissions";
 import type { AuthAccount } from "@/types/domain";
 
 interface AdminShellProps {
@@ -26,6 +26,7 @@ interface AdminShellProps {
 const links = [
   { href: "/admin", label: "Tổng quan", shortLabel: "Tổng quan", icon: "dashboard" },
   { href: "/admin/tasks", label: "WorkOrder", shortLabel: "WorkOrder", icon: "workorder" },
+  { href: "/admin/personnel", label: "Sơ đồ nhân sự", shortLabel: "Nhân sự", icon: "people", personnelAdminOnly: true },
   { href: "/admin/upload", label: "Dữ liệu", shortLabel: "Dữ liệu", icon: "database", dataAdminOnly: true }
 ] as const;
 
@@ -38,12 +39,16 @@ export const AdminShell = ({
 }: AdminShellProps): React.ReactElement => {
   const pathname = usePathname();
   const visibleLinks = links.filter(
-    (link) => !("dataAdminOnly" in link) || !link.dataAdminOnly || isDataAdminAccount(account)
+    (link) =>
+      (!("dataAdminOnly" in link) || !link.dataAdminOnly || isDataAdminAccount(account)) &&
+      (!("personnelAdminOnly" in link) ||
+        !link.personnelAdminOnly ||
+        canManagePersonnelOrg(account))
   );
 
   return (
-    <main className="min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 sm:pt-3 lg:p-3 2xl:p-4">
-      <div className="app-shell mx-auto min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[22px] lg:grid lg:min-h-[calc(100dvh-1.5rem)] lg:grid-cols-[218px_minmax(0,1fr)] 2xl:min-h-[calc(100dvh-2rem)]">
+    <main className="min-h-dvh w-full max-w-[100vw] overflow-x-auto px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 sm:pt-3 lg:p-3 2xl:p-4">
+      <div className="app-shell mx-auto min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)] lg:grid lg:min-h-[calc(100dvh-1.5rem)] lg:grid-cols-[218px_minmax(0,1fr)] 2xl:min-h-[calc(100dvh-2rem)]">
         <aside className="hidden border-r border-[var(--line)] bg-[var(--surface)] p-4 lg:flex lg:flex-col">
           <Link className="focus-ring p-1" href="/"><CompanyBrand variant="sidebar" /></Link>
           <ModuleSwitcher activeModule="bdtt" bdttHref="/admin" className="mt-4" compact />
@@ -82,7 +87,7 @@ export const AdminShell = ({
         </aside>
 
         <section className="min-w-0">
-          <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)]/96 px-4 py-4 backdrop-blur-xl lg:static lg:border-b-0 lg:bg-transparent lg:px-5 lg:py-5 lg:backdrop-blur-0">
+          <header className="mobile-shell-header sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)]/96 px-4 py-4 backdrop-blur-xl lg:static lg:border-b-0 lg:bg-transparent lg:px-5 lg:py-5 lg:backdrop-blur-0">
             <ModuleSwitcher activeModule="bdtt" bdttHref="/admin" className="mb-3 lg:hidden" compact />
             <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
               <PageHeader className="min-w-0 flex-1" description={subtitle} eyebrow={`Giám sát · BDTT ${DEFAULT_REPORT_DATE.slice(0, 4)}`} title={title} />
@@ -94,7 +99,7 @@ export const AdminShell = ({
                 <AccountMenu account={account} onLogout={onLogout} statusLabel="Phiên giám sát" />
               </div>
             </div>
-            <div className="mt-3 flex items-center gap-2 lg:hidden">
+            <div className="mobile-header-actions mt-3 gap-2 lg:hidden">
               <ModeSwitch activeMode="supervision" className="max-w-none flex-1 text-xs" href="/worker" />
               <GlobalNotifications />
               <ThemeToggle className="shrink-0" />
@@ -113,7 +118,7 @@ export const AdminShell = ({
             const active = link.href === "/admin" ? pathname === "/admin" : pathname.startsWith(link.href);
             return (
               <Link aria-current={active ? "page" : undefined} className={`focus-ring pressable flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--radius-field)] px-1 leading-tight ${active ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md" : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"}`} href={link.href} key={link.href}>
-                <Icon name={link.icon} /><span className="block max-w-full break-words">{link.shortLabel}</span>
+                <Icon name={link.icon} /><span className="mobile-button-label block max-w-full">{link.shortLabel}</span>
               </Link>
             );
           })}

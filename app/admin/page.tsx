@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ProgressCharts } from "@/components/admin/ProgressCharts";
-import { Badge, Icon, Widget, WidgetHeader, type IconName } from "@/components/ui";
+import { AppLoadingState, Badge, Icon, Widget, WidgetHeader, type IconName } from "@/components/ui";
 import { buildExcelDashboard } from "@/lib/dashboard";
 import { DEFAULT_REPORT_DATE, formatViDate } from "@/lib/date";
 import {
@@ -75,9 +75,10 @@ const AdminPage = (): React.ReactElement => {
 
   if (!data || !currentAccount || currentAccount.mustChangePassword) {
     return (
-      <main className="min-h-dvh p-6">
-        <p className="text-sm font-medium text-[var(--text-muted)]">Đang tải dashboard...</p>
-      </main>
+      <AppLoadingState
+        description="Đang tổng hợp tiến độ, nhân sự và các cảnh báo trong ngày."
+        title="Đang tải dashboard"
+      />
     );
   }
 
@@ -178,7 +179,7 @@ const ManagementDashboard = ({
         <ReportCoverage metrics={metrics} rows={rows} />
       </section>
 
-      <section className="grid min-w-0 gap-3 2xl:grid-cols-2">
+      <section className="grid min-w-0 items-start gap-3 2xl:grid-cols-2">
         <ManagementTable
           emptyText="Chưa có đơn vị nào đạt mốc kế hoạch trong phạm vi hiện tại."
           rows={onTrackRows}
@@ -255,11 +256,11 @@ const RecentUpdateList = ({
                         <span className="max-w-full truncate font-semibold text-[var(--foreground)]">
                           {row.workerName}
                         </span>
-                        <span className={`rounded-[var(--radius-field)] border-l-2 border-current px-2 py-0.5 text-[11px] font-semibold tabular-nums ${recentPercentPillClass(row.percent)}`}>
+                        <span className={`rounded-full border border-current px-2 py-0.5 text-[11px] font-semibold tabular-nums ${recentPercentPillClass(row.percent)}`}>
                           {row.percent}%
                         </span>
                         {row.hasPhoto ? (
-                          <span className="rounded-[var(--radius-field)] border-l-2 border-[var(--info)] bg-[var(--info-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--info-strong)]">
+                          <span className="rounded-full border border-[var(--info)] bg-[var(--info-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--info-strong)]">
                             Có ảnh
                           </span>
                         ) : null}
@@ -299,15 +300,16 @@ const DashboardViewTabs = ({
   ];
 
   return (
-    <div className="flex w-full max-w-xl border-b border-[var(--line)]">
+    <div className="grid w-full max-w-xl grid-cols-2 gap-1 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] p-1">
       {tabs.map((tab) => {
         const active = value === tab.value;
         return (
           <button
-            className={`focus-ring min-h-10 flex-1 border-b-2 px-4 text-sm font-semibold transition ${
+            aria-pressed={active}
+            className={`focus-ring min-h-11 rounded-[calc(var(--radius-field)-0.25rem)] px-4 text-sm font-semibold transition ${
               active
-                ? "border-[var(--primary)] text-[var(--primary-strong)]"
-                : "border-transparent text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
+                ? "bg-[var(--surface)] text-[var(--primary-strong)] shadow-[var(--shadow-soft-sm)]"
+                : "bg-transparent text-[var(--text-muted)] hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
             }`}
             key={tab.value}
             onClick={() => onChange(tab.value)}
@@ -337,7 +339,7 @@ const ManagementKpiStrip = ({
   ).length;
   const overdueUnits = rows.filter((row) => row.overdue > 0).length;
   const cards: Array<{
-    readonly icon: "chart" | "check" | "people" | "workorder";
+    readonly icon: IconName;
     readonly label: string;
     readonly value: string;
     readonly helper: string;
@@ -381,33 +383,51 @@ const ManagementKpiStrip = ({
   ];
 
   return (
-    <section className="grid overflow-hidden rounded-[var(--radius-card)] border border-[var(--line)] sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-5">
+    <section className="grid grid-cols-2 gap-3 md:grid-cols-3 2xl:grid-cols-5">
       {cards.map((card) => (
-        <article
-          className={`border-b border-r border-[var(--line)] p-3 ${toneText(card.tone)} ${toneSurface(card.tone)}`}
+        <DashboardMetricCard
+          helper={card.helper}
+          icon={card.icon}
           key={card.label}
-        >
-          <div className="flex items-start gap-3">
-            <Icon className="h-4 w-4" name={card.icon} />
-          </div>
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[10px] font-medium uppercase leading-tight text-[var(--text-soft)]">
-                {card.label}
-              </p>
-              <p className="mt-1.5 truncate text-xs font-medium leading-4 text-[var(--text-muted)]">
-                {card.helper}
-              </p>
-            </div>
-            <p className="shrink-0 text-2xl font-semibold leading-none tabular-nums sm:text-3xl">
-              {card.value}
-            </p>
-          </div>
-        </article>
+          label={card.label}
+          tone={card.tone}
+          value={card.value}
+        />
       ))}
     </section>
   );
 };
+
+const DashboardMetricCard = ({
+  className,
+  helper,
+  icon,
+  label,
+  tone,
+  value
+}: {
+  readonly className?: string;
+  readonly helper?: string;
+  readonly icon: IconName;
+  readonly label: string;
+  readonly tone: Tone;
+  readonly value: string;
+}): React.ReactElement => (
+  <article className={`metric-card min-w-0 rounded-[var(--radius-card)] p-4 ${toneText(tone)} ${className ?? ""}`}>
+    <div className="flex min-w-0 items-center gap-2 pr-6">
+      <Icon name={icon} />
+      <p className="min-w-0 text-xs font-semibold uppercase leading-5 text-current opacity-80 [overflow-wrap:anywhere]">
+        {label}
+      </p>
+    </div>
+    <p className="mt-2 text-2xl font-semibold leading-none tabular-nums sm:text-3xl">{value}</p>
+    {helper ? (
+      <p className="mt-2 text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">
+        {helper}
+      </p>
+    ) : null}
+  </article>
+);
 
 const ProgressOverview = ({ rows }: { readonly rows: readonly OrgUnitRow[] }): React.ReactElement => {
   const chartRows = [...rows].sort((left, right) => right.tasks - left.tasks).slice(0, 10);
@@ -416,47 +436,44 @@ const ProgressOverview = ({ rows }: { readonly rows: readonly OrgUnitRow[] }): R
     <Widget>
       <WidgetHeader
         action={
-          <span className="rounded-[var(--radius-field)] border-l-2 border-[var(--primary)] bg-[var(--primary-soft)] px-3 py-1 text-xs font-semibold text-[var(--primary-strong)]">
-            Top {chartRows.length}
-          </span>
+          <Badge tone="primary">Top {chartRows.length}</Badge>
         }
+        icon="chart"
+        tone="info"
         subtitle="Theo % hoàn thành trung bình và số WorkOrder trễ"
         title="Tổng quan tiến độ theo đơn vị"
       />
-      <div className="mt-3 grid overflow-hidden border border-[var(--line)] md:grid-cols-2">
+      <div className="mt-3 grid gap-2 md:grid-cols-2">
         {chartRows.map((row) => {
           const tone = row.overdue > 0 ? "danger" : row.percent >= PLAN_TARGET_PERCENT ? "success" : "warning";
           return (
-            <article
-              className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-r border-[var(--line)] px-3 py-2.5"
-              key={row.key}
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-[var(--foreground)]">{row.shortName}</p>
-                <p className="mt-0.5 truncate text-xs font-medium text-[var(--text-muted)]">
-                  {row.context} · {row.tasks} WorkOrder
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {row.percent > 0 ? (
-                  <div
-                    aria-label={`${row.shortName}: ${row.percent}% hoàn thành`}
-                    className="h-1.5 w-16 overflow-hidden bg-[var(--line)]"
-                    role="img"
-                  >
-                    <div
-                      className={`h-full progress-stripe-${tone}`}
-                      style={{ width: `${Math.min(row.percent, 100)}%` }}
-                    />
-                  </div>
-                ) : (
-                  <span className="border-l-2 border-[var(--warning)] bg-[var(--warning-soft)] px-2 py-1 text-[10px] font-semibold uppercase text-[var(--warning-strong)]">
-                    Chưa cập nhật
-                  </span>
-                )}
-                <span className={`min-w-9 text-right text-sm font-semibold tabular-nums ${toneText(tone)}`}>
+            <article className="min-w-0 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[var(--shadow-soft-sm)]" key={row.key}>
+              <div className="flex min-w-0 items-start gap-3">
+                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-[var(--radius-field)] bg-[var(--surface-muted)] ring-1 ring-[var(--border)] ${groupIconTone(row)}`}>
+                  <Icon className="h-5 w-5" name={groupIconName(row)} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="break-words text-sm font-semibold text-[var(--foreground)]">{row.shortName}</p>
+                  <p className="mt-0.5 break-words text-xs font-medium leading-5 text-[var(--text-muted)]">
+                    {row.context} · {row.tasks} WorkOrder
+                  </p>
+                </div>
+                <span className={`shrink-0 text-sm font-semibold tabular-nums ${toneText(tone)}`}>
                   {row.percent}%
                 </span>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div
+                  aria-label={`${row.shortName}: ${row.percent}% hoàn thành`}
+                  className="progress-track min-w-24 flex-1"
+                  role="img"
+                >
+                  <div
+                    className={`progress-fill progress-stripe-${tone}`}
+                    style={{ width: `${Math.min(row.percent, 100)}%` }}
+                  />
+                </div>
+                {row.percent === 0 ? <Badge tone="warning">Chưa cập nhật</Badge> : null}
               </div>
             </article>
           );
@@ -480,40 +497,28 @@ const ReportCoverage = ({
   return (
     <Widget>
       <WidgetHeader
+        icon="people"
+        tone="info"
         subtitle={formatViDate(DEFAULT_REPORT_DATE)}
         title="Báo cáo nhân sự trong ngày"
       />
-      <div className="reference-panel rounded-[var(--radius-card)] p-4 text-[var(--foreground)]">
-        <p className="text-sm font-semibold opacity-75">Tỷ lệ đã gửi báo cáo</p>
-        <p className="mt-2 text-4xl font-semibold leading-none tabular-nums">{coveragePercent}%</p>
-        <p className="mt-2 text-sm font-medium opacity-80">
-          {submitted}/{members} nhân sự được ghi nhận trong ngày.
-        </p>
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <MiniStat label="Hoàn thành" tone="success" value={metrics.completed} />
-        <MiniStat label="Đang làm" tone="warning" value={metrics.inProgress} />
-        <MiniStat label="Chưa làm" tone="info" value={metrics.notStarted} />
-        <MiniStat label="Đã hủy" tone="danger" value={metrics.cancelled} />
+      <div className="grid grid-cols-2 gap-3">
+        <DashboardMetricCard
+          className="col-span-2"
+          helper={`${submitted}/${members} nhân sự được ghi nhận trong ngày`}
+          icon="people"
+          label="Tỷ lệ đã gửi báo cáo"
+          tone="info"
+          value={`${coveragePercent}%`}
+        />
+        <DashboardMetricCard icon="check" label="Hoàn thành" tone="success" value={formatNumber(metrics.completed)} />
+        <DashboardMetricCard icon="chart" label="Đang làm" tone="warning" value={formatNumber(metrics.inProgress)} />
+        <DashboardMetricCard icon="list" label="Chưa làm" tone="info" value={formatNumber(metrics.notStarted)} />
+        <DashboardMetricCard icon="logout" label="Đã hủy" tone="danger" value={formatNumber(metrics.cancelled)} />
       </div>
     </Widget>
   );
 };
-
-const MiniStat = ({
-  label,
-  tone,
-  value
-}: {
-  readonly label: string;
-  readonly tone: Tone;
-  readonly value: number;
-}): React.ReactElement => (
-  <div className={`rounded-[var(--radius-field)] p-3 ring-1 ring-[var(--border)] ${toneSurface(tone)}`}>
-    <p className={`text-2xl font-semibold tabular-nums ${toneText(tone)}`}>{formatNumber(value)}</p>
-    <p className="mt-1 text-xs font-medium text-[var(--text-muted)]">{label}</p>
-  </div>
-);
 
 const ManagementTable = ({
   emptyText,
@@ -535,24 +540,18 @@ const ManagementTable = ({
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3">
         <WidgetHeader
           className="mb-0"
+          icon={isSuccess ? "check" : "bell"}
+          tone={isSuccess ? "success" : "warning"}
           subtitle={isSuccess ? "Đơn vị đang đi đúng nhịp" : "Ưu tiên kiểm tra trong ngày"}
           title={title}
         />
-        <span
-          className={`rounded-[var(--radius-field)] border-l-2 border-current px-3 py-1 text-sm font-semibold ${
-            isSuccess
-              ? "bg-[var(--success-soft)] text-[var(--success)]"
-              : "bg-[var(--accent-soft)] text-[var(--accent-strong)]"
-          }`}
-        >
-          {subtitle}
-        </span>
+        <Badge tone={isSuccess ? "success" : "warning"}>{subtitle}</Badge>
       </header>
 
       {rows.length === 0 ? (
         <div className="p-4 text-sm font-medium text-[var(--text-muted)]">{emptyText}</div>
       ) : (
-        <div className="divide-y divide-[var(--line-soft)]">
+        <div className="grid gap-2 p-3">
           {rows.slice(0, 8).map((row) => (
             <ManagementRow isSuccess={isSuccess} key={row.key} row={row} />
           ))}
@@ -572,7 +571,7 @@ const ManagementRow = ({
   const tone = row.overdue > 0 ? "danger" : isSuccess ? "success" : "warning";
 
   return (
-    <article className="grid gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center">
+    <article className="grid gap-3 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[var(--shadow-soft-sm)] sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center">
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-3">
           <div
@@ -581,10 +580,10 @@ const ManagementRow = ({
             <Icon className="h-5 w-5" name={groupIconName(row)} />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-base font-semibold text-[var(--foreground)]">
+            <p className="break-words text-base font-semibold text-[var(--foreground)]">
               {row.shortName}
             </p>
-            <p className="truncate text-xs font-medium text-[var(--text-muted)]">
+            <p className="break-words text-xs font-medium leading-5 text-[var(--text-muted)]">
               {row.context}
             </p>
           </div>
@@ -634,7 +633,7 @@ const LegendDot = ({
   readonly label: string;
 }): React.ReactElement => (
   <span className="inline-flex items-center gap-2 font-medium text-[var(--text-muted)]">
-    <span className={`h-2.5 w-2.5 rounded ${className}`} />
+    <span className={`h-2.5 w-2.5 rounded-full ${className}`} />
     {label}
   </span>
 );
@@ -853,13 +852,6 @@ const toneText = (tone: Tone): string => {
   if (tone === "warning") return "text-[var(--warning-strong)]";
   if (tone === "danger") return "text-[var(--danger-strong)]";
   return "text-[var(--info-strong)]";
-};
-
-const toneSurface = (tone: Tone): string => {
-  if (tone === "success") return "bg-[var(--success-soft)]";
-  if (tone === "warning") return "bg-[var(--warning-soft)]";
-  if (tone === "danger") return "bg-[var(--danger-soft)]";
-  return "bg-[var(--info-soft)]";
 };
 
 export default AdminPage;

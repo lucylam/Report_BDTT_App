@@ -60,6 +60,8 @@ export const TaskDetailPanel = ({
     return (
       <Widget>
         <WidgetHeader
+          icon="workorder"
+          tone="info"
           subtitle="Chọn một dòng trong bảng để xem task, WO, resource, ghi chú và ảnh cập nhật."
           title="Chi tiết hạng mục"
         />

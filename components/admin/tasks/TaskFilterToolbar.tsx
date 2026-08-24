@@ -3,7 +3,7 @@ import type {
   StatusFilter,
   TaskKpis
 } from "@/components/admin/tasks/taskTableModel";
-import { Icon, Input, Select, Widget, WidgetHeader } from "@/components/ui";
+import { Input, Select, Widget, WidgetHeader } from "@/components/ui";
 
 interface TaskFilterToolbarProps {
   readonly query: string;
@@ -49,7 +49,7 @@ export const TaskFilterToolbar = ({
   return (
     <Widget className="p-4">
       <WidgetHeader
-        action={<Icon className="text-[var(--primary-strong)]" name="search" />}
+        icon="search"
         subtitle="Lọc theo nhóm, đơn vị, section, ưu tiên và trạng thái"
         title="Bộ lọc WorkOrder"
       />
