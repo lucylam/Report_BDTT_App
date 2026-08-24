@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { AccountMenu } from "@/components/AccountMenu";
-import { GlobalNotifications } from "@/components/GlobalNotifications";
+import {
+  MobileAppHeader,
+  MobileBottomNavigation
+} from "@/components/MobileAppChrome";
 import { ModeSwitch } from "@/components/ModeSwitch";
-import { ModuleSwitcher } from "@/components/ModuleSwitcher";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { Alert, Badge, Icon, PageHeader, type IconName } from "@/components/ui";
+import { Alert, Badge, Icon, WidgetHeader, type IconName } from "@/components/ui";
 import { CountdownBanner } from "@/components/worker/CountdownBanner";
 import { SummaryPills } from "@/components/worker/SummaryPills";
 import { WorkerGroupedTaskList } from "@/components/worker/WorkerGroupedTaskList";
@@ -27,7 +27,7 @@ import type {
 } from "@/components/worker/types";
 import { formatViDate, getPlanReportDates, getReportHistoryDates } from "@/lib/date";
 import { getTaskPercent, getTaskProgress } from "@/lib/progress";
-import type { AuthAccount, PlanVersion, ProgressRecord, Task } from "@/types/domain";
+import type { AuthAccount, ProgressRecord, Task } from "@/types/domain";
 
 interface WorkerMobileViewProps {
   readonly account: AuthAccount;
@@ -45,7 +45,6 @@ interface WorkerMobileViewProps {
   readonly isOnline: boolean;
   readonly lastSyncedAt: string | null;
   readonly pendingUpdateCount: number;
-  readonly planVersion?: PlanVersion;
   readonly queuedUpdateCount: number;
   readonly queueSyncState: QueueSyncState;
   readonly isSubmittingUpdates: boolean;
@@ -98,7 +97,6 @@ export const WorkerMobileView = ({
   isOnline,
   lastSyncedAt,
   pendingUpdateCount,
-  planVersion,
   queuedUpdateCount,
   queueSyncState,
   isSubmittingUpdates,
@@ -173,50 +171,27 @@ export const WorkerMobileView = ({
   return (
     <main
       className="worker-mobile-view mobile-native-page min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 lg:hidden"
-      style={{ "--mobile-topbar-height": "10.5rem" } as React.CSSProperties}
     >
       <div className="app-shell mobile-native-shell min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)]">
-      <header className="mobile-topbar sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)] px-3 pb-3">
-        <ModuleSwitcher
-          activeModule="bdtt"
-          bdttHref={isAdminAccount ? "/admin" : "/worker"}
-          className="mb-2 mt-3"
-          compact
-        />
-        <PageHeader
-          eyebrow={`Công việc · BDTT ${reportDate.slice(0, 4)}`}
-          title="Báo cáo tiến độ"
-        />
-        {planVersion ? (
-          <p className="mt-1 text-xs font-normal leading-5 text-[var(--text-muted)]">
-            Kế hoạch: {planVersion.fileName} · cập nhật {new Date(planVersion.importedAt).toLocaleString("vi-VN")}
-          </p>
-        ) : null}
-
-        <div className="mobile-header-actions mt-2 gap-2">
-          {isAdminAccount ? (
+      <MobileAppHeader
+        account={account}
+        accountStatusLabel={isOnline ? "Trực tuyến" : "Ngoại tuyến"}
+        accountStatusTone={isOnline ? "success" : "warning"}
+        activeModule="bdtt"
+        bdttHref={isAdminAccount ? "/admin" : "/worker"}
+        contextAction={
+          isAdminAccount ? (
             <ModeSwitch
               activeMode="workspace"
-              className="max-w-none flex-1 text-xs"
+              className="w-auto max-w-[11.5rem] text-[11px]"
               href="/admin"
             />
-          ) : (
-            <div className="inline-flex min-h-11 min-w-0 flex-1 items-center rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] px-4 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-soft-sm)]">
-              <span className="min-w-0 truncate">Công việc</span>
-            </div>
-          )}
-          <GlobalNotifications />
-          <ThemeToggle className="shrink-0" />
-          <AccountMenu
-            account={account}
-            onLogout={onLogout}
-            showInstallButton
-            statusLabel={isOnline ? "Trực tuyến" : "Ngoại tuyến"}
-            statusTone={isOnline ? "success" : "warning"}
-          />
-        </div>
-
-      </header>
+          ) : null
+        }
+        onLogout={onLogout}
+        showInstallButton
+        title={`BDTT ${reportDate.slice(0, 4)}`}
+      />
 
       {tab === "tasks" ? (
         <>
@@ -271,15 +246,12 @@ export const WorkerMobileView = ({
       {tab === "overview" ? (
         <section className="space-y-3 px-3 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+4rem)] pt-3">
           <section className="glass-card rounded-[var(--radius-card)] p-3">
-            <div className="mb-3 flex min-w-0 items-start gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--info-soft)] text-[var(--info-strong)]">
-                <Icon name="chart" />
-              </span>
-              <div className="min-w-0">
-                <h2 className="font-semibold">Cơ cấu tiến độ</h2>
-                <p className="mt-0.5 text-sm text-[var(--text-muted)]">{activeTasks.length} hạng mục chưa cancel</p>
-              </div>
-            </div>
+            <WidgetHeader
+              icon="chart"
+              subtitle={`${activeTasks.length} hạng mục chưa cancel`}
+              title="Cơ cấu tiến độ"
+              tone="info"
+            />
             <SummaryPills percents={percents} />
           </section>
           <ProgressDonutChart
@@ -291,17 +263,14 @@ export const WorkerMobileView = ({
           />
           <DailyCompletionChart rows={historyRows} />
           <section className="glass-card rounded-[var(--radius-card)] p-3">
-            <div className="mb-3 flex min-w-0 items-start gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--warning-soft)] text-[var(--warning-strong)]">
-                <Icon name="bell" />
-              </span>
-              <div className="min-w-0">
-                <h2 className="font-semibold">Tổng quan cá nhân</h2>
-                <p className="mt-0.5 text-sm text-[var(--text-muted)]">Theo ngày báo cáo hiện tại</p>
-              </div>
-            </div>
+            <WidgetHeader
+              icon="bell"
+              subtitle="Theo ngày báo cáo hiện tại"
+              title="Tổng quan cá nhân"
+              tone="warning"
+            />
             <Alert tone={p1Open > 0 ? "warning" : "success"}>
-              Hạng mục P1 chưa xong: <strong>{p1Open}</strong>. Dữ liệu tính theo ngày báo cáo hiện tại.
+              P1 chưa xong: <strong>{p1Open}</strong>.
             </Alert>
           </section>
         </section>
@@ -349,7 +318,8 @@ export const WorkerMobileView = ({
       </div>
 
       <WorkerPendingUpdateBar
-        className="fixed inset-x-2 bottom-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.5rem)] z-50 mx-auto max-w-[520px]"
+        className="fixed right-3 bottom-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.5rem)] z-50"
+        compact
         isOnline={isOnline}
         isSubmitting={isSubmittingUpdates}
         lastSyncedAt={lastSyncedAt}
@@ -360,25 +330,16 @@ export const WorkerMobileView = ({
         syncState={queueSyncState}
       />
 
-      <nav className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 px-3">
-        <div className="floating-pill mx-auto grid w-full max-w-[520px] grid-cols-3 gap-1 rounded-[var(--radius-card)] p-2 text-center text-[11px] font-semibold">
-          {tabs.map((item) => (
-            <button
-              className={`focus-ring pressable flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-field)] px-1 leading-tight ${
-                item.key === tab
-                  ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md"
-                  : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"
-              }`}
-              key={item.key}
-              onClick={() => setTab(item.key)}
-              type="button"
-            >
-              <Icon className="shrink-0" name={item.icon} />
-              <span className="mobile-button-label max-w-full">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
+      <MobileBottomNavigation
+        ariaLabel="Điều hướng Workspace"
+        items={tabs.map((item) => ({
+          active: item.key === tab,
+          icon: item.icon,
+          key: item.key,
+          label: item.label,
+          onSelect: () => setTab(item.key)
+        }))}
+      />
     </main>
   );
 };

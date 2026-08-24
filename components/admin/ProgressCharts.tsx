@@ -138,7 +138,7 @@ export const ProgressCharts = ({
             <h2 className="mt-1.5 text-balance text-xl font-semibold leading-tight sm:text-2xl">
               Báo cáo ngắn tiến độ BDTT {reportYear} · Tổ TB ĐL&ĐK
             </h2>
-            <p className="mt-1 text-xs font-medium text-[var(--text-muted)] sm:text-sm">
+            <p className="mt-1 hidden text-xs font-medium text-[var(--text-muted)] lg:block lg:text-sm">
               Dữ liệu lũy kế toàn bộ kỳ · Mỗi hạng mục dùng mức tiến độ cao nhất đã ghi nhận.
             </p>
           </div>
@@ -175,7 +175,7 @@ export const ProgressCharts = ({
             subtitle="Nhóm task lấy trực tiếp từ cột E (Nhóm) của Google Sheet. Mỗi card hiển thị Top người thực hiện theo cột L."
             title="Chi tiết theo nhóm task"
           />
-          <span className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-1 text-xs font-medium text-[var(--text-muted)] ring-1 ring-[var(--border)]">
+          <span className="hidden rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-1 text-xs font-medium text-[var(--text-muted)] ring-1 ring-[var(--border)] lg:inline-flex">
             Nguồn: DATA!E:E
           </span>
         </div>
@@ -186,7 +186,6 @@ export const ProgressCharts = ({
         </div>
       </section>
 
-      <DeferredDashboardNotice />
     </section>
   );
 };
@@ -254,7 +253,7 @@ const Metric = ({
       </p>
     </div>
     <p className="mt-2 text-2xl font-semibold leading-none tabular-nums">{value}</p>
-    <p className="mt-2 text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">
+    <p className="mt-2 hidden text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere] lg:block">
       {note}
     </p>
   </div>
@@ -287,7 +286,7 @@ const ExecutiveInsight = ({
         </span>
         <div className="min-w-0">
           <h3 className="text-sm font-semibold">{title}</h3>
-          <p className="mt-1 text-sm font-medium leading-6 text-[var(--text-muted)]">{message}</p>
+          <p className="mt-1 hidden text-sm font-medium leading-6 text-[var(--text-muted)] lg:block">{message}</p>
         </div>
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
@@ -422,7 +421,7 @@ const ChartShell = ({
   title
 }: {
   readonly children: React.ReactNode;
-  readonly subtitle: string;
+  readonly subtitle?: string;
   readonly title: string;
 }): React.ReactElement => {
   return (
@@ -439,7 +438,7 @@ const SectionTitle = ({
   subtitle,
   title
 }: {
-  readonly subtitle: string;
+  readonly subtitle?: string;
   readonly title: string;
 }): React.ReactElement => (
   <div className="flex min-w-0 items-start gap-3">
@@ -450,7 +449,9 @@ const SectionTitle = ({
       <h2 className="text-balance text-[15px] font-semibold leading-5 sm:text-base">
         {title}
       </h2>
-      <p className="mt-1 text-xs font-medium leading-5 text-[var(--text-muted)]">{subtitle}</p>
+      {subtitle ? (
+        <p className="mt-1 hidden text-xs font-medium leading-5 text-[var(--text-muted)] lg:block">{subtitle}</p>
+      ) : null}
     </div>
   </div>
 );
@@ -651,11 +652,16 @@ const CompletionChart = ({
   readonly compact?: boolean;
   readonly data: readonly CompletionRow[];
   readonly showLegend?: boolean;
-  readonly subtitle: string;
+  readonly subtitle?: string;
   readonly title: string;
 }): React.ReactElement => {
   if (data.length === 0 || !data.some((row) => row.total > 0)) {
-    return <EmptyChart subtitle={subtitle} title={title} />;
+    return (
+      <EmptyChart
+        subtitle={subtitle ?? "Chưa có dữ liệu để hiển thị chart."}
+        title={title}
+      />
+    );
   }
   const chartRows = [...data].slice(0, compact ? 5 : 10);
   if (compact) {
@@ -727,7 +733,7 @@ const CompactCompletionBars = ({
   title
 }: {
   readonly rows: readonly CompletionRow[];
-  readonly subtitle: string;
+  readonly subtitle?: string;
   readonly title: string;
 }): React.ReactElement => {
   const maxTotal = Math.max(1, ...rows.map((row) => row.total));
@@ -1039,7 +1045,7 @@ const ResourceGroupChart = ({
       subtitle={
         group.rows.length === 0
           ? "Chưa có hạng mục thuộc nhóm này trong dữ liệu hiện tại."
-          : `Cột E · Top ${Math.min(group.rows.length, 5)} người còn khối lượng lớn`
+          : undefined
       }
       title={group.title}
     />
@@ -1054,22 +1060,11 @@ const EmptyChart = ({
   readonly title: string;
 }): React.ReactElement => (
   <ChartShell subtitle={subtitle} title={title}>
-    <div className="mt-4 flex min-h-[260px] flex-1 items-center justify-center rounded-[var(--radius-card)] border border-dashed border-[var(--line)] bg-[var(--surface-muted)] p-4 text-center text-sm font-medium text-[var(--text-muted)]">
+    <div className="mt-3 flex min-h-40 flex-1 items-center justify-center rounded-[var(--radius-card)] border border-dashed border-[var(--line)] bg-[var(--surface-muted)] p-4 text-center text-sm font-medium text-[var(--text-muted)] lg:mt-4 lg:min-h-[260px]">
       Không có dữ liệu đủ ý nghĩa để hiển thị chart.
     </div>
   </ChartShell>
 );
-
-const DeferredDashboardNotice = (): React.ReactElement => {
-  return (
-    <section className="rounded-[var(--radius-card)] border border-dashed border-[var(--line)] bg-[var(--surface)] p-4">
-      <h2 className="text-sm font-semibold">Các chart milestone/VOTTING cần thêm dữ liệu nguồn</h2>
-      <p className="mt-1 text-xs font-medium leading-5 text-[var(--text-muted)]">
-        Đợt này bỏ qua BDSC Van ĐK, BDSC Máy động, Sheet1!A2:C7 và bảng VOTTING vì app hiện chỉ có DATA A:M cùng progress worker.
-      </p>
-    </section>
-  );
-};
 
 const formatNumber = (value: number): string => {
   return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(value);

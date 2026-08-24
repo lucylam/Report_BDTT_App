@@ -9,6 +9,7 @@ import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/securi
 import { isInlinePhotoDataUrl } from "@/lib/api/photoStorage";
 import { getActiveBdttTrialRun, isTrialRunContextCurrent } from "@/lib/api/demoMode";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { resolveReportDateAtSubmission } from "@/lib/date";
 import { isPercentAllowedForMode } from "@/lib/progressMode";
 import type { Task } from "@/types/domain";
 
@@ -80,10 +81,11 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return toErrorResponse("User cap nhat khong khop phien dang nhap.", 403);
   }
 
-  const reportDate = normalizeText(update.reportDate);
-  if (!reportDate || typeof update.percent !== "number") {
+  const requestedReportDate = normalizeText(update.reportDate);
+  if (!requestedReportDate || typeof update.percent !== "number") {
     return toErrorResponse("Dữ liệu tiến độ không hợp lệ.", 400);
   }
+  const reportDate = resolveReportDateAtSubmission(requestedReportDate);
 
   const photoPath = normalizeText(update.photoPath);
   const photoPaths = Array.from(
@@ -145,5 +147,5 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return toErrorResponse(progressError.message, 500);
   }
 
-  return NextResponse.json({ ok: true, taskId: taskResult.task.id });
+  return NextResponse.json({ ok: true, taskId: taskResult.task.id, reportDate });
 };

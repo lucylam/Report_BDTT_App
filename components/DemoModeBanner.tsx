@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Alert, Button, Dialog, Icon, Input } from "@/components/ui";
-import { getCurrentReportDate } from "@/lib/date";
+import { getOperationalReportDate } from "@/lib/date";
 
 interface TrialRunStatus {
   readonly id: string;
@@ -57,7 +57,7 @@ export const DemoModeBanner = (): React.ReactElement | null => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("Dùng thử trước vận hành");
   const [confirmation, setConfirmation] = useState("");
-  const [demoReportDate, setDemoReportDate] = useState(getCurrentReportDate());
+  const [demoReportDate, setDemoReportDate] = useState(getOperationalReportDate());
   const [mutationMessage, setMutationMessage] = useState("");
   const [dataChanged, setDataChanged] = useState(false);
   const [busy, setBusy] = useState(false);

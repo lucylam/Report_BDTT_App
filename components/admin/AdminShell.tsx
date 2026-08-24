@@ -7,6 +7,10 @@ import { AccountMenu } from "@/components/AccountMenu";
 import { CompanyBrand } from "@/components/CompanyBrand";
 import { DeveloperMark } from "@/components/DeveloperMark";
 import { GlobalNotifications } from "@/components/GlobalNotifications";
+import {
+  MobileAppHeader,
+  MobileBottomNavigation
+} from "@/components/MobileAppChrome";
 import { ModeSwitch } from "@/components/ModeSwitch";
 import { ModuleSwitcher } from "@/components/ModuleSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -87,23 +91,31 @@ export const AdminShell = ({
         </aside>
 
         <section className="min-w-0">
-          <header className="mobile-shell-header sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)]/96 px-4 py-4 backdrop-blur-xl lg:static lg:border-b-0 lg:bg-transparent lg:px-5 lg:py-5 lg:backdrop-blur-0">
-            <ModuleSwitcher activeModule="bdtt" bdttHref="/admin" className="mb-3 lg:hidden" compact />
+          <MobileAppHeader
+            account={account}
+            accountStatusLabel="Phiên giám sát"
+            activeModule="bdtt"
+            bdttHref="/admin"
+            contextAction={
+              <ModeSwitch
+                activeMode="supervision"
+                className="w-auto max-w-[11.5rem] text-[11px]"
+                href="/worker"
+              />
+            }
+            onLogout={onLogout}
+            title={`BDTT ${DEFAULT_REPORT_DATE.slice(0, 4)}`}
+          />
+          <header className="hidden px-5 py-5 lg:block">
             <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
               <PageHeader className="min-w-0 flex-1" description={subtitle} eyebrow={`Giám sát · BDTT ${DEFAULT_REPORT_DATE.slice(0, 4)}`} title={title} />
-              <div className="hidden items-center gap-2 lg:flex">
+              <div className="flex items-center gap-2">
                 <Link aria-label="Mở trợ giúp" className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-field)] border border-[var(--line)] text-[var(--text-muted)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--surface-muted)]" href="/help"><Icon name="help" /></Link>
                 <GlobalNotifications />
                 <ThemeToggle />
                 <ModeSwitch activeMode="supervision" href="/worker" />
                 <AccountMenu account={account} onLogout={onLogout} statusLabel="Phiên giám sát" />
               </div>
-            </div>
-            <div className="mobile-header-actions mt-3 gap-2 lg:hidden">
-              <ModeSwitch activeMode="supervision" className="max-w-none flex-1 text-xs" href="/worker" />
-              <GlobalNotifications />
-              <ThemeToggle className="shrink-0" />
-              <AccountMenu account={account} onLogout={onLogout} statusLabel="Phiên giám sát" />
             </div>
           </header>
           <div className="min-w-0 px-4 py-4 lg:px-5 lg:pb-6 lg:pt-0">
@@ -112,18 +124,16 @@ export const AdminShell = ({
         </section>
       </div>
 
-      <nav aria-label="Điều hướng nhanh" className="mobile-bottom-nav fixed inset-x-0 bottom-0 z-40 px-3 lg:hidden">
-        <div className="floating-pill admin-bottom-nav mx-auto grid max-w-[520px] gap-1 rounded-[var(--radius-card)] p-2 text-center text-[11px] font-semibold" style={{ gridTemplateColumns: `repeat(${visibleLinks.length}, minmax(0, 1fr))` }}>
-          {visibleLinks.map((link) => {
-            const active = link.href === "/admin" ? pathname === "/admin" : pathname.startsWith(link.href);
-            return (
-              <Link aria-current={active ? "page" : undefined} className={`focus-ring pressable flex min-h-14 flex-col items-center justify-center gap-1 rounded-[var(--radius-field)] px-1 leading-tight ${active ? "bg-[var(--primary-strong)] text-[var(--primary-contrast)] shadow-md" : "text-[var(--text-muted)] hover:bg-[var(--primary-soft)] hover:text-[var(--primary-strong)]"}`} href={link.href} key={link.href}>
-                <Icon name={link.icon} /><span className="mobile-button-label block max-w-full">{link.shortLabel}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      <MobileBottomNavigation
+        ariaLabel="Điều hướng giám sát"
+        items={visibleLinks.map((link) => ({
+          active: link.href === "/admin" ? pathname === "/admin" : pathname.startsWith(link.href),
+          href: link.href,
+          icon: link.icon,
+          key: link.href,
+          label: link.shortLabel
+        }))}
+      />
     </main>
   );
 };

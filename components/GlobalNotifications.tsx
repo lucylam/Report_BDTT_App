@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Badge, Icon } from "@/components/ui";
 import type { AppNotification } from "@/lib/notifications";
 import {
@@ -24,6 +25,13 @@ export const GlobalNotifications = ({
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState("");
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelPosition, setPanelPosition] = useState({
+    top: 72,
+    right: 8,
+    maxHeight: 480
+  });
 
   const refresh = useCallback(async (): Promise<void> => {
     try {
@@ -53,6 +61,56 @@ export const GlobalNotifications = ({
     };
   }, [refresh]);
 
+  const updatePanelPosition = useCallback((): void => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const gutter = 8;
+    const triggerRect = trigger.getBoundingClientRect();
+    const preferredTop = triggerRect.bottom + gutter;
+    const availableBelow = window.innerHeight - preferredTop - gutter;
+    const top = availableBelow >= 180 ? preferredTop : gutter;
+
+    setPanelPosition({
+      top,
+      right: Math.max(gutter, window.innerWidth - triggerRect.right),
+      maxHeight: Math.max(120, window.innerHeight - top - gutter)
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const animationFrameId = window.requestAnimationFrame(updatePanelPosition);
+    const handlePointerDown = (event: PointerEvent): void => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (
+        !panelRef.current?.contains(target) &&
+        !triggerRef.current?.contains(target)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key !== "Escape") return;
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    };
+
+    window.addEventListener("resize", updatePanelPosition);
+    window.addEventListener("scroll", updatePanelPosition, true);
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("resize", updatePanelPosition);
+      window.removeEventListener("scroll", updatePanelPosition, true);
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, updatePanelPosition]);
+
   const unread = notifications.filter((notification) => !notification.readAt);
 
   const markAsRead = async (ids: readonly string[], markAll = false): Promise<void> => {
@@ -78,6 +136,7 @@ export const GlobalNotifications = ({
   return (
     <div className={cn("relative shrink-0", className)}>
       <button
+        ref={triggerRef}
         aria-expanded={isOpen}
         aria-label="Thông báo"
         className="focus-ring pressable relative inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-muted)] lg:h-10 lg:w-10"
@@ -92,32 +151,39 @@ export const GlobalNotifications = ({
         ) : null}
       </button>
 
-      {isOpen ? (
-        <div className="absolute right-0 top-12 z-50 max-h-[70dvh] w-[min(24rem,calc(100vw-2rem))] overflow-y-auto rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[var(--shadow-floating)]">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-[var(--foreground)]">Thông báo</p>
-              <p className="mt-0.5 text-xs font-normal text-[var(--text-muted)]">
-                Tất cả công tác
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {unread.length > 0 ? (
-                <button
-                  className="focus-ring min-h-9 rounded-[var(--radius-field)] px-2 text-xs font-medium text-[var(--primary-strong)] hover:bg-[var(--primary-soft)]"
-                  onClick={() => void markAsRead(unread.map((item) => item.id), true)}
-                  type="button"
-                >
-                  Đọc tất cả
-                </button>
-              ) : null}
-              <Badge tone="info">{notifications.length}</Badge>
-            </div>
-          </div>
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              aria-label="Thông báo"
+              className="fixed z-[1000] w-[min(24rem,calc(100vw-1rem))] overflow-y-auto overscroll-contain rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[var(--shadow-floating)]"
+              ref={panelRef}
+              role="dialog"
+              style={panelPosition}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-[var(--foreground)]">Thông báo</p>
+                  <p className="mt-0.5 text-xs font-normal text-[var(--text-muted)]">
+                    Tất cả công tác
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {unread.length > 0 ? (
+                    <button
+                      className="focus-ring min-h-9 rounded-[var(--radius-field)] px-2 text-xs font-medium text-[var(--primary-strong)] hover:bg-[var(--primary-soft)]"
+                      onClick={() => void markAsRead(unread.map((item) => item.id), true)}
+                      type="button"
+                    >
+                      Đọc tất cả
+                    </button>
+                  ) : null}
+                  <Badge tone="info">{notifications.length}</Badge>
+                </div>
+              </div>
 
-          {error ? <Alert className="mt-3 text-xs" tone="warning">{error}</Alert> : null}
+              {error ? <Alert className="mt-3 text-xs" tone="warning">{error}</Alert> : null}
 
-          <div className="mt-3 space-y-2">
+              <div className="mt-3 space-y-2">
             {notifications.length > 0 ? (
               notifications.map((notification) => {
                 const moduleDefinition = getPortalModule(notification.module);
@@ -158,9 +224,11 @@ export const GlobalNotifications = ({
                 Chưa có thông báo.
               </p>
             )}
-          </div>
-        </div>
-      ) : null}
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 };

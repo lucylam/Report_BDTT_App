@@ -87,6 +87,7 @@ export const LeaderTaskManager = ({
     setError("");
     setDefaultPeople();
     if (nextMode === "report") {
+      setReportDate(getPlanReportDate(data.tasks));
       setPercent(String(row?.percent ?? 0));
       setNote(row?.progress?.note ?? "");
     }
@@ -289,8 +290,11 @@ export const LeaderTaskManager = ({
               <>
                 <ReadonlyMemberField label="Ghi nhận báo cáo cho" member={reporter} />
                 <div className="grid gap-3 md:grid-cols-2">
-                  <Field label="Ngày báo cáo">
-                    <Input onChange={(event) => setReportDate(event.target.value)} type="date" value={reportDate} />
+                  <Field
+                    hint="Trước 14:00 tính cho hôm nay; từ 14:00 tính cho ngày kế tiếp."
+                    label="Ngày báo cáo (tự động)"
+                  >
+                    <Input readOnly type="date" value={reportDate} />
                   </Field>
                   <Field label="Tiến độ (%)" hint="Nhập số nguyên từ 0 đến 100.">
                     {row?.task.progressMode === "binary" ? (

@@ -7,7 +7,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { ProgressCharts } from "@/components/admin/ProgressCharts";
 import { AppLoadingState, Badge, Icon, Widget, WidgetHeader, type IconName } from "@/components/ui";
 import { buildExcelDashboard } from "@/lib/dashboard";
-import { formatViDate, getCurrentReportDate, getPlanReportDate } from "@/lib/date";
+import { formatViDate, getOperationalReportDate, getPlanReportDate } from "@/lib/date";
 import {
   getOrgScopeLabel,
   getScopedAppData,
@@ -107,7 +107,7 @@ const AdminPage = (): React.ReactElement => {
   const scopedData = getScopedAppData(data, currentAccount);
   const scopeLabel = getOrgScopeLabel(currentAccount);
   const isFullScope = hasFullOrgScope(currentAccount);
-  const overdueDate = getCurrentReportDate();
+  const overdueDate = getOperationalReportDate();
   const reportYear = getPlanReportDate(scopedData.tasks).slice(0, 4);
   const metrics = calculateCumulativeMetrics(scopedData, overdueDate);
 
@@ -433,7 +433,7 @@ const DashboardMetricCard = ({
     </div>
     <p className="mt-2 text-2xl font-semibold leading-none tabular-nums sm:text-3xl">{value}</p>
     {helper ? (
-      <p className="mt-2 text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">
+      <p className="mt-2 hidden text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere] lg:block">
         {helper}
       </p>
     ) : null}

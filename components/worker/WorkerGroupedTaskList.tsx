@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { EmptyState } from "@/components/ui";
+import { EmptyState, Icon } from "@/components/ui";
 import { TaskCard } from "@/components/worker/TaskCard";
 import type { SaveState, WorkerProgressUpdate } from "@/components/worker/types";
 import { getTaskProgress } from "@/lib/progress";
@@ -50,10 +50,10 @@ export const WorkerGroupedTaskList = ({
       {taskGroups.map((group) => {
         const isCollapsed = collapsedGroups.has(group.key);
         return (
-          <div className="space-y-2" key={group.key}>
+          <div className="space-y-1.5" key={group.key}>
             <button
               aria-expanded={!isCollapsed}
-              className={`focus-ring pressable mobile-reflow-row flex min-h-12 w-full items-center justify-between gap-3 rounded-[var(--radius-card)] border px-4 py-3 text-left shadow-[var(--shadow-soft-sm)] ${
+              className={`focus-ring pressable flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-[var(--radius-field)] border px-3 py-1.5 text-left shadow-[var(--shadow-soft-sm)] ${
                 isCollapsed
                   ? "border-[var(--line)] bg-[var(--surface)] text-[var(--primary-strong)]"
                   : "border-[var(--primary)] bg-[var(--primary-strong)] text-[var(--primary-contrast)]"
@@ -61,27 +61,16 @@ export const WorkerGroupedTaskList = ({
               onClick={() => toggleGroup(group.key)}
               type="button"
             >
-              <span className="min-w-0">
-                <span className="block break-words font-semibold">{group.label}</span>
-                <span className={`mt-0.5 block text-xs font-medium ${isCollapsed ? "text-[var(--text-muted)]" : "text-[var(--primary-contrast)] opacity-75"}`}>
-                  {group.tasks.length} hạng mục
+              <span className="flex min-w-0 flex-1 items-center gap-2">
+                <span className="mobile-single-line min-w-0 flex-1 font-semibold">{group.label}</span>
+                <span className={`shrink-0 text-xs font-medium ${isCollapsed ? "text-[var(--text-muted)]" : "text-[var(--primary-contrast)] opacity-80"}`}>
+                  {group.tasks.length}
                 </span>
               </span>
-              <span className={`flex shrink-0 self-start items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ring-1 ${
-                isCollapsed
-                  ? "bg-[var(--primary-pale)] text-[var(--primary-strong)] ring-[var(--line)]"
-                    : "bg-black/10 text-[var(--primary-contrast)] ring-white/20"
-              }`}>
-                {isCollapsed ? "Mở" : "Đóng"}
-                <span
-                  aria-hidden="true"
-                  className={`h-2 w-2 border-b-2 border-r-2 transition-transform ${
-                    isCollapsed
-                      ? "translate-y-[-1px] rotate-45 border-[var(--primary-strong)]"
-                      : "translate-y-[1px] rotate-[225deg] border-[var(--primary-contrast)]"
-                  }`}
-                />
-              </span>
+              <Icon
+                className={`h-4 w-4 transition-transform duration-200 ${isCollapsed ? "" : "rotate-180"}`}
+                name="chevronDown"
+              />
             </button>
             {isCollapsed ? null : (
               <TaskGroupItems

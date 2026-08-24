@@ -100,7 +100,7 @@ export const TasksTable = ({
   };
 
   return (
-    <section className="grid gap-4">
+    <section className="grid gap-2 lg:gap-4">
       <TaskKpiStrip kpis={kpis} onSelect={selectKpi} />
 
       <TaskFilterToolbar
@@ -124,17 +124,18 @@ export const TasksTable = ({
         units={units}
       />
 
-      <Widget className="p-4 lg:p-5">
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+      <Widget className="p-2 lg:p-5">
+        <div className="flex items-center justify-between gap-2">
           <WidgetHeader
-            className="mb-0"
+            className="mb-0 hidden lg:flex"
             icon="list"
             subtitle={`Hiển thị ${rows.length}/${filteredRows.length} dòng phù hợp`}
             title="Danh sách hạng mục"
           />
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="rounded-full bg-[var(--surface-muted)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] ring-1 ring-[var(--border-strong)]">
-              Tổng dữ liệu: {allRows.length} hạng mục
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-2 lg:flex-initial lg:justify-end">
+            <p className="shrink-0 rounded-full bg-[var(--surface-muted)] px-2.5 py-1.5 text-xs font-semibold text-[var(--foreground)] ring-1 ring-[var(--border-strong)] lg:px-3 lg:py-2 lg:text-sm">
+              <span className="lg:hidden">{rows.length}/{filteredRows.length}</span>
+              <span className="hidden lg:inline">Tổng dữ liệu: {allRows.length} hạng mục</span>
             </p>
             {canManage ? (
               <LeaderTaskManager
@@ -147,7 +148,7 @@ export const TasksTable = ({
           </div>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-2 lg:mt-4">
           <TaskDesktopWorkspace
             canManage={canManage}
             data={data}

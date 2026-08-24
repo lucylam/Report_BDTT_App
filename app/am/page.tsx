@@ -7,6 +7,10 @@ import { type ChangeEvent, type FormEvent, useEffect, useMemo, useState } from "
 import { AccountMenu } from "@/components/AccountMenu";
 import { CompanyBrand } from "@/components/CompanyBrand";
 import { GlobalNotifications } from "@/components/GlobalNotifications";
+import {
+  MobileAppHeader,
+  MobileBottomNavigation
+} from "@/components/MobileAppChrome";
 import { ModuleSwitcher } from "@/components/ModuleSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -14,8 +18,10 @@ import {
   AppLoadingState,
   Badge,
   Button,
+  EmptyState,
   Field,
   Icon,
+  type IconName,
   Input,
   PageHeader,
   Select,
@@ -42,6 +48,13 @@ import { compressPhotoToDataUrl, MAX_SOURCE_PHOTO_MEGABYTES } from "@/lib/photo"
 import { cn } from "@/lib/ui";
 
 type AmView = "assign" | "work" | "report" | "team";
+
+const amViewIcons: Readonly<Record<AmView, IconName>> = {
+  assign: "list",
+  work: "camera",
+  report: "chart",
+  team: "people"
+};
 type PhotoKind = "before" | "after";
 type ReportStatusFilter = "all" | "active" | AmActivityStatus;
 type ReportDateFilter = "all" | "overdue" | "today" | "next7";
@@ -1153,7 +1166,7 @@ const AmPage = (): React.ReactElement => {
   }
 
   return (
-    <main className="mobile-native-page min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 py-2 sm:px-3 sm:py-3 lg:p-3 2xl:p-4">
+    <main className="mobile-native-page am-mobile-page min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 sm:pt-3 lg:p-3 2xl:p-4">
       <div className="app-shell mobile-native-shell mx-auto grid min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)] lg:min-h-[calc(100dvh-1.5rem)] lg:grid-cols-[218px_minmax(0,1fr)] 2xl:min-h-[calc(100dvh-2rem)]">
         <aside className="hidden border-r border-[var(--line)] bg-[var(--surface)] p-4 lg:flex lg:flex-col">
           <Link className="focus-ring rounded-[var(--radius-card)] p-1" href="/">
@@ -1173,8 +1186,15 @@ const AmPage = (): React.ReactElement => {
         </aside>
 
         <section className="min-w-0">
-          <header className="mobile-shell-header sticky top-0 z-30 border-b border-[var(--line)] bg-[var(--surface)]/96 px-4 py-4 backdrop-blur-xl lg:static lg:border-b-0 lg:bg-transparent lg:px-5 lg:py-5 lg:backdrop-blur-0">
-            <ModuleSwitcher activeModule="am" bdttHref={bdttHref} className="mb-3 lg:hidden" compact />
+          <MobileAppHeader
+            account={currentAccount}
+            accountStatusLabel="Phiên nội bộ"
+            activeModule="am"
+            bdttHref={bdttHref}
+            onLogout={logout}
+            title="AM"
+          />
+          <header className="hidden px-5 py-5 lg:block">
             <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
               <PageHeader
                 className="min-w-0 flex-1"
@@ -1197,7 +1217,7 @@ const AmPage = (): React.ReactElement => {
 
           <div className="min-w-0 space-y-4 px-4 py-4 lg:px-5 lg:pb-6 lg:pt-0">
             {currentView !== "report" ? (
-              <section className="grid overflow-hidden rounded-[var(--radius-card)] border border-[var(--line)] sm:grid-cols-2 xl:grid-cols-6">
+              <section className="mobile-kpi-strip grid grid-cols-2 overflow-hidden rounded-[var(--radius-card)] border border-[var(--line)] lg:grid-cols-3 xl:grid-cols-6">
                 {[
                   ["Tổng việc", kpis.total],
                   ["Đã giao", kpis.assigned],
@@ -1206,9 +1226,9 @@ const AmPage = (): React.ReactElement => {
                   ["Bổ sung", kpis.needsRevision],
                   ["Đã đạt", kpis.approved]
                 ].map(([label, value]) => (
-                  <div className="border-b border-r border-[var(--line-soft)] bg-[var(--surface)] px-3 py-2.5 last:border-r-0" key={label}>
-                    <p className="text-xs font-medium uppercase text-[var(--text-soft)]">{label}</p>
-                    <p className="mt-1 text-xl font-semibold tabular-nums text-[var(--foreground)]">
+                  <div className="flex min-h-12 items-center justify-between gap-2 border-b border-r border-[var(--line-soft)] bg-[var(--surface)] px-3 py-2 lg:block lg:min-h-0 lg:py-2.5" key={label}>
+                    <p className="text-[11px] font-medium leading-4 text-[var(--text-muted)] lg:uppercase lg:text-[var(--text-soft)]">{label}</p>
+                    <p className="text-lg font-semibold tabular-nums text-[var(--foreground)] lg:mt-1 lg:text-xl">
                       {value}
                     </p>
                   </div>
@@ -1218,7 +1238,7 @@ const AmPage = (): React.ReactElement => {
 
             <nav
               aria-label="Chức năng AM"
-              className="mobile-app-tabs flex max-w-full overflow-x-auto border-b border-[var(--line)]"
+              className="hidden max-w-full overflow-x-auto border-b border-[var(--line)] lg:flex"
             >
               {availableViews.map((view) => (
                 <button
@@ -1376,15 +1396,10 @@ const AmPage = (): React.ReactElement => {
                     />
                   ))
                 ) : (
-                  <Widget className="p-4 text-center">
-                    <Badge tone="neutral">Chưa có việc AM</Badge>
-                    <h2 className="mt-3 text-xl font-semibold text-[var(--foreground)]">
-                      Chưa có nhiệm vụ cần cập nhật
-                    </h2>
-                    <p className="mx-auto mt-2 max-w-xl text-sm font-medium leading-6 text-[var(--text-muted)]">
-                      Khi quản lý AM giao việc, nhiệm vụ sẽ xuất hiện tại đây để người thực hiện cập nhật ảnh trước và sau.
-                    </p>
-                  </Widget>
+                  <EmptyState
+                    description="Nhiệm vụ mới sẽ xuất hiện tại đây."
+                    title="Chưa có nhiệm vụ AM"
+                  />
                 )}
               </section>
             ) : null}
@@ -1396,7 +1411,7 @@ const AmPage = (): React.ReactElement => {
                     <h2 className="text-lg font-semibold text-[var(--foreground)]">
                       Báo cáo và phê duyệt AM
                     </h2>
-                    <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--text-muted)]">
+                    <p className="mt-1 hidden max-w-3xl text-sm leading-6 text-[var(--text-muted)] lg:block">
                       Lọc công việc cần chú ý, mở từng nhiệm vụ để đối chiếu ảnh trước và sau, sau đó duyệt hoặc yêu cầu bổ sung.
                     </p>
                   </div>
@@ -1563,32 +1578,41 @@ const AmPage = (): React.ReactElement => {
 
                   </>
                 ) : (
-                  <div className="rounded-[var(--radius-card)] border border-dashed border-[var(--border-strong)] bg-[var(--surface-muted)] p-4 text-center">
-                    <Badge tone="neutral">
-                      {reportActivities.length === 0 ? "Chưa có báo cáo" : "Không có kết quả"}
-                    </Badge>
-                    <p className="mt-3 text-sm font-medium leading-6 text-[var(--text-muted)]">
-                      {reportActivities.length === 0
-                        ? "Chưa có nhiệm vụ AM nào để tổng hợp."
-                        : "Không có nhiệm vụ phù hợp với bộ lọc hiện tại."}
-                    </p>
-                    {hasReportFilters ? (
-                      <Button
-                        className="mt-3"
-                        onClick={() => setReportFilters(INITIAL_REPORT_FILTERS)}
-                        size="sm"
-                        variant="secondary"
-                      >
-                        Xóa bộ lọc
-                      </Button>
-                    ) : null}
-                  </div>
+                  <EmptyState
+                    action={
+                      hasReportFilters ? (
+                        <Button
+                          onClick={() => setReportFilters(INITIAL_REPORT_FILTERS)}
+                          size="sm"
+                          variant="secondary"
+                        >
+                          Xóa bộ lọc
+                        </Button>
+                      ) : undefined
+                    }
+                    description={
+                      reportActivities.length === 0
+                        ? "Chưa có nhiệm vụ để tổng hợp."
+                        : "Hãy điều chỉnh bộ lọc hiện tại."
+                    }
+                    title={reportActivities.length === 0 ? "Chưa có báo cáo" : "Không có kết quả"}
+                  />
                 )}
               </Widget>
             ) : null}
           </div>
         </section>
       </div>
+      <MobileBottomNavigation
+        ariaLabel="Điều hướng AM"
+        items={availableViews.map((view) => ({
+          active: currentView === view.key,
+          icon: amViewIcons[view.key],
+          key: view.key,
+          label: view.label,
+          onSelect: () => setActiveView(view.key)
+        }))}
+      />
       <PhotoLightbox photo={previewPhoto} onClose={() => setPreviewPhoto(null)} />
     </main>
   );

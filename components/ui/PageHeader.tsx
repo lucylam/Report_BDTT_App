@@ -7,6 +7,7 @@ interface PageHeaderProps {
   readonly description?: string;
   readonly actions?: ReactNode;
   readonly className?: string;
+  readonly mobileCompact?: boolean;
 }
 
 export const PageHeader = ({
@@ -14,21 +15,43 @@ export const PageHeader = ({
   title,
   description,
   actions,
-  className
+  className,
+  mobileCompact = true
 }: PageHeaderProps): React.ReactElement => {
   return (
-    <div className={cn("flex min-w-0 flex-wrap items-center gap-3", className)}>
+    <div
+      className={cn(
+        "flex min-w-0 flex-wrap items-center",
+        mobileCompact ? "gap-2 lg:gap-3" : "gap-3",
+        className
+      )}
+    >
       <div className="min-w-0 flex-1">
         {eyebrow ? (
-          <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
+          <p
+            className={cn(
+              "text-xs font-semibold uppercase text-[var(--primary-strong)]",
+              mobileCompact && "hidden lg:block"
+            )}
+          >
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="mt-1 max-w-full text-balance break-words text-2xl font-semibold leading-tight tracking-normal text-[var(--foreground)] lg:text-3xl">
+        <h1
+          className={cn(
+            "max-w-full text-balance break-words font-semibold leading-tight tracking-normal text-[var(--foreground)]",
+            mobileCompact ? "text-xl lg:mt-1 lg:text-3xl" : "mt-1 text-2xl lg:text-3xl"
+          )}
+        >
           {title}
         </h1>
         {description ? (
-          <p className="mt-1 break-words text-sm font-semibold leading-5 text-[var(--text-muted)]">
+          <p
+            className={cn(
+              "mt-1 break-words text-sm font-semibold leading-5 text-[var(--text-muted)]",
+              mobileCompact && "hidden lg:block"
+            )}
+          >
             {description}
           </p>
         ) : null}

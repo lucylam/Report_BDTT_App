@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { minutesUntilNoon } from "@/lib/date";
+import { minutesUntilReportCutoff } from "@/lib/date";
 
 export const CountdownBanner = (): React.ReactElement => {
-  const [minutesLeft, setMinutesLeft] = useState<number>(minutesUntilNoon());
+  const [minutesLeft, setMinutesLeft] = useState<number>(minutesUntilReportCutoff());
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      setMinutesLeft(minutesUntilNoon());
+      setMinutesLeft(minutesUntilReportCutoff());
     }, 60_000);
     return () => window.clearInterval(interval);
   }, []);
@@ -16,7 +16,7 @@ export const CountdownBanner = (): React.ReactElement => {
   if (minutesLeft === 0) {
     return (
       <div className="mx-4 mt-2 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-warm)] px-3 py-2 text-sm font-semibold text-[var(--accent-strong)] shadow-[var(--shadow-soft-sm)]">
-        Đã qua mốc nhắc 12:00. Vẫn có thể cập nhật tiến độ, ghi chú và ảnh.
+        Mốc 14:00 đã qua.
       </div>
     );
   }
@@ -32,7 +32,7 @@ export const CountdownBanner = (): React.ReactElement => {
 
   return (
     <div className={`mx-4 mt-2 rounded-[var(--radius-card)] border border-[var(--line)] px-3 py-2 text-sm shadow-[var(--shadow-soft-sm)] ${urgentClass}`}>
-      Còn <span className="font-semibold">{hours} giờ {minutes} phút</span> để cập nhật trước mốc nhắc 12:00.
+      Mốc 14:00 · còn <span className="font-semibold">{hours} giờ {minutes} phút</span>.
     </div>
   );
 };

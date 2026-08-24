@@ -3,7 +3,7 @@ import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { getAuthenticatedAccount, getAuthenticatedDataAdmin } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { TASK_PHOTOS_BUCKET } from "@/lib/api/photoStorage";
-import { getCurrentReportDate } from "@/lib/date";
+import { getOperationalReportDate } from "@/lib/date";
 import {
   createDemoProgressRows,
   DEMO_PROGRESS_BATCH_SIZE,
@@ -198,7 +198,7 @@ export const PUT = async (request: Request): Promise<NextResponse> => {
   }
 
   const body = (await request.json().catch(() => ({}))) as DemoModeBody;
-  const reportDate = text(body.reportDate) || getCurrentReportDate();
+  const reportDate = text(body.reportDate) || getOperationalReportDate();
   if (!isValidReportDate(reportDate)) {
     return errorResponse("Ngày báo cáo demo không hợp lệ.", 400);
   }

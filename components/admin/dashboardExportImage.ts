@@ -141,7 +141,7 @@ export const createCompactDashboardExportSvg = (
   );
   y += resourcePanelHeight + gap;
 
-  parts.push(notePanel({ x: pagePad, y, w: contentWidth, h: 58 }));
+  parts.push(footerPanel({ x: pagePad, y, w: contentWidth, h: 58 }));
   y += 58 + pagePad;
 
   const height = Math.ceil(y);
@@ -482,10 +482,9 @@ const resourceTile = (group: ResourceGroupDashboard, rect: ChartRect): string =>
   ].join("");
 };
 
-const notePanel = (rect: ChartRect): string => [
+const footerPanel = (rect: ChartRect): string => [
   card(rect.x, rect.y, rect.w, rect.h, 18),
-  text("Ghi chú: Các chart milestone/VOTTING cần thêm dữ liệu nguồn nên không đưa vào ảnh compact.", rect.x + 22, rect.y + 36, 15, 800, colors.muted),
-  text("BDTT WebApp · dashboard report image", rect.x + rect.w - 320, rect.y + 36, 13, 700, colors.soft)
+  text("BDTT WebApp · dashboard report image", rect.x + 22, rect.y + 36, 13, 700, colors.soft)
 ].join("");
 
 const resourceGroupsHeight = (groups: readonly ResourceGroupDashboard[]): number => {

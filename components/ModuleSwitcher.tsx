@@ -15,13 +15,15 @@ interface ModuleSwitcherProps {
   readonly bdttHref: string;
   readonly className?: string;
   readonly compact?: boolean;
+  readonly variant?: "menu" | "toggle";
 }
 
 export const ModuleSwitcher = ({
   activeModule,
   bdttHref,
   className,
-  compact = false
+  compact = false,
+  variant = "menu"
 }: ModuleSwitcherProps): React.ReactElement => {
   const { modules, loading } = usePortalModules();
   const activeDefinition = getPortalModule(activeModule);
@@ -37,6 +39,57 @@ export const ModuleSwitcher = ({
   const active =
     visibleModules.find((module) => module.key === activeModule) ??
     fallbackModules[0];
+  const alternateKey: PortalModuleKey = activeModule === "bdtt" ? "am" : "bdtt";
+  const alternate = visibleModules.find((module) => module.key === alternateKey);
+
+  if (variant === "toggle") {
+    if (!alternate) {
+      return (
+        <span
+          aria-live={loading ? "polite" : undefined}
+          className={cn(
+            "inline-flex min-h-11 items-center rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] px-3 text-xs font-semibold text-[var(--text-muted)]",
+            className
+          )}
+        >
+          {activeModule.toUpperCase()}
+        </span>
+      );
+    }
+
+    const isBdtt = activeModule === "bdtt";
+    return (
+      <Link
+        aria-label={`Chuyển từ ${activeModule.toUpperCase()} sang ${alternate.key.toUpperCase()}`}
+        className={cn(
+          "focus-ring pressable inline-grid min-h-11 w-auto min-w-[7.75rem] max-w-full shrink-0 grid-cols-2 items-center rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-1 text-xs font-semibold shadow-[var(--shadow-soft-sm)]",
+          className
+        )}
+        href={alternate.href}
+      >
+        <span
+          className={cn(
+            "inline-flex min-h-9 items-center justify-center whitespace-nowrap rounded-[calc(var(--radius-field)-0.25rem)] px-2",
+            isBdtt
+              ? "bg-[var(--foreground)] text-[var(--surface)]"
+              : "text-[var(--text-muted)]"
+          )}
+        >
+          BDTT
+        </span>
+        <span
+          className={cn(
+            "inline-flex min-h-9 items-center justify-center whitespace-nowrap rounded-[calc(var(--radius-field)-0.25rem)] px-2",
+            isBdtt
+              ? "text-[var(--text-muted)]"
+              : "bg-[var(--foreground)] text-[var(--surface)]"
+          )}
+        >
+          AM
+        </span>
+      </Link>
+    );
+  }
 
   return (
     <details className={cn("group relative min-w-0", className)}>

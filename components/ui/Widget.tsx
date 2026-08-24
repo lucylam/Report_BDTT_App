@@ -28,6 +28,7 @@ interface WidgetHeaderProps {
   readonly icon?: IconName;
   readonly tone?: "primary" | "success" | "accent" | "warning" | "danger" | "info" | "neutral";
   readonly className?: string;
+  readonly mobileCompact?: boolean;
 }
 
 const headerToneClass = {
@@ -47,13 +48,26 @@ export const WidgetHeader = ({
   action,
   icon,
   tone = "primary",
-  className
+  className,
+  mobileCompact = true
 }: WidgetHeaderProps): React.ReactElement => {
   return (
-    <div className={cn("mb-3 flex flex-wrap items-start justify-between gap-3", className)}>
+    <div
+      className={cn(
+        "flex flex-wrap items-start justify-between",
+        mobileCompact ? "mb-2 gap-2 lg:mb-3 lg:gap-3" : "mb-3 gap-3",
+        className
+      )}
+    >
       <div className="flex min-w-0 flex-1 items-start gap-3">
         {icon ? (
-          <span className={cn("inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-field)]", headerToneClass[tone])}>
+          <span
+            className={cn(
+              "inline-flex shrink-0 items-center justify-center rounded-[var(--radius-field)]",
+              mobileCompact ? "h-9 w-9 lg:h-10 lg:w-10" : "h-10 w-10",
+              headerToneClass[tone]
+            )}
+          >
             <Icon name={icon} />
           </span>
         ) : null}
@@ -62,7 +76,12 @@ export const WidgetHeader = ({
             {title}
           </h2>
           {subtitle ? (
-            <p className="mt-0.5 break-words text-[11px] leading-4 text-[var(--text-muted)]">
+            <p
+              className={cn(
+                "mt-0.5 break-words text-[11px] leading-4 text-[var(--text-muted)]",
+                mobileCompact && "hidden lg:block"
+              )}
+            >
               {subtitle}
             </p>
           ) : null}

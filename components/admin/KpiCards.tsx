@@ -65,7 +65,7 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
             <p className="min-w-0 text-xs font-semibold uppercase leading-5 opacity-80 [overflow-wrap:anywhere]">{card.label}</p>
           </div>
           <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">{card.value}</p>
-          <p className="mt-2 text-xs font-semibold leading-5 text-[var(--text-muted)]">{card.helper}</p>
+          <p className="mt-2 hidden text-xs font-semibold leading-5 text-[var(--text-muted)] lg:block">{card.helper}</p>
         </div>
       ))}
     </section>

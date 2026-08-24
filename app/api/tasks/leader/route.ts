@@ -19,6 +19,7 @@ import {
 } from "@/lib/permissions";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isPercentAllowedForMode } from "@/lib/progressMode";
+import { resolveReportDateAtSubmission } from "@/lib/date";
 import { resolveTaskReporterId } from "@/lib/taskReporter";
 import type { AuthAccount, Profile } from "@/types/domain";
 
@@ -478,9 +479,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (taskResult.task.is_cancelled) {
     return toErrorResponse("Task đã hủy, không thể cập nhật báo cáo.", 409);
   }
-  const reportDate = normalizeText(body.reportDate);
+  const requestedReportDate = normalizeText(body.reportDate);
   if (
-    !isDateText(reportDate) ||
+    !isDateText(requestedReportDate) ||
     !isPercentAllowedForMode(
       body.percent,
       taskResult.task.progress_mode === "binary" ? "binary" : "continuous"
@@ -488,6 +489,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   ) {
     return toErrorResponse("Ngày báo cáo hoặc phần trăm tiến độ không hợp lệ.", 400);
   }
+  const reportDate = resolveReportDateAtSubmission(requestedReportDate);
 
   const now = new Date().toISOString();
   await saveBdttTrialTaskBackup(supabase, trialRunId, taskId);
@@ -550,5 +552,5 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     `${auth.account.fullName} đã cập nhật báo cáo ngày ${reportDate} ở mức ${body.percent}%.`,
     trialRunId
   );
-  return NextResponse.json({ ok: true, taskId });
+  return NextResponse.json({ ok: true, taskId, reportDate });
 };

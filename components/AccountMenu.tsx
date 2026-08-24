@@ -5,10 +5,12 @@ import { useState } from "react";
 import { DeveloperMark } from "@/components/DeveloperMark";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { Button, Dialog, Icon } from "@/components/ui";
+import { cn } from "@/lib/ui";
 import type { AuthAccount } from "@/types/domain";
 
 interface AccountMenuProps {
   readonly account: AuthAccount;
+  readonly compact?: boolean;
   readonly onLogout: () => void;
   readonly statusLabel?: string;
   readonly statusTone?: "success" | "warning";
@@ -17,6 +19,7 @@ interface AccountMenuProps {
 
 export const AccountMenu = ({
   account,
+  compact = false,
   onLogout,
   statusLabel,
   statusTone = "success",
@@ -30,22 +33,31 @@ export const AccountMenu = ({
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         aria-label="Tài khoản"
-        className="focus-ring pressable flex min-h-11 max-w-[15rem] shrink-0 items-center gap-2 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1.5 text-left shadow-[var(--shadow-soft-sm)] transition hover:bg-[var(--surface-muted)] sm:px-3"
+        className={cn(
+          "focus-ring pressable flex min-h-11 shrink-0 items-center rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] text-left shadow-[var(--shadow-soft-sm)] transition hover:bg-[var(--surface-muted)]",
+          compact
+            ? "h-11 w-11 max-w-11 justify-center p-0"
+            : "max-w-[15rem] gap-2 px-2.5 py-1.5 sm:px-3"
+        )}
         onClick={() => setIsOpen(true)}
         type="button"
       >
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-sm font-semibold text-[var(--on-accent)]">
           {getInitials(account.fullName)}
         </span>
-        <span className="hidden min-w-0 sm:block">
-          <span className="block truncate text-sm font-semibold text-[var(--foreground)]">
-            {account.fullName}
-          </span>
-          <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">
-            {account.orgTitle}
-          </span>
-        </span>
-        <Icon className="hidden text-[var(--text-muted)] sm:block" name="chevronDown" />
+        {!compact ? (
+          <>
+            <span className="hidden min-w-0 sm:block">
+              <span className="block truncate text-sm font-semibold text-[var(--foreground)]">
+                {account.fullName}
+              </span>
+              <span className="block truncate text-xs font-semibold text-[var(--text-muted)]">
+                {account.orgTitle}
+              </span>
+            </span>
+            <Icon className="hidden text-[var(--text-muted)] sm:block" name="chevronDown" />
+          </>
+        ) : null}
       </button>
 
       {isOpen ? (

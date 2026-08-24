@@ -4,11 +4,13 @@ import {
   excelSerialToDate,
   getAvailableReportDates,
   getCurrentReportDate,
+  getOperationalReportDate,
   getPlanReportDate,
   getPlanReportDates,
   getRecentReportDates,
   getReportHistoryDates,
-  minutesUntilNoon
+  minutesUntilReportCutoff,
+  resolveReportDateAtSubmission
 } from "@/lib/date";
 
 describe("excelSerialToDate / dateToExcelSerial", () => {
@@ -24,13 +26,13 @@ describe("excelSerialToDate / dateToExcelSerial", () => {
   });
 });
 
-describe("minutesUntilNoon", () => {
-  it("trả về 0 sau 12:00 trưa giờ Việt Nam", () => {
-    expect(minutesUntilNoon(new Date("2026-06-12T06:00:00.000Z"))).toBe(0);
+describe("minutesUntilReportCutoff", () => {
+  it("trả về 0 từ 14:00 giờ Việt Nam", () => {
+    expect(minutesUntilReportCutoff(new Date("2026-06-12T07:00:00.000Z"))).toBe(0);
   });
 
-  it("đếm ngược đúng trước 12:00 trưa giờ Việt Nam", () => {
-    expect(minutesUntilNoon(new Date("2026-06-12T04:30:00.000Z"))).toBe(30);
+  it("đếm ngược đúng trước mốc 14:00", () => {
+    expect(minutesUntilReportCutoff(new Date("2026-06-12T06:30:00.000Z"))).toBe(30);
   });
 });
 
@@ -38,6 +40,17 @@ describe("report date", () => {
   it("lấy ngày theo múi giờ nhà máy", () => {
     expect(getCurrentReportDate(new Date("2026-07-17T16:59:00.000Z"))).toBe("2026-07-17");
     expect(getCurrentReportDate(new Date("2026-07-17T17:01:00.000Z"))).toBe("2026-07-18");
+  });
+
+  it("chuyển ngày báo cáo tại đúng mốc 14:00 giờ Việt Nam", () => {
+    expect(getOperationalReportDate(new Date("2026-09-15T06:59:59.000Z"))).toBe("2026-09-15");
+    expect(getOperationalReportDate(new Date("2026-09-15T07:00:00.000Z"))).toBe("2026-09-16");
+  });
+
+  it("chuẩn hóa ngày gửi ở cutoff nhưng giữ ngày đã clamp theo kỳ kế hoạch", () => {
+    expect(resolveReportDateAtSubmission("2026-09-15", new Date("2026-09-15T06:59:59.000Z"))).toBe("2026-09-15");
+    expect(resolveReportDateAtSubmission("2026-09-15", new Date("2026-09-15T07:00:00.000Z"))).toBe("2026-09-16");
+    expect(resolveReportDateAtSubmission("2026-09-15", new Date("2026-08-24T08:00:00.000Z"))).toBe("2026-09-15");
   });
 
   it("tạo cửa sổ lịch sử và giữ ngày dữ liệu thực tế", () => {

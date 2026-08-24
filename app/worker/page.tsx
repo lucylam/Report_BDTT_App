@@ -26,7 +26,7 @@ import type {
   WorkerProgressDraftMap,
   WorkerProgressUpdate
 } from "@/components/worker/types";
-import { getPlanReportDate } from "@/lib/date";
+import { getOperationalReportDate, getPlanReportDate } from "@/lib/date";
 import { getProgressPhotoPaths, isInlinePhotoPath } from "@/lib/photo";
 import {
   createOfflinePhotoReference,
@@ -91,7 +91,7 @@ const submitProgressToDatabase = async ({
     readonly fullName: string;
     readonly resourceName: string;
   };
-}): Promise<void> => {
+}): Promise<string> => {
   const response = await fetch("/api/progress/submit", {
     method: "POST",
     headers: {
@@ -112,6 +112,11 @@ const submitProgressToDatabase = async ({
     }
     throw new Error(message);
   }
+
+  const result = (await response.json().catch(() => null)) as
+    | { readonly reportDate?: string }
+    | null;
+  return result?.reportDate || update.reportDate;
 };
 
 const uploadProgressPhotos = async ({
@@ -200,7 +205,10 @@ const WorkerPage = (): React.ReactElement => {
     queueProgress,
     updateProgress
   } = useAppData();
-  const reportDate = getPlanReportDate(data?.tasks ?? []);
+  const [currentReportDate, setCurrentReportDate] = useState<string>(() =>
+    getOperationalReportDate()
+  );
+  const reportDate = getPlanReportDate(data?.tasks ?? [], currentReportDate);
   const [filter, setFilter] = useState<WorkerFilter>("today");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedUnit, setSelectedUnit] = useState<string>("");
@@ -224,6 +232,22 @@ const WorkerPage = (): React.ReactElement => {
     flushQueue,
     updateProgress
   });
+
+  useEffect(() => {
+    const refreshReportDate = (): void => {
+      const nextReportDate = getOperationalReportDate();
+      setCurrentReportDate((current) =>
+        current === nextReportDate ? current : nextReportDate
+      );
+    };
+    const intervalId = window.setInterval(refreshReportDate, 30_000);
+    window.addEventListener("focus", refreshReportDate);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshReportDate);
+    };
+  }, []);
+
   useEffect(() => {
     syncContextRef.current = {
       cancelTask,
@@ -298,7 +322,7 @@ const WorkerPage = (): React.ReactElement => {
             trialRunId: queued.trialRunId ?? null
           };
 
-          await submitProgressToDatabase({
+          const effectiveReportDate = await submitProgressToDatabase({
             task,
             update: payload,
             worker: {
@@ -307,7 +331,7 @@ const WorkerPage = (): React.ReactElement => {
               resourceName: profile.resourceName
             }
           });
-          applyProgress(payload);
+          applyProgress({ ...payload, reportDate: effectiveReportDate });
           await removeOfflinePhotos(queuedPhotoPaths);
           syncedItemIds.push(queued.id);
         } catch (error) {
@@ -561,7 +585,7 @@ const WorkerPage = (): React.ReactElement => {
               photoPaths: uploadedPhotoPaths
             };
             payloadForOfflineRetry = persistedPayload;
-            await submitProgressToDatabase({
+            const effectiveReportDate = await submitProgressToDatabase({
               task,
               update: persistedPayload,
               worker: {
@@ -570,7 +594,10 @@ const WorkerPage = (): React.ReactElement => {
                 resourceName: worker.resourceName
               }
             });
-            updateProgress(persistedPayload);
+            updateProgress({
+              ...persistedPayload,
+              reportDate: effectiveReportDate
+            });
             setSaveStates((current) => ({ ...current, [taskId]: "saved" }));
           } else {
             await queueOfflineProgress(taskId, payload);
@@ -686,7 +713,6 @@ const WorkerPage = (): React.ReactElement => {
           void submitDraftUpdates();
         }}
         pendingUpdateCount={pendingUpdateCount}
-        planVersion={data.planVersion}
         queuedUpdateCount={queueLength}
         queueSyncState={queueSyncState}
         progress={data.progress}

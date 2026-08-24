@@ -1,6 +1,8 @@
 const EXCEL_DATE_OFFSET = 25569;
 const MS_PER_DAY = 86_400_000;
 const DEFAULT_REPORT_WINDOW_DAYS = 14;
+const REPORT_CUTOFF_HOUR = 14;
+const REPORT_TIME_ZONE = "Asia/Ho_Chi_Minh";
 
 export interface ReportDateRangeItem {
   readonly startDate: string;
@@ -8,6 +10,28 @@ export interface ReportDateRangeItem {
 }
 
 const isIsoDate = (value: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+const getReportTimeParts = (now: Date): Record<string, string> =>
+  Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: REPORT_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23"
+    })
+      .formatToParts(now)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  );
+
+const addReportDays = (dateText: string, days: number): string => {
+  const date = new Date(`${dateText}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+};
 
 const createDateRange = (startDate: string, finishDate: string): readonly string[] => {
   if (!isIsoDate(startDate) || !isIsoDate(finishDate) || finishDate < startDate) {
@@ -23,16 +47,27 @@ const createDateRange = (startDate: string, finishDate: string): readonly string
 };
 
 export const getCurrentReportDate = (now: Date = new Date()): string => {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Saigon",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).formatToParts(now);
-  const year = parts.find((part) => part.type === "year")?.value ?? "";
-  const month = parts.find((part) => part.type === "month")?.value ?? "";
-  const day = parts.find((part) => part.type === "day")?.value ?? "";
-  return `${year}-${month}-${day}`;
+  const parts = getReportTimeParts(now);
+  return `${parts.year}-${parts.month}-${parts.day}`;
+};
+
+export const getOperationalReportDate = (now: Date = new Date()): string => {
+  const parts = getReportTimeParts(now);
+  const calendarDate = `${parts.year}-${parts.month}-${parts.day}`;
+  return Number(parts.hour) >= REPORT_CUTOFF_HOUR
+    ? addReportDays(calendarDate, 1)
+    : calendarDate;
+};
+
+export const resolveReportDateAtSubmission = (
+  requestedDate: string,
+  now: Date = new Date()
+): string => {
+  const calendarDate = getCurrentReportDate(now);
+  const operationalDate = getOperationalReportDate(now);
+  return requestedDate === calendarDate || requestedDate === operationalDate
+    ? operationalDate
+    : requestedDate;
 };
 
 export const getRecentReportDates = (
@@ -49,14 +84,14 @@ export const getRecentReportDates = (
 };
 
 /** Ngày vận hành hiện tại tại múi giờ nhà máy. Không còn khóa vào dữ liệu demo. */
-export const DEFAULT_REPORT_DATE = getCurrentReportDate();
+export const DEFAULT_REPORT_DATE = getOperationalReportDate();
 
 /** Cửa sổ mặc định cho lịch sử; màn hình có dữ liệu sẽ hợp nhất thêm các ngày thực tế. */
 export const REPORT_DATES: readonly string[] = getRecentReportDates();
 
 export const getAvailableReportDates = (
   reportDates: readonly string[],
-  anchorDate = DEFAULT_REPORT_DATE
+  anchorDate = getOperationalReportDate()
 ): readonly string[] =>
   [...new Set([...getRecentReportDates(anchorDate), ...reportDates.filter(Boolean)])].sort();
 
@@ -83,7 +118,7 @@ export const getPlanReportDates = (
 
 export const getPlanReportDate = (
   items: readonly ReportDateRangeItem[],
-  currentDate = DEFAULT_REPORT_DATE
+  currentDate = getOperationalReportDate()
 ): string => {
   const reportDates = getPlanReportDates(items);
   if (reportDates.length === 0) return currentDate;
@@ -97,7 +132,7 @@ export const getPlanReportDate = (
 export const getReportHistoryDates = (
   items: readonly ReportDateRangeItem[],
   actualReportDates: readonly string[],
-  currentDate = DEFAULT_REPORT_DATE,
+  currentDate = getOperationalReportDate(),
   dayCount = 7
 ): readonly string[] => {
   const planDates = getPlanReportDates(items);
@@ -137,16 +172,10 @@ export const formatViDate = (dateText: string): string => {
   }).format(date);
 };
 
-export const minutesUntilNoon = (now: Date = new Date()): number => {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Saigon",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  }).formatToParts(now);
-  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? "0");
-  const minute = Number(
-    parts.find((part) => part.type === "minute")?.value ?? "0"
+export const minutesUntilReportCutoff = (now: Date = new Date()): number => {
+  const parts = getReportTimeParts(now);
+  return Math.max(
+    0,
+    REPORT_CUTOFF_HOUR * 60 - (Number(parts.hour) * 60 + Number(parts.minute))
   );
-  return Math.max(0, 12 * 60 - (hour * 60 + minute));
 };
