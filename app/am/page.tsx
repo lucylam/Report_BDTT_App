@@ -1167,8 +1167,8 @@ const AmPage = (): React.ReactElement => {
 
   return (
     <main className="mobile-native-page am-mobile-page min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 pb-[calc(var(--mobile-bottom-nav-height)+var(--safe-bottom)+0.75rem)] pt-2 sm:px-3 sm:pt-3 lg:p-3 2xl:p-4">
-      <div className="app-shell mobile-native-shell mx-auto grid min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)] lg:min-h-[calc(100dvh-1.5rem)] lg:grid-cols-[218px_minmax(0,1fr)] 2xl:min-h-[calc(100dvh-2rem)]">
-        <aside className="hidden border-r border-[var(--line)] bg-[var(--surface)] p-4 lg:flex lg:flex-col">
+      <div className="app-shell mobile-native-shell desktop-shell-grid mx-auto grid min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)] lg:min-h-[calc(100dvh-1.5rem)] 2xl:min-h-[calc(100dvh-2rem)]">
+        <aside className="desktop-sidebar-safe hidden border-r border-[var(--line)] bg-[var(--surface)] p-4 lg:flex lg:flex-col">
           <Link className="focus-ring rounded-[var(--radius-card)] p-1" href="/">
             <CompanyBrand variant="sidebar" />
           </Link>

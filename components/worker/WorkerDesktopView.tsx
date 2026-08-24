@@ -214,8 +214,8 @@ export const WorkerDesktopView = ({
 
   return (
     <main className="hidden min-h-dvh w-full max-w-[100vw] overflow-x-hidden p-3 lg:block 2xl:p-4">
-      <div className="app-shell mx-auto grid min-h-[calc(100dvh-1.5rem)] w-full max-w-none grid-cols-[218px_minmax(0,1fr)] overflow-hidden rounded-[var(--radius-panel)] 2xl:min-h-[calc(100dvh-2rem)]">
-        <aside className="flex border-r border-[var(--line)] bg-[var(--surface)] p-4">
+      <div className="app-shell desktop-shell-grid mx-auto grid min-h-[calc(100dvh-1.5rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)] 2xl:min-h-[calc(100dvh-2rem)]">
+        <aside className="desktop-sidebar-safe flex border-r border-[var(--line)] bg-[var(--surface)] p-4">
           <div className="flex min-h-full w-full flex-col">
             <Link
               className="focus-ring rounded-[var(--radius-card)] p-1"
@@ -702,7 +702,7 @@ const DesktopNavButton = ({
     type="button"
   >
     <Icon className={active ? "text-[var(--primary-strong)]" : ""} name={icon} />
-    <span className="truncate">{label}</span>
+    <span className="break-words">{label}</span>
   </button>
 );
 

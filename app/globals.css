@@ -87,6 +87,7 @@
 
   --mobile-topbar-height: 4.35rem;
   --mobile-bottom-nav-height: 5.5rem;
+  --desktop-sidebar-width: clamp(290px, 22vw, 328px);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
@@ -274,6 +275,22 @@ textarea {
 :where(h1, h2, h3, h4, h5, h6, p, dt, dd, label, legend, th, td) {
   max-width: 100%;
   overflow-wrap: break-word;
+}
+
+/* Shared desktop shell: keep navigation and account text fully readable.
+   Sidebar content must reflow; it must never be clipped or compressed into a
+   narrow text column. */
+@media (min-width: 1024px) {
+  .desktop-shell-grid {
+    grid-template-columns: var(--desktop-sidebar-width) minmax(0, 1fr);
+  }
+
+  .desktop-sidebar-safe .truncate {
+    overflow: visible !important;
+    overflow-wrap: anywhere !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+  }
 }
 
 h1,
