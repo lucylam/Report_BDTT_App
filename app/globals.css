@@ -171,6 +171,13 @@
   box-sizing: border-box;
 }
 
+/* Text must be allowed to shrink inside flex/grid tracks before it wraps.
+   Without this, larger browser or OS text sizes can push a whole card wider
+   than its container even when the card itself is responsive. */
+:where(.flex, .inline-flex, .grid, .inline-grid) > * {
+  min-width: 0;
+}
+
 html {
   background: var(--background);
   color: var(--foreground);
@@ -224,10 +231,16 @@ body {
   line-height: 1.4rem !important;
 }
 
-/* Desktop at 100% zoom uses a larger reading baseline. Rem-based Tailwind
-   utilities and form controls scale together, while mobile keeps the native
-   16px baseline and remains compatible with OS text scaling. */
+/* Desktop at 100% zoom uses a larger reading baseline. Compact laptop
+   viewports step up to 17px; wide screens use 18px. Rem-based spacing grows
+   with the text, so cards and controls keep their visual proportions. */
 @media (min-width: 768px) {
+  html {
+    font-size: 106.25%;
+  }
+}
+
+@media (min-width: 1280px) {
   html {
     font-size: 112.5%;
   }
@@ -248,6 +261,19 @@ select,
 textarea {
   font-family: inherit;
   letter-spacing: 0;
+}
+
+:where(button, [role="button"], summary, a) {
+  max-width: 100%;
+}
+
+:where(button, [role="button"], summary) {
+  overflow-wrap: anywhere;
+}
+
+:where(h1, h2, h3, h4, h5, h6, p, dt, dd, label, legend, th, td) {
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 
 h1,
