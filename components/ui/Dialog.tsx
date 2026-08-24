@@ -25,8 +25,13 @@ export const Dialog = ({
   children
 }: DialogProps): React.ReactElement | null => {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
   const titleId = useId();
   const descriptionId = useId();
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -52,7 +57,7 @@ export const Dialog = ({
 
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab" || !dialogNode) return;
@@ -79,7 +84,7 @@ export const Dialog = ({
       window.removeEventListener("keydown", onKeyDown);
       previouslyFocused?.focus();
     };
-  }, [onClose]);
+  }, []);
 
   const dialog = (
     <div
