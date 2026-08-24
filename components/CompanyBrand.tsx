@@ -3,11 +3,13 @@ import { cn } from "@/lib/ui";
 
 interface CompanyBrandProps {
   readonly className?: string;
+  readonly showDescription?: boolean;
   readonly variant?: "compact" | "sidebar" | "full";
 }
 
 export const CompanyBrand = ({
   className,
+  showDescription = true,
   variant = "sidebar"
 }: CompanyBrandProps): React.ReactElement => {
   const isCompact = variant === "compact";
@@ -56,7 +58,7 @@ export const CompanyBrand = ({
           <p className={cn("mt-1 font-medium text-[var(--text-muted)]", isFull ? "text-sm" : "text-xs")}>
             Xưởng Điều khiển
           </p>
-          {isFull ? (
+          {isFull && showDescription ? (
             <p className="mt-3 text-sm font-medium text-[var(--text-muted)]">
               Công tác, nhiệm vụ, thông báo và báo cáo theo vai trò
             </p>

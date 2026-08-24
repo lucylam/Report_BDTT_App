@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CompanyBrand } from "@/components/CompanyBrand";
-import { DeveloperMark } from "@/components/DeveloperMark";
 import { PwaInstallButton } from "@/components/PwaInstallButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Alert, Button, Field, Icon, Input } from "@/components/ui";
@@ -63,17 +62,13 @@ const LoginPage = (): React.ReactElement => {
       <section className="app-shell grid w-full max-w-5xl overflow-hidden rounded-[var(--radius-panel)] p-4 md:grid-cols-[0.92fr_1.08fr] md:p-5">
         <div className="hidden rounded-[var(--radius-card)] bg-[var(--foreground)] p-7 text-[var(--surface)] shadow-[var(--shadow-soft-md)] md:flex md:flex-col md:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase opacity-75">Tiến độ BDTT 2026</p>
-            <h1 className="mt-4 text-5xl font-semibold leading-tight">
-              Không gian làm việc nội bộ
-            </h1>
-            <p className="mt-4 max-w-md text-sm font-semibold leading-7 opacity-85">
-              Công cụ cập nhật, báo cáo, giám sát tiến độ trong BDTT của Tổ Thiết bị Đo lường & Điều khiển
+            <h1 className="text-5xl font-semibold leading-tight">BDTT 2026</h1>
+            <p className="mt-4 max-w-sm text-base font-semibold leading-6 opacity-80">
+              Tổ Thiết bị Đo lường & Điều khiển
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <LoginMetric icon="calendar" label="Mốc nhắc" value="12:00" />
-            <LoginMetric icon="spreadsheet" label="Báo cáo" value="Excel" />
+          <div className="max-w-48">
+            <LoginMetric icon="calendar" label="Mốc nhắc" value="14:00" />
           </div>
         </div>
 
@@ -81,30 +76,23 @@ const LoginPage = (): React.ReactElement => {
           <div className="flex items-start justify-between gap-4">
             <CompanyBrand
               className="min-w-0 flex-1"
+              showDescription={false}
               variant="full"
             />
             <ThemeToggle className="shrink-0" />
           </div>
-          <DeveloperMark className="mt-3" variant="inline" />
 
-          <div className="mt-7">
-            <p className="text-xs font-semibold uppercase text-[var(--primary-strong)]">
-              Đăng nhập nội bộ
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold leading-tight md:text-4xl">
-              Vào hệ thống BDTT
+          <div className="mt-6">
+            <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
+              Đăng nhập
             </h1>
-            <p className="mt-2 text-sm font-semibold leading-6 text-[var(--text-muted)]">
-              Dùng tài khoản được cấp để vào đúng màn hình theo vai trò.
-            </p>
           </div>
 
-          <form className="mt-6 flex flex-col gap-4" onSubmit={submitLogin}>
+          <form className="mt-5 flex flex-col gap-4" onSubmit={submitLogin}>
             <Field label="Tên đăng nhập">
               <Input
                 autoComplete="username"
                 onChange={(event) => setUsername(event.target.value)}
-                placeholder="Ví dụ: vinhlpp"
                 required
                 value={username}
               />
@@ -113,7 +101,6 @@ const LoginPage = (): React.ReactElement => {
               <Input
                 autoComplete="current-password"
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Mặc định: 123456"
                 required
                 trailing={
                   <button
@@ -152,7 +139,7 @@ const LoginPage = (): React.ReactElement => {
               )}
             </Button>
           </form>
-          <PwaInstallButton className="mt-4" compact showHint />
+          <PwaInstallButton className="mt-4" compact />
         </div>
       </section>
     </main>
@@ -164,7 +151,7 @@ const LoginMetric = ({
   label,
   value
 }: {
-  readonly icon: "calendar" | "spreadsheet";
+  readonly icon: "calendar";
   readonly label: string;
   readonly value: string;
 }): React.ReactElement => (
