@@ -13,6 +13,7 @@ import { WorkerGroupedTaskList } from "@/components/worker/WorkerGroupedTaskList
 import { WorkerPendingUpdateBar } from "@/components/worker/WorkerPendingUpdateBar";
 import { WorkerSearchControls } from "@/components/worker/WorkerSearchControls";
 import {
+  getTaskAssigneeOptions,
   getTaskUnitOptions,
   groupWorkerTasks,
   type WorkerGroupMode,
@@ -39,6 +40,7 @@ interface WorkerMobileViewProps {
   readonly searchQuery: string;
   readonly selectedTaskDate: string;
   readonly selectedPriority: WorkerPriorityFilter;
+  readonly selectedAssignee: string;
   readonly selectedUnit: string;
   readonly isOnline: boolean;
   readonly lastSyncedAt: string | null;
@@ -50,6 +52,7 @@ interface WorkerMobileViewProps {
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly onFilterChange: (filter: WorkerFilter) => void;
   readonly onSearchChange: (query: string) => void;
+  readonly onAssigneeChange: (assignee: string) => void;
   readonly onTaskDateChange: (date: string) => void;
   readonly onPriorityChange: (priority: WorkerPriorityFilter) => void;
   readonly onUnitChange: (unit: string) => void;
@@ -90,6 +93,7 @@ export const WorkerMobileView = ({
   searchQuery,
   selectedTaskDate,
   selectedPriority,
+  selectedAssignee,
   selectedUnit,
   isOnline,
   lastSyncedAt,
@@ -101,6 +105,7 @@ export const WorkerMobileView = ({
   saveStates,
   onFilterChange,
   onSearchChange,
+  onAssigneeChange,
   onTaskDateChange,
   onPriorityChange,
   onUnitChange,
@@ -139,6 +144,7 @@ export const WorkerMobileView = ({
   ).length;
   const taskGroups = groupWorkerTasks(filteredTasks, groupMode);
   const taskDateOptions = getPlanReportDates(allTasks);
+  const assigneeOptions = getTaskAssigneeOptions(allTasks);
   const unitOptions = getTaskUnitOptions(allTasks);
   const reportDates = getReportHistoryDates(
     allTasks,
@@ -227,17 +233,20 @@ export const WorkerMobileView = ({
           <section className="space-y-2 border-b border-[var(--line)] bg-[var(--surface)] px-3 py-2">
             <SummaryPills percents={percents} />
             <WorkerSearchControls
+              assigneeOptions={assigneeOptions}
               filter={filter}
               groupMode={groupMode}
               inputId="worker-mobile-task-search"
               onFilterChange={onFilterChange}
               onGroupModeChange={setGroupMode}
               onSearchChange={onSearchChange}
+              onAssigneeChange={onAssigneeChange}
               onPriorityChange={onPriorityChange}
               onTaskDateChange={onTaskDateChange}
               onUnitChange={onUnitChange}
               resultLabel={`${filteredTasks.length}/${allTasks.length} hạng mục`}
               searchQuery={searchQuery}
+              selectedAssignee={selectedAssignee}
               selectedPriority={selectedPriority}
               selectedTaskDate={selectedTaskDate}
               taskDateOptions={taskDateOptions}

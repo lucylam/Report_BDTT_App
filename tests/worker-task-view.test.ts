@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  getTaskAssigneeOptions,
+  matchesWorkerTaskAssignee,
   matchesWorkerTaskDate,
   matchesWorkerTaskPriority
 } from "@/components/worker/taskView";
@@ -51,5 +53,26 @@ describe("Worker task priority filter", () => {
     expect(matchesWorkerTaskPriority(task, "2")).toBe(true);
     expect(matchesWorkerTaskPriority(task, "1")).toBe(false);
     expect(matchesWorkerTaskPriority(task, "3")).toBe(false);
+  });
+});
+
+describe("Worker task assignee filter", () => {
+  it("lọc theo Resource Name và không phân biệt dấu, hoa thường", () => {
+    const task = createTask("2026-09-15", "2026-09-16");
+
+    expect(matchesWorkerTaskAssignee(task, "nguyen van a")).toBe(true);
+    expect(matchesWorkerTaskAssignee(task, "Nguyễn Văn B")).toBe(false);
+    expect(matchesWorkerTaskAssignee(task, "")).toBe(true);
+  });
+
+  it("tạo danh sách người thực hiện duy nhất và có thứ tự", () => {
+    const first = createTask("2026-09-15", "2026-09-16");
+    const second = { ...first, id: "task-2", resourceName: "Trần Văn C" };
+    const duplicate = { ...first, id: "task-3", resourceName: "nguyen van a" };
+
+    expect(getTaskAssigneeOptions([second, duplicate, first])).toEqual([
+      "nguyen van a",
+      "Trần Văn C"
+    ]);
   });
 });

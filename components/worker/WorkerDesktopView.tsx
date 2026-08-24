@@ -23,6 +23,7 @@ import { WorkerDesktopTaskList } from "@/components/worker/WorkerDesktopTaskList
 import { WorkerPendingUpdateBar } from "@/components/worker/WorkerPendingUpdateBar";
 import { WorkerSearchControls } from "@/components/worker/WorkerSearchControls";
 import {
+  getTaskAssigneeOptions,
   getTaskUnitOptions,
   groupWorkerTasks,
   type WorkerGroupMode,
@@ -50,6 +51,7 @@ interface WorkerDesktopViewProps {
   readonly searchQuery: string;
   readonly selectedTaskDate: string;
   readonly selectedPriority: WorkerPriorityFilter;
+  readonly selectedAssignee: string;
   readonly selectedUnit: string;
   readonly isOnline: boolean;
   readonly lastSyncedAt: string | null;
@@ -61,6 +63,7 @@ interface WorkerDesktopViewProps {
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly onFilterChange: (filter: WorkerFilter) => void;
   readonly onSearchChange: (query: string) => void;
+  readonly onAssigneeChange: (assignee: string) => void;
   readonly onTaskDateChange: (date: string) => void;
   readonly onPriorityChange: (priority: WorkerPriorityFilter) => void;
   readonly onUnitChange: (unit: string) => void;
@@ -104,6 +107,7 @@ export const WorkerDesktopView = ({
   searchQuery,
   selectedTaskDate,
   selectedPriority,
+  selectedAssignee,
   selectedUnit,
   isOnline,
   lastSyncedAt,
@@ -115,6 +119,7 @@ export const WorkerDesktopView = ({
   saveStates,
   onFilterChange,
   onSearchChange,
+  onAssigneeChange,
   onTaskDateChange,
   onPriorityChange,
   onUnitChange,
@@ -174,6 +179,7 @@ export const WorkerDesktopView = ({
   ).length;
   const taskGroups = groupWorkerTasks(filteredTasks, groupMode);
   const taskDateOptions = getPlanReportDates(allTasks);
+  const assigneeOptions = getTaskAssigneeOptions(allTasks);
   const unitOptions = getTaskUnitOptions(allTasks);
   const reportDates = getReportHistoryDates(
     allTasks,
@@ -292,6 +298,7 @@ export const WorkerDesktopView = ({
               {tab === "tasks" ? (
                 <TasksWorkspace
                   allTasks={allTasks}
+                  assigneeOptions={assigneeOptions}
                   completedCount={completedCount}
                   displayProgress={displayProgress}
                   filter={filter}
@@ -308,6 +315,7 @@ export const WorkerDesktopView = ({
                   onFilterChange={onFilterChange}
                   onGroupModeChange={setGroupMode}
                   onSearchChange={onSearchChange}
+                  onAssigneeChange={onAssigneeChange}
                   onPriorityChange={onPriorityChange}
                   onTaskDateChange={onTaskDateChange}
                   onUnitChange={onUnitChange}
@@ -320,6 +328,7 @@ export const WorkerDesktopView = ({
                   reportDate={reportDate}
                   saveStates={saveStates}
                   searchQuery={searchQuery}
+                  selectedAssignee={selectedAssignee}
                   selectedPriority={selectedPriority}
                   selectedTaskDate={selectedTaskDate}
                   selectedUnit={selectedUnit}
@@ -361,6 +370,7 @@ export const WorkerDesktopView = ({
 
 const TasksWorkspace = ({
   allTasks,
+  assigneeOptions,
   completedCount,
   displayProgress,
   filter,
@@ -377,6 +387,7 @@ const TasksWorkspace = ({
   onFilterChange,
   onGroupModeChange,
   onSearchChange,
+  onAssigneeChange,
   onPriorityChange,
   onTaskDateChange,
   onUnitChange,
@@ -389,6 +400,7 @@ const TasksWorkspace = ({
   reportDate,
   saveStates,
   searchQuery,
+  selectedAssignee,
   selectedPriority,
   selectedTaskDate,
   selectedUnit,
@@ -398,6 +410,7 @@ const TasksWorkspace = ({
   unitOptions
 }: {
   readonly allTasks: readonly Task[];
+  readonly assigneeOptions: readonly string[];
   readonly completedCount: number;
   readonly displayProgress: readonly ProgressRecord[];
   readonly filter: WorkerFilter;
@@ -414,6 +427,7 @@ const TasksWorkspace = ({
   readonly onFilterChange: (filter: WorkerFilter) => void;
   readonly onGroupModeChange: (groupMode: WorkerGroupMode) => void;
   readonly onSearchChange: (query: string) => void;
+  readonly onAssigneeChange: (assignee: string) => void;
   readonly onPriorityChange: (priority: WorkerPriorityFilter) => void;
   readonly onTaskDateChange: (date: string) => void;
   readonly onUnitChange: (unit: string) => void;
@@ -426,6 +440,7 @@ const TasksWorkspace = ({
   readonly reportDate: string;
   readonly saveStates: Readonly<Record<string, SaveState>>;
   readonly searchQuery: string;
+  readonly selectedAssignee: string;
   readonly selectedPriority: WorkerPriorityFilter;
   readonly selectedTaskDate: string;
   readonly selectedUnit: string;
@@ -498,21 +513,24 @@ const TasksWorkspace = ({
       <Widget>
         <WidgetHeader
           icon="search"
-          subtitle="Tìm theo tag, WorkOrder, hạng mục hoặc khu vực"
+          subtitle="Tìm nhanh hoặc mở bộ lọc theo ngày, trạng thái và người thực hiện"
           title="Bộ lọc công việc"
         />
         <WorkerSearchControls
+          assigneeOptions={assigneeOptions}
           filter={filter}
           groupMode={groupMode}
           inputId={SEARCH_INPUT_ID}
           onFilterChange={onFilterChange}
           onGroupModeChange={onGroupModeChange}
           onSearchChange={onSearchChange}
+          onAssigneeChange={onAssigneeChange}
           onPriorityChange={onPriorityChange}
           onTaskDateChange={onTaskDateChange}
           onUnitChange={onUnitChange}
           resultLabel={`${filteredTasks.length}/${allTasks.length} hạng mục, nhấn / để tìm`}
           searchQuery={searchQuery}
+          selectedAssignee={selectedAssignee}
           selectedPriority={selectedPriority}
           selectedTaskDate={selectedTaskDate}
           taskDateOptions={taskDateOptions}

@@ -172,11 +172,11 @@ export const ProgressCharts = ({
       <section className="glass-card min-w-0 rounded-[var(--radius-card)] p-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <SectionTitle
-            subtitle="Phân tích sâu theo prefix Resource Names. Mỗi card chỉ hiện Top resource còn khối lượng lớn."
-            title="Chi tiết theo phân nhóm resource"
+            subtitle="Nhóm task lấy trực tiếp từ cột E (Nhóm) của Google Sheet. Mỗi card hiển thị Top người thực hiện theo cột L."
+            title="Chi tiết theo nhóm task"
           />
           <span className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-1 text-xs font-medium text-[var(--text-muted)] ring-1 ring-[var(--border)]">
-            Chi tiết kỹ thuật
+            Nguồn: DATA!E:E
           </span>
         </div>
         <div className="mt-3 grid min-w-0 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
@@ -1039,7 +1039,7 @@ const ResourceGroupChart = ({
       subtitle={
         group.rows.length === 0
           ? "Chưa có hạng mục thuộc nhóm này trong dữ liệu hiện tại."
-          : `${group.key} · Top ${Math.min(group.rows.length, 5)} resource còn khối lượng lớn`
+          : `Cột E · Top ${Math.min(group.rows.length, 5)} người còn khối lượng lớn`
       }
       title={group.title}
     />

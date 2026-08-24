@@ -98,22 +98,6 @@ const preferredLeadOrder = [
   "TLTBĐK_PHẠM QUYẾT CHIẾN"
 ];
 
-const resourceGroupLabels: Record<string, string> = {
-  "HTĐK": "Nhóm thiết bị hệ thống điều khiển",
-  TBCH: "Nhóm thiết bị chấp hành",
-  AMLL: "Nhóm TB đo - Áp, mức, lưu lượng",
-  BENT: "Nhóm TB đo - Bently",
-  "NHIỆT": "Nhóm TB đo - Nhiệt độ",
-  PI: "Nhóm TB đo - PI",
-  "TLTBĐK": "Nhóm tháo lắp TBĐK"
-};
-
-const resourceGroupOrder = ["HTĐK", "TBCH", "AMLL", "BENT", "NHIỆT", "PI", "TLTBĐK"];
-
-const getResourcePrefix = (resourceName: string): string => {
-  return normalizeDashboardKey(resourceName.split("_")[0] ?? "");
-};
-
 export const getCumulativePercent = (
   progress: readonly ProgressRecord[],
   taskId: string
@@ -215,11 +199,18 @@ export const buildExcelDashboard = (
     preferredOwnerUnitOrder
   );
   const leadStatus = buildLeadStatusRows(data.tasks, data.progress, leadNames);
-  const resourceGroups = resourceGroupOrder.map((key) => ({
-    key,
-    title: resourceGroupLabels[key] ?? key,
+  const sheetGroups = createCompletionRows(
+    activeTasks,
+    data.progress,
+    (task) => task.nhom
+  );
+  const resourceGroups = sheetGroups.map((group) => ({
+    key: getDashboardKey(group.name),
+    title: group.name,
     rows: createCompletionRows(
-      activeTasks.filter((task) => getResourcePrefix(task.resourceName) === normalizeDashboardKey(key)),
+      activeTasks.filter(
+        (task) => getDashboardKey(task.nhom) === getDashboardKey(group.name)
+      ),
       data.progress,
       (task) => task.resourceName
     )

@@ -12,6 +12,7 @@ import {
   mergeProgressWithDrafts
 } from "@/components/worker/progressDrafts";
 import {
+  matchesWorkerTaskAssignee,
   matchesWorkerTaskDate,
   matchesWorkerTaskPriority,
   matchesWorkerTaskQuery,
@@ -205,6 +206,7 @@ const WorkerPage = (): React.ReactElement => {
   const [selectedUnit, setSelectedUnit] = useState<string>("");
   const [selectedTaskDate, setSelectedTaskDate] = useState<string>("");
   const [selectedPriority, setSelectedPriority] = useState<WorkerPriorityFilter>("");
+  const [selectedAssignee, setSelectedAssignee] = useState<string>("");
   const [cancelTaskId, setCancelTaskId] = useState<string | null>(null);
   const [draftUpdates, setDraftUpdates] = useState<WorkerProgressDraftMap>({});
   const [isSubmittingUpdates, setIsSubmittingUpdates] = useState<boolean>(false);
@@ -393,6 +395,7 @@ const WorkerPage = (): React.ReactElement => {
         const filterDate = selectedTaskDate || reportDate;
         return (
           matchesFilter(task, percent, filter, filterDate) &&
+          matchesWorkerTaskAssignee(task, selectedAssignee) &&
           matchesWorkerTaskDate(task, selectedTaskDate) &&
           matchesWorkerTaskPriority(task, selectedPriority) &&
           (!selectedUnit || task.donVi === selectedUnit) &&
@@ -408,6 +411,7 @@ const WorkerPage = (): React.ReactElement => {
     filter,
     reportDate,
     searchQuery,
+    selectedAssignee,
     selectedPriority,
     selectedTaskDate,
     selectedUnit
@@ -674,6 +678,7 @@ const WorkerPage = (): React.ReactElement => {
         onFilterChange={setFilter}
         onLogout={logout}
         onSearchChange={setSearchQuery}
+        onAssigneeChange={setSelectedAssignee}
         onPriorityChange={setSelectedPriority}
         onTaskDateChange={handleTaskDateChange}
         onUnitChange={setSelectedUnit}
@@ -688,6 +693,7 @@ const WorkerPage = (): React.ReactElement => {
         reportDate={reportDate}
         saveStates={saveStates}
         searchQuery={searchQuery}
+        selectedAssignee={selectedAssignee}
         selectedPriority={selectedPriority}
         selectedTaskDate={selectedTaskDate}
         selectedUnit={selectedUnit}
@@ -707,6 +713,7 @@ const WorkerPage = (): React.ReactElement => {
         onFilterChange={setFilter}
         onLogout={logout}
         onSearchChange={setSearchQuery}
+        onAssigneeChange={setSelectedAssignee}
         onPriorityChange={setSelectedPriority}
         onTaskDateChange={handleTaskDateChange}
         onUnitChange={setSelectedUnit}
@@ -721,6 +728,7 @@ const WorkerPage = (): React.ReactElement => {
         reportDate={reportDate}
         saveStates={saveStates}
         searchQuery={searchQuery}
+        selectedAssignee={selectedAssignee}
         selectedPriority={selectedPriority}
         selectedTaskDate={selectedTaskDate}
         selectedUnit={selectedUnit}

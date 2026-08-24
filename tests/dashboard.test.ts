@@ -112,7 +112,7 @@ describe("buildExcelDashboard", () => {
     expect(dashboard.overall.percent).toBe(100);
   });
 
-  it("group đúng theo đơn vị chủ quản, nhóm trưởng và prefix resource", () => {
+  it("group đúng theo đơn vị chủ quản, nhóm trưởng và cột E của Google Sheet", () => {
     const leadA = "HTĐK_VÕ QUANG MINH";
     const leadB = "TBCH_LÝ NGỌC LĨNH";
     const data = makeData(
@@ -120,14 +120,16 @@ describe("buildExcelDashboard", () => {
         makeTask({
           id: "utility",
           donVi: "UTILITY",
+          nhom: "DK-DCS",
           nhomTruong: leadA,
-          resourceName: "HTĐK_VÕ QUANG MINH"
+          resourceName: "VÕ QUANG MINH"
         }),
         makeTask({
           id: "urea",
           donVi: "UREA",
+          nhom: "DK-VALVE",
           nhomTruong: leadB,
-          resourceName: "TBCH_LÝ NGỌC LĨNH"
+          resourceName: "LÝ NGỌC LĨNH"
         })
       ],
       [makeProgress("utility", 100), makeProgress("urea", 50)]
@@ -136,13 +138,13 @@ describe("buildExcelDashboard", () => {
     const dashboard = buildExcelDashboard(data);
     const utility = dashboard.byOwnerUnit.find((row) => row.name === "UTILITY");
     const ureaLeadRow = dashboard.byOwnerUnitAndLead.find((row) => row.name === "UREA");
-    const htdk = dashboard.resourceGroups.find((group) => group.key === "HTĐK");
+    const dcs = dashboard.resourceGroups.find((group) => group.title === "DK-DCS");
 
     expect(utility?.done).toBe(1);
     expect(ureaLeadRow?.values[leadB]).toBe(50);
     expect(ureaLeadRow?.totals[leadB]).toBe(1);
-    expect(htdk?.rows).toHaveLength(1);
-    expect(htdk?.rows[0]?.name).toBe("HTĐK_VÕ QUANG MINH");
+    expect(dcs?.rows).toHaveLength(1);
+    expect(dcs?.rows[0]?.name).toBe("VÕ QUANG MINH");
   });
 
   it("task hủy xuất hiện trong status nhưng không làm lệch completion totals", () => {
@@ -193,21 +195,23 @@ describe("buildExcelDashboard", () => {
     expect(dashboard.attentionLeads[0]?.notStarted).toBe(1);
   });
 
-  it("gộp các biến thể tên nhóm trưởng và resource prefix khác dấu/gạch dưới", () => {
+  it("gộp các biến thể tên nhóm trưởng, nhóm cột E và tên resource", () => {
     const lead = "TB ĐO_NGUYỄN THANH HẢI";
     const data = makeData(
       [
         makeTask({
           id: "accented",
           donVi: "UTILITY",
+          nhom: "DK-DCS",
           nhomTruong: lead,
-          resourceName: "HTĐK_LÊ BÁ TỨ"
+          resourceName: "LÊ BÁ TỨ"
         }),
         makeTask({
           id: "plain",
           donVi: "UTILITY",
+          nhom: "dk dcs",
           nhomTruong: "TB DO_NGUYEN THANH HAI",
-          resourceName: "HTDK_LE BA TU"
+          resourceName: "LE BA TU"
         })
       ],
       [makeProgress("accented", 100), makeProgress("plain", 50)]
@@ -216,14 +220,37 @@ describe("buildExcelDashboard", () => {
     const dashboard = buildExcelDashboard(data);
     const leadStatus = dashboard.leadStatus.find((row) => row.name === lead);
     const unitLead = dashboard.byOwnerUnitAndLead.find((row) => row.name === "UTILITY");
-    const htdk = dashboard.resourceGroups.find((group) => group.key === "HTĐK");
+    const dcs = dashboard.resourceGroups.find((group) => group.title === "DK-DCS");
 
     expect(dashboard.leadNames).toEqual([lead]);
     expect(leadStatus).toMatchObject({ completed: 1, inProgress: 1, total: 2 });
     expect(unitLead?.values[lead]).toBe(75);
     expect(unitLead?.totals[lead]).toBe(2);
-    expect(htdk?.rows).toHaveLength(1);
-    expect(htdk?.rows[0]).toMatchObject({ total: 2, percent: 75 });
+    expect(dcs?.rows).toHaveLength(1);
+    expect(dcs?.rows[0]).toMatchObject({ total: 2, percent: 75 });
+  });
+
+  it("tạo card động cho mọi nhóm có dữ liệu ở cột E", () => {
+    const data = makeData(
+      [
+        makeTask({ id: "valve", nhom: "DK-VALVE", resourceName: "NGÔ THANH LÂM" }),
+        makeTask({ id: "bent", nhom: "DK-BENT", resourceName: "TRẦN NHỰT QUANG" }),
+        makeTask({ id: "bent-2", nhom: "DK-BENT", resourceName: "DƯƠNG QUỐC THẠNH" }),
+        makeTask({ id: "plc", nhom: "DK-PLC", resourceName: "PHAN TRUNG KIÊN" }),
+        makeTask({ id: "plc-2", nhom: "DK-PLC", resourceName: "LÊ BÁ TỨ" }),
+        makeTask({ id: "plc-3", nhom: "DK-PLC", resourceName: "TRỊNH VĂN KIỀU" })
+      ],
+      []
+    );
+
+    const dashboard = buildExcelDashboard(data);
+
+    expect(dashboard.resourceGroups.map((group) => group.title)).toEqual([
+      "DK-PLC",
+      "DK-BENT",
+      "DK-VALVE"
+    ]);
+    expect(dashboard.resourceGroups.map((group) => group.rows.length)).toEqual([3, 2, 1]);
   });
 
   it("khong dem progress cua user ngoai danh sach worker vao KPI worker bao cao", () => {

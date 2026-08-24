@@ -458,7 +458,7 @@ const resourceGroupsPanel = (
   const headerH = 68;
   return [
     card(rect.x, rect.y, rect.w, rect.h, 22),
-    panelTitle("Chi tiết theo phân nhóm resource", "Mỗi nhóm chỉ hiển thị Top resource có khối lượng lớn để ảnh ngắn gọn", {
+    panelTitle("Chi tiết theo nhóm task", "Nhóm lấy từ cột E Google Sheet; mỗi card hiển thị Top người thực hiện ở cột L", {
       ...rect,
       y: rect.y
     }),
@@ -477,7 +477,7 @@ const resourceTile = (group: ResourceGroupDashboard, rect: ChartRect): string =>
   return [
     roundedRect(rect.x, rect.y, rect.w, rect.h, 18, colors.mutedSurface, 1, colors.border),
     text(truncate(group.title.toUpperCase(), 31), rect.x + 16, rect.y + 28, 14, 800, colors.text),
-    text(group.key, rect.x + 16, rect.y + 52, 13, 800, colors.muted),
+    text("Nguồn DATA!E:E", rect.x + 16, rect.y + 52, 13, 800, colors.muted),
     compactBars(rows, rect.x + 16, rect.y + 66, rect.w - 32, rect.h - 82)
   ].join("");
 };

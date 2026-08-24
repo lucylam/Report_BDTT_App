@@ -61,6 +61,16 @@ export const matchesWorkerTaskPriority = (
   return !selectedPriority || task.priority === Number(selectedPriority);
 };
 
+export const matchesWorkerTaskAssignee = (
+  task: Task,
+  selectedAssignee: string
+): boolean => {
+  return (
+    !selectedAssignee ||
+    normalizeSearchText(task.resourceName) === normalizeSearchText(selectedAssignee)
+  );
+};
+
 export const getWorkerTaskStatusWeight = (
   task: Task,
   percent: ProgressPercent
@@ -132,4 +142,19 @@ export const getTaskUnitOptions = (
     .sort((first, second) =>
       first.localeCompare(second, "vi", { numeric: true, sensitivity: "base" })
     );
+};
+
+export const getTaskAssigneeOptions = (
+  tasks: readonly Task[]
+): readonly string[] => {
+  const options = new Map<string, string>();
+  tasks.forEach((task) => {
+    const name = task.resourceName.trim();
+    const key = normalizeSearchText(name);
+    if (key && !options.has(key)) options.set(key, name);
+  });
+
+  return Array.from(options.values()).sort((first, second) =>
+    first.localeCompare(second, "vi", { numeric: true, sensitivity: "base" })
+  );
 };
