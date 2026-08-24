@@ -9,6 +9,8 @@ export { Button } from "./Button";
 export type { ButtonSize, ButtonVariant } from "./Button";
 export { Card } from "./Card";
 export type { CardPadding, CardVariant } from "./Card";
+export { CompactMetricStrip } from "./CompactMetricStrip";
+export type { CompactMetricItem, CompactMetricTone } from "./CompactMetricStrip";
 export { Dialog } from "./Dialog";
 export { EmptyState } from "./EmptyState";
 export { Field } from "./Field";

@@ -6,7 +6,14 @@ import { useEffect, useMemo, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { PersonnelEditorDialog } from "@/components/admin/personnel/PersonnelEditorDialog";
 import { PersonnelOrgChart } from "@/components/admin/personnel/PersonnelOrgChart";
-import { Alert, AppLoadingState, Icon, Input, type IconName } from "@/components/ui";
+import {
+  Alert,
+  AppLoadingState,
+  CompactMetricStrip,
+  Icon,
+  Input,
+  type IconName
+} from "@/components/ui";
 import { useAppData } from "@/hooks/useAppData";
 import { canManagePersonnelOrg } from "@/lib/permissions";
 import type { Profile } from "@/types/domain";
@@ -84,7 +91,19 @@ const AdminPersonnelPage = (): React.ReactElement => {
       subtitle="Sơ đồ tổ chức, luân chuyển nhóm và phân quyền nhân sự BDTT"
       title="Quản trị nhân sự"
     >
-      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <CompactMetricStrip
+        ariaLabel="Tổng hợp cơ cấu nhân sự"
+        className="lg:hidden"
+        columns={4}
+        items={[
+          { icon: "people", key: "personnel", label: "Nhân sự", tone: "info", value: allProfiles.length },
+          { icon: "workorder", key: "groups", label: "Nhóm công tác", shortLabel: "Nhóm", value: groups },
+          { icon: "shield", key: "leaders", label: "Cấp quản lý", shortLabel: "Quản lý", tone: "primary", value: leaders },
+          { icon: "account", key: "pnt", label: "PNT", tone: "warning", value: pnt }
+        ]}
+      />
+
+      <section className="hidden grid-cols-2 gap-3 lg:grid xl:grid-cols-4">
         <PersonnelMetric icon="people" label="Nhân sự" tone="info" value={allProfiles.length} />
         <PersonnelMetric icon="workorder" label="Nhóm công tác" tone="neutral" value={groups} />
         <PersonnelMetric icon="shield" label="Cấp quản lý" tone="primary" value={leaders} />

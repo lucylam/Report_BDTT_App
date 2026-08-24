@@ -1,7 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Badge, Icon, Input, Select, Widget, WidgetHeader } from "@/components/ui";
+import {
+  Badge,
+  CompactMetricStrip,
+  Icon,
+  Input,
+  Select,
+  Widget,
+  WidgetHeader
+} from "@/components/ui";
 import { formatViDate, getAvailableReportDates, getPlanReportDates } from "@/lib/date";
 import { getTaskPercent } from "@/lib/progress";
 import {
@@ -226,7 +234,19 @@ export const WorkerStatusTable = ({
 
   return (
     <section className="grid min-w-0 gap-4">
-      <section className="mobile-adaptive-grid grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <CompactMetricStrip
+        ariaLabel="Tổng hợp báo cáo nhân sự"
+        className="lg:hidden"
+        columns={4}
+        items={[
+          { icon: "people", key: "personnel", label: "Nhân sự", tone: "info", value: filteredRows.length },
+          { icon: "check", key: "submitted", label: "Đã gửi", tone: "success", value: submittedCount },
+          { icon: "bell", key: "missing", label: "Còn thiếu", shortLabel: "Thiếu", tone: "danger", value: missingCount },
+          { icon: "chart", key: "average", label: "Tiến độ trung bình", shortLabel: "TB", tone: "warning", value: `${averagePercent}%` }
+        ]}
+      />
+
+      <section className="hidden grid-cols-2 gap-3 lg:grid xl:grid-cols-4">
         <PersonnelMetric icon="people" label="Nhân sự" tone="info" value={filteredRows.length} />
         <PersonnelMetric icon="check" label="Đã gửi" tone="success" value={submittedCount} />
         <PersonnelMetric icon="bell" label="Còn thiếu" tone="danger" value={missingCount} />
@@ -367,7 +387,9 @@ const WorkerStatusRow = ({
   readonly row: WorkerRow;
 }): React.ReactElement => (
   <button
-    className={`focus-ring pressable grid min-w-0 gap-3 border-x-0 border-t-0 border-b px-4 py-3 text-left lg:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)_minmax(0,1.8fr)_minmax(0,1fr)] lg:items-center lg:gap-3 lg:py-2.5 ${
+    aria-haspopup="dialog"
+    aria-label={`${row.profile.fullName}, ${row.submittedDays}/${row.totalDays} ngày có báo cáo, tiến độ ${row.percent}%, ${row.submitted ? "đã gửi đủ" : "còn thiếu"}. Bấm để xem chi tiết.`}
+    className={`focus-ring pressable flex min-h-14 min-w-0 items-center gap-2 border-x-0 border-t-0 border-b px-3 py-2 text-left lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)_minmax(0,1.8fr)_minmax(0,1fr)] lg:gap-3 lg:px-4 lg:py-2.5 ${
       active
         ? "border-l-2 border-b-[var(--line)] border-l-[var(--primary)] bg-[var(--primary-soft)]"
         : "border-b-[var(--line)] bg-[var(--surface)] hover:bg-[var(--line-soft)]"
@@ -375,17 +397,12 @@ const WorkerStatusRow = ({
     onClick={onSelect}
     type="button"
   >
-    <div className="flex min-w-0 items-start justify-between gap-3 lg:block">
-      <div className="min-w-0">
-        <p className="truncate font-semibold">{row.profile.fullName}</p>
-        <p className="mt-1 truncate text-xs text-[var(--text-muted)]">@{row.profile.username}</p>
-      </div>
-      <span className="shrink-0 lg:hidden">
-        <Badge solid tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
-      </span>
+    <div className="min-w-0 flex-1 lg:block">
+      <p className="truncate font-semibold">{row.profile.fullName}</p>
+      <p className="mt-1 hidden truncate text-xs text-[var(--text-muted)] lg:block">@{row.profile.username}</p>
     </div>
 
-    <div className="min-w-0">
+    <div className="hidden min-w-0 lg:block">
       <p className="line-clamp-2 text-sm font-semibold leading-5 text-[var(--foreground)]">
         {row.profile.nhom || row.profile.subgroup || "N/A"}
       </p>
@@ -394,21 +411,32 @@ const WorkerStatusRow = ({
       </p>
     </div>
 
-    <div className="grid min-w-0 grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-0 lg:divide-x lg:divide-[var(--line)]">
+    <div className="hidden min-w-0 grid-cols-4 gap-0 divide-x divide-[var(--line)] lg:grid">
       <InfoMini label="Hạng mục" value={row.assigned} />
       <InfoMini label="Cập nhật" value={row.updatedTasks} />
       <InfoMini label="Xong" value={row.done} />
       <InfoMini label="Cancel" value={row.cancelled} />
     </div>
 
-    <div className="min-w-0 lg:flex lg:items-center lg:gap-2">
+    <div className="hidden min-w-0 items-center gap-2 lg:flex">
       <div className="min-w-0 flex-1">
         <ProgressInline percent={row.percent} />
       </div>
-      <div className="mt-2 hidden shrink-0 lg:block lg:mt-0">
+      <div className="shrink-0">
         <Badge solid tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
       </div>
     </div>
+
+    <span className="shrink-0 text-xs font-semibold tabular-nums text-[var(--text-muted)] lg:hidden">
+      {row.submittedDays}/{row.totalDays}
+    </span>
+    <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--foreground)] lg:hidden">
+      {row.percent}%
+    </span>
+    <span className="shrink-0 lg:hidden">
+      <Badge solid tone={getSubmissionTone(row)}>{row.submitted ? "Đủ" : "Thiếu"}</Badge>
+    </span>
+    <Icon className="h-4 w-4 shrink-0 -rotate-90 text-[var(--text-soft)] lg:hidden" name="chevronDown" />
   </button>
 );
 

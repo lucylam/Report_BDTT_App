@@ -538,6 +538,15 @@ button:disabled {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)) !important;
   }
 
+  /* KPI strips stay dense on ordinary phones, then reflow at extreme display
+     zoom so values and labels remain readable instead of being clipped. */
+  @media (max-width: 320px) {
+    .compact-metric-strip-3,
+    .compact-metric-strip-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+  }
+
   .mobile-reflow-row {
     flex-direction: column;
     align-items: stretch;
