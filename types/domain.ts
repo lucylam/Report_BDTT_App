@@ -186,6 +186,7 @@ export interface QueuedProgressUpdate {
   readonly photoPath?: string;
   readonly photoPaths?: readonly string[];
   readonly queuedAt: string;
+  readonly trialRunId?: string | null;
 }
 
 export interface QueuedCancelTaskUpdate {
@@ -195,6 +196,7 @@ export interface QueuedCancelTaskUpdate {
   readonly userId: string;
   readonly cancelReason: string;
   readonly queuedAt: string;
+  readonly trialRunId?: string | null;
 }
 
 export type OfflineQueueItem = QueuedProgressUpdate | QueuedCancelTaskUpdate;
@@ -208,6 +210,11 @@ export interface AppData {
   readonly offlineQueue: OfflineQueueItem[];
   readonly activeUserId: string | null;
   readonly planVersion?: PlanVersion;
+  readonly trialRun?: {
+    readonly id: string;
+    readonly name: string;
+    readonly startedAt: string;
+  };
 }
 
 export interface ImportPreview {

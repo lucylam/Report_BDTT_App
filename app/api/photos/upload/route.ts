@@ -6,12 +6,14 @@ import {
   TASK_PHOTOS_BUCKET
 } from "@/lib/api/photoStorage";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
+import { getActiveBdttTrialRun, isTrialRunContextCurrent } from "@/lib/api/demoMode";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Task } from "@/types/domain";
 
 export const runtime = "nodejs";
 
 interface UploadPhotoBody {
+  readonly trialRunId?: string | null;
   readonly task?: Task;
   readonly reportDate?: string;
   readonly dataUrl?: string;
@@ -40,6 +42,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!auth.ok) return toErrorResponse(auth.error, auth.status);
 
   const body = (await request.json()) as UploadPhotoBody;
+  const trialRun = await getActiveBdttTrialRun(supabase);
+  if (!isTrialRunContextCurrent(body.trialRunId, trialRun?.id ?? null)) {
+    return toErrorResponse("Chế độ dùng thử đã thay đổi. Hãy tải lại trang.", 409);
+  }
   const task = body.task;
   const reportDate = normalizeText(body.reportDate);
   const dataUrl = normalizeText(body.dataUrl);
@@ -66,7 +72,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const photoPath = createTaskPhotoPath({
     profileId: auth.profile.id,
     taskId: taskResult.task.id,
-    reportDate
+    reportDate,
+    trialRunId: trialRun?.id ?? null
   });
 
   const { error: uploadError } = await supabase.storage

@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { createProfilesFromAccounts, createSeedAccounts, getLoginUsername } from "@/lib/accounts";
 import { getAuthenticatedAccount, isUuid } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
+import {
+  getActiveBdttTrialRun,
+  saveBdttTrialTaskBackup
+} from "@/lib/api/demoMode";
 import { getMissingLeaderTaskCreateFields } from "@/lib/leaderTaskCreate";
 import {
   canManageBdttTasks,
@@ -156,13 +160,15 @@ const writeEvent = async (
   taskId: string,
   eventType: "created_ad_hoc" | "reassigned" | "cancelled" | "report_updated",
   actorId: string,
-  details: Record<string, unknown>
+  details: Record<string, unknown>,
+  trialRunId: string | null
 ): Promise<void> => {
   const { error } = await supabase.from("bdtt_task_events").insert({
     task_id: taskId,
     event_type: eventType,
     actor_id: actorId,
-    details
+    details,
+    trial_run_id: trialRunId
   });
   if (error) console.error("[api/tasks/leader.writeEvent]", error.message);
 };
@@ -174,7 +180,8 @@ const notifyProfiles = async (
   taskId: string,
   eventType: string,
   title: string,
-  message: string
+  message: string,
+  trialRunId: string | null
 ): Promise<void> => {
   const recipients = Array.from(
     new Set(recipientIds.filter((id): id is string => Boolean(id) && id !== actorId))
@@ -188,7 +195,8 @@ const notifyProfiles = async (
       entity_id: taskId,
       href: `/worker?task=${taskId}`,
       title,
-      message
+      message,
+      trial_run_id: trialRunId
     }))
   );
   if (error) console.error("[api/tasks/leader.notifyProfiles]", error.message);
@@ -209,6 +217,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!canManageBdttTasks(auth.account)) {
     return toErrorResponse("Chỉ nhóm trưởng hoặc cấp quản lý cao hơn được quản lý task.", 403);
   }
+
+  const trialRun = await getActiveBdttTrialRun(supabase);
+  const trialRunId = trialRun?.id ?? null;
 
   const body = (await request.json()) as LeaderTaskBody;
   const action = body.action;
@@ -308,7 +319,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         is_cancelled: false,
         cancel_reason: "",
         created_at: now,
-        updated_at: now
+        updated_at: now,
+        trial_run_id: trialRunId
       })
       .select("id")
       .single();
@@ -317,7 +329,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     await writeEvent(supabase, taskId, "created_ad_hoc", auth.profile.id, {
       assignee_id: assignee.db.id,
       reporter_id: reporter.db.id
-    });
+    }, trialRunId);
     await notifyProfiles(
       supabase,
       [assignee.db.id, reporter.db.id],
@@ -325,7 +337,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       taskId,
       "task_created",
       `Task phát sinh: ${tagname}`,
-      `${auth.account.fullName} đã giao task “${taskName}”.`
+      `${auth.account.fullName} đã giao task “${taskName}”.`,
+      trialRunId
     );
     return NextResponse.json({ ok: true, taskId });
   }
@@ -349,6 +362,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       return toErrorResponse("Task đã hủy, không thể phân công lại.", 409);
     }
 
+    await saveBdttTrialTaskBackup(supabase, trialRunId, taskId);
     const { error } = await supabase
       .from("tasks")
       .update({
@@ -365,7 +379,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       previous_reporter_id: taskResult.task.reporter_id,
       assignee_id: assignee.db.id,
       reporter_id: reporter.db.id
-    });
+    }, trialRunId);
     await notifyProfiles(
       supabase,
       [
@@ -378,7 +392,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       taskId,
       "task_reassigned",
       "Thay đổi phân công WorkOrder",
-      `${auth.account.fullName} đã cập nhật người thực hiện hoặc người báo cáo.`
+      `${auth.account.fullName} đã cập nhật người thực hiện hoặc người báo cáo.`,
+      trialRunId
     );
     return NextResponse.json({ ok: true, taskId });
   }
@@ -391,6 +406,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     if (taskResult.task.is_cancelled) {
       return toErrorResponse("Task đã được hủy trước đó.", 409);
     }
+    await saveBdttTrialTaskBackup(supabase, trialRunId, taskId);
     const { error } = await supabase
       .from("tasks")
       .update({
@@ -403,7 +419,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     if (error) return toErrorResponse(error.message, 500);
     await writeEvent(supabase, taskId, "cancelled", auth.profile.id, {
       reason: cancelReason
-    });
+    }, trialRunId);
     await notifyProfiles(
       supabase,
       [taskResult.task.assigned_to, taskResult.task.reporter_id],
@@ -411,7 +427,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       taskId,
       "task_cancelled",
       "Task đã được hủy",
-      `${auth.account.fullName}: ${cancelReason}`
+      `${auth.account.fullName}: ${cancelReason}`,
+      trialRunId
     );
     return NextResponse.json({ ok: true, taskId });
   }
@@ -434,6 +451,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   }
 
   const now = new Date().toISOString();
+  await saveBdttTrialTaskBackup(supabase, trialRunId, taskId);
   const { data: previousRows, error: previousError } = await supabase
     .from("progress")
     .select("user_id, percent, note, photo_path, photo_paths")
@@ -460,9 +478,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       photo_paths: photoPaths,
       submitted_by: auth.profile.id,
       submitted_at: now,
-      updated_at: now
+      updated_at: now,
+      trial_run_id: trialRunId
     },
-    { onConflict: "task_id,user_id,report_date" }
+    { onConflict: "task_id,user_id,report_date,trial_run_id" }
   );
   if (progressError) return toErrorResponse(progressError.message, 500);
 
@@ -481,7 +500,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     reporter_id: reporter.db.id,
     report_date: reportDate,
     percent: body.percent
-  });
+  }, trialRunId);
   await notifyProfiles(
     supabase,
     [taskResult.task.assigned_to, reporter.db.id],
@@ -489,7 +508,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     taskId,
     "task_report_updated",
     "Báo cáo WorkOrder đã được cập nhật",
-    `${auth.account.fullName} đã cập nhật báo cáo ngày ${reportDate} ở mức ${body.percent}%.`
+    `${auth.account.fullName} đã cập nhật báo cáo ngày ${reportDate} ở mức ${body.percent}%.`,
+    trialRunId
   );
   return NextResponse.json({ ok: true, taskId });
 };

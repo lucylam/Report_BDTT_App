@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedProfile } from "@/lib/api/session";
+import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import type { AppNotification } from "@/lib/notifications";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -45,18 +46,25 @@ const getContext = async (request: Request) => {
 export const GET = async (request: Request): Promise<NextResponse> => {
   const context = await getContext(request);
   if (!context.ok) return context.response;
+  const trialRun = await getActiveBdttTrialRun(context.supabase);
+  const visibilityFilter = trialRun
+    ? `module.eq.am,trial_run_id.eq.${trialRun.id}`
+    : "module.eq.am,trial_run_id.is.null";
 
-  let { data, error } = await context.supabase
+  const query = context.supabase
     .from("app_notifications")
     .select("id, module, event_type, entity_id, href, title, message, read_at, created_at")
     .eq("recipient_id", context.profile.id)
+    .or(visibilityFilter)
     .order("created_at", { ascending: false })
     .limit(50);
+  let { data, error } = await query;
   if (error?.message.toLowerCase().includes("href")) {
     const fallback = await context.supabase
       .from("app_notifications")
       .select("id, module, event_type, entity_id, title, message, read_at, created_at")
       .eq("recipient_id", context.profile.id)
+      .or(visibilityFilter)
       .order("created_at", { ascending: false })
       .limit(50);
     data = (fallback.data ?? []).map((row) => ({ ...row, href: null }));

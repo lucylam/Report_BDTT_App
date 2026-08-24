@@ -42,15 +42,20 @@ export const createTaskPhotoPath = ({
   profileId,
   reportDate,
   taskId,
+  trialRunId,
   timestamp = new Date()
 }: {
   readonly profileId: string;
   readonly reportDate: string;
   readonly taskId: string;
+  readonly trialRunId?: string | null;
   readonly timestamp?: Date;
 }): string => {
   const stampedAt = timestamp.toISOString().replace(/[:.]/g, "-");
-  return `${safePathPart(profileId)}/${safePathPart(taskId)}/${safePathPart(reportDate)}-${stampedAt}.jpg`;
+  const basePath = `${safePathPart(profileId)}/${safePathPart(taskId)}/${safePathPart(reportDate)}-${stampedAt}.jpg`;
+  return trialRunId
+    ? `trials/${safePathPart(trialRunId)}/${basePath}`
+    : basePath;
 };
 
 export const canAccessPhotoPath = (
@@ -58,6 +63,7 @@ export const canAccessPhotoPath = (
   photoPath: string
 ): boolean => {
   if (profile.role === "admin") return true;
-  const [ownerId] = photoPath.split("/");
+  const pathParts = photoPath.split("/");
+  const ownerId = pathParts[0] === "trials" ? pathParts[2] : pathParts[0];
   return ownerId === profile.id;
 };

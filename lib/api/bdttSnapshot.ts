@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import {
   applyAccountProfileOverrides,
   createProfilesFromAccounts,
@@ -46,6 +47,7 @@ interface DbTask {
   readonly updated_by: string | null;
   readonly is_cancelled: boolean | null;
   readonly cancel_reason: string | null;
+  readonly trial_run_id: string | null;
 }
 
 interface DbProgress {
@@ -58,6 +60,7 @@ interface DbProgress {
   readonly photo_paths: string[] | null;
   readonly submitted_at: string | null;
   readonly submitted_by: string | null;
+  readonly trial_run_id: string | null;
 }
 
 const text = (value: unknown): string =>
@@ -152,19 +155,24 @@ const toPriority = (value: number | null): 1 | 2 | 3 =>
   value === 1 || value === 3 ? value : 2;
 
 export const loadBdttSnapshot = async (supabase: SupabaseClient): Promise<AppData> => {
+  const trialRun = await getActiveBdttTrialRun(supabase);
   const [profileRows, taskRows, progressRows, latestBatchResult] = await Promise.all([
     listProfiles(supabase),
     listAll<DbTask>(
       supabase,
       "tasks",
-      "id, stt, wo, tagname, task_name, nhom, don_vi, section, duration, priority, start_date, finish_date, resource_name, nhom_truong, assigned_to, reporter_id, task_source, progress_mode, created_by, updated_by, is_cancelled, cancel_reason",
+      "id, stt, wo, tagname, task_name, nhom, don_vi, section, duration, priority, start_date, finish_date, resource_name, nhom_truong, assigned_to, reporter_id, task_source, progress_mode, created_by, updated_by, is_cancelled, cancel_reason, trial_run_id",
       "stt"
+    ).then((rows) =>
+      rows.filter((row) => !row.trial_run_id || row.trial_run_id === trialRun?.id)
     ),
     listAll<DbProgress>(
       supabase,
       "progress",
-      "task_id, user_id, report_date, percent, note, photo_path, photo_paths, submitted_at, submitted_by",
+      "task_id, user_id, report_date, percent, note, photo_path, photo_paths, submitted_at, submitted_by, trial_run_id",
       "report_date"
+    ).then((rows) =>
+      rows.filter((row) => !row.trial_run_id || row.trial_run_id === trialRun?.id)
     ),
     supabase
       .from("import_batches")
@@ -234,6 +242,9 @@ export const loadBdttSnapshot = async (supabase: SupabaseClient): Promise<AppDat
           importedAt: batch.imported_at,
           rowCount: batch.row_count ?? tasks.length
         }
+      : undefined,
+    trialRun: trialRun
+      ? { id: trialRun.id, name: trialRun.name, startedAt: trialRun.startedAt }
       : undefined
   };
 };

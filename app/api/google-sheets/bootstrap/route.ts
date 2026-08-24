@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { getAuthenticatedDataAdmin } from "@/lib/api/session";
+import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { parseBootstrapSheet } from "@/lib/google/bootstrap";
 import { computeSheetChecksum, readDataSheetValues } from "@/lib/google/sheets";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -28,6 +29,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!supabase) return errorResponse("Chưa cấu hình Supabase server cho khởi tạo DATA.", 503);
   const auth = await getAuthenticatedDataAdmin(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
+  if (await getActiveBdttTrialRun(supabase)) {
+    return errorResponse("Hãy kết thúc Demo Mode trước khi khởi tạo lại dữ liệu.", 409);
+  }
 
   const body = (await request.json().catch(() => ({}))) as BootstrapBody;
   const action = body.action ?? "preview";

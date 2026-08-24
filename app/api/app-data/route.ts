@@ -6,6 +6,7 @@ import {
   createSeedAccounts
 } from "@/lib/accounts";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
+import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { getAuthenticatedAccount } from "@/lib/api/session";
 import { getScopedAppData } from "@/lib/permissions";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -48,6 +49,7 @@ const LEADER_TASK_COLUMNS = [
   "created_by",
   "updated_by"
 ] as const;
+const TRIAL_COLUMN = "trial_run_id";
 
 interface DbProfile {
   readonly id: string;
@@ -84,6 +86,7 @@ interface DbTask {
   readonly updated_by?: string | null;
   readonly is_cancelled: boolean | null;
   readonly cancel_reason: string | null;
+  readonly trial_run_id?: string | null;
 }
 
 interface DbProgress {
@@ -96,6 +99,7 @@ interface DbProgress {
   readonly photo_paths?: string[] | null;
   readonly submitted_at: string | null;
   readonly submitted_by?: string | null;
+  readonly trial_run_id?: string | null;
 }
 
 interface DbImportBatch {
@@ -190,7 +194,8 @@ const listProfiles = async (
 };
 
 const listTasks = async (
-  supabase: NonNullable<Awaited<ReturnType<typeof createServerSupabaseClient>>>
+  supabase: NonNullable<Awaited<ReturnType<typeof createServerSupabaseClient>>>,
+  trialRunId: string | null
 ): Promise<{ readonly data: DbTask[]; readonly error: string | null }> => {
   const rows: DbTask[] = [];
   let page = 0;
@@ -199,16 +204,20 @@ const listTasks = async (
   while (true) {
     const from = page * DB_PAGE_SIZE;
     const to = from + DB_PAGE_SIZE - 1;
-    const { data, error } = await supabase
+    let query = supabase
       .from("tasks")
       .select(
         [
           ...BASE_TASK_COLUMNS,
-          ...(supportsLeaderColumns ? LEADER_TASK_COLUMNS : [])
+          ...(supportsLeaderColumns ? LEADER_TASK_COLUMNS : []),
+          TRIAL_COLUMN
         ].join(", ")
       )
-      .order("stt", { ascending: true })
-      .range(from, to);
+      .order("stt", { ascending: true });
+    query = trialRunId
+      ? query.or(`trial_run_id.is.null,trial_run_id.eq.${trialRunId}`)
+      : query.is("trial_run_id", null);
+    const { data, error } = await query.range(from, to);
 
     if (
       error &&
@@ -233,7 +242,8 @@ const listTasks = async (
 };
 
 const listProgress = async (
-  supabase: NonNullable<Awaited<ReturnType<typeof createServerSupabaseClient>>>
+  supabase: NonNullable<Awaited<ReturnType<typeof createServerSupabaseClient>>>,
+  trialRunId: string | null
 ): Promise<{ readonly data: DbProgress[]; readonly error: string | null }> => {
   const rows: DbProgress[] = [];
   let page = 0;
@@ -242,17 +252,20 @@ const listProgress = async (
   while (true) {
     const from = page * DB_PAGE_SIZE;
     const to = from + DB_PAGE_SIZE - 1;
-    const { data, error } = await supabase
+    let query = supabase
       .from("progress")
       .select(
         columnMode === "full"
-          ? "task_id, user_id, report_date, percent, note, photo_path, photo_paths, submitted_at, submitted_by"
+          ? "task_id, user_id, report_date, percent, note, photo_path, photo_paths, submitted_at, submitted_by, trial_run_id"
           : columnMode === "photos"
-            ? "task_id, user_id, report_date, percent, note, photo_path, photo_paths, submitted_at"
-            : "task_id, user_id, report_date, percent, note, photo_path, submitted_at"
+            ? "task_id, user_id, report_date, percent, note, photo_path, photo_paths, submitted_at, trial_run_id"
+            : "task_id, user_id, report_date, percent, note, photo_path, submitted_at, trial_run_id"
       )
-      .order("submitted_at", { ascending: false })
-      .range(from, to);
+      .order("submitted_at", { ascending: false });
+    query = trialRunId
+      ? query.or(`trial_run_id.is.null,trial_run_id.eq.${trialRunId}`)
+      : query.is("trial_run_id", null);
+    const { data, error } = await query.range(from, to);
 
     if (error && columnMode === "full" && error.message.toLowerCase().includes("submitted_by")) {
       columnMode = "photos";
@@ -418,6 +431,16 @@ export const GET = async (request: Request): Promise<NextResponse> => {
   const auth = await getAuthenticatedAccount(request, supabase);
   if (!auth.ok) return toErrorResponse(auth.error, auth.status);
 
+  let trialRun;
+  try {
+    trialRun = await getActiveBdttTrialRun(supabase);
+  } catch (error) {
+    return toErrorResponse(
+      error instanceof Error ? error.message : "Không đọc được Demo Mode.",
+      500
+    );
+  }
+
   const [
     profilesResult,
     tasksResult,
@@ -426,8 +449,8 @@ export const GET = async (request: Request): Promise<NextResponse> => {
   ] =
     await Promise.all([
       listProfiles(supabase),
-      listTasks(supabase),
-      listProgress(supabase),
+      listTasks(supabase, trialRun?.id ?? null),
+      listProgress(supabase, trialRun?.id ?? null),
       supabase
         .from("import_batches")
         .select("id, file_name, imported_at, row_count")
@@ -491,6 +514,9 @@ export const GET = async (request: Request): Promise<NextResponse> => {
           importedAt: (latestBatch as DbImportBatch).imported_at,
           rowCount: (latestBatch as DbImportBatch).row_count ?? tasks.length
         }
+      : undefined,
+    trialRun: trialRun
+      ? { id: trialRun.id, name: trialRun.name, startedAt: trialRun.startedAt }
       : undefined
   };
   const scopedData = getScopedAppData(

@@ -3,11 +3,6 @@
 import { DEFAULT_INITIAL_PASSWORD, getLoginUsername } from "@/lib/accounts";
 import { normalizeStoredAppData } from "@/lib/appDataMigration";
 import { createDemoData } from "@/lib/demoData";
-import {
-  applyOfficialDemoProgress,
-  clearOfficialDemoProgress,
-  type DemoProgressMutationResult
-} from "@/lib/demoProgress";
 import type {
   AppData,
   AuthAccount,
@@ -32,12 +27,14 @@ interface ProgressUpdateInput {
   readonly note: string;
   readonly photoPath?: string;
   readonly photoPaths?: readonly string[];
+  readonly trialRunId?: string | null;
 }
 
 interface CancelTaskQueueInput {
   readonly taskId: string;
   readonly userId: string;
   readonly cancelReason: string;
+  readonly trialRunId?: string | null;
 }
 
 export const loadAppData = (): AppData => {
@@ -428,20 +425,4 @@ export const createDailySnapshot = (
   };
   saveAppData(nextData);
   return nextData;
-};
-
-export const createOfficialDemoProgress = (
-  data: AppData
-): DemoProgressMutationResult => {
-  const result = applyOfficialDemoProgress(data);
-  saveAppData(result.data);
-  return result;
-};
-
-export const removeOfficialDemoProgress = (
-  data: AppData
-): DemoProgressMutationResult => {
-  const result = clearOfficialDemoProgress(data);
-  saveAppData(result.data);
-  return result;
 };

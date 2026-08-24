@@ -7,6 +7,7 @@ import {
 } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { isInlinePhotoDataUrl } from "@/lib/api/photoStorage";
+import { getActiveBdttTrialRun, isTrialRunContextCurrent } from "@/lib/api/demoMode";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isPercentAllowedForMode } from "@/lib/progressMode";
 import type { Task } from "@/types/domain";
@@ -14,6 +15,7 @@ import type { Task } from "@/types/domain";
 export const runtime = "nodejs";
 
 interface SubmitProgressBody {
+  readonly trialRunId?: string | null;
   readonly update?: {
     readonly taskId?: string;
     readonly userId?: string;
@@ -55,6 +57,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const { profile } = auth;
 
   const body = (await request.json()) as SubmitProgressBody;
+  const trialRun = await getActiveBdttTrialRun(supabase);
+  if (!isTrialRunContextCurrent(body.trialRunId, trialRun?.id ?? null)) {
+    return toErrorResponse(
+      "Chế độ dùng thử đã thay đổi. Hãy tải lại trang trước khi gửi báo cáo.",
+      409
+    );
+  }
   const update = body.update;
   const task = body.task;
   if (!update || !task) {
@@ -117,16 +126,17 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     photo_path: photoPaths[0] || null,
     submitted_by: profile.id,
     submitted_at: now,
-    updated_at: now
+    updated_at: now,
+    trial_run_id: trialRun?.id ?? null
   };
   let { error: progressError } = await supabase.from("progress").upsert(
     { ...baseRow, photo_paths: photoPaths },
-    { onConflict: "task_id,user_id,report_date" }
+    { onConflict: "task_id,user_id,report_date,trial_run_id" }
   );
 
   if (progressError?.message.toLowerCase().includes("photo_paths")) {
     const fallback = await supabase.from("progress").upsert(baseRow, {
-      onConflict: "task_id,user_id,report_date"
+      onConflict: "task_id,user_id,report_date,trial_run_id"
     });
     progressError = fallback.error;
   }

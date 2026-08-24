@@ -3,6 +3,7 @@ import { getAuthenticatedAccount, findReportableTask } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { loadBdttSnapshot } from "@/lib/api/bdttSnapshot";
 import { getScopedBdttManagerIds } from "@/lib/api/bdttRecipients";
+import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { canManageBdttTasks, canViewTask } from "@/lib/permissions";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
@@ -49,14 +50,19 @@ export const GET = async (request: Request): Promise<NextResponse> => {
   }
 
   try {
+    const trialRun = await getActiveBdttTrialRun(supabase);
+    let issueQuery = supabase
+      .from("data_issue_reports")
+      .select(
+        "id, task_id, reported_by, issue_type, current_value, suggested_value, note, status, resolved_by, resolution_note, review_started_at, resolved_at, created_at, updated_at, trial_run_id"
+      )
+      .order("created_at", { ascending: false });
+    issueQuery = trialRun
+      ? issueQuery.eq("trial_run_id", trialRun.id)
+      : issueQuery.is("trial_run_id", null);
     const [snapshot, issueResult] = await Promise.all([
       loadBdttSnapshot(supabase),
-      supabase
-        .from("data_issue_reports")
-        .select(
-          "id, task_id, reported_by, issue_type, current_value, suggested_value, note, status, resolved_by, resolution_note, review_started_at, resolved_at, created_at, updated_at"
-        )
-        .order("created_at", { ascending: false })
+      issueQuery
     ]);
     if (issueResult.error) throw new Error(issueResult.error.message);
     const taskById = new Map(snapshot.tasks.map((task) => [task.id, task]));
@@ -76,6 +82,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!supabase) return errorResponse("Chưa cấu hình Supabase cho báo sai dữ liệu.", 503);
   const auth = await getAuthenticatedAccount(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
+  const trialRun = await getActiveBdttTrialRun(supabase);
 
   const body = (await request.json()) as DataIssueBody;
   const task = body.task;
@@ -109,7 +116,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       issue_type: issueType,
       current_value: currentValue,
       suggested_value: suggestedValue,
-      note
+      note,
+      trial_run_id: trialRun?.id ?? null
     })
     .select("id")
     .single();
@@ -135,7 +143,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         entity_id: ownedTask.task.id,
         href: "/admin/tasks?tab=issues",
         title: `Báo sai dữ liệu: ${task.tagname}`,
-        message: `${auth.account.fullName}: ${suggestedValue || note}`
+        message: `${auth.account.fullName}: ${suggestedValue || note}`,
+        trial_run_id: trialRun?.id ?? null
       }))
     );
   }
@@ -149,6 +158,7 @@ export const PATCH = async (request: Request): Promise<NextResponse> => {
   const auth = await getAuthenticatedAccount(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
   if (!canManageBdttTasks(auth.account)) return errorResponse("Bạn không có quyền xử lý dữ liệu.", 403);
+  const trialRun = await getActiveBdttTrialRun(supabase);
 
   const body = (await request.json()) as DataIssueBody;
   const issueId = text(body.issueId);
@@ -163,13 +173,16 @@ export const PATCH = async (request: Request): Promise<NextResponse> => {
     const [{ data: issue, error: issueError }, snapshot] = await Promise.all([
       supabase
         .from("data_issue_reports")
-        .select("id, task_id, reported_by, status")
+        .select("id, task_id, reported_by, status, trial_run_id")
         .eq("id", issueId)
         .maybeSingle(),
       loadBdttSnapshot(supabase)
     ]);
     if (issueError) throw new Error(issueError.message);
     if (!issue) return errorResponse("Không tìm thấy báo sai dữ liệu.", 404);
+    if ((issue.trial_run_id ?? null) !== (trialRun?.id ?? null)) {
+      return errorResponse("Báo sai không thuộc chế độ dữ liệu hiện tại.", 409);
+    }
     if (!canTransitionDataIssue(issue.status as DataIssueStatus, nextStatus)) {
       return errorResponse("Báo sai đã kết thúc hoặc không thể chuyển sang trạng thái này.", 409);
     }
@@ -200,7 +213,8 @@ export const PATCH = async (request: Request): Promise<NextResponse> => {
       entity_id: issue.task_id,
       href: `/worker?task=${issue.task_id}`,
       title: nextStatus === "reviewing" ? "Báo sai đang được xử lý" : "Báo sai đã có kết quả",
-      message: resolutionNote || `${auth.account.fullName} đã tiếp nhận xử lý.`
+      message: resolutionNote || `${auth.account.fullName} đã tiếp nhận xử lý.`,
+      trial_run_id: trialRun?.id ?? null
     });
     return NextResponse.json({ ok: true, issueId, status: nextStatus });
   } catch (error) {

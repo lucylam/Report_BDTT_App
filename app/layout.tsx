@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { FirstRunOnboarding } from "@/components/FirstRunOnboarding";
+import { DemoModeBanner } from "@/components/DemoModeBanner";
 import { PwaRuntime } from "@/components/PwaRuntime";
 import { getInitialTheme } from "@/lib/theme.server";
 import "./globals.css";
@@ -53,6 +54,7 @@ const RootLayout = async ({ children }: RootLayoutProps): Promise<React.ReactEle
       <body>
         <PwaRuntime />
         <FirstRunOnboarding />
+        <DemoModeBanner />
         <a
           className="fixed left-4 top-4 z-[2000] -translate-y-[200%] rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-4 py-3 font-semibold text-[var(--primary-contrast)] transition-transform focus:translate-y-0"
           href="#main-content"

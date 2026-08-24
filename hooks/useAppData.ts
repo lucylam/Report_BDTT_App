@@ -3,16 +3,13 @@
 import { useEffect, useState } from "react";
 import { getLoginUsername } from "@/lib/accounts";
 import { normalizeStoredAppData } from "@/lib/appDataMigration";
-import { createDemoData } from "@/lib/demoData";
 import {
   createDailySnapshot,
-  createOfficialDemoProgress,
   flushOfflineQueue,
   loadAppData,
   logoutAccount,
   queueCancelTaskUpdate,
   queueProgressUpdate,
-  removeOfficialDemoProgress,
   replaceTasks,
   saveAppData,
   setAccountMustChangePassword,
@@ -20,13 +17,11 @@ import {
   setTaskCancelled,
   upsertProgress
 } from "@/lib/storage";
-import type { DemoProgressMutationResult } from "@/lib/demoProgress";
 import type {
   AppData,
   AuthAccount,
   Profile,
   ProgressPercent,
-  ProgressRecord,
   Task
 } from "@/types/domain";
 
@@ -38,6 +33,7 @@ interface ProgressUpdate {
   readonly note: string;
   readonly photoPath?: string;
   readonly photoPaths?: readonly string[];
+  readonly trialRunId?: string | null;
 }
 
 interface UseAppDataResult {
@@ -58,13 +54,11 @@ interface UseAppDataResult {
   readonly queueCancelTask: (
     taskId: string,
     userId: string,
-    cancelReason: string
+    cancelReason: string,
+    trialRunId?: string | null
   ) => void;
   readonly flushQueue: (syncedItemIds?: readonly string[]) => void;
   readonly createSnapshot: (reportDate: string) => void;
-  readonly createDemoProgress: () => DemoProgressMutationResult;
-  readonly clearDemoProgress: () => DemoProgressMutationResult;
-  readonly resetDemo: () => void;
   readonly refreshRemoteData: () => Promise<void>;
 }
 
@@ -97,24 +91,6 @@ interface RemoteAppDataResult {
   readonly unavailable: boolean;
 }
 
-const DEMO_NOTE_PREFIX = "[DEMO]";
-
-const getProgressKey = (record: ProgressRecord): string =>
-  `${record.taskId}|${record.userId}|${record.reportDate}`;
-
-const mergeProgressWithLocalDemo = (
-  remoteProgress: readonly ProgressRecord[],
-  localProgress: readonly ProgressRecord[]
-): ProgressRecord[] => {
-  const remoteKeys = new Set(remoteProgress.map(getProgressKey));
-  const localDemoProgress = localProgress.filter(
-    (record) =>
-      record.note.trim().startsWith(DEMO_NOTE_PREFIX) &&
-      !remoteKeys.has(getProgressKey(record))
-  );
-  return [...remoteProgress, ...localDemoProgress];
-};
-
 const shouldUseRemoteData = (localData: AppData, remoteData: AppData): boolean => {
   if (remoteData.activeUserId) return true;
   if (localData.activeUserId && remoteData.activeUserId === localData.activeUserId) {
@@ -128,7 +104,7 @@ const shouldUseRemoteData = (localData: AppData, remoteData: AppData): boolean =
 const mergeRemoteAppData = (localData: AppData, remoteData: AppData): AppData => {
   return normalizeStoredAppData({
     ...remoteData,
-    progress: mergeProgressWithLocalDemo(remoteData.progress, localData.progress),
+    progress: remoteData.progress,
     dailySnapshots: localData.dailySnapshots,
     offlineQueue: localData.offlineQueue,
     activeUserId: remoteData.activeUserId
@@ -336,11 +312,12 @@ export const useAppData = (): UseAppDataResult => {
   const queueCancelTask = (
     taskId: string,
     userId: string,
-    cancelReason: string
+    cancelReason: string,
+    trialRunId?: string | null
   ): void => {
     setData((current) => {
       const base = current ?? loadAppData();
-      return queueCancelTaskUpdate(base, { taskId, userId, cancelReason });
+      return queueCancelTaskUpdate(base, { taskId, userId, cancelReason, trialRunId });
     });
   };
 
@@ -350,24 +327,6 @@ export const useAppData = (): UseAppDataResult => {
 
   const createSnapshot = (reportDate: string): void => {
     setData((current) => createDailySnapshot(current ?? loadAppData(), reportDate));
-  };
-
-  const createDemoProgress = (): DemoProgressMutationResult => {
-    const result = createOfficialDemoProgress(data ?? loadAppData());
-    setData(result.data);
-    return result;
-  };
-
-  const clearDemoProgress = (): DemoProgressMutationResult => {
-    const result = removeOfficialDemoProgress(data ?? loadAppData());
-    setData(result.data);
-    return result;
-  };
-
-  const resetDemo = (): void => {
-    const nextData = createDemoData();
-    saveAppData(nextData);
-    setData(nextData);
   };
 
   const refreshRemoteData = async (): Promise<void> => {
@@ -398,9 +357,6 @@ export const useAppData = (): UseAppDataResult => {
     queueCancelTask,
     flushQueue,
     createSnapshot,
-    createDemoProgress,
-    clearDemoProgress,
-    resetDemo,
     refreshRemoteData
   };
 };

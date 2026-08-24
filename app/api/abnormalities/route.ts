@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { loadBdttSnapshot } from "@/lib/api/bdttSnapshot";
+import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { getScopedBdttManagerIds } from "@/lib/api/bdttRecipients";
 import { getAuthenticatedAccount, findReportableTask, isUuid } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
@@ -36,9 +37,17 @@ export const GET = async (request: Request): Promise<NextResponse> => {
   const auth = await getAuthenticatedAccount(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
   try {
+    const trialRun = await getActiveBdttTrialRun(supabase);
+    let abnormalityQuery = supabase
+      .from("bdtt_abnormalities")
+      .select("*")
+      .order("created_at", { ascending: false });
+    abnormalityQuery = trialRun
+      ? abnormalityQuery.eq("trial_run_id", trialRun.id)
+      : abnormalityQuery.is("trial_run_id", null);
     const [snapshot, abnormalityResult, photoResult] = await Promise.all([
       loadBdttSnapshot(supabase),
-      supabase.from("bdtt_abnormalities").select("*").order("created_at", { ascending: false }),
+      abnormalityQuery,
       supabase
         .from("bdtt_abnormality_photos")
         .select("id, abnormality_id, storage_path, uploaded_by, created_at")
@@ -74,6 +83,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!supabase) return errorResponse("Chưa cấu hình Supabase cho bất thường.", 503);
   const auth = await getAuthenticatedAccount(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
+  const trialRun = await getActiveBdttTrialRun(supabase);
   const body = (await request.json()) as AbnormalityBody;
   const title = text(body.title);
   const description = text(body.description);
@@ -111,6 +121,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       severity,
       status: "new",
       reported_by: auth.profile.id,
+      trial_run_id: trialRun?.id ?? null,
       created_at: now,
       updated_at: now
     })
@@ -121,7 +132,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     abnormality_id: item.id,
     event_type: "created",
     actor_id: auth.profile.id,
-    details: { task_id: taskId, severity }
+      details: { task_id: taskId, severity }
   });
 
   const recipients = await getScopedBdttManagerIds(supabase, {
@@ -138,7 +149,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         entity_id: item.id,
         href: "/admin/tasks?tab=abnormalities",
         title: `Bất thường mới: ${title}`,
-        message: location ? `${auth.account.fullName} · ${location}` : auth.account.fullName
+        message: location ? `${auth.account.fullName} · ${location}` : auth.account.fullName,
+        trial_run_id: trialRun?.id ?? null
       }))
     );
   }
@@ -152,6 +164,7 @@ export const PATCH = async (request: Request): Promise<NextResponse> => {
   const auth = await getAuthenticatedAccount(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
   if (!canManageBdttTasks(auth.account)) return errorResponse("Bạn không có quyền xử lý bất thường.", 403);
+  const trialRun = await getActiveBdttTrialRun(supabase);
 
   const body = (await request.json()) as AbnormalityBody;
   const abnormalityId = text(body.abnormalityId);
@@ -165,6 +178,9 @@ export const PATCH = async (request: Request): Promise<NextResponse> => {
     if (itemError) throw new Error(itemError.message);
     if (profileResult.error) throw new Error(profileResult.error.message);
     if (!item) return errorResponse("Không tìm thấy bất thường.", 404);
+    if ((item.trial_run_id ?? null) !== (trialRun?.id ?? null)) {
+      return errorResponse("Bất thường không thuộc chế độ dữ liệu hiện tại.", 409);
+    }
     const scopedAccount = { ...auth.account, id: auth.profile.id };
     const task = item.task_id ? snapshot.tasks.find((entry) => entry.id === item.task_id) : null;
     const responsible = snapshot.profiles.find(
@@ -224,7 +240,8 @@ export const PATCH = async (request: Request): Promise<NextResponse> => {
           entity_id: abnormalityId,
           href: "/admin/tasks?tab=abnormalities",
           title: `Bất thường: ${item.title}`,
-          message: `Trạng thái: ${nextStatus}${resolutionNote ? ` · ${resolutionNote}` : ""}`
+          message: `Trạng thái: ${nextStatus}${resolutionNote ? ` · ${resolutionNote}` : ""}`,
+          trial_run_id: trialRun?.id ?? null
         }))
       );
     }

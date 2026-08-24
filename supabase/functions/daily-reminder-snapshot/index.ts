@@ -44,7 +44,8 @@ Deno.serve(async () => {
   const reportDate = getReportDate();
   const { data: tasks, error: tasksError } = await supabase
     .from("tasks")
-    .select("id, nhom, don_vi, is_cancelled");
+    .select("id, nhom, don_vi, is_cancelled")
+    .is("trial_run_id", null);
   if (tasksError) {
     console.error("[daily-reminder-snapshot.tasks]", tasksError.message);
     return new Response(tasksError.message, { status: 500 });
@@ -53,6 +54,7 @@ Deno.serve(async () => {
   const { data: progress, error: progressError } = await supabase
     .from("progress")
     .select("task_id, percent")
+    .is("trial_run_id", null)
     .eq("report_date", reportDate);
   if (progressError) {
     console.error("[daily-reminder-snapshot.progress]", progressError.message);

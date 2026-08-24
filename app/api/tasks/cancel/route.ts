@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { findOwnedTask, getAuthenticatedProfile } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
+import {
+  getActiveBdttTrialRun,
+  isTrialRunContextCurrent,
+  saveBdttTrialTaskBackup
+} from "@/lib/api/demoMode";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Task } from "@/types/domain";
 
 export const runtime = "nodejs";
 
 interface CancelTaskBody {
+  readonly trialRunId?: string | null;
   readonly task?: Task;
   readonly cancelReason?: string;
 }
@@ -34,6 +40,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!auth.ok) return toErrorResponse(auth.error, auth.status);
 
   const body = (await request.json()) as CancelTaskBody;
+  const trialRun = await getActiveBdttTrialRun(supabase);
+  if (!isTrialRunContextCurrent(body.trialRunId, trialRun?.id ?? null)) {
+    return toErrorResponse("Chế độ dùng thử đã thay đổi. Hãy tải lại trang.", 409);
+  }
   const task = body.task;
   const cancelReason = normalizeText(body.cancelReason);
   if (!task) return toErrorResponse("Thieu task can cancel.", 400);
@@ -43,6 +53,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const taskResult = await findOwnedTask(supabase, auth.profile.id, task);
   if (!taskResult.ok) return toErrorResponse(taskResult.error, taskResult.status);
+
+  await saveBdttTrialTaskBackup(supabase, trialRun?.id ?? null, taskResult.task.id);
 
   const { data: updatedTask, error } = await supabase
     .from("tasks")

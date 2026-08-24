@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { loadBdttSnapshot } from "@/lib/api/bdttSnapshot";
 import { getAuthenticatedDataAdmin } from "@/lib/api/session";
+import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { buildFullDataSheetRangeValues } from "@/lib/excel/exporter";
 import {
   computeSheetChecksum,
@@ -30,6 +31,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!supabase) return errorResponse("Chưa cấu hình Supabase server cho đồng bộ DATA.", 503);
   const auth = await getAuthenticatedDataAdmin(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
+  if (await getActiveBdttTrialRun(supabase)) {
+    return errorResponse("Đồng bộ Google Sheet tạm khóa trong Demo Mode.", 409);
+  }
 
   const body = (await request.json().catch(() => ({}))) as SyncBody;
   const action = body.action ?? "preview";

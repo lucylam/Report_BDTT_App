@@ -61,6 +61,7 @@ interface WorkerProgressPayload {
   readonly note: string;
   readonly photoPath?: string;
   readonly photoPaths?: readonly string[];
+  readonly trialRunId?: string | null;
 }
 
 const readWorkerApiError = async (
@@ -92,6 +93,7 @@ const submitProgressToDatabase = async ({
       "content-type": "application/json"
     },
     body: JSON.stringify({
+      trialRunId: update.trialRunId ?? null,
       update,
       task,
       worker
@@ -110,11 +112,13 @@ const submitProgressToDatabase = async ({
 const uploadProgressPhotos = async ({
   task,
   reportDate,
-  photoPaths
+  photoPaths,
+  trialRunId
 }: {
   readonly task: Task;
   readonly reportDate: string;
   readonly photoPaths: readonly string[];
+  readonly trialRunId?: string | null;
 }): Promise<string[]> => {
   const uploadedPaths: string[] = [];
   for (const source of photoPaths) {
@@ -129,7 +133,7 @@ const uploadProgressPhotos = async ({
     const response = await fetch("/api/photos/upload", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ task, reportDate, dataUrl })
+      body: JSON.stringify({ task, reportDate, dataUrl, trialRunId: trialRunId ?? null })
     });
 
     if (!response.ok) {
@@ -150,10 +154,12 @@ const uploadProgressPhotos = async ({
 
 const submitCancelToDatabase = async ({
   task,
-  cancelReason
+  cancelReason,
+  trialRunId
 }: {
   readonly task: Task;
   readonly cancelReason: string;
+  readonly trialRunId?: string | null;
 }): Promise<void> => {
   const response = await fetch("/api/tasks/cancel", {
     method: "POST",
@@ -162,7 +168,8 @@ const submitCancelToDatabase = async ({
     },
     body: JSON.stringify({
       task,
-      cancelReason
+      cancelReason,
+      trialRunId: trialRunId ?? null
     })
   });
 
@@ -249,7 +256,8 @@ const WorkerPage = (): React.ReactElement => {
           if (queued.kind === "cancelTask") {
             await submitCancelToDatabase({
               task,
-              cancelReason: queued.cancelReason
+              cancelReason: queued.cancelReason,
+              trialRunId: queued.trialRunId ?? null
             });
             applyCancel(queued.taskId, queued.cancelReason);
             syncedItemIds.push(queued.id);
@@ -260,7 +268,8 @@ const WorkerPage = (): React.ReactElement => {
           const photoPaths = await uploadProgressPhotos({
             task,
             reportDate: queued.reportDate,
-            photoPaths: queuedPhotoPaths
+            photoPaths: queuedPhotoPaths,
+            trialRunId: queued.trialRunId ?? null
           });
           const payload: WorkerProgressPayload = {
             taskId: queued.taskId,
@@ -269,7 +278,8 @@ const WorkerPage = (): React.ReactElement => {
             percent: queued.percent,
             note: queued.note,
             photoPath: photoPaths[0],
-            photoPaths
+            photoPaths,
+            trialRunId: queued.trialRunId ?? null
           };
 
           await submitProgressToDatabase({
@@ -457,7 +467,8 @@ const WorkerPage = (): React.ReactElement => {
     const offlinePayload: WorkerProgressPayload = {
       ...payload,
       photoPath: storedPhotoPaths[0],
-      photoPaths: storedPhotoPaths
+      photoPaths: storedPhotoPaths,
+      trialRunId: payload.trialRunId ?? null
     };
     queueProgress(offlinePayload);
     updateProgress(offlinePayload);
@@ -501,7 +512,8 @@ const WorkerPage = (): React.ReactElement => {
           percent: update.percent,
           note: update.note,
           photoPath: update.photoPath,
-          photoPaths: update.photoPaths
+          photoPaths: update.photoPaths,
+          trialRunId: data.trialRun?.id ?? null
         };
 
         let payloadForOfflineRetry = payload;
@@ -510,7 +522,8 @@ const WorkerPage = (): React.ReactElement => {
             const uploadedPhotoPaths = await uploadProgressPhotos({
               task,
               reportDate: DEFAULT_REPORT_DATE,
-              photoPaths: getProgressPhotoPaths(payload)
+              photoPaths: getProgressPhotoPaths(payload),
+              trialRunId: payload.trialRunId ?? null
             });
             const persistedPayload: WorkerProgressPayload = {
               ...payload,
@@ -584,12 +597,16 @@ const WorkerPage = (): React.ReactElement => {
     setSaveStates((current) => ({ ...current, [taskId]: "saving" }));
     try {
       if (isOnline) {
-        await submitCancelToDatabase({ task, cancelReason });
+        await submitCancelToDatabase({
+          task,
+          cancelReason,
+          trialRunId: data.trialRun?.id ?? null
+        });
         cancelTask(taskId, cancelReason);
         setSaveStates((current) => ({ ...current, [taskId]: "saved" }));
       } else {
         cancelTask(taskId, cancelReason);
-        queueCancelTask(taskId, worker.id, cancelReason);
+        queueCancelTask(taskId, worker.id, cancelReason, data.trialRun?.id ?? null);
         setSaveStates((current) => ({ ...current, [taskId]: "offline" }));
       }
       setCancelTaskId(null);
@@ -597,7 +614,7 @@ const WorkerPage = (): React.ReactElement => {
       console.error("[WorkerPage.confirmCancel]", error);
       if (error instanceof TypeError) {
         cancelTask(taskId, cancelReason);
-        queueCancelTask(taskId, worker.id, cancelReason);
+        queueCancelTask(taskId, worker.id, cancelReason, data.trialRun?.id ?? null);
         setSaveStates((current) => ({ ...current, [taskId]: "offline" }));
         setCancelTaskId(null);
       } else {

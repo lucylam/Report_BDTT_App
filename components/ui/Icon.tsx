@@ -11,6 +11,7 @@ import {
   Database,
   Download,
   FileSpreadsheet,
+  FlaskConical,
   Gauge,
   History,
   LayoutDashboard,
@@ -45,6 +46,7 @@ export type IconName =
   | "data"
   | "database"
   | "download"
+  | "demo"
   | "help"
   | "history"
   | "list"
@@ -82,6 +84,7 @@ const iconMap: Record<IconName, LucideIcon> = {
   data: Database,
   database: Database,
   download: Download,
+  demo: FlaskConical,
   help: CircleHelp,
   history: History,
   list: ListChecks,

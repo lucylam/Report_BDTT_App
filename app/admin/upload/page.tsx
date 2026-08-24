@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Alert, AppLoadingState, Badge, Button, Icon, Widget, WidgetHeader } from "@/components/ui";
-import { OFFICIAL_DEMO_NOTE_PREFIX, isOfficialDemoProgress } from "@/lib/demoProgress";
 import { isDataAdminAccount } from "@/lib/permissions";
 import { useAppData } from "@/hooks/useAppData";
 
@@ -62,14 +61,7 @@ const formatTimestamp = (value: string | undefined): string =>
 
 const AdminUploadPage = (): React.ReactElement => {
   const router = useRouter();
-  const {
-    clearDemoProgress,
-    createDemoProgress,
-    currentAccount,
-    data,
-    logout,
-    refreshRemoteData
-  } = useAppData();
+  const { currentAccount, data, logout, refreshRemoteData } = useAppData();
   const [bootstrap, setBootstrap] = useState<BootstrapPreview | null>(null);
   const [sync, setSync] = useState<SyncPreview | null>(null);
   const [busy, setBusy] = useState<"bootstrap-preview" | "bootstrap-apply" | "sync-preview" | "sync-apply" | "">("");
@@ -161,8 +153,6 @@ const AdminUploadPage = (): React.ReactElement => {
     }
   };
 
-  const demoCount = data.progress.filter(isOfficialDemoProgress).length;
-
   return (
     <AdminShell
       account={currentAccount}
@@ -208,16 +198,6 @@ const AdminUploadPage = (): React.ReactElement => {
         </Widget>
       </section>
 
-      <Widget>
-        <WidgetHeader icon="database" tone="warning" subtitle={`Marker an toàn ${OFFICIAL_DEMO_NOTE_PREFIX}; không tác động task thật`} title="Dữ liệu demo trình bày" />
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Metric label="Record demo hiện có" value={String(demoCount)} />
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => { const result = createDemoProgress(); setMessage(`Đã tạo ${result.created} record demo.`); }} variant="secondary">Tạo demo</Button>
-            <Button disabled={demoCount === 0} onClick={() => { const result = clearDemoProgress(); setMessage(`Đã xóa ${result.cleared} record demo.`); }} variant="danger">Xóa demo</Button>
-          </div>
-        </div>
-      </Widget>
     </AdminShell>
   );
 };

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { getAuthenticatedDataAdmin } from "@/lib/api/session";
+import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Task } from "@/types/domain";
 
@@ -154,6 +155,12 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     const auth = await getAuthenticatedDataAdmin(request, supabase);
     if (!auth.ok) {
       return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
+    }
+    if (await getActiveBdttTrialRun(supabase)) {
+      return NextResponse.json(
+        { ok: false, error: "Hãy kết thúc Demo Mode trước khi import task kế hoạch." },
+        { status: 409 }
+      );
     }
 
     const body = (await request.json()) as ImportTasksBody;

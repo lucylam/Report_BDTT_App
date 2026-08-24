@@ -116,6 +116,7 @@ export const normalizeOfflineQueue = (
       const taskId = normalizeText(candidate.taskId);
       const userId = normalizeText(candidate.userId);
       const queuedAt = normalizeText(candidate.queuedAt) || new Date(0).toISOString();
+      const trialRunId = normalizeText(candidate.trialRunId) || undefined;
       const id =
         normalizeText(candidate.id) ||
         `${kind}-${taskId}-${userId}-${queuedAt}`;
@@ -131,6 +132,7 @@ export const normalizeOfflineQueue = (
           taskId,
           userId,
           cancelReason,
+          ...(trialRunId ? { trialRunId } : {}),
           queuedAt
         };
       }
@@ -147,6 +149,7 @@ export const normalizeOfflineQueue = (
         note: normalizeText(candidate.note),
         photoPath: normalizeText(candidate.photoPath) || undefined,
         photoPaths: normalizePhotoPaths(candidate.photoPaths, candidate.photoPath),
+        ...(trialRunId ? { trialRunId } : {}),
         queuedAt
       };
     })

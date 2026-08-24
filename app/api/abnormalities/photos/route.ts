@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getAuthenticatedAccount, isUuid } from "@/lib/api/session";
+import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { loadBdttSnapshot } from "@/lib/api/bdttSnapshot";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { parsePhotoDataUrl, TASK_PHOTOS_BUCKET } from "@/lib/api/photoStorage";
@@ -23,16 +24,20 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!supabase) return errorResponse("Chưa cấu hình Supabase cho ảnh bất thường.", 503);
   const auth = await getAuthenticatedAccount(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
+  const trialRun = await getActiveBdttTrialRun(supabase);
   const body = (await request.json()) as PhotoBody;
   if (!isUuid(body.abnormalityId ?? "")) return errorResponse("Mã bất thường không hợp lệ.", 400);
 
   const { data: item, error: itemError } = await supabase
     .from("bdtt_abnormalities")
-    .select("id, task_id, reported_by, assigned_to, status")
+    .select("id, task_id, reported_by, assigned_to, status, trial_run_id")
     .eq("id", body.abnormalityId)
     .maybeSingle();
   if (itemError) return errorResponse(itemError.message, 500);
   if (!item) return errorResponse("Không tìm thấy bất thường.", 404);
+  if ((item.trial_run_id ?? null) !== (trialRun?.id ?? null)) {
+    return errorResponse("Bất thường không thuộc chế độ dữ liệu hiện tại.", 409);
+  }
   let canUpload = item.reported_by === auth.profile.id || item.assigned_to === auth.profile.id;
   if (!canUpload && canManageBdttTasks(auth.account)) {
     const snapshot = await loadBdttSnapshot(supabase);
@@ -68,7 +73,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if ((count ?? 0) >= 5) return errorResponse("Mỗi bất thường chỉ được tối đa 5 ảnh.", 400);
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const storagePath = `${auth.profile.id}/abnormalities/${body.abnormalityId}/${stamp}-${randomUUID()}.jpg`;
+  const basePath = `${auth.profile.id}/abnormalities/${body.abnormalityId}/${stamp}-${randomUUID()}.jpg`;
+  const storagePath = trialRun ? `trials/${trialRun.id}/${basePath}` : basePath;
   const { error: uploadError } = await supabase.storage
     .from(TASK_PHOTOS_BUCKET)
     .upload(storagePath, photo.bytes, { contentType: photo.mimeType, upsert: false });
