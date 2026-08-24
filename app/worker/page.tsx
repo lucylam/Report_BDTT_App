@@ -252,6 +252,13 @@ const WorkerPage = (): React.ReactElement => {
         try {
           const task = currentData.tasks.find((item) => item.id === queued.taskId);
           if (!task) continue;
+          if ((queued.trialRunId ?? null) !== (currentData.trialRun?.id ?? null)) {
+            if (queued.kind === "progress") {
+              await removeOfflinePhotos(getProgressPhotoPaths(queued));
+            }
+            syncedItemIds.push(queued.id);
+            continue;
+          }
 
           if (queued.kind === "cancelTask") {
             await submitCancelToDatabase({
