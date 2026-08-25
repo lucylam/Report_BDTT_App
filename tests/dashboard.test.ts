@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createCompactDashboardExportSvg } from "@/components/admin/dashboardExportImage";
 import { buildExcelDashboard } from "@/lib/dashboard";
 import type { AppData, Profile, ProgressPercent, ProgressRecord, Task } from "@/types/domain";
 
@@ -288,5 +289,23 @@ describe("buildExcelDashboard", () => {
 
     expect(dashboard.executive.submittedWorkers).toBe(1);
     expect(dashboard.executive.totalWorkers).toBe(2);
+  });
+
+  it("xuất ảnh dashboard theo bố cục dọc, không ép biểu đồ", () => {
+    const data = makeData(
+      [
+        makeTask({ id: "task-1", donVi: "AMONIA", nhom: "DK-PLC" }),
+        makeTask({ id: "task-2", donVi: "UTILITY", nhom: "DK-BENT" })
+      ],
+      [makeProgress("task-1", 50)]
+    );
+
+    const report = createCompactDashboardExportSvg(buildExcelDashboard(data), "2026");
+
+    expect(report.width).toBe(1680);
+    expect(report.height).toBeGreaterThan(1800);
+    expect(report.svg).toContain("TÌNH HÌNH ĐIỀU HÀNH");
+    expect(report.svg).toContain("CHI TIẾT THEO NHÓM TASK");
+    expect(report.svg).toContain(`viewBox="0 0 ${report.width} ${report.height}"`);
   });
 });

@@ -30,7 +30,7 @@ export const DashboardExportButton = ({
     const pngBlob = dashboard
       ? await renderCompactDashboardAsPng(dashboard, reportYear)
       : await captureCurrentDashboardAsPng(button);
-    downloadBlob(pngBlob, "bdtt-dashboard-compact-hq.png");
+    downloadBlob(pngBlob, "bdtt-dashboard-hq.png");
   };
 
   return (

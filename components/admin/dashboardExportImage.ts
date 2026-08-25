@@ -6,8 +6,9 @@ import type {
   UnitLeadRow
 } from "@/lib/dashboard";
 
-const width = 1920;
-const pagePad = 42;
+// Match the web dashboard width and let the exported report grow vertically.
+const width = 1680;
+const pagePad = 32;
 const gap = 18;
 
 interface ExportColors {
@@ -87,26 +88,30 @@ export const createCompactDashboardExportSvg = (
   let y = pagePad;
 
   parts.push(background());
-  parts.push(header(reportYear, y));
-  y += 96;
+  parts.push(reportHeader(reportYear, { x: pagePad, y, w: contentWidth, h: 116 }));
+  y += 116 + gap;
 
   parts.push(kpiStrip(dashboard, y, contentWidth));
-  y += 112;
+  y += 136 + gap;
 
-  const mainLeft = Math.round(contentWidth * 0.31);
-  const mainMid = Math.round(contentWidth * 0.35);
-  const mainRight = contentWidth - mainLeft - mainMid - gap * 2;
-  const mainHeight = 292;
+  parts.push(
+    attentionPanel(dashboard, {
+      x: pagePad,
+      y,
+      w: contentWidth,
+      h: 250
+    })
+  );
+  y += 250 + gap;
+
+  const mainLeft = Math.round((contentWidth - gap) * 0.4);
+  const mainRight = contentWidth - mainLeft - gap;
+  const ownerUnitCount = dashboard.byOwnerUnit.filter((row) => row.total > 0).length;
+  const mainHeight = Math.max(410, 126 + ownerUnitCount * 42);
   parts.push(
     overallPanel(dashboard, { x: pagePad, y, w: mainLeft, h: mainHeight }),
     ownerUnitPanel(dashboard.byOwnerUnit, {
       x: pagePad + mainLeft + gap,
-      y,
-      w: mainMid,
-      h: mainHeight
-    }),
-    leadStatusPanel(dashboard.leadStatus, {
-      x: pagePad + mainLeft + gap + mainMid + gap,
       y,
       w: mainRight,
       h: mainHeight
@@ -114,21 +119,30 @@ export const createCompactDashboardExportSvg = (
   );
   y += mainHeight + gap;
 
+  const secondLeft = Math.round((contentWidth - gap) * 0.5);
+  const secondRight = contentWidth - secondLeft - gap;
+  const matrixRows = dashboard.byOwnerUnitAndLead.filter((row) =>
+    dashboard.leadNames.some((lead) => (row.totals[lead] ?? 0) > 0)
+  ).length;
+  const secondHeight = Math.max(
+    410,
+    154 + Math.max(matrixRows, dashboard.leadStatus.length) * 44
+  );
   parts.push(
     unitLeadPanel(dashboard.byOwnerUnitAndLead, dashboard.leadNames, {
       x: pagePad,
       y,
-      w: Math.round((contentWidth - gap) * 0.5),
-      h: 276
+      w: secondLeft,
+      h: secondHeight
     }),
-    attentionPanel(dashboard, {
-      x: pagePad + Math.round((contentWidth - gap) * 0.5) + gap,
+    leadStatusPanel(dashboard.leadStatus, {
+      x: pagePad + secondLeft + gap,
       y,
-      w: Math.round((contentWidth - gap) * 0.5),
-      h: 276
+      w: secondRight,
+      h: secondHeight
     })
   );
-  y += 276 + gap;
+  y += secondHeight + gap;
 
   const resourcePanelHeight = resourceGroupsHeight(dashboard.resourceGroups);
   parts.push(
@@ -160,13 +174,15 @@ export const createCompactDashboardExportSvg = (
 const background = (): string =>
   `<rect width="100%" height="100%" fill="${colors.bg}"/>`;
 
-const header = (reportYear: string, y: number): string => [
-  text("BÁO CÁO EXCEL", pagePad, y + 18, 15, 800, colors.primaryStrong, "track"),
-  text(`Báo cáo ngắn tiến độ BDTT ${reportYear} · Tổ TB ĐL&ĐK`, pagePad, y + 52, 30, 600, colors.text),
+const reportHeader = (reportYear: string, rect: ChartRect): string => [
+  card(rect.x, rect.y, rect.w, rect.h, 22),
+  roundedRect(rect.x, rect.y, 10, rect.h, 5, colors.primaryStrong),
+  text("BÁO CÁO EXCEL", rect.x + 28, rect.y + 30, 15, 800, colors.primaryStrong, "track"),
+  text(`Báo cáo ngắn tiến độ BDTT ${reportYear} · Tổ TB ĐL&ĐK`, rect.x + 28, rect.y + 68, 30, 600, colors.text),
   text(
     "Dữ liệu lũy kế toàn bộ kỳ · Mỗi hạng mục dùng mức tiến độ cao nhất đã ghi nhận.",
-    pagePad,
-    y + 82,
+    rect.x + 28,
+    rect.y + 98,
     17,
     700,
     colors.muted
@@ -180,12 +196,6 @@ const kpiStrip = (
 ): string => {
   const { executive, overall } = dashboard;
   const items = [
-    {
-      label: "Tổng hạng mục",
-      value: formatNumber(executive.totalTasks),
-      note: `${formatNumber(executive.activeTasks)} active`,
-      color: colors.text
-    },
     {
       label: "Tiến độ tổng",
       value: `${executive.overallPercent}%`,
@@ -217,11 +227,11 @@ const kpiStrip = (
     .map((item, index) => {
       const x = pagePad + index * (itemWidth + itemGap);
       return [
-        card(x, y, itemWidth, 92, 20),
+        card(x, y, itemWidth, 136, 20),
         `<circle cx="${x + itemWidth - 24}" cy="${y + 24}" r="7" fill="${item.color}" opacity="0.72"/>`,
         text(item.label, x + 22, y + 30, 14, 800, colors.soft, "upper"),
-        text(item.value, x + 22, y + 66, 34, 800, item.color),
-        text(item.note, x + 132, y + 64, 13, 700, colors.muted)
+        text(item.value, x + 22, y + 78, 36, 800, item.color),
+        text(item.note, x + 22, y + 112, 14, 700, colors.muted)
       ].join("");
     })
     .join("");
@@ -229,34 +239,34 @@ const kpiStrip = (
 
 const overallPanel = (dashboard: ExcelDashboardData, rect: ChartRect): string => {
   const { executive, overall } = dashboard;
-  const cx = rect.x + 106;
-  const cy = rect.y + 164;
-  const radius = 74;
+  const cx = rect.x + Math.round(rect.w * 0.3);
+  const cy = rect.y + Math.round(rect.h * 0.56);
+  const radius = 100;
   const doneAngle = Math.max(0.001, Math.min(359.999, overall.percent * 3.6));
   return [
     card(rect.x, rect.y, rect.w, rect.h, 22),
     panelTitle("Tổng tiến độ BDTT", "Tỷ lệ hoàn thành trung bình toàn tổ", rect),
-    donutPath(cx, cy, radius, 18, 359.999, colors.grid),
-    donutPath(cx, cy, radius, 18, doneAngle, colors.done),
+    donutPath(cx, cy, radius, 22, 359.999, colors.grid),
+    donutPath(cx, cy, radius, 22, doneAngle, colors.done),
     text(`${overall.percent}%`, cx, cy + 9, 38, 800, colors.text, "middle"),
     text("Hoàn thành", cx, cy + 34, 14, 800, colors.muted, "middle"),
-    miniLegend("Đã thực hiện", colors.done, rect.x + 214, rect.y + 122),
-    text(formatNumber(overall.done), rect.x + 386, rect.y + 132, 22, 800, colors.done),
-    miniLegend("Còn lại", colors.remaining, rect.x + 214, rect.y + 164),
-    text(formatNumber(overall.remaining), rect.x + 386, rect.y + 174, 22, 800, colors.remaining),
-    miniLegend("Hủy", colors.danger, rect.x + 214, rect.y + 206),
-    text(formatNumber(executive.cancelledTasks), rect.x + 386, rect.y + 216, 22, 800, colors.danger)
+    miniLegend("Đã thực hiện", colors.done, rect.x + Math.round(rect.w * 0.57), cy - 46),
+    text(formatNumber(overall.done), rect.x + rect.w - 38, cy - 46, 22, 800, colors.done, "middle"),
+    miniLegend("Còn lại", colors.remaining, rect.x + Math.round(rect.w * 0.57), cy + 6),
+    text(formatNumber(overall.remaining), rect.x + rect.w - 38, cy + 6, 22, 800, colors.remaining, "middle"),
+    miniLegend("Hủy", colors.danger, rect.x + Math.round(rect.w * 0.57), cy + 58),
+    text(formatNumber(executive.cancelledTasks), rect.x + rect.w - 38, cy + 58, 22, 800, colors.danger, "middle")
   ].join("");
 };
 
 const ownerUnitPanel = (rows: readonly CompletionRow[], rect: ChartRect): string => {
-  const visibleRows = rows.filter((row) => row.total > 0).slice(0, 7);
+  const visibleRows = rows.filter((row) => row.total > 0);
   const labelX = rect.x + 24;
-  const plotX = rect.x + 126;
-  const plotW = rect.w - 206;
+  const plotX = rect.x + 176;
+  const plotW = rect.w - 282;
   const valueX = plotX + plotW + 12;
-  const startY = rect.y + 82;
-  const rowHeight = 27;
+  const startY = rect.y + 104;
+  const rowHeight = 42;
   const guides = [0, 25, 50, 75, 100]
     .map((tick) => {
       const x = plotX + (tick / 100) * plotW;
@@ -271,11 +281,11 @@ const ownerUnitPanel = (rows: readonly CompletionRow[], rect: ChartRect): string
       const y = startY + index * rowHeight;
       const markerX = plotX + (Math.max(1, Math.min(99, row.percent)) / 100) * plotW;
       return [
-        text(truncate(row.name, 13), labelX, y + 5, 11, 800, colors.text),
+        text(truncate(row.name, 21), labelX, y + 6, 13, 800, colors.text),
         `<line x1="${plotX}" y1="${y}" x2="${plotX + plotW}" y2="${y}" stroke="${colors.border}" stroke-width="2"/>`,
         `<rect x="${markerX - 5}" y="${y - 5}" width="10" height="10" fill="${colors.done}" stroke="${colors.surface}" stroke-width="2"/>`,
-        text(`${row.percent}%`, markerX, y - 9, 10, 800, colors.text, "middle"),
-        text(`${formatNumber(row.done)}/${formatNumber(row.total)}`, valueX, y + 5, 10, 800, colors.text)
+        text(`${row.percent}%`, markerX, y - 11, 11, 800, colors.text, "middle"),
+        text(`${formatNumber(row.done)}/${formatNumber(row.total)}`, valueX, y + 6, 12, 800, colors.text)
       ].join("");
     })
     .join("");
@@ -288,13 +298,13 @@ const ownerUnitPanel = (rows: readonly CompletionRow[], rect: ChartRect): string
 };
 
 const leadStatusPanel = (rows: readonly LeadStatusRow[], rect: ChartRect): string => {
-  const visibleRows = rows.slice(0, 5);
+  const visibleRows = rows;
   const maxValue = Math.max(1, ...visibleRows.map((row) => row.total));
   const x = rect.x + 24;
-  const barX = rect.x + 248;
-  const barW = rect.w - 286;
-  const rowH = 34;
-  const y = rect.y + 82;
+  const barX = rect.x + Math.round(rect.w * 0.4);
+  const barW = rect.w - (barX - rect.x) - 70;
+  const rowH = 44;
+  const y = rect.y + 100;
   const bars = visibleRows
     .map((row, index) => {
       const yy = y + index * rowH;
@@ -312,7 +322,7 @@ const leadStatusPanel = (rows: readonly LeadStatusRow[], rect: ChartRect): strin
         return svg;
       });
       return [
-        text(truncate(row.name, 20), x, yy + 18, 13, 800, colors.text),
+        text(truncate(row.name, 27), x, yy + 18, 13, 800, colors.text),
         roundedRect(barX, yy + 7, barW, 12, 6, colors.grid, 0.9),
         ...segments,
         text(formatNumber(row.total), barX + barW + 12, yy + 19, 12, 800, colors.muted)
@@ -341,10 +351,10 @@ const unitLeadPanel = (
   leadNames: readonly string[],
   rect: ChartRect
 ): string => {
-  const visibleLeads = leadNames.slice(0, 4);
+  const visibleLeads = leadNames.slice(0, 6);
   const visibleRows = rows
     .filter((row) => visibleLeads.some((lead) => (row.totals[lead] ?? 0) > 0))
-    .slice(0, 5);
+    .slice(0, 10);
 
   if (visibleRows.length === 0 || visibleLeads.length === 0) {
     return [
@@ -355,17 +365,17 @@ const unitLeadPanel = (
   }
 
   const tableX = rect.x + 24;
-  const tableY = rect.y + 88;
-  const unitWidth = 118;
+  const tableY = rect.y + 108;
+  const unitWidth = 130;
   const cellWidth = (rect.w - 48 - unitWidth) / visibleLeads.length;
-  const rowHeight = 31;
+  const rowHeight = 44;
   const headers = visibleLeads
     .map((lead, index) =>
       text(
-        truncate(normalizeLeadLabel(lead), 15),
+        truncate(normalizeLeadLabel(lead), 18),
         tableX + unitWidth + index * cellWidth + cellWidth / 2,
         tableY - 12,
-        9,
+        10,
         800,
         colors.muted,
         "middle"
@@ -376,7 +386,7 @@ const unitLeadPanel = (
     .map((row, rowIndex) => {
       const y = tableY + rowIndex * rowHeight;
       return [
-        text(truncate(row.name, 13), tableX, y + 20, 11, 800, colors.text),
+        text(truncate(row.name, 16), tableX, y + 27, 12, 800, colors.text),
         ...visibleLeads.map((lead, columnIndex) => {
           const total = row.totals[lead] ?? 0;
           const percent = row.values[lead] ?? 0;
@@ -390,8 +400,8 @@ const unitLeadPanel = (
             text(
               total > 0 ? `${percent}% · ${formatNumber(total)}` : "—",
               x + cellWidth / 2,
-              y + 20,
-              10,
+              y + 27,
+              11,
               800,
               total > 0 ? colors.text : colors.muted,
               "middle"
@@ -421,27 +431,46 @@ const getExportHeatColor = (percent: number): string => {
 const attentionPanel = (dashboard: ExcelDashboardData, rect: ChartRect): string => {
   const unitRows = dashboard.attentionOwnerUnits.slice(0, 4);
   const leadRows = dashboard.attentionLeads.slice(0, 4);
-  const list = (items: string[], x: number, y: number, title: string): string => [
-    text(title, x, y, 14, 800, colors.text),
+  const innerGap = 14;
+  const innerX = rect.x + 20;
+  const innerY = rect.y + 66;
+  const innerW = (rect.w - 40 - innerGap * 2) / 3;
+  const innerH = rect.h - 86;
+  const list = (
+    items: string[],
+    x: number,
+    title: string,
+    accentColor: string
+  ): string => [
+    roundedRect(x, innerY, innerW, innerH, 16, colors.mutedSurface, 1, colors.border),
+    text(title, x + 18, innerY + 28, 14, 800, colors.text),
     ...items.map((item, index) => [
-      `<circle cx="${x + 7}" cy="${y + 28 + index * 31}" r="5" fill="${colors.accent}" opacity="0.85"/>`,
-      text(truncate(item, 42), x + 22, y + 33 + index * 31, 13, 800, colors.muted)
+      `<circle cx="${x + 24}" cy="${innerY + 57 + index * 29}" r="5" fill="${accentColor}" opacity="0.85"/>`,
+      text(truncate(item, 43), x + 38, innerY + 62 + index * 29, 12, 800, colors.muted)
     ].join(""))
   ].join("");
+  const summaryX = innerX;
   return [
     card(rect.x, rect.y, rect.w, rect.h, 22),
-    panelTitle("Các điểm cần chú ý", "Ưu tiên theo phần còn lại và trạng thái mở", rect),
+    panelTitle("Tình hình điều hành", "Tổng hợp lũy kế và các điểm cần ưu tiên", rect),
+    roundedRect(summaryX, innerY, innerW, innerH, 16, colors.primarySoft, 1, colors.border),
+    text("TỔNG QUAN", summaryX + 18, innerY + 28, 14, 800, colors.primaryStrong, "track"),
+    text(`${dashboard.executive.overallPercent}%`, summaryX + 18, innerY + 78, 38, 800, colors.primaryStrong),
+    text("tiến độ quy đổi", summaryX + 108, innerY + 76, 13, 800, colors.muted),
+    text(`${formatNumber(dashboard.executive.activeTasks)} active`, summaryX + 18, innerY + 116, 14, 800, colors.text),
+    text(`${formatNumber(dashboard.executive.completedTasks)} hoàn thành`, summaryX + 168, innerY + 116, 14, 800, colors.done),
+    text(`${formatNumber(dashboard.executive.cancelledTasks)} hủy`, summaryX + 338, innerY + 116, 14, 800, colors.danger),
     list(
       unitRows.map((row) => `${row.name}: ${formatNumber(row.remaining)} còn lại · ${row.percent}%`),
-      rect.x + 24,
-      rect.y + 82,
-      "Đơn vị cần ưu tiên"
+      innerX + innerW + innerGap,
+      "Đơn vị cần ưu tiên",
+      colors.accent
     ),
     list(
       leadRows.map((row) => `${row.name}: ${formatNumber(row.notStarted + row.inProgress)} chưa xong`),
-      rect.x + Math.round(rect.w / 2) + 8,
-      rect.y + 82,
-      "Nhóm cần bám"
+      innerX + (innerW + innerGap) * 2,
+      "Nhóm cần bám",
+      colors.danger
     )
   ].join("");
 };
@@ -450,12 +479,12 @@ const resourceGroupsPanel = (
   groups: readonly ResourceGroupDashboard[],
   rect: ChartRect
 ): string => {
-  const columns = 4;
+  const columns = 3;
   const innerPad = 24;
   const cardGap = 14;
   const tileW = (rect.w - innerPad * 2 - cardGap * (columns - 1)) / columns;
-  const tileH = 158;
-  const headerH = 68;
+  const tileH = 220;
+  const headerH = 78;
   return [
     card(rect.x, rect.y, rect.w, rect.h, 22),
     panelTitle("Chi tiết theo nhóm task", "Nhóm lấy từ cột E Google Sheet; mỗi card hiển thị Top người thực hiện ở cột L", {
@@ -473,10 +502,10 @@ const resourceGroupsPanel = (
 };
 
 const resourceTile = (group: ResourceGroupDashboard, rect: ChartRect): string => {
-  const rows = group.rows.slice(0, 4);
+  const rows = group.rows.slice(0, 5);
   return [
     roundedRect(rect.x, rect.y, rect.w, rect.h, 18, colors.mutedSurface, 1, colors.border),
-    text(truncate(group.title.toUpperCase(), 31), rect.x + 16, rect.y + 28, 14, 800, colors.text),
+    text(truncate(group.title.toUpperCase(), 48), rect.x + 16, rect.y + 30, 15, 800, colors.text),
     text("Nguồn DATA!E:E", rect.x + 16, rect.y + 52, 13, 800, colors.muted),
     compactBars(rows, rect.x + 16, rect.y + 66, rect.w - 32, rect.h - 82)
   ].join("");
@@ -488,8 +517,8 @@ const footerPanel = (rect: ChartRect): string => [
 ].join("");
 
 const resourceGroupsHeight = (groups: readonly ResourceGroupDashboard[]): number => {
-  const rows = Math.ceil(groups.length / 4);
-  return 68 + rows * 158 + Math.max(0, rows - 1) * 14 + 24;
+  const rows = Math.ceil(groups.length / 3);
+  return 78 + rows * 220 + Math.max(0, rows - 1) * 14 + 24;
 };
 
 const compactBars = (
@@ -507,10 +536,10 @@ const compactBars = (
   return rows
     .map((row, index) => {
       const yy = y + index * rowH;
-      const labelW = 196;
+      const labelW = Math.min(210, Math.round(w * 0.44));
       const barW = Math.max(90, w - labelW - 40);
       return [
-        text(truncate(row.name, 16), x, yy + 17, 11, 800, colors.text),
+        text(truncate(row.name, 24), x, yy + 17, 11, 800, colors.text),
         roundedRect(x + labelW, yy + 8, barW, 8, 4, colors.grid, 0.9),
         roundedRect(x + labelW, yy + 8, (row.done / maxTotal) * barW, 8, 4, colors.done, 0.96),
         roundedRect(
