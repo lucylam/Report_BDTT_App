@@ -99,6 +99,18 @@ export const TasksTable = ({
     setSelectedTaskId(null);
   };
 
+  const resetFilters = (): void => {
+    setQuery("");
+    setGroup("all");
+    setUnit("all");
+    setSection("all");
+    setPriority("all");
+    setStatus("all");
+    setQuickFilter("all");
+    resetVisibleRows();
+    setSelectedTaskId(null);
+  };
+
   return (
     <section className="grid gap-2 lg:gap-4">
       <TaskKpiStrip kpis={kpis} onSelect={selectKpi} />
@@ -111,12 +123,14 @@ export const TasksTable = ({
         onPriorityChange={(value) => updateFilter(setPriority, value)}
         onQueryChange={(value) => updateFilter(setQuery, value)}
         onQuickFilterChange={(value) => updateFilter(setQuickFilter, value)}
+        onReset={resetFilters}
         onSectionChange={(value) => updateFilter(setSection, value)}
         onStatusChange={(value) => updateFilter(setStatus, value)}
         onUnitChange={(value) => updateFilter(setUnit, value)}
         priority={priority}
         query={query}
         quickFilter={quickFilter}
+        resultLabel={`${filteredRows.length}/${allRows.length} hạng mục`}
         section={section}
         sections={sections}
         status={status}
