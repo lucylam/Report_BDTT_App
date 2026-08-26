@@ -280,7 +280,7 @@ export const WorkerDesktopView = ({
                 </p>
                 <GlobalNotifications />
                 <ThemeToggle />
-                {isAdminAccount ? <ModeSwitch activeMode="workspace" href="/admin" /> : null}
+                <ModeSwitch activeMode="workspace" showSupervision={isAdminAccount} />
               </div>
 
               <AccountMenu

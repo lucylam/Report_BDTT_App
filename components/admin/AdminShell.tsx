@@ -99,8 +99,8 @@ export const AdminShell = ({
             contextAction={
               <ModeSwitch
                 activeMode="supervision"
-                className="w-auto max-w-[11.5rem] text-[11px]"
-                href="/worker"
+                className="w-auto max-w-[18rem] text-[11px]"
+                showSupervision
               />
             }
             onLogout={onLogout}
@@ -113,7 +113,7 @@ export const AdminShell = ({
                 <Link aria-label="Mở trợ giúp" className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-field)] border border-[var(--line)] text-[var(--text-muted)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--surface-muted)]" href="/help"><Icon name="help" /></Link>
                 <GlobalNotifications />
                 <ThemeToggle />
-                <ModeSwitch activeMode="supervision" href="/worker" />
+                <ModeSwitch activeMode="supervision" showSupervision />
                 <AccountMenu account={account} onLogout={onLogout} statusLabel="Phiên giám sát" />
               </div>
             </div>

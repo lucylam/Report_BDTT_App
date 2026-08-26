@@ -1,56 +1,66 @@
 import Link from "next/link";
-import { Icon } from "@/components/ui";
+import { Icon, type IconName } from "@/components/ui";
 import { cn } from "@/lib/ui";
 
 interface ModeSwitchProps {
-  readonly activeMode: "workspace" | "supervision";
-  readonly href: string;
+  readonly activeMode: "workspace" | "supervision" | "taskInfo";
   readonly className?: string;
+  readonly showSupervision?: boolean;
+}
+
+interface ModeItem {
+  readonly key: ModeSwitchProps["activeMode"];
+  readonly href: string;
+  readonly icon: IconName;
+  readonly label: string;
 }
 
 export const ModeSwitch = ({
   activeMode,
-  href,
-  className
+  className,
+  showSupervision = false
 }: ModeSwitchProps): React.ReactElement => {
-  const isWorkspace = activeMode === "workspace";
-  const targetLabel = isWorkspace ? "Giám sát" : "Workspace";
+  const items: ModeItem[] = [
+    { key: "workspace", href: "/worker", icon: "list", label: "Workspace" },
+    { key: "taskInfo", href: "/task-info", icon: "calendar", label: "Task thông tin" }
+  ];
+  if (showSupervision) {
+    items.splice(1, 0, {
+      key: "supervision",
+      href: "/admin",
+      icon: "dashboard",
+      label: "Giám sát"
+    });
+  }
 
   return (
-    <Link
-      aria-label={`Chuyển sang ${targetLabel}`}
+    <nav
+      aria-label="Chuyển màn hình BDTT"
       className={cn(
-        "mobile-mode-switch focus-ring group inline-flex min-h-11 w-full max-w-[18rem] min-w-0 items-center overflow-hidden rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-1 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] transition hover:bg-[var(--surface-muted)] sm:w-auto",
+        "mobile-mode-switch inline-grid min-h-11 w-full min-w-0 items-center gap-1 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-1 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-soft-sm)] sm:w-auto",
         className
       )}
-      href={href}
+      style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
     >
-      <span className="relative grid w-full min-w-0 grid-cols-2 rounded-[calc(var(--radius-field)-0.25rem)] sm:min-w-[12.5rem]">
-        <span
-          className={cn(
-            "absolute inset-y-0 left-0 w-1/2 rounded-[calc(var(--radius-field)-0.25rem)] bg-[var(--foreground)] shadow-md transition-transform duration-300 ease-out",
-            isWorkspace ? "translate-x-0" : "translate-x-full"
-          )}
-        />
-        <span
-          className={cn(
-            "relative z-10 flex min-h-9 min-w-0 items-center justify-center gap-1.5 rounded-[calc(var(--radius-field)-0.25rem)] px-2 transition-colors duration-200 sm:px-3",
-            isWorkspace ? "text-[var(--surface)]" : "text-[var(--text-muted)]"
-          )}
-        >
-          <Icon className="h-4 w-4 shrink-0" name="list" />
-          <span className="mobile-button-label min-w-0">Workspace</span>
-        </span>
-        <span
-          className={cn(
-            "relative z-10 flex min-h-9 min-w-0 items-center justify-center gap-1.5 rounded-[calc(var(--radius-field)-0.25rem)] px-2 transition-colors duration-200 sm:px-3",
-            isWorkspace ? "text-[var(--text-muted)]" : "text-[var(--surface)]"
-          )}
-        >
-          <Icon className="h-4 w-4 shrink-0" name="dashboard" />
-          <span className="mobile-button-label min-w-0">Giám sát</span>
-        </span>
-      </span>
-    </Link>
+      {items.map((item) => {
+        const active = activeMode === item.key;
+        return (
+          <Link
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "focus-ring pressable flex min-h-9 min-w-0 items-center justify-center gap-1.5 rounded-[calc(var(--radius-field)-0.25rem)] px-2 text-center leading-tight no-underline transition-colors sm:px-3",
+              active
+                ? "bg-[var(--foreground)] text-[var(--surface)] shadow-md"
+                : "text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
+            )}
+            href={item.href}
+            key={item.key}
+          >
+            <Icon className="h-4 w-4 shrink-0" name={item.icon} />
+            <span className="mobile-button-label min-w-0 break-words">{item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 };

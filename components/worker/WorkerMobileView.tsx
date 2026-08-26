@@ -180,13 +180,11 @@ export const WorkerMobileView = ({
         activeModule="bdtt"
         bdttHref={isAdminAccount ? "/admin" : "/worker"}
         contextAction={
-          isAdminAccount ? (
-            <ModeSwitch
-              activeMode="workspace"
-              className="w-auto max-w-[11.5rem] text-[11px]"
-              href="/admin"
-            />
-          ) : null
+          <ModeSwitch
+            activeMode="workspace"
+            className="w-auto max-w-[18rem] text-[11px]"
+            showSupervision={isAdminAccount}
+          />
         }
         onLogout={onLogout}
         showInstallButton
