@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  createCompactDashboardExportSvg,
-  type DashboardExportTheme
-} from "@/components/admin/dashboardExportImage";
-import type { ExcelDashboardData } from "@/lib/dashboard";
 import { cn } from "@/lib/ui";
 
 const EXPORT_SCALE = 3;
@@ -15,21 +10,15 @@ const EXPORT_HIDDEN_SELECTOR = "[data-export-hidden]";
 
 interface DashboardExportButtonProps {
   readonly className?: string;
-  readonly dashboard?: ExcelDashboardData;
-  readonly reportYear?: string;
 }
 
 export const DashboardExportButton = ({
-  className,
-  dashboard,
-  reportYear = ""
+  className
 }: DashboardExportButtonProps): React.ReactElement => {
   const exportPng = async (button: HTMLButtonElement): Promise<void> => {
     await document.fonts.ready;
     await nextFrame();
-    const pngBlob = dashboard
-      ? await renderCompactDashboardAsPng(dashboard, reportYear)
-      : await captureCurrentDashboardAsPng(button);
+    const pngBlob = await captureCurrentDashboardAsPng(button);
     downloadBlob(pngBlob, "bdtt-dashboard-hq.png");
   };
 
@@ -54,60 +43,6 @@ const captureCurrentDashboardAsPng = async (button: HTMLButtonElement): Promise<
   const target = button.closest<HTMLElement>(EXPORT_ROOT_SELECTOR);
   if (!target) throw new Error("Không tìm thấy dashboard để export.");
   return captureElementAsPng(target);
-};
-
-const renderCompactDashboardAsPng = async (
-  dashboard: ExcelDashboardData,
-  reportYear: string
-): Promise<Blob> => {
-  const report = createCompactDashboardExportSvg(
-    dashboard,
-    reportYear,
-    readDashboardExportTheme()
-  );
-  const scale = exportScale(report.width, report.height);
-  const image = await loadImage(svgToDataUrl(report.svg));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(report.width * scale);
-  canvas.height = Math.round(report.height * scale);
-  const context = canvas.getContext("2d");
-  if (!context) throw new Error("Không tạo được canvas export.");
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
-  context.setTransform(scale, 0, 0, scale, 0, 0);
-  context.drawImage(image, 0, 0, report.width, report.height);
-  return canvasToPngBlob(canvas);
-};
-
-const readDashboardExportTheme = (): DashboardExportTheme => {
-  const root = getComputedStyle(document.documentElement);
-  const body = getComputedStyle(document.body);
-  const value = (name: string, fallback: string): string =>
-    root.getPropertyValue(name).trim() || fallback;
-
-  return {
-    fontFamily: body.fontFamily,
-    colors: {
-      bg: value("--background", "#f2f2f0"),
-      surface: value("--surface", "#ffffff"),
-      mutedSurface: value("--surface-muted", "#f0f2eb"),
-      border: value("--line", "rgba(255,255,255,0.09)"),
-      text: value("--foreground", "#111111"),
-      muted: value("--text-muted", "#565a50"),
-      soft: value("--text-soft", "#666b60"),
-      primary: value("--primary", "#537f16"),
-      primaryStrong: value("--primary-strong", "#466b12"),
-      primarySoft: value("--primary-soft", "rgba(198,167,255,0.15)"),
-      done: value("--chart-done-strong", "#3b5c0d"),
-      remaining: value("--chart-remaining-strong", "#777b71"),
-      accent: value("--chart-accent", "#ad481b"),
-      accentStrong: value("--accent-strong", "#9f3e17"),
-      danger: value("--chart-danger", "#a6321d"),
-      info: value("--chart-info", "#285f9c"),
-      slate: value("--chart-muted", "#72766d"),
-      grid: value("--line", "rgba(255,255,255,0.09)")
-    }
-  };
 };
 
 const captureElementAsPng = async (target: HTMLElement): Promise<Blob> => {

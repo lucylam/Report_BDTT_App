@@ -144,8 +144,6 @@ export const ProgressCharts = ({
           </div>
           <DashboardExportButton
             className="min-h-9 justify-self-start px-3 py-2 text-xs"
-            dashboard={dashboard}
-            reportYear={reportYear}
           />
         </div>
         <ExecutiveBoard dashboard={dashboard} />
