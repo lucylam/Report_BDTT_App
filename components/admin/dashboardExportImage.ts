@@ -10,6 +10,8 @@ import type {
 const width = 1680;
 const pagePad = 32;
 const gap = 18;
+const minimumFontSize = 16;
+const fontScale = 1.25;
 
 interface ExportColors {
   readonly bg: string;
@@ -88,26 +90,26 @@ export const createCompactDashboardExportSvg = (
   let y = pagePad;
 
   parts.push(background());
-  parts.push(reportHeader(reportYear, { x: pagePad, y, w: contentWidth, h: 116 }));
-  y += 116 + gap;
+  parts.push(reportHeader(reportYear, { x: pagePad, y, w: contentWidth, h: 132 }));
+  y += 132 + gap;
 
   parts.push(kpiStrip(dashboard, y, contentWidth));
-  y += 136 + gap;
+  y += 156 + gap;
 
   parts.push(
     attentionPanel(dashboard, {
       x: pagePad,
       y,
       w: contentWidth,
-      h: 250
+      h: 290
     })
   );
-  y += 250 + gap;
+  y += 290 + gap;
 
   const mainLeft = Math.round((contentWidth - gap) * 0.4);
   const mainRight = contentWidth - mainLeft - gap;
   const ownerUnitCount = dashboard.byOwnerUnit.filter((row) => row.total > 0).length;
-  const mainHeight = Math.max(410, 126 + ownerUnitCount * 42);
+  const mainHeight = Math.max(470, 150 + ownerUnitCount * 50);
   parts.push(
     overallPanel(dashboard, { x: pagePad, y, w: mainLeft, h: mainHeight }),
     ownerUnitPanel(dashboard.byOwnerUnit, {
@@ -119,30 +121,30 @@ export const createCompactDashboardExportSvg = (
   );
   y += mainHeight + gap;
 
-  const secondLeft = Math.round((contentWidth - gap) * 0.5);
-  const secondRight = contentWidth - secondLeft - gap;
   const matrixRows = dashboard.byOwnerUnitAndLead.filter((row) =>
     dashboard.leadNames.some((lead) => (row.totals[lead] ?? 0) > 0)
   ).length;
-  const secondHeight = Math.max(
-    410,
-    154 + Math.max(matrixRows, dashboard.leadStatus.length) * 44
-  );
+  const matrixHeight = Math.max(440, 168 + matrixRows * 56);
   parts.push(
     unitLeadPanel(dashboard.byOwnerUnitAndLead, dashboard.leadNames, {
       x: pagePad,
       y,
-      w: secondLeft,
-      h: secondHeight
-    }),
-    leadStatusPanel(dashboard.leadStatus, {
-      x: pagePad + secondLeft + gap,
-      y,
-      w: secondRight,
-      h: secondHeight
+      w: contentWidth,
+      h: matrixHeight
     })
   );
-  y += secondHeight + gap;
+  y += matrixHeight + gap;
+
+  const leadHeight = Math.max(400, 156 + dashboard.leadStatus.length * 54);
+  parts.push(
+    leadStatusPanel(dashboard.leadStatus, {
+      x: pagePad,
+      y,
+      w: contentWidth,
+      h: leadHeight
+    })
+  );
+  y += leadHeight + gap;
 
   const resourcePanelHeight = resourceGroupsHeight(dashboard.resourceGroups);
   parts.push(
@@ -178,11 +180,11 @@ const reportHeader = (reportYear: string, rect: ChartRect): string => [
   card(rect.x, rect.y, rect.w, rect.h, 22),
   roundedRect(rect.x, rect.y, 10, rect.h, 5, colors.primaryStrong),
   text("BÁO CÁO EXCEL", rect.x + 28, rect.y + 30, 15, 800, colors.primaryStrong, "track"),
-  text(`Báo cáo ngắn tiến độ BDTT ${reportYear} · Tổ TB ĐL&ĐK`, rect.x + 28, rect.y + 68, 30, 600, colors.text),
+  text(`Báo cáo ngắn tiến độ BDTT ${reportYear} · Tổ TB ĐL&ĐK`, rect.x + 28, rect.y + 76, 30, 600, colors.text),
   text(
     "Dữ liệu lũy kế toàn bộ kỳ · Mỗi hạng mục dùng mức tiến độ cao nhất đã ghi nhận.",
     rect.x + 28,
-    rect.y + 98,
+    rect.y + 116,
     17,
     700,
     colors.muted
@@ -227,11 +229,11 @@ const kpiStrip = (
     .map((item, index) => {
       const x = pagePad + index * (itemWidth + itemGap);
       return [
-        card(x, y, itemWidth, 136, 20),
+        card(x, y, itemWidth, 156, 20),
         `<circle cx="${x + itemWidth - 24}" cy="${y + 24}" r="7" fill="${item.color}" opacity="0.72"/>`,
-        text(item.label, x + 22, y + 30, 14, 800, colors.soft, "upper"),
-        text(item.value, x + 22, y + 78, 36, 800, item.color),
-        text(item.note, x + 22, y + 112, 14, 700, colors.muted)
+        text(item.label, x + 22, y + 32, 14, 800, colors.soft, "upper"),
+        text(item.value, x + 22, y + 90, 36, 800, item.color),
+        text(item.note, x + 22, y + 134, 14, 700, colors.muted)
       ].join("");
     })
     .join("");
@@ -265,8 +267,8 @@ const ownerUnitPanel = (rows: readonly CompletionRow[], rect: ChartRect): string
   const plotX = rect.x + 176;
   const plotW = rect.w - 282;
   const valueX = plotX + plotW + 12;
-  const startY = rect.y + 104;
-  const rowHeight = 42;
+  const startY = rect.y + 126;
+  const rowHeight = 50;
   const guides = [0, 25, 50, 75, 100]
     .map((tick) => {
       const x = plotX + (tick / 100) * plotW;
@@ -284,7 +286,7 @@ const ownerUnitPanel = (rows: readonly CompletionRow[], rect: ChartRect): string
         text(truncate(row.name, 21), labelX, y + 6, 13, 800, colors.text),
         `<line x1="${plotX}" y1="${y}" x2="${plotX + plotW}" y2="${y}" stroke="${colors.border}" stroke-width="2"/>`,
         `<rect x="${markerX - 5}" y="${y - 5}" width="10" height="10" fill="${colors.done}" stroke="${colors.surface}" stroke-width="2"/>`,
-        text(`${row.percent}%`, markerX, y - 11, 11, 800, colors.text, "middle"),
+        text(`${row.percent}%`, markerX, y + 28, 11, 800, colors.text, "middle"),
         text(`${formatNumber(row.done)}/${formatNumber(row.total)}`, valueX, y + 6, 12, 800, colors.text)
       ].join("");
     })
@@ -303,8 +305,8 @@ const leadStatusPanel = (rows: readonly LeadStatusRow[], rect: ChartRect): strin
   const x = rect.x + 24;
   const barX = rect.x + Math.round(rect.w * 0.4);
   const barW = rect.w - (barX - rect.x) - 70;
-  const rowH = 44;
-  const y = rect.y + 100;
+  const rowH = 54;
+  const y = rect.y + 116;
   const bars = visibleRows
     .map((row, index) => {
       const yy = y + index * rowH;
@@ -365,16 +367,16 @@ const unitLeadPanel = (
   }
 
   const tableX = rect.x + 24;
-  const tableY = rect.y + 108;
-  const unitWidth = 130;
+  const tableY = rect.y + 122;
+  const unitWidth = 180;
   const cellWidth = (rect.w - 48 - unitWidth) / visibleLeads.length;
-  const rowHeight = 44;
+  const rowHeight = 56;
   const headers = visibleLeads
     .map((lead, index) =>
       text(
         truncate(normalizeLeadLabel(lead), 18),
         tableX + unitWidth + index * cellWidth + cellWidth / 2,
-        tableY - 12,
+        tableY - 18,
         10,
         800,
         colors.muted,
@@ -386,7 +388,7 @@ const unitLeadPanel = (
     .map((row, rowIndex) => {
       const y = tableY + rowIndex * rowHeight;
       return [
-        text(truncate(row.name, 16), tableX, y + 27, 12, 800, colors.text),
+        text(truncate(row.name, 20), tableX, y + 35, 12, 800, colors.text),
         ...visibleLeads.map((lead, columnIndex) => {
           const total = row.totals[lead] ?? 0;
           const percent = row.values[lead] ?? 0;
@@ -400,7 +402,7 @@ const unitLeadPanel = (
             text(
               total > 0 ? `${percent}% · ${formatNumber(total)}` : "—",
               x + cellWidth / 2,
-              y + 27,
+              y + 35,
               11,
               800,
               total > 0 ? colors.text : colors.muted,
@@ -445,8 +447,8 @@ const attentionPanel = (dashboard: ExcelDashboardData, rect: ChartRect): string 
     roundedRect(x, innerY, innerW, innerH, 16, colors.mutedSurface, 1, colors.border),
     text(title, x + 18, innerY + 28, 14, 800, colors.text),
     ...items.map((item, index) => [
-      `<circle cx="${x + 24}" cy="${innerY + 57 + index * 29}" r="5" fill="${accentColor}" opacity="0.85"/>`,
-      text(truncate(item, 43), x + 38, innerY + 62 + index * 29, 12, 800, colors.muted)
+      `<circle cx="${x + 24}" cy="${innerY + 62 + index * 36}" r="5" fill="${accentColor}" opacity="0.85"/>`,
+      text(truncate(item, 43), x + 38, innerY + 68 + index * 36, 12, 800, colors.muted)
     ].join(""))
   ].join("");
   const summaryX = innerX;
@@ -455,11 +457,11 @@ const attentionPanel = (dashboard: ExcelDashboardData, rect: ChartRect): string 
     panelTitle("Tình hình điều hành", "Tổng hợp lũy kế và các điểm cần ưu tiên", rect),
     roundedRect(summaryX, innerY, innerW, innerH, 16, colors.primarySoft, 1, colors.border),
     text("TỔNG QUAN", summaryX + 18, innerY + 28, 14, 800, colors.primaryStrong, "track"),
-    text(`${dashboard.executive.overallPercent}%`, summaryX + 18, innerY + 78, 38, 800, colors.primaryStrong),
-    text("tiến độ quy đổi", summaryX + 108, innerY + 76, 13, 800, colors.muted),
-    text(`${formatNumber(dashboard.executive.activeTasks)} active`, summaryX + 18, innerY + 116, 14, 800, colors.text),
-    text(`${formatNumber(dashboard.executive.completedTasks)} hoàn thành`, summaryX + 168, innerY + 116, 14, 800, colors.done),
-    text(`${formatNumber(dashboard.executive.cancelledTasks)} hủy`, summaryX + 338, innerY + 116, 14, 800, colors.danger),
+    text(`${dashboard.executive.overallPercent}%`, summaryX + 18, innerY + 92, 38, 800, colors.primaryStrong),
+    text("tiến độ quy đổi", summaryX + 130, innerY + 88, 13, 800, colors.muted),
+    text(`${formatNumber(dashboard.executive.activeTasks)} active`, summaryX + 18, innerY + 140, 14, 800, colors.text),
+    text(`${formatNumber(dashboard.executive.completedTasks)} hoàn thành`, summaryX + 180, innerY + 140, 14, 800, colors.done),
+    text(`${formatNumber(dashboard.executive.cancelledTasks)} hủy`, summaryX + 370, innerY + 140, 14, 800, colors.danger),
     list(
       unitRows.map((row) => `${row.name}: ${formatNumber(row.remaining)} còn lại · ${row.percent}%`),
       innerX + innerW + innerGap,
@@ -479,12 +481,12 @@ const resourceGroupsPanel = (
   groups: readonly ResourceGroupDashboard[],
   rect: ChartRect
 ): string => {
-  const columns = 3;
+  const columns = 2;
   const innerPad = 24;
   const cardGap = 14;
   const tileW = (rect.w - innerPad * 2 - cardGap * (columns - 1)) / columns;
-  const tileH = 220;
-  const headerH = 78;
+  const tileH = 300;
+  const headerH = 88;
   return [
     card(rect.x, rect.y, rect.w, rect.h, 22),
     panelTitle("Chi tiết theo nhóm task", "Nhóm lấy từ cột E Google Sheet; mỗi card hiển thị Top người thực hiện ở cột L", {
@@ -507,7 +509,7 @@ const resourceTile = (group: ResourceGroupDashboard, rect: ChartRect): string =>
     roundedRect(rect.x, rect.y, rect.w, rect.h, 18, colors.mutedSurface, 1, colors.border),
     text(truncate(group.title.toUpperCase(), 48), rect.x + 16, rect.y + 30, 15, 800, colors.text),
     text("Nguồn DATA!E:E", rect.x + 16, rect.y + 52, 13, 800, colors.muted),
-    compactBars(rows, rect.x + 16, rect.y + 66, rect.w - 32, rect.h - 82)
+    compactBars(rows, rect.x + 16, rect.y + 76, rect.w - 32, rect.h - 98)
   ].join("");
 };
 
@@ -517,8 +519,8 @@ const footerPanel = (rect: ChartRect): string => [
 ].join("");
 
 const resourceGroupsHeight = (groups: readonly ResourceGroupDashboard[]): number => {
-  const rows = Math.ceil(groups.length / 3);
-  return 78 + rows * 220 + Math.max(0, rows - 1) * 14 + 24;
+  const rows = Math.ceil(groups.length / 2);
+  return 88 + rows * 300 + Math.max(0, rows - 1) * 14 + 24;
 };
 
 const compactBars = (
@@ -536,7 +538,7 @@ const compactBars = (
   return rows
     .map((row, index) => {
       const yy = y + index * rowH;
-      const labelW = Math.min(210, Math.round(w * 0.44));
+      const labelW = Math.min(300, Math.round(w * 0.42));
       const barW = Math.max(90, w - labelW - 40);
       return [
         text(truncate(row.name, 24), x, yy + 17, 11, 800, colors.text),
@@ -596,7 +598,8 @@ const text = (
 ): string => {
   const textAnchor = anchor === "middle" ? ` text-anchor="middle"` : "";
   const extraClass = anchor === "upper" || anchor === "track" ? ` class="${anchor}"` : "";
-  return `<text x="${round(x)}" y="${round(y)}" fill="${color}" font-size="${size}" font-weight="${Math.min(weight, 700)}"${textAnchor}${extraClass}>${escapeXml(value)}</text>`;
+  const renderedSize = Math.max(minimumFontSize, round(size * fontScale));
+  return `<text x="${round(x)}" y="${round(y)}" fill="${color}" font-size="${renderedSize}" font-weight="${Math.min(weight, 700)}"${textAnchor}${extraClass}>${escapeXml(value)}</text>`;
 };
 
 const miniLegend = (label: string, color: string, x: number, y: number): string => [

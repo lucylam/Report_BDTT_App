@@ -303,9 +303,13 @@ describe("buildExcelDashboard", () => {
     const report = createCompactDashboardExportSvg(buildExcelDashboard(data), "2026");
 
     expect(report.width).toBe(1680);
-    expect(report.height).toBeGreaterThan(1800);
+    expect(report.height).toBeGreaterThan(2400);
     expect(report.svg).toContain("TÌNH HÌNH ĐIỀU HÀNH");
     expect(report.svg).toContain("CHI TIẾT THEO NHÓM TASK");
     expect(report.svg).toContain(`viewBox="0 0 ${report.width} ${report.height}"`);
+    const fontSizes = [...report.svg.matchAll(/font-size="([\d.]+)"/g)].map((match) =>
+      Number(match[1])
+    );
+    expect(Math.min(...fontSizes)).toBeGreaterThanOrEqual(16);
   });
 });
