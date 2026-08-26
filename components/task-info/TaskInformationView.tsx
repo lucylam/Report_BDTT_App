@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Badge, Card, Icon, Input, Select } from "@/components/ui";
+import { ScheduleMap } from "@/components/task-info/ScheduleMap";
 import {
   scheduleAreaDescriptions,
   scheduleAreas,
@@ -143,14 +144,23 @@ export const TaskInformationView = (): React.ReactElement => {
     const normalizedQuery = normalize(query.trim());
     return [...scheduleEvents]
       .filter((event) => phase === "all" || event.p === phase)
-      .filter((event) => area === "all" || event.x === area)
-      .filter((event) => date === "all" || event.d === date)
       .filter((event) => {
         if (!normalizedQuery) return true;
         return normalize(`${event.c} ${event.s} ${event.x} ${event.n ?? ""}`).includes(normalizedQuery);
       })
+      .filter((event) => area === "all" || event.x === area)
+      .filter((event) => date === "all" || event.d === date)
       .sort(compareEvents);
   }, [area, date, phase, query]);
+
+  const mapEvents = useMemo(() => {
+    const normalizedQuery = normalize(query.trim());
+    return scheduleEvents.filter((event) => {
+      if (phase !== "all" && event.p !== phase) return false;
+      if (!normalizedQuery) return true;
+      return normalize(`${event.c} ${event.s} ${event.x} ${event.n ?? ""}`).includes(normalizedQuery);
+    });
+  }, [phase, query]);
 
   const groupedEvents = useMemo(() => {
     const groups = new Map<string, ScheduleEvent[]>();
@@ -218,6 +228,25 @@ export const TaskInformationView = (): React.ReactElement => {
           })}
         </div>
       </Card>
+
+      <ScheduleMap
+        dates={scheduleDates}
+        events={mapEvents}
+        onClear={() => {
+          setDate("all");
+          setArea("all");
+        }}
+        onDateSelect={(selectedDate) => {
+          setDate(selectedDate);
+          setArea("all");
+        }}
+        onSelect={(selectedDate, selectedArea) => {
+          setDate(selectedDate);
+          setArea(selectedArea);
+        }}
+        selectedArea={area}
+        selectedDate={date}
+      />
 
       <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1.55fr)_minmax(22rem,0.7fr)] xl:gap-4">
         <section aria-labelledby="schedule-timeline-heading" className="min-w-0 space-y-3">
