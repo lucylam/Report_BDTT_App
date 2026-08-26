@@ -16,6 +16,8 @@ import { cn } from "@/lib/ui";
 type PhaseFilter = "all" | SchedulePhase;
 type AreaFilter = "all" | ScheduleArea;
 
+const scheduleDates = [...new Set(scheduleEvents.map((event) => event.d))].sort();
+
 const phaseMeta: Record<
   SchedulePhase,
   { readonly label: string; readonly tone: "danger" | "warning" | "info" | "success"; readonly dot: string }
@@ -135,18 +137,20 @@ export const TaskInformationView = (): React.ReactElement => {
   const [query, setQuery] = useState("");
   const [phase, setPhase] = useState<PhaseFilter>("all");
   const [area, setArea] = useState<AreaFilter>("all");
+  const [date, setDate] = useState("all");
 
   const filteredEvents = useMemo(() => {
     const normalizedQuery = normalize(query.trim());
     return [...scheduleEvents]
       .filter((event) => phase === "all" || event.p === phase)
       .filter((event) => area === "all" || event.x === area)
+      .filter((event) => date === "all" || event.d === date)
       .filter((event) => {
         if (!normalizedQuery) return true;
         return normalize(`${event.c} ${event.s} ${event.x} ${event.n ?? ""}`).includes(normalizedQuery);
       })
       .sort(compareEvents);
-  }, [area, phase, query]);
+  }, [area, date, phase, query]);
 
   const groupedEvents = useMemo(() => {
     const groups = new Map<string, ScheduleEvent[]>();
@@ -183,11 +187,18 @@ export const TaskInformationView = (): React.ReactElement => {
           </div>
         </div>
 
-        <div className="mt-3 grid min-w-0 gap-2 lg:grid-cols-[minmax(18rem,1fr)_minmax(12rem,0.35fr)]">
+        <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(18rem,1fr)_minmax(13rem,0.32fr)_minmax(13rem,0.32fr)]">
           <label className="relative block min-w-0">
             <span className="sr-only">Tìm mốc công việc hoặc thiết bị</span>
             <Icon className="pointer-events-none absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-[var(--text-muted)]" name="search" />
             <Input className="pl-11" onChange={(event) => setQuery(event.target.value)} placeholder="Tìm thiết bị, cụm hoặc nội dung…" type="search" value={query} />
+          </label>
+          <label className="min-w-0">
+            <span className="sr-only">Lọc theo ngày</span>
+            <Select onChange={(event) => setDate(event.target.value)} value={date}>
+              <option value="all">Tất cả ngày</option>
+              {scheduleDates.map((item) => <option key={item} value={item}>{formatDate(item)}</option>)}
+            </Select>
           </label>
           <label className="min-w-0">
             <span className="sr-only">Lọc theo khu vực</span>
@@ -212,7 +223,7 @@ export const TaskInformationView = (): React.ReactElement => {
         <section aria-labelledby="schedule-timeline-heading" className="min-w-0 space-y-3">
           <div className="flex min-w-0 items-center gap-3 px-1">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-field)] bg-[var(--info-soft)] text-[var(--info-strong)]"><Icon name="calendar" /></span>
-            <div className="min-w-0"><h2 className="break-words text-xl font-semibold leading-7" id="schedule-timeline-heading">Lịch 14–27/09/2026</h2><p className="break-words text-sm leading-5 text-[var(--text-muted)]">Chạm vào mốc có ghi chú để xem đầy đủ.</p></div>
+            <div className="min-w-0"><h2 className="break-words text-xl font-semibold leading-7 capitalize" id="schedule-timeline-heading">{date === "all" ? "Lịch 14–27/09/2026" : formatDate(date)}</h2><p className="break-words text-sm leading-5 text-[var(--text-muted)]">Chạm vào mốc có ghi chú để xem đầy đủ.</p></div>
           </div>
 
           {groupedEvents.length ? groupedEvents.map(([date, events]) => (
