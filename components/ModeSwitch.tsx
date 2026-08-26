@@ -22,7 +22,7 @@ export const ModeSwitch = ({
 }: ModeSwitchProps): React.ReactElement => {
   const items: ModeItem[] = [
     { key: "workspace", href: "/worker", icon: "list", label: "Workspace" },
-    { key: "taskInfo", href: "/task-info", icon: "calendar", label: "Task thông tin" }
+    { key: "taskInfo", href: "/task-info", icon: "calendar", label: "Thông tin" }
   ];
   if (showSupervision) {
     items.splice(1, 0, {
