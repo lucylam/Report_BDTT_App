@@ -29,7 +29,8 @@ export const GlobalNotifications = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelPosition, setPanelPosition] = useState({
     top: 72,
-    right: 8,
+    left: 8,
+    width: 384,
     maxHeight: 480
   });
 
@@ -67,13 +68,20 @@ export const GlobalNotifications = ({
 
     const gutter = 8;
     const triggerRect = trigger.getBoundingClientRect();
+    const panelWidth = Math.min(384, window.innerWidth - gutter * 2);
     const preferredTop = triggerRect.bottom + gutter;
     const availableBelow = window.innerHeight - preferredTop - gutter;
     const top = availableBelow >= 180 ? preferredTop : gutter;
+    const preferredLeft = triggerRect.right - panelWidth;
+    const left = Math.min(
+      Math.max(gutter, preferredLeft),
+      window.innerWidth - panelWidth - gutter
+    );
 
     setPanelPosition({
       top,
-      right: Math.max(gutter, window.innerWidth - triggerRect.right),
+      left,
+      width: panelWidth,
       maxHeight: Math.max(120, window.innerHeight - top - gutter)
     });
   }, []);
@@ -155,7 +163,7 @@ export const GlobalNotifications = ({
         ? createPortal(
             <div
               aria-label="Thông báo"
-              className="fixed z-[1000] w-[min(24rem,calc(100vw-1rem))] overflow-y-auto overscroll-contain rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[var(--shadow-floating)]"
+              className="fixed z-[1000] max-w-[calc(100vw-1rem)] overflow-y-auto overscroll-contain rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[var(--shadow-floating)]"
               ref={panelRef}
               role="dialog"
               style={panelPosition}
@@ -202,11 +210,11 @@ export const GlobalNotifications = ({
                       setIsOpen(false);
                     }}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold text-[var(--foreground)]">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <p className="min-w-0 flex-1 break-words text-sm font-semibold text-[var(--foreground)]">
                         {notification.title}
                       </p>
-                      <Badge tone="neutral">
+                      <Badge className="shrink-0" tone="neutral">
                         {moduleDefinition?.shortLabel ?? notification.module.toUpperCase()}
                       </Badge>
                     </div>
