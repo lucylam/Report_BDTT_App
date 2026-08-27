@@ -14,10 +14,19 @@ import {
 } from "@/lib/bdttSchedule";
 import { cn } from "@/lib/ui";
 
-type PhaseFilter = "all" | SchedulePhase;
+type OperatingPhase = "dung" | "khoidong";
+type PhaseFilter = "all" | OperatingPhase;
 type AreaFilter = "all" | ScheduleArea;
 
 const scheduleDates = [...new Set(scheduleEvents.map((event) => event.d))].sort();
+const operatingEvents = scheduleEvents.filter(
+  (event): event is ScheduleEvent & { readonly p: OperatingPhase } =>
+    event.p === "dung" || event.p === "khoidong"
+);
+const operatingPhases = schedulePhases.filter(
+  (phase): phase is { readonly key: OperatingPhase; readonly label: string } =>
+    phase.key === "dung" || phase.key === "khoidong"
+);
 
 const phaseMeta: Record<
   SchedulePhase,
@@ -142,7 +151,7 @@ export const TaskInformationView = (): React.ReactElement => {
 
   const filteredEvents = useMemo(() => {
     const normalizedQuery = normalize(query.trim());
-    return [...scheduleEvents]
+    return [...operatingEvents]
       .filter((event) => phase === "all" || event.p === phase)
       .filter((event) => {
         if (!normalizedQuery) return true;
@@ -155,7 +164,7 @@ export const TaskInformationView = (): React.ReactElement => {
 
   const mapEvents = useMemo(() => {
     const normalizedQuery = normalize(query.trim());
-    return scheduleEvents.filter((event) => {
+    return operatingEvents.filter((event) => {
       if (phase !== "all" && event.p !== phase) return false;
       if (!normalizedQuery) return true;
       return normalize(`${event.c} ${event.s} ${event.x} ${event.n ?? ""}`).includes(normalizedQuery);
@@ -182,8 +191,8 @@ export const TaskInformationView = (): React.ReactElement => {
       <section aria-label="Tổng quan lịch BDTT 2026" className="grid min-w-0 grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-3">
         <SummaryCard icon="calendar" label="Bắt đầu dừng" value="09:00 · 15/09" detail="Ammonia và Urê giảm tải" toneClass="text-[var(--danger-strong)]" />
         <SummaryCard icon="history" label="Thời gian dừng" value="45–46 giờ" detail="Ammonia 48,5 giờ · Urê 41 giờ" toneClass="text-[var(--warning-strong)]" />
-        <SummaryCard icon="list" label="BDTT" value="17–24/09" detail="8 ngày · 3.084 hạng mục" toneClass="text-[var(--info-strong)]" />
-        <SummaryCard icon="check" label="Chạy lại" value="106,5 giờ" detail="Từ 25/09 · NH₃ ngày 27/09" toneClass="text-[var(--success-strong)]" />
+        <SummaryCard icon="list" label="Bắt đầu chạy lại" value="00:00 · 25/09" detail="Gas in và đánh lửa" toneClass="text-[var(--info-strong)]" />
+        <SummaryCard icon="check" label="Có sản phẩm" value="27/09" detail="NH₃ dự kiến từ 03:00–05:00" toneClass="text-[var(--success-strong)]" />
       </section>
 
       <Card className="min-w-0 p-3 sm:p-4" variant="solid">
@@ -193,7 +202,7 @@ export const TaskInformationView = (): React.ReactElement => {
           </span>
           <div className="min-w-0">
             <h2 className="break-words text-lg font-semibold leading-6">Tra cứu lịch</h2>
-            <p className="break-words text-sm leading-5 text-[var(--text-muted)]">{filteredEvents.length}/{scheduleEvents.length} mốc phù hợp</p>
+            <p className="break-words text-sm leading-5 text-[var(--text-muted)]">{filteredEvents.length}/{operatingEvents.length} mốc phù hợp</p>
           </div>
         </div>
 
@@ -221,7 +230,7 @@ export const TaskInformationView = (): React.ReactElement => {
 
         <div aria-label="Lọc theo giai đoạn" className="mt-3 flex min-w-0 flex-wrap gap-2" role="group">
           <button aria-pressed={phase === "all"} className={cn("focus-ring pressable min-h-11 rounded-full border px-4 text-sm font-semibold", phase === "all" ? "border-[var(--foreground)] bg-[var(--foreground)] text-[var(--surface)]" : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-muted)]")} onClick={() => setPhase("all")} type="button">Tất cả</button>
-          {schedulePhases.map((item) => {
+          {operatingPhases.map((item) => {
             const meta = phaseMeta[item.key];
             const selected = phase === item.key;
             return <button aria-pressed={selected} className={cn("focus-ring pressable flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-semibold", selected ? "border-[var(--primary-strong)] bg-[var(--primary-soft)] text-[var(--primary-strong)]" : "border-[var(--line)] bg-[var(--surface)] text-[var(--text-muted)]")} key={item.key} onClick={() => setPhase(item.key)} type="button"><span className={cn("h-2.5 w-2.5 rounded-full", meta.dot)} />{item.label}</button>;

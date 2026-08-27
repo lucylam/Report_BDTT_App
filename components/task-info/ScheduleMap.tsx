@@ -28,6 +28,10 @@ const phaseColor: Record<SchedulePhase, string> = {
   khoidong: "bg-[var(--success)]"
 };
 
+const mapPhases = schedulePhases.filter(
+  (phase) => phase.key === "dung" || phase.key === "khoidong"
+);
+
 const formatMapDate = (value: string): string => {
   const [year, month, day] = value.split("-").map(Number);
   return new Intl.DateTimeFormat("vi-VN", {
@@ -57,7 +61,7 @@ const PhaseSegments = ({
 
   return (
     <span
-      aria-label={schedulePhases
+      aria-label={mapPhases
         .filter((phase) => counts[phase.key] > 0)
         .map((phase) => `${phase.label}: ${counts[phase.key]}`)
         .join(", ")}
@@ -67,7 +71,7 @@ const PhaseSegments = ({
       )}
       role="img"
     >
-      {schedulePhases.map((phase) =>
+      {mapPhases.map((phase) =>
         counts[phase.key] > 0 ? (
           <span
             className={phaseColor[phase.key]}
@@ -122,7 +126,7 @@ export const ScheduleMap = ({
       </div>
 
       <div aria-label="Chú giải bản đồ lịch" className="mt-3 flex min-w-0 flex-wrap gap-x-4 gap-y-2">
-        {schedulePhases.map((phase) => (
+        {mapPhases.map((phase) => (
           <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-[var(--text-muted)]" key={phase.key}>
             <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", phaseColor[phase.key])} />
             <span className="break-words">{phase.label}</span>
