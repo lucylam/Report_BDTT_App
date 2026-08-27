@@ -389,9 +389,12 @@ button:disabled {
 }
 
 .icon-button {
-  display: grid;
+  display: inline-grid;
+  height: 2.75rem;
+  width: 2.75rem;
   min-height: 2.75rem;
   min-width: 2.75rem;
+  flex: 0 0 2.75rem;
   place-items: center;
   border-radius: var(--radius-field);
   border: 1px solid var(--line);
@@ -408,13 +411,6 @@ button:disabled {
 .icon-button:hover {
   background: var(--surface-muted);
   color: var(--foreground);
-}
-
-@media (min-width: 1024px) {
-  .icon-button {
-    min-height: 2.25rem;
-    min-width: 2.25rem;
-  }
 }
 
 .icon-button-active {

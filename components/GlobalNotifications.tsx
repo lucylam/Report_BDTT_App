@@ -147,7 +147,7 @@ export const GlobalNotifications = ({
         ref={triggerRef}
         aria-expanded={isOpen}
         aria-label="Thông báo"
-        className="focus-ring pressable relative inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-muted)] lg:h-10 lg:w-10"
+        className="focus-ring pressable icon-button relative"
         onClick={toggle}
         type="button"
       >

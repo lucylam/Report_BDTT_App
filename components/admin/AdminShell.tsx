@@ -110,7 +110,7 @@ export const AdminShell = ({
             <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
               <PageHeader className="min-w-0 flex-1" description={subtitle} eyebrow={`Giám sát · BDTT ${DEFAULT_REPORT_DATE.slice(0, 4)}`} title={title} />
               <div className="flex items-center gap-2">
-                <Link aria-label="Mở trợ giúp" className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-field)] border border-[var(--line)] text-[var(--text-muted)] shadow-[var(--shadow-soft-sm)] hover:bg-[var(--surface-muted)]" href="/help"><Icon name="help" /></Link>
+                <Link aria-label="Mở trợ giúp" className="focus-ring pressable icon-button" href="/help"><Icon name="help" /></Link>
                 <GlobalNotifications />
                 <ThemeToggle />
                 <ModeSwitch activeMode="supervision" showSupervision />
