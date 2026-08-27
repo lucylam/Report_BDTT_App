@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedProfile } from "@/lib/api/session";
+import { createDueBdttReminderNotifications } from "@/lib/api/bdttReminderNotifications";
 import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import type { AppNotification } from "@/lib/notifications";
@@ -47,6 +48,18 @@ export const GET = async (request: Request): Promise<NextResponse> => {
   const context = await getContext(request);
   if (!context.ok) return context.response;
   const trialRun = await getActiveBdttTrialRun(context.supabase);
+  try {
+    await createDueBdttReminderNotifications(
+      context.supabase,
+      context.profile,
+      trialRun
+    );
+  } catch (error) {
+    console.error(
+      "[api/notifications.bdtt-reminders]",
+      error instanceof Error ? error.message : error
+    );
+  }
   const visibilityFilter = trialRun
     ? `module.eq.am,trial_run_id.eq.${trialRun.id}`
     : "module.eq.am,trial_run_id.is.null";

@@ -4,6 +4,12 @@ const DEFAULT_REPORT_WINDOW_DAYS = 14;
 const REPORT_CUTOFF_HOUR = 14;
 const REPORT_TIME_ZONE = "Asia/Ho_Chi_Minh";
 
+export interface ReportClock {
+  readonly calendarDate: string;
+  readonly hour: number;
+  readonly minute: number;
+}
+
 export interface ReportDateRangeItem {
   readonly startDate: string;
   readonly finishDate: string;
@@ -33,6 +39,15 @@ const addReportDays = (dateText: string, days: number): string => {
   return date.toISOString().slice(0, 10);
 };
 
+export const getReportClock = (now: Date = new Date()): ReportClock => {
+  const parts = getReportTimeParts(now);
+  return {
+    calendarDate: `${parts.year}-${parts.month}-${parts.day}`,
+    hour: Number(parts.hour),
+    minute: Number(parts.minute)
+  };
+};
+
 const createDateRange = (startDate: string, finishDate: string): readonly string[] => {
   if (!isIsoDate(startDate) || !isIsoDate(finishDate) || finishDate < startDate) {
     return [];
@@ -47,16 +62,14 @@ const createDateRange = (startDate: string, finishDate: string): readonly string
 };
 
 export const getCurrentReportDate = (now: Date = new Date()): string => {
-  const parts = getReportTimeParts(now);
-  return `${parts.year}-${parts.month}-${parts.day}`;
+  return getReportClock(now).calendarDate;
 };
 
 export const getOperationalReportDate = (now: Date = new Date()): string => {
-  const parts = getReportTimeParts(now);
-  const calendarDate = `${parts.year}-${parts.month}-${parts.day}`;
-  return Number(parts.hour) >= REPORT_CUTOFF_HOUR
-    ? addReportDays(calendarDate, 1)
-    : calendarDate;
+  const clock = getReportClock(now);
+  return clock.hour >= REPORT_CUTOFF_HOUR
+    ? addReportDays(clock.calendarDate, 1)
+    : clock.calendarDate;
 };
 
 export const resolveReportDateAtSubmission = (
