@@ -73,7 +73,7 @@ export const TaskDetailPanel = ({
   const { task, percent, progress, status } = row;
 
   return (
-    <Widget className="sticky top-24 max-h-[calc(100dvh-7rem)] overflow-auto p-5">
+    <Widget className="min-w-0 self-start p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-2xl font-semibold leading-tight">{task.tagname}</p>
