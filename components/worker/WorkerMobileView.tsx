@@ -182,7 +182,7 @@ export const WorkerMobileView = ({
         contextAction={
           <ModeSwitch
             activeMode="workspace"
-            className="w-auto max-w-[18rem] text-[11px]"
+            className="w-full max-w-none text-[11px]"
             showSupervision={isAdminAccount}
           />
         }

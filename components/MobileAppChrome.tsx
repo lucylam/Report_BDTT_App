@@ -63,12 +63,12 @@ export const MobileAppHeader = ({
       />
     </div>
 
-    <div className="mt-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
-      <h1 className="min-w-0 flex-1 break-words text-lg font-semibold leading-6 text-[var(--primary-strong)]">
+    <div className="mt-2 min-w-0">
+      <h1 className="break-words px-1 text-base font-semibold leading-5 text-[var(--primary-strong)]">
         {title}
       </h1>
-      {contextAction ? <div className="min-w-0 shrink-0">{contextAction}</div> : null}
     </div>
+    {contextAction ? <div className="mt-2 min-w-0 w-full">{contextAction}</div> : null}
   </header>
 );
 
