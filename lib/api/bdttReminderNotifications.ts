@@ -42,23 +42,31 @@ export const createBdttReminderNotificationId = (key: string): string => {
 
 export const getMissingBdttReporters = ({
   profiles,
-  activeReporterIds,
+  reportingRoleIds,
   submittedReporterIds,
   orgGroup
 }: {
   readonly profiles: readonly ReporterSummary[];
-  readonly activeReporterIds: ReadonlySet<string>;
+  readonly reportingRoleIds: ReadonlySet<string>;
   readonly submittedReporterIds: ReadonlySet<string>;
   readonly orgGroup?: string;
 }): ReporterSummary[] =>
   profiles
     .filter(
       (profile) =>
-        activeReporterIds.has(profile.id) &&
+        reportingRoleIds.has(profile.id) &&
         !submittedReporterIds.has(profile.id) &&
         (!orgGroup || profile.orgGroup === orgGroup)
     )
     .sort((left, right) => left.fullName.localeCompare(right.fullName, "vi"));
+
+export const getBdttReportActionWindow = (
+  calendarDate: string
+): { readonly start: string; readonly end: string } => {
+  const start = new Date(`${calendarDate}T00:00:00+07:00`);
+  const end = new Date(start.getTime() + 86_400_000);
+  return { start: start.toISOString(), end: end.toISOString() };
+};
 
 const hasNotification = async (
   supabase: SupabaseClient,
@@ -72,17 +80,19 @@ const hasNotification = async (
   return (count ?? 0) > 0;
 };
 
-const hasSubmittedReport = async (
+const hasReportedDuringDay = async (
   supabase: SupabaseClient,
   profileId: string,
-  reportDate: string,
+  calendarDate: string,
   trialRunId: string | null
 ): Promise<boolean> => {
+  const actionWindow = getBdttReportActionWindow(calendarDate);
   let query = supabase
     .from("progress")
     .select("task_id", { count: "exact", head: true })
     .eq("user_id", profileId)
-    .eq("report_date", reportDate);
+    .gte("submitted_at", actionWindow.start)
+    .lt("submitted_at", actionWindow.end);
   query = trialRunId
     ? query.eq("trial_run_id", trialRunId)
     : query.is("trial_run_id", null);
@@ -91,19 +101,16 @@ const hasSubmittedReport = async (
   return (count ?? 0) > 0;
 };
 
-const hasActiveReporterTasks = async (
+const hasReportingRole = async (
   supabase: SupabaseClient,
   profileId: string,
-  reportDate: string,
   trialRunId: string | null
 ): Promise<boolean> => {
   let query = supabase
     .from("tasks")
     .select("id", { count: "exact", head: true })
     .eq("reporter_id", profileId)
-    .eq("is_cancelled", false)
-    .lte("start_date", reportDate)
-    .gte("finish_date", reportDate);
+    .eq("is_cancelled", false);
   query = trialRunId
     ? query.or(`trial_run_id.is.null,trial_run_id.eq.${trialRunId}`)
     : query.is("trial_run_id", null);
@@ -112,9 +119,8 @@ const hasActiveReporterTasks = async (
   return (count ?? 0) > 0;
 };
 
-const listActiveReporterIds = async (
+const listReportingRoleIds = async (
   supabase: SupabaseClient,
-  reportDate: string,
   trialRunId: string | null
 ): Promise<Set<string>> => {
   const reporterIds = new Set<string>();
@@ -124,8 +130,6 @@ const listActiveReporterIds = async (
       .from("tasks")
       .select("id, reporter_id")
       .eq("is_cancelled", false)
-      .lte("start_date", reportDate)
-      .gte("finish_date", reportDate)
       .not("reporter_id", "is", null)
       .order("id", { ascending: true })
       .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
@@ -146,19 +150,22 @@ const listActiveReporterIds = async (
 const listSubmittedReporterIds = async (
   supabase: SupabaseClient,
   reporterIds: readonly string[],
-  reportDate: string,
+  calendarDate: string,
   trialRunId: string | null
 ): Promise<Set<string>> => {
   if (reporterIds.length === 0) return new Set();
+  const actionWindow = getBdttReportActionWindow(calendarDate);
   const submittedIds = new Set<string>();
   let page = 0;
   while (true) {
     let query = supabase
       .from("progress")
       .select("task_id, user_id")
-      .eq("report_date", reportDate)
       .in("user_id", reporterIds)
+      .gte("submitted_at", actionWindow.start)
+      .lt("submitted_at", actionWindow.end)
       .order("task_id", { ascending: true })
+      .order("user_id", { ascending: true })
       .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
     query = trialRunId
       ? query.eq("trial_run_id", trialRunId)
@@ -234,8 +241,8 @@ const createReporterReminder = async (
     `bdtt:reporter-reminder:${contextKey}:${reportDate}:${profile.id}`
   );
   if (await hasNotification(supabase, notificationId)) return;
-  if (await hasSubmittedReport(supabase, profile.id, reportDate, trialRunId)) return;
-  if (!(await hasActiveReporterTasks(supabase, profile.id, reportDate, trialRunId))) return;
+  if (await hasReportedDuringDay(supabase, profile.id, reportDate, trialRunId)) return;
+  if (!(await hasReportingRole(supabase, profile.id, trialRunId))) return;
 
   await insertNotification(supabase, {
     id: notificationId,
@@ -269,11 +276,11 @@ const createMissingReportSummary = async (
   );
   if (await hasNotification(supabase, notificationId)) return;
 
-  const activeReporterIds = await listActiveReporterIds(supabase, reportDate, trialRunId);
-  if (activeReporterIds.size === 0) return;
+  const reportingRoleIds = await listReportingRoleIds(supabase, trialRunId);
+  if (reportingRoleIds.size === 0) return;
   const profiles = await listReporterProfiles(supabase);
   const scopedProfiles = profiles.filter(
-    (reporter) => activeReporterIds.has(reporter.id) && (isDataAdmin || reporter.orgGroup === orgGroup)
+    (reporter) => reportingRoleIds.has(reporter.id) && (isDataAdmin || reporter.orgGroup === orgGroup)
   );
   if (scopedProfiles.length === 0) return;
   const scopedReporterIds = scopedProfiles.map((reporter) => reporter.id);
@@ -285,7 +292,7 @@ const createMissingReportSummary = async (
   );
   const missing = getMissingBdttReporters({
     profiles: scopedProfiles,
-    activeReporterIds,
+    reportingRoleIds,
     submittedReporterIds,
     orgGroup: isDataAdmin ? undefined : orgGroup
   });

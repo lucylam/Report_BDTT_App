@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createBdttReminderNotificationId,
+  getBdttReportActionWindow,
   getBdttReminderPhase,
   getMissingBdttReporters
 } from "@/lib/api/bdttReminderNotifications";
@@ -20,7 +21,14 @@ describe("BDTT reminder notifications", () => {
     expect(createBdttReminderNotificationId("bdtt:live:2026-09-15:user-b")).not.toBe(first);
   });
 
-  it("lists only active missing reporters inside the requested group", () => {
+  it("counts report actions by the Vietnam calendar day, independent of report_date", () => {
+    expect(getBdttReportActionWindow("2026-09-15")).toEqual({
+      start: "2026-09-14T17:00:00.000Z",
+      end: "2026-09-15T17:00:00.000Z"
+    });
+  });
+
+  it("lists only missing reporting-role profiles inside the requested group", () => {
     const profiles = [
       { id: "a", fullName: "An", orgGroup: "Nhóm 1" },
       { id: "b", fullName: "Bình", orgGroup: "Nhóm 1" },
@@ -29,7 +37,7 @@ describe("BDTT reminder notifications", () => {
     expect(
       getMissingBdttReporters({
         profiles,
-        activeReporterIds: new Set(["a", "b", "c"]),
+        reportingRoleIds: new Set(["a", "b", "c"]),
         submittedReporterIds: new Set(["a"]),
         orgGroup: "Nhóm 1"
       }).map((profile) => profile.id)
