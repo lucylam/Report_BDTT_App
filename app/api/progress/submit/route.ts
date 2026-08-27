@@ -8,6 +8,7 @@ import {
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { isInlinePhotoDataUrl } from "@/lib/api/photoStorage";
 import { getActiveBdttTrialRun, isTrialRunContextCurrent } from "@/lib/api/demoMode";
+import { writeBdttTaskEvent } from "@/lib/api/taskEvents";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { resolveReportDateAtSubmission } from "@/lib/date";
 import { isPercentAllowedForMode } from "@/lib/progressMode";
@@ -131,6 +132,27 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     updated_at: now,
     trial_run_id: trialRun?.id ?? null
   };
+
+  let previousProgressQuery = supabase
+    .from("progress")
+    .select(
+      "user_id, submitted_by, report_date, percent, note, photo_path, photo_paths, submitted_at"
+    )
+    .eq("task_id", taskResult.task.id)
+    .eq("user_id", profile.id)
+    .eq("report_date", reportDate);
+  previousProgressQuery = trialRun?.id
+    ? previousProgressQuery.eq("trial_run_id", trialRun.id)
+    : previousProgressQuery.is("trial_run_id", null);
+  const { data: previousProgress, error: previousProgressError } =
+    await previousProgressQuery.maybeSingle();
+  if (previousProgressError) {
+    console.error(
+      "[api/progress/submit.previousProgress]",
+      previousProgressError.message
+    );
+  }
+
   let { error: progressError } = await supabase.from("progress").upsert(
     { ...baseRow, photo_paths: photoPaths },
     { onConflict: "task_id,user_id,report_date,trial_run_id" }
@@ -145,6 +167,25 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   if (progressError) {
     return toErrorResponse(progressError.message, 500);
+  }
+
+  const eventError = await writeBdttTaskEvent(supabase, {
+    taskId: taskResult.task.id,
+    eventType: "report_updated",
+    actorId: profile.id,
+    details: {
+      reporter_id: taskResult.task.reporter_id ?? profile.id,
+      submitted_by: profile.id,
+      report_date: reportDate,
+      percent: update.percent,
+      note: normalizeText(update.note),
+      photo_paths: photoPaths,
+      previous_report: previousProgress ?? null
+    },
+    trialRunId: trialRun?.id ?? null
+  });
+  if (eventError) {
+    console.error("[api/progress/submit.writeEvent]", eventError);
   }
 
   return NextResponse.json({ ok: true, taskId: taskResult.task.id, reportDate });

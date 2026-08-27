@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CompactTaskDisclosure } from "@/components/tasks/CompactTaskDisclosure";
+import { TaskReportTimeline } from "@/components/tasks/TaskReportTimeline";
 import { Alert, Badge, Icon, ProgressBar, type BadgeTone } from "@/components/ui";
 import type { ProgressTone } from "@/components/ui";
 import { ProgressEditor } from "@/components/worker/ProgressEditor";
@@ -98,6 +99,10 @@ export const TaskCard = ({
           </Alert>
         ) : (
           <>
+            <TaskReportTimeline
+              refreshKey={progress?.submittedAt}
+              taskId={task.id}
+            />
             <ProgressEditor
               density="compact"
               onChange={onChange}

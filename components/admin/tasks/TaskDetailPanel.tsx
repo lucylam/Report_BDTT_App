@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Icon, Widget, WidgetHeader } from "@/components/ui";
+import { Badge, Widget, WidgetHeader } from "@/components/ui";
 import {
   getProgressLabel,
   getStatusLabel,
@@ -11,6 +11,7 @@ import {
 } from "@/components/admin/tasks/taskTableModel";
 import { getProgressPhotoPaths, resolvePhotoPreviewUrl } from "@/lib/photo";
 import { LeaderTaskManager } from "@/components/admin/tasks/LeaderTaskManager";
+import { TaskReportTimeline } from "@/components/tasks/TaskReportTimeline";
 import type { AppData } from "@/types/domain";
 
 interface TaskDetailPanelProps {
@@ -141,22 +142,11 @@ export const TaskDetailPanel = ({
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-[var(--radius-field)] border border-[var(--border)] bg-[var(--surface-muted)] p-4">
-        <p className="flex items-center gap-2 text-xs font-semibold uppercase text-[var(--text-soft)]">
-          <Icon className="h-4 w-4" name="history" />
-          Ghi chú worker
-        </p>
-        <p className="mt-2 min-h-12 text-sm leading-6 text-[var(--foreground)]">
-          {progress?.note || "Chưa có ghi chú cho ngày báo cáo hiện tại."}
-        </p>
-        {progress?.submittedBy && progress.submittedBy !== progress.userId ? (
-          <p className="mt-2 text-xs font-medium text-[var(--text-muted)]">
-            Cập nhật thay bởi:{" "}
-            {data.profiles.find((profile) => profile.id === progress.submittedBy)?.fullName ||
-              "Tài khoản quản lý"}
-          </p>
-        ) : null}
-      </div>
+      <TaskReportTimeline
+        className="mt-4"
+        refreshKey={progress?.submittedAt}
+        taskId={task.id}
+      />
 
       {visiblePhotoPreviews.length > 0 ? (
         <div className="mt-3 grid grid-cols-2 gap-2">
@@ -192,6 +182,8 @@ const Info = ({
 }): React.ReactElement => (
   <div className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]">
     <p className="text-xs font-semibold uppercase text-[var(--text-soft)]">{label}</p>
-    <p className="mt-1 truncate font-semibold text-[var(--foreground)]">{value}</p>
+    <p className="mt-1 break-words font-semibold text-[var(--foreground)] [overflow-wrap:anywhere]">
+      {value}
+    </p>
   </div>
 );

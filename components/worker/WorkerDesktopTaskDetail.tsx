@@ -1,4 +1,5 @@
 import { Alert, EmptyState, Icon } from "@/components/ui";
+import { TaskReportTimeline } from "@/components/tasks/TaskReportTimeline";
 import { ProgressEditor } from "@/components/worker/ProgressEditor";
 import type {
   SaveState,
@@ -33,6 +34,8 @@ export const WorkerDesktopTaskDetail = ({
     );
   }
 
+  const currentProgress = getTaskProgress(progress, task.id, reportDate);
+
   return (
     <>
       <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--primary)]">
@@ -60,10 +63,15 @@ export const WorkerDesktopTaskDetail = ({
           </Alert>
         ) : (
           <>
+            <TaskReportTimeline
+              className="mb-3"
+              refreshKey={currentProgress?.submittedAt}
+              taskId={task.id}
+            />
             <ProgressEditor
               key={task.id}
               onChange={(update) => onChange(task.id, update)}
-              progress={getTaskProgress(progress, task.id, reportDate)}
+              progress={currentProgress}
               saveState={saveStates[task.id] ?? "idle"}
               task={task}
             />

@@ -11,6 +11,7 @@ import {
   getActiveBdttTrialRun,
   saveBdttTrialTaskBackup
 } from "@/lib/api/demoMode";
+import { writeBdttTaskEvent } from "@/lib/api/taskEvents";
 import { getMissingLeaderTaskCreateFields } from "@/lib/leaderTaskCreate";
 import {
   canManageBdttTasks,
@@ -200,14 +201,14 @@ const writeEvent = async (
   details: Record<string, unknown>,
   trialRunId: string | null
 ): Promise<void> => {
-  const { error } = await supabase.from("bdtt_task_events").insert({
-    task_id: taskId,
-    event_type: eventType,
-    actor_id: actorId,
+  const error = await writeBdttTaskEvent(supabase, {
+    taskId,
+    eventType,
+    actorId,
     details,
-    trial_run_id: trialRunId
+    trialRunId
   });
-  if (error) console.error("[api/tasks/leader.writeEvent]", error.message);
+  if (error) console.error("[api/tasks/leader.writeEvent]", error);
 };
 
 const notifyProfiles = async (
@@ -495,7 +496,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   await saveBdttTrialTaskBackup(supabase, trialRunId, taskId);
   const { data: previousRows, error: previousError } = await supabase
     .from("progress")
-    .select("user_id, percent, note, photo_path, photo_paths")
+    .select(
+      "user_id, submitted_by, report_date, percent, note, photo_path, photo_paths, submitted_at"
+    )
     .eq("task_id", taskId)
     .eq("report_date", reportDate)
     .order("updated_at", { ascending: false });
@@ -539,8 +542,11 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   await writeEvent(supabase, taskId, "report_updated", auth.profile.id, {
     previous_reports: previousRows ?? [],
     reporter_id: taskReporter.db.id,
+    submitted_by: auth.profile.id,
     report_date: reportDate,
-    percent: body.percent
+    percent: body.percent,
+    note: normalizeText(body.note),
+    photo_paths: photoPaths
   }, trialRunId);
   await notifyProfiles(
     supabase,

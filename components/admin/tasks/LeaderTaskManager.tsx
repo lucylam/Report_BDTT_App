@@ -89,7 +89,7 @@ export const LeaderTaskManager = ({
     if (nextMode === "report") {
       setReportDate(getPlanReportDate(data.tasks));
       setPercent(String(row?.percent ?? 0));
-      setNote(row?.progress?.note ?? "");
+      setNote("");
     }
     setMode(nextMode);
   };
@@ -310,7 +310,7 @@ export const LeaderTaskManager = ({
                     )}
                   </Field>
                 </div>
-                <Field label="Nội dung báo cáo">
+                <Field label="Ghi chú lần cập nhật này">
                   <Textarea onChange={(event) => setNote(event.target.value)} value={note} />
                 </Field>
                 <Alert tone="info">

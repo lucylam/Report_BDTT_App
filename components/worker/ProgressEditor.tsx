@@ -59,7 +59,10 @@ export const ProgressEditor = ({
   }>({ taskId: task.id, value: String(percent) });
   const manualPercent =
     manualState.taskId === task.id ? manualState.value : String(percent);
-  const note = progress?.note ?? "";
+  const note =
+    saveState === "draft" || saveState === "saving" || saveState === "error"
+      ? progress?.note ?? ""
+      : "";
   const photoPaths = useMemo(
     () => getProgressPhotoPaths(progress),
     [progress]
@@ -321,14 +324,16 @@ export const ProgressEditor = ({
 
       {showDetails ? (
         <label className="block">
-          <span className="text-sm font-semibold text-[var(--foreground)]">Ghi chú</span>
+          <span className="text-sm font-semibold text-[var(--foreground)]">
+            Ghi chú lần cập nhật này
+          </span>
           <Textarea
             className="mt-2"
             onChange={(event) => {
               const nextNote = event.target.value;
               stageChange(percent, nextNote);
             }}
-            placeholder="Ghi chú vấn đề phát sinh..."
+            placeholder="Nhập nội dung mới..."
             value={note}
           />
         </label>

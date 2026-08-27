@@ -9,6 +9,7 @@ import {
   type TaskRow
 } from "@/components/admin/tasks/taskTableModel";
 import { CompactTaskDisclosure } from "@/components/tasks/CompactTaskDisclosure";
+import { TaskReportTimeline } from "@/components/tasks/TaskReportTimeline";
 import { Badge } from "@/components/ui";
 import type { AppData } from "@/types/domain";
 
@@ -74,11 +75,10 @@ export const TaskMobileCards = ({
                 </p>
               ) : null}
 
-              {progress?.note ? (
-                <p className="rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 text-sm font-medium leading-6 text-[var(--foreground)] ring-1 ring-[var(--border)]">
-                  {progress.note}
-                </p>
-              ) : null}
+              <TaskReportTimeline
+                refreshKey={progress?.submittedAt}
+                taskId={task.id}
+              />
 
               {canManage ? (
                 <LeaderTaskManager data={data} onChanged={onDataChanged} row={row} />

@@ -104,6 +104,19 @@ export interface ProgressRecord {
   readonly submittedBy?: string;
 }
 
+export interface TaskReportHistoryItem {
+  readonly id: string;
+  readonly taskId: string;
+  readonly reportDate: string;
+  readonly percent: ProgressPercent;
+  readonly note: string;
+  readonly photoPaths: readonly string[];
+  readonly actorId: string;
+  readonly actorName: string;
+  readonly actorUsername?: string;
+  readonly createdAt: string;
+}
+
 export interface PlanVersion {
   readonly batchId: string;
   readonly fileName: string;
