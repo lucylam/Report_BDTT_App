@@ -734,14 +734,11 @@ const CompactCompletionBars = ({
   readonly subtitle?: string;
   readonly title: string;
 }): React.ReactElement => {
-  const maxTotal = Math.max(1, ...rows.map((row) => row.total));
-
   return (
     <ChartShell subtitle={subtitle} title={title}>
       <div className="mt-3 divide-y divide-[var(--line-soft)] border-y border-[var(--line)]">
         {rows.map((row) => {
-          const totalWidth = `${Math.max(10, (row.total / maxTotal) * 100)}%`;
-          const doneWidth = row.total === 0 ? "0%" : `${(row.done / row.total) * 100}%`;
+          const progressWidth = `${Math.max(0, Math.min(100, row.percent))}%`;
 
           return (
             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-2.5" key={row.name}>
@@ -760,14 +757,9 @@ const CompactCompletionBars = ({
                   role="img"
                 >
                   <div
-                    className="h-full max-w-full overflow-hidden rounded-full bg-[var(--chart-remaining-soft)]"
-                    style={{ width: totalWidth }}
-                  >
-                    <div
-                      className="h-full rounded-full bg-[var(--chart-done-strong)]"
-                      style={{ width: doneWidth }}
-                    />
-                  </div>
+                    className="h-full max-w-full rounded-full bg-[var(--chart-done-strong)]"
+                    style={{ width: progressWidth }}
+                  />
                 </div>
                 <span className="min-w-9 text-right text-xs font-semibold tabular-nums text-[var(--foreground)]">
                   {row.percent}%

@@ -1,177 +1,183 @@
-# Đặc tả thiết kế — Industrial Operations Console
+# Đặc tả giao diện BDTT để tái sử dụng
 
-Ngày cập nhật: 2026-07-17
+Ngày cập nhật: 2026-08-27
 
-Phạm vi: Cổng vận hành Xưởng Điều khiển, BDTT, AM và các công tác nội bộ bổ sung sau này.
+Phạm vi: giao diện hiện hành của BDTT Webapp trên nhánh `main`.
 
-## 1. Định hướng
+## 1. Nguồn sự thật
 
-Đây là phần mềm vận hành nội bộ, không phải landing page hay SaaS marketing. Giao diện cần tạo cảm giác của một bảng điều hành kỹ thuật: rõ trạng thái, mật độ dữ liệu cao, thao tác nhanh và ổn định khi sử dụng nhiều giờ.
+Khi tái tạo giao diện cho một ứng dụng khác, đọc nguồn theo thứ tự sau:
 
-Ba nguyên tắc cốt lõi:
+1. `app/globals.css`: màu sắc, typography, radius, shadow, kích thước shell và responsive.
+2. `components/ui/*`: cấu trúc Button, Card, Badge, Input, Widget, ProgressBar và Icon.
+3. `app/layout.tsx`: font và nền tảng accessibility toàn ứng dụng.
+4. Các màn hình đang dùng trên nhánh `main`: cách ghép shell, sidebar, topbar, bottom navigation và nội dung nghiệp vụ.
+5. Tài liệu này: bản tóm tắt để chuyển giao, không được ưu tiên hơn source code.
 
-- Ưu tiên thông tin và hành động nghiệp vụ hơn trang trí.
-- Phân cấp bằng đường biên, rail trạng thái, độ tương phản và khoảng cách; không dựa vào bóng đổ hoặc nhiều lớp card.
-- Giữ cấu trúc nhất quán khi số lượng công tác tăng: cổng công tác → module → màn hình nghiệp vụ → chi tiết.
+Không dùng các nguồn sau để suy ra phong cách hiện hành:
 
-Không sao chép bố cục Kanban của ảnh tham chiếu. Workflow, bảng dữ liệu, báo cáo và phân quyền của BDTT/AM được giữ nguyên.
+- `.claude/worktrees/**`: bản làm việc cũ hoặc tạm thời.
+- `docs/design-audit-*/**`: ảnh kiểm thử của nhiều giai đoạn khác nhau.
+- `worker_mobile_mockup.html` và các file `*mockup*.html`: prototype lịch sử, chỉ dùng khi cần đối chiếu luồng cũ.
+- ảnh chụp màn hình cũ nếu khác token trong `app/globals.css`.
 
-## 2. Dấu hiệu nhận diện
+## 2. Định hướng thị giác
 
-- App chiếm toàn bộ viewport; không đặt toàn bộ ứng dụng trong một khung nổi bo tròn.
-- Sidebar graphite/xanh thép đậm, rộng 232px trên desktop.
-- Header và nội dung nối liền theo lưới, phân tách bằng border 1px.
-- Bề mặt phẳng, gần vuông; radius chuẩn chỉ 2px.
-- Màu nhấn duy nhất là industrial blue. Màu semantic chỉ dùng cho trạng thái thật.
-- KPI là một dải số liệu có đường chia ô, không phải một hàng card đồng dạng.
-- Số liệu, mã thiết bị, phần trăm và ngày dùng monospace/tabular numerals.
-- Chuyển động ngắn 100ms, không scale, bounce hoặc hiệu ứng trang trí.
+Tên định hướng: `earthy pastel operations UI`.
 
-## 3. Token nền tảng
+Đây là công cụ vận hành nội bộ thân thiện, rõ ràng và dễ đọc; không phải landing page, SaaS marketing hay bảng điều khiển xanh thép. Giao diện kết hợp:
+
+- nền xám ấm;
+- bề mặt trắng, đường viền nhẹ và bóng đổ mềm;
+- xanh lá làm màu hành động/chọn chính;
+- cam đất làm màu nhấn;
+- màu semantic riêng cho cảnh báo, lỗi và thông tin;
+- góc bo vừa phải, không vuông cứng và không bo tròn quá mức;
+- mật độ thông tin cao nhưng vẫn đủ khoảng thở và vùng chạm.
+
+Không tự đổi màu chủ đạo thành xanh navy hoặc xanh thép chỉ vì sản phẩm phục vụ nhà máy. Ngữ cảnh công nghiệp mô tả nghiệp vụ, không phải chỉ dẫn palette.
+
+## 3. Token hiện hành
 
 ### Light mode
 
 ```css
---background: #e4e8eb;
---foreground: #111820;
---surface: #ffffff;
---surface-muted: #eef1f3;
---surface-elevated: #e7ebee;
---sidebar: #111820;
---line: rgb(17 24 32 / 0.16);
---border-strong: rgb(17 24 32 / 0.30);
+--background: #f2f2f0;
+--foreground: #111111;
+--text-muted: #565a50;
+--text-soft: #666b60;
 
---primary: #28667d;
---primary-strong: #174f65;
---success: #18764f;
---warning: #9a6700;
---danger: #c7352a;
---info: #2f7896;
+--surface: #ffffff;
+--surface-muted: #f0f2eb;
+--surface-elevated: #f3f4ef;
+--surface-warm: #f5d5ad;
+--sidebar: #ffffff;
+--line: #d8dcd2;
+--line-soft: #e2e5dd;
+
+--primary: #537f16;
+--primary-strong: #466b12;
+--primary-soft: #d6e8a8;
+--primary-pale: #e3efc4;
+
+--accent: #ad481b;
+--accent-strong: #9f3e17;
+--accent-soft: #f5d5ad;
+
+--warning: #805605;
+--warning-soft: #f4e19a;
+--danger: #a6321d;
+--danger-soft: #f4c9be;
+--info: #285f9c;
+--info-soft: #cfe2f5;
 ```
 
 ### Dark mode
 
-```css
---background: #0c1218;
---foreground: #f0f4f7;
---surface: #121a21;
---surface-muted: #19232c;
---surface-elevated: #202b35;
---sidebar: #0c1319;
---primary: #6aabc4;
---primary-strong: #83bdd3;
-```
-
-### Shape và elevation
+Dark mode giữ cùng quan hệ màu, chuyển sang nền than ấm và màu nhấn sáng hơn:
 
 ```css
---radius-field: 0.125rem;
---radius-card: 0.125rem;
---radius-panel: 0;
---shadow-soft-sm: none;
---shadow-soft-md: none;
+--background: #151612;
+--foreground: #f6f7ef;
+--surface: #20211c;
+--surface-muted: #2b2d25;
+--sidebar: #20211c;
+
+--primary: #b7e35a;
+--primary-strong: #b7e35a;
+--accent: #ffb766;
+--warning: #f4d35e;
+--danger: #ff8a6b;
+--info: #8cc7ff;
 ```
 
-Shadow chỉ dành cho popover, menu, dialog hoặc bottom sheet cần tách khỏi nội dung. Không dùng glassmorphism, gradient trang trí hoặc blur đại trà.
+### Shape, shadow và kích thước shell
 
-## 4. Typography
+```css
+--radius-card: 1rem;
+--radius-field: 0.75rem;
+--radius-panel: 1.25rem;
 
-- Font giao diện: `Inter Variable` với optical sizing được self-host qua `next/font`, fallback `Segoe UI`, Arial, sans-serif.
-- Font mã kỹ thuật: `IBM Plex Mono`, fallback `Cascadia Mono`, Consolas, monospace.
-- Số liệu thông thường dùng Inter với `tabular-nums`; chỉ mã thiết bị, WorkOrder và dữ liệu kỹ thuật dạng code mới dùng monospace.
-- Tiêu đề trang: 24–30px, weight 600.
-- Tiêu đề khu vực: 15–18px, weight 600.
-- Nội dung: 14–15px, line-height 1.45–1.55.
-- Nhãn/meta: 11–13px; uppercase chỉ dành cho eyebrow hoặc nhãn kỹ thuật ngắn.
-- Không dùng uppercase cho tiêu đề dài; không áp dụng tracking âm cho nội dung tiếng Việt.
-- Không dùng font tròn, friendly hoặc tracking rộng cho nội dung tiếng Việt.
+--shadow-soft-sm: 0 12px 30px rgb(16 24 40 / 0.05);
+--shadow-soft-md: 0 16px 36px -8px rgb(16 24 40 / 0.08);
+--shadow-floating: 0 24px 50px -16px rgb(16 24 40 / 0.18);
 
-## 5. Bố cục chuẩn
+--desktop-sidebar-width: clamp(290px, 22vw, 328px);
+--mobile-topbar-height: 4.35rem;
+--mobile-bottom-nav-height: 5.5rem;
+```
+
+Component phải dùng semantic token thay vì lặp raw hex. Gradient chỉ dùng ở nơi source hiện hành đã định nghĩa, không thêm gradient tím-xanh hoặc glow trang trí.
+
+## 4. Typography và icon
+
+- Font chính: `Plus Jakarta Sans`, tải qua `next/font/google` với Vietnamese subset.
+- Fallback: `Segoe UI Variable`, `Segoe UI`, system sans-serif.
+- Font kỹ thuật: `Cascadia Mono`, `SFMono-Regular`, Consolas hoặc monospace.
+- Dùng `tabular-nums` cho phần trăm, KPI, ngày và số liệu cần so sánh theo cột.
+- Icon dùng `lucide-react`, nét outline nhất quán; không dùng emoji làm icon chức năng.
+- Nội dung tiếng Việt phải giữ UTF-8 đúng và có line-height đủ thoáng.
+
+## 5. Shell và responsive
 
 ### Desktop
 
-- Shell full-bleed, tối thiểu cao 100dvh.
-- Sidebar 232px; vùng nội dung `minmax(0, 1fr)`.
-- Header có border-bottom và không nổi khỏi mặt phẳng nội dung.
-- Nội dung dùng padding 16–20px và gap 12–16px.
-- Danh sách lớn ưu tiên table, split view hoặc row register; không biến mỗi hàng thành card riêng nếu không cần thiết.
+- Toàn ứng dụng nằm trong `app-shell` bo theo `--radius-panel`, có border và bóng mềm.
+- Sidebar trắng rộng 290–328px, nội dung là `minmax(0, 1fr)`.
+- Navigation active dùng nền `--primary-soft`, chữ/icon `--primary-strong`.
+- Nội dung chính dùng card/widget theo lưới; không biến mọi hàng dữ liệu thành card nếu table hoặc split view dễ đọc hơn.
 
 ### Mobile
 
-- Shell vẫn full-bleed, không có lề canvas bao quanh.
-- Bottom navigation bám cạnh dưới, rộng toàn màn hình, border-top rõ.
-- Touch target tối thiểu 44px.
-- Dữ liệu phụ có thể chuyển thành stacked rows; không thu nhỏ bảng desktop đến mức khó đọc.
+- Shell chuyển thành bề mặt gần full-bleed, không để margin/radius làm giảm diện tích đọc.
+- Topbar và bottom navigation hỗ trợ safe area.
+- Touch target chính tối thiểu 44px; input chuẩn cao 48px.
+- Table rộng phải chuyển thành card/stacked detail hoặc vùng cuộn có chỉ dẫn, không thu nhỏ chữ để nhét nội dung.
+- Khi browser/system text scale tới 200%, container phải reflow hoặc tăng chiều cao.
+- Không cắt, che, ép hoặc dùng ellipsis cho tên người, điều hướng, trạng thái, hành động và hướng dẫn. Toàn bộ giá trị quan trọng phải truy cập được.
 
-## 6. Thành phần
-
-### Navigation
-
-- Mục active dùng rail trái 2px và nền primary-soft.
-- Tên công tác và chức năng phải là danh từ nghiệp vụ, không dùng copy marketing.
-- Module switcher là control điều hướng, không trình bày như thẻ quảng cáo.
+## 6. Thành phần chuẩn
 
 ### Button
 
-- Primary: nền `--primary-strong`, chữ tương phản, không gradient.
-- Secondary: nền surface, border rõ.
+- Primary: nền `--primary-strong`, chữ `--primary-contrast`.
+- Secondary: nền `--surface`, border `--border-strong`.
 - Danger chỉ dùng cho thao tác hủy/xóa thật.
-- Nút desktop thường cao 40px; mobile tối thiểu 44px.
-- Không kéo nút full-width nếu hành động không cần chiếm cả hàng.
+- Ghost dùng cho hành động phụ trong vùng đã có phân cấp rõ.
+- Cho phép nhãn dài xuống dòng; không ép `nowrap` và không cắt chữ.
 
-### Status và badge
+### Card và Widget
 
-- Badge gần vuông, nhỏ, có nhãn chữ và rail trái 2px.
-- Không dùng pill cho filter, trạng thái, đơn vị hoặc phần trăm.
-- Chấm tròn chỉ dùng cho tín hiệu tức thời nhỏ như online/unread/timeline.
-- Không phụ thuộc riêng vào màu để truyền đạt trạng thái.
+- Card dùng `--surface`, border nhẹ, `--radius-card` và bóng mềm.
+- Widget là đơn vị nội dung có header, title, subtitle và action rõ ràng.
+- Ưu tiên `divide-y`, grid hoặc disclosure bên trong thay vì lồng quá nhiều card.
 
-### KPI
+### Badge và trạng thái
 
-- KPI đặt trong dải có border bao và đường chia ô.
-- Giá trị 20–24px, monospace; label 11–12px.
-- Không dùng 4–6 card bo tròn giống hệt nhau có icon lớn và nhiều khoảng trống.
-
-### Card và widget
-
-- Card chỉ dùng khi nội dung thật sự là một đơn vị độc lập.
-- Mặc định border 1px, radius 2px, không shadow.
-- Header của widget tách bằng border-bottom.
-- Danh sách bên trong widget dùng `divide-y` thay vì nhiều card con.
-
-### Progress và chart
-
-- Progress bar gần vuông, cao 6–10px.
-- Màu hoàn thành, còn lại và cảnh báo dùng token semantic.
-- Chart phải có nhãn, số liệu hoặc legend; không dựa riêng vào màu.
-- Số liệu chart dùng tabular numerals.
+- Badge hiện hành là pill nhỏ, hỗ trợ `success`, `warning`, `accent`, `danger`, `info`, `neutral`, `primary`.
+- Badge mềm dùng nền semantic nhạt; badge solid chỉ dùng khi cần tương phản cao.
+- Không truyền đạt trạng thái chỉ bằng màu: luôn có nhãn chữ, icon hoặc số liệu đi kèm.
 
 ### Form
 
-- Label luôn hiển thị; placeholder không thay thế label.
-- Input desktop cao khoảng 40px, mobile tối thiểu 44px.
-- Lỗi đặt sát trường nhập và nêu cách khắc phục.
-- Nhóm nút hành động đặt gần dữ liệu liên quan, tránh thanh CTA khổng lồ.
+- Label luôn hiển thị; placeholder không thay label.
+- Input dùng `control-pill`, border rõ, focus ring dễ nhận biết và cỡ chữ mobile tối thiểu 16px để tránh zoom ngoài ý muốn.
+- Lỗi đặt gần trường nhập và mô tả cách khắc phục.
 
-## 7. Các mẫu phải tránh
+### KPI, progress và chart
 
-- App nằm trong một card lớn có margin ngoài, radius 20px và shadow sâu.
-- Gradient tím–xanh, glass blur, glow hoặc background mesh trang trí.
-- Hàng loạt card bo tròn chứa rất ít nội dung.
-- Mọi label đều là pill.
-- Icon lớn trong bubble tròn chỉ để lấp khoảng trống.
-- Heading quá lớn, copy kiểu quảng cáo hoặc giải thích dài trước khi cho người dùng hành động.
-- Hover nâng card, scale nút hoặc animation chậm hơn thao tác.
-- Dùng màu semantic làm màu trang trí khi không có trạng thái tương ứng.
+- KPI ưu tiên dải metric/card gọn, dùng số tabular và nhãn ngắn.
+- Progress dùng track bo tròn, màu chính hoặc semantic theo ý nghĩa thật.
+- Chart phải có nhãn, legend hoặc số liệu; không phụ thuộc riêng vào màu.
 
-## 8. Quy tắc mở rộng công tác mới
+## 7. Workflow phải được giữ nguyên
 
-Mỗi công tác mới phải tái sử dụng shell, module switcher, header, notification và account menu hiện có. Công tác chỉ tự định nghĩa:
+Khi chuyển giao giao diện, không được đơn giản hóa mất luồng nghiệp vụ:
 
-- vai trò và quyền;
-- các màn hình nghiệp vụ;
-- trạng thái workflow;
-- bảng/danh sách/biểu mẫu riêng;
-- notification events riêng.
+`tổng quan → bộ lọc → danh sách/bằng chứng → chi tiết → cập nhật hoặc phê duyệt`
 
-Không tạo một dashboard visual style mới cho từng công tác. Khác biệt giữa BDTT, AM và các module sau này đến từ workflow và dữ liệu, không đến từ một bộ màu hoặc kiểu card riêng.
+Giữ nguyên vai trò, quyền, trạng thái công việc, bằng chứng ảnh, lịch sử báo cáo, import/export và thông báo. Chỉ tái sử dụng ngôn ngữ thị giác; không tự phát minh API, schema hoặc quyền mới.
+
+## 8. Prompt clone khuyến nghị
+
+> Tái tạo giao diện dựa trên source hiện hành của BDTT Webapp. Trước tiên đọc `app/globals.css`, `app/layout.tsx`, `components/ui/*` và các màn hình tương ứng trên nhánh `main`. Giữ phong cách earthy pastel operations UI: nền xám ấm, card trắng, xanh lá làm primary, cam đất làm accent, radius 12–20px và bóng mềm. Dùng Plus Jakarta Sans và Lucide icons. Giữ đầy đủ workflow nghiệp vụ và khả năng đọc ở desktop/mobile, kể cả text scaling 200%. Không suy luận palette từ lĩnh vực nhà máy. Bỏ qua `.claude/worktrees/**`, `docs/design-audit-*/**`, `worker_mobile_mockup.html` và các file `*mockup*.html` vì đó là lịch sử hoặc prototype, không phải nguồn thiết kế hiện hành.

@@ -9,7 +9,7 @@ Current source artifacts in this folder:
 - The workbook's main import/export sheet is `DATA`, with 2,119 demo task rows after the header.
 - Future task imports use only sheet `DATA` columns `A:M`: `Stt` through `NhÃ³m trÆ°á»Ÿng`.
 - Future worker progress is not imported from old date/progress columns. The app collects progress from workers and later exports a completed `DATA` sheet with progress columns filled.
-- `worker_mobile_mockup.html` is the visual reference for the first worker mobile screen.
+- `worker_mobile_mockup.html` is a historical workflow prototype only. Do not copy its colors, typography, spacing, or component styling. For the current visual system, use `app/globals.css`, `app/layout.tsx`, `components/ui/*`, and `docs/ui-design-spec-for-clone.md` on `main` as the source of truth.
 - `maintenance_webapp_prompt.md` is the implementation plan and should stay aligned with the real workbook format.
 
 Implementation principle:
