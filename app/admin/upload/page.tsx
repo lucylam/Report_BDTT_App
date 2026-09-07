@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { ThaoLapImportPanel } from "@/components/admin/ThaoLapImportPanel";
 import { Alert, AppLoadingState, Badge, Button, Icon, Widget, WidgetHeader } from "@/components/ui";
 import { isDataAdminAccount } from "@/lib/permissions";
 import { useAppData } from "@/hooks/useAppData";
@@ -69,7 +70,7 @@ const AdminUploadPage = (): React.ReactElement => {
   const { currentAccount, data, logout, refreshRemoteData } = useAppData();
   const [bootstrap, setBootstrap] = useState<BootstrapPreview | null>(null);
   const [sync, setSync] = useState<SyncPreview | null>(null);
-  const [busy, setBusy] = useState<"bootstrap-preview" | "bootstrap-apply" | "sync-preview" | "sync-apply" | "">("");
+  const [busy, setBusy] = useState<"bootstrap-preview" | "bootstrap-apply" | "sync-preview" | "sync-apply" | "group-import" | "">("");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -163,10 +164,21 @@ const AdminUploadPage = (): React.ReactElement => {
     <AdminShell
       account={currentAccount}
       onLogout={logout}
-      subtitle="Database là nguồn dữ liệu chính; Google Sheet chỉ dùng để khởi tạo một lần và nhận snapshot đầu ra."
+      subtitle="Khởi tạo kế hoạch, import cập nhật riêng nhóm Tháo lắp và đồng bộ dữ liệu từ web sang Google Sheet."
       title="Dữ liệu & Google Sheet"
     >
       {message ? <Alert tone="info">{message}</Alert> : null}
+      <ThaoLapImportPanel
+        busy={busy !== ""}
+        demoMode={Boolean(data.trialRun)}
+        onBusyChange={(active) => setBusy(active ? "group-import" : "")}
+        onImported={async () => {
+          setBootstrap(null);
+          setSync(null);
+          setMessage("");
+          await refreshRemoteData();
+        }}
+      />
       <section className="grid items-start gap-3 xl:grid-cols-2">
         <Widget>
           <WidgetHeader icon="upload" subtitle="Có thể khởi tạo hoặc thay thế kế hoạch khi chưa có báo cáo tiến độ" title="1. Khởi tạo từ Google Sheet" />

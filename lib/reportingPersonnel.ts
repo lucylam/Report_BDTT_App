@@ -4,20 +4,27 @@ export const isReportablePersonnel = (profile: Profile): boolean =>
   profile.canLogin && !profile.isPlaceholder;
 
 export const getReportablePersonnel = (
-  profiles: readonly Profile[]
-): Profile[] => profiles.filter(isReportablePersonnel);
+  profiles: readonly Profile[],
+  tasks: readonly Task[]
+): Profile[] => {
+  const reporterIds = new Set(getActiveTasksByReporter(tasks).keys());
+  return profiles.filter((profile) => isReportablePersonnel(profile) && reporterIds.has(profile.id));
+};
 
-export const getActiveTasksByAssignee = (
+export const getTaskReporterId = (task: Task): string | null =>
+  task.reporterId ?? task.assignedTo;
+
+export const getActiveTasksByReporter = (
   tasks: readonly Task[]
 ): Map<string, Task[]> => {
   const result = new Map<string, Task[]>();
   tasks
-    .filter((task) => !task.isCancelled && task.assignedTo)
+    .filter((task) => !task.isCancelled)
     .forEach((task) => {
-      const assigneeId = task.assignedTo;
-      if (!assigneeId) return;
-      const current = result.get(assigneeId) ?? [];
-      result.set(assigneeId, [...current, task]);
+      const reporterId = getTaskReporterId(task);
+      if (!reporterId) return;
+      const current = result.get(reporterId) ?? [];
+      result.set(reporterId, [...current, task]);
     });
   return result;
 };
@@ -33,9 +40,9 @@ export const hasSubmittedReportForDate = ({
   readonly profileId: string;
   readonly reportDate: string;
 }): boolean => {
-  if (activeTasks.length === 0) return true;
+  const taskIds = new Set(activeTasks.map((task) => task.id));
   return progress.some(
-    (record) => record.userId === profileId && record.reportDate === reportDate
+    (record) => record.userId === profileId && record.reportDate === reportDate && taskIds.has(record.taskId)
   );
 };
 
@@ -48,6 +55,6 @@ export const hasSubmittedAnyReport = ({
   readonly progress: readonly ProgressRecord[];
   readonly profileId: string;
 }): boolean => {
-  if (activeTasks.length === 0) return true;
-  return progress.some((record) => record.userId === profileId);
+  const taskIds = new Set(activeTasks.map((task) => task.id));
+  return progress.some((record) => record.userId === profileId && taskIds.has(record.taskId));
 };

@@ -14,6 +14,7 @@ import { formatViDate, getAvailableReportDates, getPlanReportDates } from "@/lib
 import { getTaskPercent } from "@/lib/progress";
 import {
   getReportablePersonnel,
+  getTaskReporterId,
   hasSubmittedReportForDate
 } from "@/lib/reportingPersonnel";
 import type {
@@ -105,7 +106,7 @@ const createDayStatuses = (
 ): WorkerDayStatus[] => {
   return reportDates.map((date) => {
     const records = data.progress.filter(
-      (record) => record.userId === profile.id && record.reportDate === date
+      (record) => record.userId === profile.id && record.reportDate === date && activeTasks.some((task) => task.id === record.taskId)
     );
     const percentSum = activeTasks.reduce<number>(
       (sum, task) => sum + getTaskPercent(data.progress, task.id, date),
@@ -131,9 +132,9 @@ const buildRows = (
   dateFilter: DateFilter,
   reportDates: readonly string[]
 ): WorkerRow[] => {
-  return getReportablePersonnel(data.profiles)
+  return getReportablePersonnel(data.profiles, data.tasks)
     .map((profile) => {
-      const tasks = data.tasks.filter((task) => task.assignedTo === profile.id);
+      const tasks = data.tasks.filter((task) => getTaskReporterId(task) === profile.id);
       const activeTasks = tasks.filter((task) => !task.isCancelled);
       const cancelled = tasks.length - activeTasks.length;
       const dayStatuses = createDayStatuses(data, profile, activeTasks, reportDates);
@@ -239,7 +240,7 @@ export const WorkerStatusTable = ({
         className="lg:hidden"
         columns={4}
         items={[
-          { icon: "people", key: "personnel", label: "Nhân sự", tone: "info", value: filteredRows.length },
+          { icon: "people", key: "personnel", label: "Nhân sự báo cáo", tone: "info", value: filteredRows.length },
           { icon: "check", key: "submitted", label: "Đã gửi", tone: "success", value: submittedCount },
           { icon: "bell", key: "missing", label: "Còn thiếu", shortLabel: "Thiếu", tone: "danger", value: missingCount },
           { icon: "chart", key: "average", label: "Tiến độ trung bình", shortLabel: "TB", tone: "warning", value: `${averagePercent}%` }
@@ -247,7 +248,7 @@ export const WorkerStatusTable = ({
       />
 
       <section className="hidden grid-cols-2 gap-3 lg:grid xl:grid-cols-4">
-        <PersonnelMetric icon="people" label="Nhân sự" tone="info" value={filteredRows.length} />
+        <PersonnelMetric icon="people" label="Nhân sự báo cáo" tone="info" value={filteredRows.length} />
         <PersonnelMetric icon="check" label="Đã gửi" tone="success" value={submittedCount} />
         <PersonnelMetric icon="bell" label="Còn thiếu" tone="danger" value={missingCount} />
         <PersonnelMetric icon="chart" label="Tiến độ TB" suffix="%" tone="warning" value={averagePercent} />
@@ -257,7 +258,7 @@ export const WorkerStatusTable = ({
         <WidgetHeader
           icon="people"
           tone="info"
-          subtitle={`${filteredRows.length}/${rows.length} nhân sự · ${getDateLabel(dateFilter)}`}
+          subtitle={`${filteredRows.length}/${rows.length} nhân sự được phân công báo cáo trên WO chưa hủy · ${getDateLabel(dateFilter)}`}
           title="Theo dõi báo cáo nhân sự"
         />
 

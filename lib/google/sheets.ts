@@ -116,15 +116,21 @@ export const computeSheetChecksum = (
   crypto.createHash("sha256").update(JSON.stringify(values)).digest("hex");
 
 export const readDataSheetValues = async (
-  range = "A2:AG"
+  range = "A2:AG",
+  options?: { readonly sheetName: string; readonly unformatted?: boolean }
 ): Promise<readonly (readonly ExportCellValue[])[]> => {
   if (!/^[A-Z]+\d+:[A-Z]+(?:\d+)?$/.test(range)) {
     throw new Error("Phạm vi đọc Google Sheet không hợp lệ.");
   }
   const accessToken = await getAccessToken();
-  const target = encodeURIComponent(sheetRange(range));
+  const target = encodeURIComponent(options
+    ? `'${options.sheetName.replaceAll("'", "''")}'!${range}`
+    : sheetRange(range));
+  const renderOptions = options?.unformatted
+    ? "&valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER"
+    : "";
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${getSpreadsheetId()}/values/${target}?majorDimension=ROWS`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${getSpreadsheetId()}/values/${target}?majorDimension=ROWS${renderOptions}`,
     { headers: { authorization: `Bearer ${accessToken}` }, cache: "no-store" }
   );
   const payload = (await response.json()) as {

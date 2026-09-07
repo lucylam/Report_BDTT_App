@@ -107,9 +107,9 @@ export const AdminShell = ({
             title={`BDTT ${DEFAULT_REPORT_DATE.slice(0, 4)}`}
           />
           <header className="hidden px-5 py-5 lg:block">
-            <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
-              <PageHeader className="min-w-0 flex-1" description={subtitle} eyebrow={`Giám sát · BDTT ${DEFAULT_REPORT_DATE.slice(0, 4)}`} title={title} />
-              <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-start gap-3">
+              <PageHeader className="min-w-0 flex-[1_1_22rem]" description={subtitle} eyebrow={`Giám sát · BDTT ${DEFAULT_REPORT_DATE.slice(0, 4)}`} title={title} />
+              <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
                 <Link aria-label="Mở trợ giúp" className="focus-ring pressable icon-button" href="/help"><Icon name="help" /></Link>
                 <GlobalNotifications />
                 <ThemeToggle />

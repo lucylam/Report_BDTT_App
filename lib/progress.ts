@@ -6,7 +6,7 @@ import type {
   Task
 } from "@/types/domain";
 import {
-  getActiveTasksByAssignee,
+  getActiveTasksByReporter,
   getReportablePersonnel,
   hasSubmittedAnyReport,
   hasSubmittedReportForDate
@@ -66,8 +66,8 @@ export const calculateMetrics = (
     (percent) => percent > 0 && percent < 100
   ).length;
   const notStarted = percents.filter((percent) => percent === 0).length;
-  const reportablePersonnel = getReportablePersonnel(data.profiles);
-  const activeTasksByAssignee = getActiveTasksByAssignee(activeTasks);
+  const reportablePersonnel = getReportablePersonnel(data.profiles, activeTasks);
+  const activeTasksByReporter = getActiveTasksByReporter(activeTasks);
   const priorityOpen = activeTasks.filter((task) => {
     return (
       task.priority === 1 &&
@@ -89,7 +89,7 @@ export const calculateMetrics = (
     unsubmittedWorkers: reportablePersonnel.filter(
       (profile) =>
         !hasSubmittedReportForDate({
-          activeTasks: activeTasksByAssignee.get(profile.id) ?? [],
+          activeTasks: activeTasksByReporter.get(profile.id) ?? [],
           progress: data.progress,
           profileId: profile.id,
           reportDate
@@ -116,8 +116,8 @@ export const calculateCumulativeMetrics = (
     (percent) => percent > 0 && percent < 100
   ).length;
   const notStarted = percents.filter((percent) => percent === 0).length;
-  const reportablePersonnel = getReportablePersonnel(data.profiles);
-  const activeTasksByAssignee = getActiveTasksByAssignee(activeTasks);
+  const reportablePersonnel = getReportablePersonnel(data.profiles, activeTasks);
+  const activeTasksByReporter = getActiveTasksByReporter(activeTasks);
   const priorityOpen = activeTasks.filter(
     (task) =>
       task.priority === 1 &&
@@ -139,7 +139,7 @@ export const calculateCumulativeMetrics = (
     unsubmittedWorkers: reportablePersonnel.filter(
       (profile) =>
         !hasSubmittedAnyReport({
-          activeTasks: activeTasksByAssignee.get(profile.id) ?? [],
+          activeTasks: activeTasksByReporter.get(profile.id) ?? [],
           progress: data.progress,
           profileId: profile.id
         })

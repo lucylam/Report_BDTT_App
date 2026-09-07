@@ -5,7 +5,7 @@ import type {
   Task
 } from "@/types/domain";
 import {
-  getActiveTasksByAssignee,
+  getActiveTasksByReporter,
   getReportablePersonnel,
   hasSubmittedAnyReport
 } from "@/lib/reportingPersonnel";
@@ -241,11 +241,11 @@ const buildExecutiveSummary = (
   overall: CompletionRow
 ): ExecutiveDashboardSummary => {
   const activeTaskIds = new Set(activeTasks.map((task) => task.id));
-  const reportablePersonnel = getReportablePersonnel(data.profiles);
+  const reportablePersonnel = getReportablePersonnel(data.profiles, activeTasks);
   const reportablePersonnelIds = new Set(
     reportablePersonnel.map((profile) => profile.id)
   );
-  const activeTasksByAssignee = getActiveTasksByAssignee(activeTasks);
+  const activeTasksByReporter = getActiveTasksByReporter(activeTasks);
   const cumulativeRecords = data.progress.filter(
     (record) => activeTaskIds.has(record.taskId)
   );
@@ -257,7 +257,7 @@ const buildExecutiveSummary = (
   );
   const submittedPersonnel = reportablePersonnel.filter((profile) =>
     hasSubmittedAnyReport({
-      activeTasks: activeTasksByAssignee.get(profile.id) ?? [],
+      activeTasks: activeTasksByReporter.get(profile.id) ?? [],
       progress: personnelRecords,
       profileId: profile.id
     })

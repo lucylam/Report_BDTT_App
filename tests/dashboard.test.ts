@@ -188,8 +188,8 @@ describe("buildExcelDashboard", () => {
       notStartedTasks: 1,
       unfinishedTasks: 2,
       updatedTasks: 2,
-      submittedWorkers: 2,
-      totalWorkers: 2
+      submittedWorkers: 1,
+      totalWorkers: 1
     });
     expect(dashboard.attentionOwnerUnits[0]?.name).toBe("UREA");
     expect(dashboard.attentionLeads[0]?.notStarted).toBe(1);
@@ -270,7 +270,7 @@ describe("buildExcelDashboard", () => {
     expect(dashboard.executive.totalWorkers).toBe(1);
   });
 
-  it("tinh nhan su khong co task la da bao cao trong ngay", () => {
+  it("không tính nhân sự không có trách nhiệm báo cáo vào tổng hoặc đã gửi", () => {
     const data = makeData(
       [makeTask({ id: "task-1", assignedTo: "user-1" })],
       [],
@@ -286,8 +286,8 @@ describe("buildExcelDashboard", () => {
 
     const dashboard = buildExcelDashboard(data);
 
-    expect(dashboard.executive.submittedWorkers).toBe(1);
-    expect(dashboard.executive.totalWorkers).toBe(2);
+    expect(dashboard.executive.submittedWorkers).toBe(0);
+    expect(dashboard.executive.totalWorkers).toBe(1);
   });
 
 });

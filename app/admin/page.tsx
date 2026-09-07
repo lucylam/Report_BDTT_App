@@ -19,7 +19,7 @@ import {
   getTaskCumulativePercent
 } from "@/lib/progress";
 import {
-  getActiveTasksByAssignee,
+  getActiveTasksByReporter,
   getReportablePersonnel,
   hasSubmittedAnyReport
 } from "@/lib/reportingPersonnel";
@@ -738,7 +738,7 @@ const buildOrgUnitRows = (
   level: OrgUnitLevel,
   overdueDate: string
 ): OrgUnitRow[] => {
-  const activeTasksByAssignee = getActiveTasksByAssignee(data.tasks);
+  const activeTasksByReporter = getActiveTasksByReporter(data.tasks);
   const units = new Map<
     string,
     {
@@ -750,7 +750,7 @@ const buildOrgUnitRows = (
     }
   >();
 
-  getReportablePersonnel(data.profiles)
+  getReportablePersonnel(data.profiles, data.tasks)
     .forEach((profile) => {
       const groupName = profile.orgGroup || profile.nhom || "Chưa phân nhóm";
       const subgroupName = profile.subgroup || profile.nhom || groupName;
@@ -766,7 +766,7 @@ const buildOrgUnitRows = (
       };
       current.profiles.add(profile.id);
       if (hasSubmittedAnyReport({
-        activeTasks: activeTasksByAssignee.get(profile.id) ?? [],
+        activeTasks: activeTasksByReporter.get(profile.id) ?? [],
         progress: data.progress,
         profileId: profile.id
       })) {
