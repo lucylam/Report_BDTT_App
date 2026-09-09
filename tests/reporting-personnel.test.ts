@@ -25,13 +25,15 @@ const data: AppData = {
 };
 
 describe("reporting personnel scope", () => {
-  it("renders the personnel report table using only reporting personnel", () => {
+  it("keeps assignees in the task list while KPI scope remains reporter-only", () => {
     const markup = renderToStaticMarkup(createElement(WorkerStatusTable, { data }));
     expect(markup).toContain("Nhân sự báo cáo");
     expect(markup).toContain("reporter-1");
     expect(markup).toContain("reporter-2");
+    expect(markup).toContain(">worker<");
+    expect(markup).toContain("Có quyền báo cáo");
+    expect(markup).toContain("KPI tính trên 2 người báo cáo");
     expect(markup).not.toContain(">supervisor<");
-    expect(markup).not.toContain(">worker<");
     expect(markup).not.toContain(">cancelled-only<");
   });
   it("counts each designated reporter once, excluding assignees, observers and cancelled-only reporters", () => {

@@ -301,6 +301,17 @@ describe("canViewTask", () => {
       )
     ).toBe(true);
   });
+
+  it("người thực hiện vẫn xem được task khi người báo cáo là người khác", () => {
+    const assignee = makeAccount({ username: "assignee" });
+    expect(
+      canViewTask(
+        assignee,
+        { ...baseTask, assignedTo: assignee.id, reporterId: "user-reporter" },
+        []
+      )
+    ).toBe(true);
+  });
 });
 
 describe("getScopedAppData", () => {

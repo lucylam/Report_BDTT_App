@@ -36,6 +36,7 @@ import {
   storeOfflinePhoto
 } from "@/lib/offlinePhotoStore";
 import { getTaskPercent, getTaskProgress } from "@/lib/progress";
+import { isTaskParticipant } from "@/lib/permissions";
 import { useAppData } from "@/hooks/useAppData";
 import type { ProgressPercent, Task } from "@/types/domain";
 
@@ -406,9 +407,7 @@ const WorkerPage = (): React.ReactElement => {
 
   const allWorkerTasks = useMemo(() => {
     if (!data || !worker) return [];
-    return data.tasks.filter(
-      (task) => task.assignedTo === worker.id || task.reporterId === worker.id
-    );
+    return data.tasks.filter((task) => isTaskParticipant(task, worker.id));
   }, [data, worker]);
 
   const filteredTasks = useMemo(() => {

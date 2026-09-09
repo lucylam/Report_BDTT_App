@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { findOwnedTask, getAuthenticatedProfile } from "@/lib/api/session";
+import { findReportableTask, getAuthenticatedProfile } from "@/lib/api/session";
 import {
   createTaskPhotoPath,
   parsePhotoDataUrl,
@@ -53,7 +53,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return toErrorResponse("Thieu task, reportDate hoac anh.", 400);
   }
 
-  const taskResult = await findOwnedTask(supabase, auth.profile.id, task);
+  const taskResult = await findReportableTask(supabase, auth.profile.id, task);
   if (!taskResult.ok) return toErrorResponse(taskResult.error, taskResult.status);
   if (taskResult.task.is_cancelled) {
     return toErrorResponse("Hang muc da cancel, khong the upload anh.", 409);

@@ -74,6 +74,11 @@ export const canViewProfile = (
   );
 };
 
+export const isTaskParticipant = (
+  task: Pick<Task, "assignedTo" | "reporterId">,
+  profileId: string
+): boolean => task.assignedTo === profileId || task.reporterId === profileId;
+
 export const canViewTask = (
   account: ScopeAccount | null,
   task: Task,
@@ -81,6 +86,7 @@ export const canViewTask = (
 ): boolean => {
   if (!account) return false;
   if (hasFullOrgScope(account)) return true;
+  if (isTaskParticipant(task, account.id)) return true;
   const responsibleProfileIds = [task.assignedTo, task.reporterId].filter(
     (profileId): profileId is string => Boolean(profileId)
   );

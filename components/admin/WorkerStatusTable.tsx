@@ -11,11 +11,13 @@ import {
   WidgetHeader
 } from "@/components/ui";
 import { formatViDate, getAvailableReportDates, getPlanReportDates } from "@/lib/date";
+import { isTaskParticipant } from "@/lib/permissions";
 import { getTaskPercent } from "@/lib/progress";
 import {
   getReportablePersonnel,
   getTaskReporterId,
-  hasSubmittedReportForDate
+  hasSubmittedReportForDate,
+  isReportablePersonnel
 } from "@/lib/reportingPersonnel";
 import type {
   AppData,
@@ -50,6 +52,8 @@ interface WorkerRow {
   readonly updatedTasks: number;
   readonly dayStatuses: readonly WorkerDayStatus[];
   readonly taskStatuses: readonly WorkerTaskStatus[];
+  readonly reportingRequired: boolean;
+  readonly reportingSubmitted: boolean;
 }
 
 type SubmittedFilter = "all" | "submitted" | "missing";
@@ -130,11 +134,26 @@ const createDayStatuses = (
 const buildRows = (
   data: AppData,
   dateFilter: DateFilter,
-  reportDates: readonly string[]
+  reportDates: readonly string[],
+  scope: "participant" | "reporter"
 ): WorkerRow[] => {
-  return getReportablePersonnel(data.profiles, data.tasks)
+  const profiles = scope === "reporter"
+    ? getReportablePersonnel(data.profiles, data.tasks)
+    : data.profiles.filter(
+        (profile) =>
+          isReportablePersonnel(profile) &&
+          data.tasks.some(
+            (task) => !task.isCancelled && isTaskParticipant(task, profile.id)
+          )
+      );
+
+  return profiles
     .map((profile) => {
-      const tasks = data.tasks.filter((task) => getTaskReporterId(task) === profile.id);
+      const tasks = data.tasks.filter((task) =>
+        scope === "reporter"
+          ? getTaskReporterId(task) === profile.id
+          : isTaskParticipant(task, profile.id)
+      );
       const activeTasks = tasks.filter((task) => !task.isCancelled);
       const cancelled = tasks.length - activeTasks.length;
       const dayStatuses = createDayStatuses(data, profile, activeTasks, reportDates);
@@ -167,6 +186,8 @@ const buildRows = (
         totalDays: reportDates.length,
         updatedTasks,
         dayStatuses,
+        reportingRequired: scope === "reporter",
+        reportingSubmitted: submitted,
         taskStatuses: taskStatuses.sort((left, right) => {
           if (right.percent !== left.percent) return right.percent - left.percent;
           return left.task.tagname.localeCompare(right.task.tagname);
@@ -179,10 +200,17 @@ const getDateLabel = (dateFilter: DateFilter): string => {
   return dateFilter === "all-days" ? "Tổng các ngày" : formatViDate(dateFilter);
 };
 
-const getSubmissionTone = (row: WorkerRow): "success" | "warning" | "danger" => {
-  if (row.submittedDays === row.totalDays) return "success";
+const getSubmissionTone = (row: WorkerRow): "success" | "warning" | "danger" | "info" => {
+  if (!row.reportingRequired) return "info";
+  if (row.reportingSubmitted) return "success";
   if (row.submittedDays > 0) return "warning";
   return "danger";
+};
+
+const getSubmissionLabel = (row: WorkerRow, compact = false): string => {
+  if (!row.reportingRequired) return compact ? "Thực hiện" : "Có quyền báo cáo";
+  if (row.reportingSubmitted) return compact ? "Đủ" : "Đã gửi";
+  return compact ? "Thiếu" : "Còn thiếu";
 };
 
 export const WorkerStatusTable = ({
@@ -202,19 +230,41 @@ export const WorkerStatusTable = ({
       : getAvailableReportDates(data.progress.map((record) => record.reportDate));
   }, [data.progress, data.tasks]);
 
-  const rows = useMemo(
-    () => buildRows(data, dateFilter, reportDates),
-    [data, dateFilter, reportDates]
-  );
-  const filteredRows = rows.filter((row) => {
+  const { reportingRows, rows } = useMemo(() => {
+    const nextReportingRows = buildRows(data, dateFilter, reportDates, "reporter");
+    const reportingByProfileId = new Map(
+      nextReportingRows.map((row) => [row.profile.id, row])
+    );
+    const nextRows = buildRows(data, dateFilter, reportDates, "participant").map(
+      (row) => {
+        const reportingRow = reportingByProfileId.get(row.profile.id);
+        return {
+          ...row,
+          reportingRequired: Boolean(reportingRow),
+          reportingSubmitted: reportingRow?.submitted ?? false
+        };
+      }
+    );
+    return { reportingRows: nextReportingRows, rows: nextRows };
+  }, [data, dateFilter, reportDates]);
+  const matchesQuery = (row: WorkerRow): boolean => {
     const text =
       `${row.profile.fullName} ${row.profile.nhom} ${row.profile.orgGroup} ${row.profile.subgroup} ${row.profile.username}`.toLowerCase();
-    const matchesQuery = text.includes(query.trim().toLowerCase());
+    return text.includes(query.trim().toLowerCase());
+  };
+  const filteredRows = rows.filter((row) => {
+    const matchesStatus =
+      status === "all" ||
+      (status === "submitted" && row.reportingRequired && row.reportingSubmitted) ||
+      (status === "missing" && row.reportingRequired && !row.reportingSubmitted);
+    return matchesQuery(row) && matchesStatus;
+  });
+  const filteredReportingRows = reportingRows.filter((row) => {
     const matchesStatus =
       status === "all" ||
       (status === "submitted" && row.submitted) ||
       (status === "missing" && !row.submitted);
-    return matchesQuery && matchesStatus;
+    return matchesQuery(row) && matchesStatus;
   });
   const selectedRow =
     filteredRows.find((row) => row.profile.id === selectedWorkerId) ??
@@ -223,14 +273,14 @@ export const WorkerStatusTable = ({
   const mobileSelectedRow = selectedWorkerId
     ? filteredRows.find((row) => row.profile.id === selectedWorkerId) ?? null
     : null;
-  const submittedCount = filteredRows.filter((row) => row.submitted).length;
-  const missingCount = filteredRows.length - submittedCount;
+  const submittedCount = filteredReportingRows.filter((row) => row.submitted).length;
+  const missingCount = filteredReportingRows.length - submittedCount;
   const averagePercent =
-    filteredRows.length === 0
+    filteredReportingRows.length === 0
       ? 0
       : Math.round(
-          filteredRows.reduce<number>((total, row) => total + row.percent, 0) /
-            filteredRows.length
+          filteredReportingRows.reduce<number>((total, row) => total + row.percent, 0) /
+            filteredReportingRows.length
         );
 
   return (
@@ -240,7 +290,7 @@ export const WorkerStatusTable = ({
         className="lg:hidden"
         columns={4}
         items={[
-          { icon: "people", key: "personnel", label: "Nhân sự báo cáo", tone: "info", value: filteredRows.length },
+          { icon: "people", key: "personnel", label: "Nhân sự báo cáo", tone: "info", value: filteredReportingRows.length },
           { icon: "check", key: "submitted", label: "Đã gửi", tone: "success", value: submittedCount },
           { icon: "bell", key: "missing", label: "Còn thiếu", shortLabel: "Thiếu", tone: "danger", value: missingCount },
           { icon: "chart", key: "average", label: "Tiến độ trung bình", shortLabel: "TB", tone: "warning", value: `${averagePercent}%` }
@@ -248,7 +298,7 @@ export const WorkerStatusTable = ({
       />
 
       <section className="hidden grid-cols-2 gap-3 lg:grid xl:grid-cols-4">
-        <PersonnelMetric icon="people" label="Nhân sự báo cáo" tone="info" value={filteredRows.length} />
+        <PersonnelMetric icon="people" label="Nhân sự báo cáo" tone="info" value={filteredReportingRows.length} />
         <PersonnelMetric icon="check" label="Đã gửi" tone="success" value={submittedCount} />
         <PersonnelMetric icon="bell" label="Còn thiếu" tone="danger" value={missingCount} />
         <PersonnelMetric icon="chart" label="Tiến độ TB" suffix="%" tone="warning" value={averagePercent} />
@@ -258,7 +308,7 @@ export const WorkerStatusTable = ({
         <WidgetHeader
           icon="people"
           tone="info"
-          subtitle={`${filteredRows.length}/${rows.length} nhân sự được phân công báo cáo trên WO chưa hủy · ${getDateLabel(dateFilter)}`}
+          subtitle={`${filteredRows.length}/${rows.length} nhân sự thực hiện hoặc báo cáo · KPI tính trên ${filteredReportingRows.length} người báo cáo · ${getDateLabel(dateFilter)}`}
           title="Theo dõi báo cáo nhân sự"
         />
 
@@ -389,7 +439,7 @@ const WorkerStatusRow = ({
 }): React.ReactElement => (
   <button
     aria-haspopup="dialog"
-    aria-label={`${row.profile.fullName}, ${row.submittedDays}/${row.totalDays} ngày có báo cáo, tiến độ ${row.percent}%, ${row.submitted ? "đã gửi đủ" : "còn thiếu"}. Bấm để xem chi tiết.`}
+    aria-label={`${row.profile.fullName}, ${row.submittedDays}/${row.totalDays} ngày có báo cáo, tiến độ ${row.percent}%, ${getSubmissionLabel(row)}. Bấm để xem chi tiết.`}
     className={`focus-ring pressable flex min-h-14 min-w-0 items-center gap-2 border-x-0 border-t-0 border-b px-3 py-2 text-left lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)_minmax(0,1.8fr)_minmax(0,1fr)] lg:gap-3 lg:px-4 lg:py-2.5 ${
       active
         ? "border-l-2 border-b-[var(--line)] border-l-[var(--primary)] bg-[var(--primary-soft)]"
@@ -424,7 +474,7 @@ const WorkerStatusRow = ({
         <ProgressInline percent={row.percent} />
       </div>
       <div className="shrink-0">
-        <Badge solid tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
+        <Badge solid tone={getSubmissionTone(row)}>{getSubmissionLabel(row)}</Badge>
       </div>
     </div>
 
@@ -435,7 +485,7 @@ const WorkerStatusRow = ({
       {row.percent}%
     </span>
     <span className="shrink-0 lg:hidden">
-      <Badge solid tone={getSubmissionTone(row)}>{row.submitted ? "Đủ" : "Thiếu"}</Badge>
+      <Badge solid tone={getSubmissionTone(row)}>{getSubmissionLabel(row, true)}</Badge>
     </span>
     <Icon className="h-4 w-4 shrink-0 -rotate-90 text-[var(--text-soft)] lg:hidden" name="chevronDown" />
   </button>
@@ -464,7 +514,7 @@ const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.R
             @{row.profile.username} · {row.profile.nhom || row.profile.subgroup || "N/A"}
           </p>
         </div>
-        <Badge solid tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
+        <Badge solid tone={getSubmissionTone(row)}>{getSubmissionLabel(row)}</Badge>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-3">
@@ -488,8 +538,8 @@ const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.R
             >
               <p className="text-xs font-medium text-[var(--text-muted)]">{formatViDate(day.date)}</p>
               <ProgressInline percent={day.percent} />
-              <Badge solid tone={day.submitted ? "success" : "danger"}>
-                {day.submitted ? day.updatedTasks : "Thiếu"}
+              <Badge solid tone={day.submitted ? "success" : row.reportingRequired ? "danger" : "info"}>
+                {day.submitted ? day.updatedTasks : row.reportingRequired ? "Thiếu" : "Chưa gửi"}
               </Badge>
             </div>
           ))}
@@ -502,7 +552,7 @@ const WorkerDetailPanel = ({ row }: { readonly row: WorkerRow | null }): React.R
           icon="list"
           tone="info"
           subtitle="Sắp xếp theo tiến độ cao đến thấp"
-          title="Hạng mục được giao"
+          title="Hạng mục thực hiện hoặc báo cáo"
         />
         <div className="grid max-h-[420px] gap-2 overflow-auto pr-1">
           {row.taskStatuses.slice(0, 18).map((item) => (
@@ -592,7 +642,7 @@ const WorkerMobileDetailSheet = ({
             <div className="min-w-0 flex-1">
               <ProgressInline percent={row.percent} />
             </div>
-            <Badge solid tone={getSubmissionTone(row)}>{row.submitted ? "Đã gửi" : "Còn thiếu"}</Badge>
+            <Badge solid tone={getSubmissionTone(row)}>{getSubmissionLabel(row)}</Badge>
           </div>
 
           <div className="mt-4 grid grid-cols-3 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] p-1">
@@ -654,7 +704,10 @@ const MobileWorkerSummary = ({ row }: { readonly row: WorkerRow }): React.ReactE
 
     <div className="grid grid-cols-2 gap-3">
       <InfoTile label="Ngày đã báo cáo" value={row.submittedDays} />
-      <InfoTile label="Ngày còn thiếu" value={row.totalDays - row.submittedDays} />
+      <InfoTile
+        label={row.reportingRequired ? "Ngày còn thiếu" : "Ngày chưa cập nhật"}
+        value={row.totalDays - row.submittedDays}
+      />
       <InfoTile label="Hoàn thành" value={row.done} />
       <InfoTile label="Đã cancel" value={row.cancelled} />
     </div>
@@ -679,8 +732,8 @@ const MobileWorkerDayList = ({ row }: { readonly row: WorkerRow }): React.ReactE
           {formatViDate(day.date)}
         </p>
         <ProgressInline percent={day.percent} />
-        <Badge solid tone={day.submitted ? "success" : "danger"}>
-          {day.submitted ? day.updatedTasks : "Thiếu"}
+        <Badge solid tone={day.submitted ? "success" : row.reportingRequired ? "danger" : "info"}>
+          {day.submitted ? day.updatedTasks : row.reportingRequired ? "Thiếu" : "Chưa gửi"}
         </Badge>
       </div>
     ))}
@@ -700,14 +753,14 @@ const MobileWorkerTaskList = ({
 }): React.ReactElement => (
   <div className="grid gap-3">
     <div>
-      <p className="font-semibold text-[var(--foreground)]">Hạng mục được giao</p>
+      <p className="font-semibold text-[var(--foreground)]">Hạng mục thực hiện hoặc báo cáo</p>
       <p className="mt-1 text-sm font-medium text-[var(--text-muted)]">
         {tasks.length}/{row.taskStatuses.length} hạng mục phù hợp
       </p>
     </div>
 
     <label>
-      <span className="sr-only">Tìm hạng mục được giao</span>
+      <span className="sr-only">Tìm hạng mục thực hiện hoặc báo cáo</span>
       <Input
         onChange={(event) => onQueryChange(event.target.value)}
         placeholder="Tìm tag, WO, section..."
