@@ -4,6 +4,7 @@ import {
   getAuthenticatedAdmin,
   getAuthenticatedDataAdmin,
   getLocalAccountIdForUsername,
+  getTaskReportOwnerId,
   isSessionProfileReference
 } from "@/lib/api/session";
 import {
@@ -63,6 +64,21 @@ describe("api session helpers", () => {
 
   it("rejects another user reference", () => {
     expect(isSessionProfileReference("user-worker02", profile)).toBe(false);
+  });
+
+  it("attributes delegated reports to the designated reporter and audits the submitter", () => {
+    expect(
+      getTaskReportOwnerId(
+        { assigned_to: "cunghv", reporter_id: "cunghv" },
+        "vinhlpp"
+      )
+    ).toBe("cunghv");
+    expect(
+      getTaskReportOwnerId(
+        { assigned_to: "cunghv", reporter_id: null },
+        "vinhlpp"
+      )
+    ).toBe("cunghv");
   });
 
   it("allows only DATA admin for protected data write routes", async () => {

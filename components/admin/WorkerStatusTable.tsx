@@ -11,7 +11,7 @@ import {
   WidgetHeader
 } from "@/components/ui";
 import { formatViDate, getAvailableReportDates, getPlanReportDates } from "@/lib/date";
-import { isTaskParticipant } from "@/lib/permissions";
+import { canReportBdttTask } from "@/lib/permissions";
 import { getTaskPercent } from "@/lib/progress";
 import {
   getReportablePersonnel,
@@ -143,7 +143,8 @@ const buildRows = (
         (profile) =>
           isReportablePersonnel(profile) &&
           data.tasks.some(
-            (task) => !task.isCancelled && isTaskParticipant(task, profile.id)
+            (task) =>
+              !task.isCancelled && canReportBdttTask(profile, task, data.profiles)
           )
       );
 
@@ -152,7 +153,7 @@ const buildRows = (
       const tasks = data.tasks.filter((task) =>
         scope === "reporter"
           ? getTaskReporterId(task) === profile.id
-          : isTaskParticipant(task, profile.id)
+          : canReportBdttTask(profile, task, data.profiles)
       );
       const activeTasks = tasks.filter((task) => !task.isCancelled);
       const cancelled = tasks.length - activeTasks.length;

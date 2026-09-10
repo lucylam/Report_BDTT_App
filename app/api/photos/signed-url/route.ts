@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { getAuthenticatedProfile } from "@/lib/api/session";
+import { findReportableTask, getAuthenticatedProfile } from "@/lib/api/session";
 import {
   canAccessPhotoPath,
+  getTaskIdFromPhotoPath,
   isAbsolutePhotoUrl,
   isInlinePhotoDataUrl,
   SIGNED_PHOTO_URL_TTL_SECONDS,
@@ -40,7 +41,16 @@ export const GET = async (request: Request): Promise<NextResponse> => {
     return toErrorResponse("Duong dan anh storage khong hop le.", 400);
   }
   if (!canAccessPhotoPath(auth.profile, photoPath)) {
-    return toErrorResponse("Khong co quyen xem anh nay.", 403);
+    const taskId = getTaskIdFromPhotoPath(photoPath);
+    if (!taskId) return toErrorResponse("Duong dan anh storage khong hop le.", 400);
+    const taskResult = await findReportableTask(supabase, auth.profile.id, {
+      id: taskId,
+      tagname: "",
+      wo: ""
+    });
+    if (!taskResult.ok) {
+      return toErrorResponse("Khong co quyen xem anh nay.", 403);
+    }
   }
 
   const { data, error } = await supabase.storage

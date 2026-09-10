@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canAccessPhotoPath,
   createTaskPhotoPath,
+  getTaskIdFromPhotoPath,
   parsePhotoDataUrl
 } from "@/lib/api/photoStorage";
 import {
@@ -39,6 +40,13 @@ describe("photo storage helpers", () => {
         timestamp: new Date("2026-07-08T01:02:03.456Z")
       })
     ).toBe("profile-1/task-abc/2026-07-08-2026-07-08T01-02-03-456Z.jpg");
+  });
+
+  it("reads the task id from regular and trial photo paths", () => {
+    expect(getTaskIdFromPhotoPath("profile-1/task-1/report.jpg")).toBe("task-1");
+    expect(
+      getTaskIdFromPhotoPath("trials/trial-1/profile-1/task-2/report.jpg")
+    ).toBe("task-2");
   });
 
   it("limits worker access to their own photo folder and lets admin view all", () => {

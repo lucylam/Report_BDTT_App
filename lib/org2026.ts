@@ -88,7 +88,8 @@ const subgroupAssignments: Record<string, string> = {
 };
 
 const personalAssignments: Record<string, string> = {
-  kiaq: "Phụ trách chung Tổ Thiết bị Đo lường & Điều khiển"
+  kiaq: "Phụ trách chung Tổ Thiết bị Đo lường & Điều khiển",
+  vinhlpp: "Hậu cần & Tổng hợp; kiêm thành viên PN1 - Nhóm TB Chấp hành"
 };
 
 export const getOrgRoleLabel = (orgRole: OrgRole): string => {

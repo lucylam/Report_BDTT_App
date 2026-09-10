@@ -67,3 +67,9 @@ export const canAccessPhotoPath = (
   const ownerId = pathParts[0] === "trials" ? pathParts[2] : pathParts[0];
   return ownerId === profile.id;
 };
+
+export const getTaskIdFromPhotoPath = (photoPath: string): string | null => {
+  const pathParts = photoPath.split("/");
+  const taskId = pathParts[0] === "trials" ? pathParts[3] : pathParts[1];
+  return taskId?.trim() || null;
+};

@@ -3,6 +3,7 @@ import { getLoginUsername } from "@/lib/accounts";
 import {
   findReportableTask,
   getAuthenticatedProfile,
+  getTaskReportOwnerId,
   isSessionProfileReference
 } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
@@ -120,9 +121,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   }
 
   const now = new Date().toISOString();
+  const reportOwnerId = getTaskReportOwnerId(taskResult.task, profile.id);
   const baseRow = {
     task_id: taskResult.task.id,
-    user_id: profile.id,
+    user_id: reportOwnerId,
     report_date: reportDate,
     percent: update.percent,
     note: normalizeText(update.note),
@@ -139,7 +141,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       "user_id, submitted_by, report_date, percent, note, photo_path, photo_paths, submitted_at"
     )
     .eq("task_id", taskResult.task.id)
-    .eq("user_id", profile.id)
+    .eq("user_id", reportOwnerId)
     .eq("report_date", reportDate);
   previousProgressQuery = trialRun?.id
     ? previousProgressQuery.eq("trial_run_id", trialRun.id)
@@ -174,7 +176,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     eventType: "report_updated",
     actorId: profile.id,
     details: {
-      reporter_id: taskResult.task.reporter_id ?? profile.id,
+      reporter_id: reportOwnerId,
       submitted_by: profile.id,
       report_date: reportDate,
       percent: update.percent,

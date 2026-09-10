@@ -4,7 +4,7 @@ import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { getAuthenticatedAccount, isUuid } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { getOrgScopeKey } from "@/lib/org2026";
-import { hasFullOrgScope } from "@/lib/permissions";
+import { canReportBdttTask, hasFullOrgScope } from "@/lib/permissions";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { deduplicateTaskReportHistory } from "@/lib/taskReportHistory";
 import type {
@@ -104,6 +104,24 @@ const canViewHistory = (
   responsibleProfiles: readonly DbProfileSummary[]
 ): boolean => {
   if (task.assigned_to === profileId || task.reporter_id === profileId) return true;
+  if (
+    canReportBdttTask(
+      account,
+      { assignedTo: task.assigned_to, reporterId: task.reporter_id },
+      responsibleProfiles.map((profile) => {
+        const username = getLoginUsername(normalizeText(profile.username));
+        const seedAccount = seededAccountsByUsername.get(username);
+        return {
+          id: profile.id,
+          username,
+          orgGroup: normalizeText(profile.org_group) || seedAccount?.orgGroup || "",
+          subgroup: normalizeText(profile.subgroup) || seedAccount?.subgroup || ""
+        };
+      })
+    )
+  ) {
+    return true;
+  }
   if (hasFullOrgScope(account)) return true;
   if (account.role !== "admin") return false;
 

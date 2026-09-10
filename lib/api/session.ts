@@ -9,7 +9,11 @@ import {
   getRequestCookie,
   verifyAuthSessionToken
 } from "@/lib/authSession";
-import { canManagePersonnelOrg, isDataAdminAccount } from "@/lib/permissions";
+import {
+  canManagePersonnelOrg,
+  canReportBdttTask,
+  isDataAdminAccount
+} from "@/lib/permissions";
 import type { AuthAccount, Task, UserRole } from "@/types/domain";
 
 interface DbProfile {
@@ -241,6 +245,58 @@ export const isUuid = (value: string): boolean => {
 const normalizeText = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
 
+const canUseSharedReportingScope = async (
+  supabase: SupabaseClient,
+  profileId: string,
+  task: DbTaskOwnership
+): Promise<{ readonly allowed: boolean; readonly error: string | null }> => {
+  const profileIds = Array.from(
+    new Set(
+      [profileId, task.assigned_to, task.reporter_id].filter(
+        (value): value is string => Boolean(value)
+      )
+    )
+  );
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, org_group, subgroup")
+    .in("id", profileIds);
+  if (error) return { allowed: false, error: error.message };
+
+  const seedAccountsByUsername = new Map(
+    createSeedAccounts().map((account) => [getLoginUsername(account.username), account])
+  );
+  const profiles = (data ?? []).map((profile) => {
+    const username = getLoginUsername(normalizeText(profile.username));
+    const seedAccount = seedAccountsByUsername.get(username);
+    return {
+      id: String(profile.id),
+      username,
+      orgGroup: normalizeText(profile.org_group) || seedAccount?.orgGroup || "",
+      subgroup: normalizeText(profile.subgroup) || seedAccount?.subgroup || ""
+    };
+  });
+  const currentProfile = profiles.find((profile) => profile.id === profileId);
+  return {
+    allowed: currentProfile
+      ? canReportBdttTask(
+          currentProfile,
+          {
+            assignedTo: task.assigned_to,
+            reporterId: task.reporter_id ?? null
+          },
+          profiles
+        )
+      : false,
+    error: null
+  };
+};
+
+export const getTaskReportOwnerId = (
+  task: Pick<DbTaskOwnership, "assigned_to" | "reporter_id">,
+  submitterId: string
+): string => task.reporter_id ?? task.assigned_to ?? submitterId;
+
 const findTaskForProfile = async (
   supabase: SupabaseClient,
   profileId: string,
@@ -272,9 +328,20 @@ const findTaskForProfile = async (
   if (error) return { ok: false, status: 500, error: error.message };
 
   const dbTask = data as DbTaskOwnership | null;
-  const canAccess =
+  let canAccess =
     dbTask?.assigned_to === profileId ||
     (allowReporter && dbTask?.reporter_id === profileId);
+  if (dbTask?.id && allowReporter && !canAccess) {
+    const sharedScope = await canUseSharedReportingScope(
+      supabase,
+      profileId,
+      dbTask
+    );
+    if (sharedScope.error) {
+      return { ok: false, status: 500, error: sharedScope.error };
+    }
+    canAccess = sharedScope.allowed;
+  }
   if (!dbTask?.id || !canAccess) {
     return {
       ok: false,

@@ -32,6 +32,9 @@ describe("sơ đồ tổ chức chính thức", () => {
       managedGroups: [],
       managedSubgroups: []
     });
+    expect(profilesByUsername.get("vinhlpp")?.orgAssignment).toContain(
+      "kiêm thành viên PN1 - Nhóm TB Chấp hành"
+    );
     expect(profilesByUsername.get("hautv")).toMatchObject({
       role: "admin",
       orgRole: "nhomPho",
@@ -147,5 +150,8 @@ describe("applyAccountProfileOverrides", () => {
       managedGroups: [],
       managedSubgroups: []
     });
+    expect(account?.orgAssignment).toContain(
+      "kiêm thành viên PN1 - Nhóm TB Chấp hành"
+    );
   });
 });

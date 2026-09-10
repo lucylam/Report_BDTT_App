@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getOrgScopeKey } from "@/lib/org2026";
+import { getOrgScopeKey, ORG_GROUPS } from "@/lib/org2026";
 import {
   canGenerateDemoProgress,
   canManageBdttTasks,
   canManagePersonnelOrg,
+  canReportBdttTask,
   canViewProfile,
   canViewTask,
   getScopedAppData,
@@ -311,6 +312,133 @@ describe("canViewTask", () => {
         []
       )
     ).toBe(true);
+  });
+});
+
+describe("shared reporting scope for TB Chấp hành PN1", () => {
+  const pnt = makeProfile({
+    id: "user-cunghv",
+    username: "cunghv",
+    orgGroup: ORG_GROUPS.chapHanh,
+    subgroup: "PN1",
+    orgRole: "pnt"
+  });
+  const sharedTask: Task = {
+    id: "task-tbch-pn1",
+    stt: 1,
+    wo: "WO-PN1",
+    tagname: "TAG-PN1",
+    taskName: "Hạng mục PN1",
+    nhom: ORG_GROUPS.chapHanh,
+    donVi: "",
+    section: "PN1",
+    duration: "1d",
+    priority: 1,
+    startDate: "",
+    finishDate: "",
+    resourceName: "HỮU VĂN CƯNG",
+    nhomTruong: "LÝ NGỌC LĨNH",
+    assignedTo: pnt.id,
+    reporterId: pnt.id,
+    isCancelled: false,
+    cancelReason: ""
+  };
+
+  it("cho mọi thành viên PN1 xem và báo cáo task đứng tên PNT", () => {
+    const member = makeAccount({
+      username: "nhatpm",
+      orgGroup: ORG_GROUPS.chapHanh,
+      subgroup: "PN1"
+    });
+
+    expect(canReportBdttTask(member, sharedTask, [pnt])).toBe(true);
+    expect(canViewTask(member, sharedTask, [pnt])).toBe(true);
+  });
+
+  it("cho vinhlpp quyền thành viên kiêm nhiệm PN1 nhưng không mở sang PN khác", () => {
+    const vinh = makeAccount({
+      username: "vinhlpp",
+      role: "admin",
+      orgGroup: ORG_GROUPS.hauCan,
+      subgroup: ""
+    });
+    const pn2Lead = makeProfile({
+      id: "user-hungtt",
+      username: "hungtt",
+      orgGroup: ORG_GROUPS.chapHanh,
+      subgroup: "PN2"
+    });
+
+    expect(canReportBdttTask(vinh, sharedTask, [pnt])).toBe(true);
+    expect(
+      canReportBdttTask(
+        vinh,
+        { ...sharedTask, assignedTo: pn2Lead.id, reporterId: pn2Lead.id },
+        [pn2Lead]
+      )
+    ).toBe(false);
+  });
+
+  it("không cấp quyền cho PN1 của nhóm khác", () => {
+    const outsider = makeAccount({
+      username: "chiendc",
+      orgGroup: ORG_GROUPS.doLuong,
+      subgroup: "PN1"
+    });
+    expect(canReportBdttTask(outsider, sharedTask, [pnt])).toBe(false);
+  });
+
+  it("không biến task Hậu cần đứng tên vinhlpp thành task dùng chung của PN1", () => {
+    const member = makeAccount({
+      username: "nhatpm",
+      orgGroup: ORG_GROUPS.chapHanh,
+      subgroup: "PN1"
+    });
+    const vinh = makeProfile({
+      id: "user-vinhlpp",
+      username: "vinhlpp",
+      orgGroup: ORG_GROUPS.hauCan,
+      subgroup: ""
+    });
+
+    expect(
+      canReportBdttTask(
+        member,
+        { ...sharedTask, assignedTo: vinh.id, reporterId: vinh.id },
+        [vinh]
+      )
+    ).toBe(false);
+  });
+
+  it("trả task PN1 và hồ sơ PNT cho thành viên trong dữ liệu đã scope", () => {
+    const member = makeAccount({
+      username: "nhatpm",
+      orgGroup: ORG_GROUPS.chapHanh,
+      subgroup: "PN1"
+    });
+    const memberProfile = makeProfile({
+      id: member.id,
+      username: member.username,
+      orgGroup: member.orgGroup,
+      subgroup: member.subgroup
+    });
+    const scoped = getScopedAppData(
+      {
+        accounts: [member],
+        profiles: [memberProfile, pnt],
+        tasks: [sharedTask],
+        progress: [],
+        dailySnapshots: [],
+        offlineQueue: [],
+        activeUserId: member.id
+      },
+      member
+    );
+
+    expect(scoped.tasks.map((task) => task.id)).toEqual([sharedTask.id]);
+    expect(scoped.profiles.map((profile) => profile.id).sort()).toEqual(
+      [member.id, pnt.id].sort()
+    );
   });
 });
 
