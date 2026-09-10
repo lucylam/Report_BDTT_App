@@ -277,6 +277,26 @@ textarea {
   overflow-wrap: break-word;
 }
 
+/* Text is operational data in this app. Keep utility classes from hiding it
+   when browser zoom or system text scaling reduces the available width. */
+:where(.truncate, .line-clamp-2, .line-clamp-3) {
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+}
+
+:where(.line-clamp-2, .line-clamp-3) {
+  display: block !important;
+  -webkit-box-orient: initial !important;
+  -webkit-line-clamp: unset !important;
+}
+
+:where(.whitespace-nowrap) {
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+}
+
 /* Shared desktop shell: keep navigation and account text fully readable.
    Sidebar content must reflow; it must never be clipped or compressed into a
    narrow text column. */
@@ -285,12 +305,6 @@ textarea {
     grid-template-columns: var(--desktop-sidebar-width) minmax(0, 1fr);
   }
 
-  .desktop-sidebar-safe .truncate {
-    overflow: visible !important;
-    overflow-wrap: anywhere !important;
-    text-overflow: clip !important;
-    white-space: normal !important;
-  }
 }
 
 h1,
@@ -662,10 +676,10 @@ button:disabled {
   }
 
   .mobile-native-page .mobile-single-line {
-    overflow: hidden !important;
-    overflow-wrap: normal !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
+    overflow: visible !important;
+    overflow-wrap: anywhere !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
   }
 
   .mobile-native-page .line-clamp-2,

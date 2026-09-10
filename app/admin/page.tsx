@@ -433,7 +433,7 @@ const DashboardMetricCard = ({
     </div>
     <p className="mt-2 text-2xl font-semibold leading-none tabular-nums sm:text-3xl">{value}</p>
     {helper ? (
-      <p className="mt-2 hidden text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere] lg:block">
+      <p className="mt-2 text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">
         {helper}
       </p>
     ) : null}

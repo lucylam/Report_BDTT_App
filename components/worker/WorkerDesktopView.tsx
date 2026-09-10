@@ -557,7 +557,7 @@ const TasksWorkspace = ({
           </div>
         </Widget>
 
-        <Widget className="sticky top-3 max-h-[calc(100dvh-6rem)] overflow-auto">
+        <Widget className="min-w-0 self-start">
           <WorkerDesktopTaskDetail
             onCancel={onCancel}
             onChange={onChange}

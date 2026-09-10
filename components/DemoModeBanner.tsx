@@ -204,7 +204,7 @@ export const DemoModeBanner = (): React.ReactElement | null => {
             : "border-b border-[var(--line)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)]"
         }
       >
-        <div className="mx-auto flex min-h-10 max-w-[1920px] items-center justify-between gap-3">
+        <div className="mx-auto flex min-h-10 max-w-[1920px] flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2 text-sm font-bold">
             <Icon name={isTrial ? "demo" : "shield"} />
             <span className="truncate">
@@ -221,7 +221,7 @@ export const DemoModeBanner = (): React.ReactElement | null => {
               {isTrial ? "Tạo / xóa demo" : "Bật dùng thử"}
             </Button>
           ) : (
-            <span className="hidden shrink-0 text-xs font-bold sm:inline">Dữ liệu sẽ được xóa trước khi dùng thật</span>
+            <span className="text-xs font-bold [overflow-wrap:anywhere]">Dữ liệu sẽ được xóa trước khi dùng thật</span>
           )}
         </div>
       </div>

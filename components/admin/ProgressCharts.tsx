@@ -138,7 +138,7 @@ export const ProgressCharts = ({
             <h2 className="mt-1.5 text-balance text-xl font-semibold leading-tight sm:text-2xl">
               Báo cáo ngắn tiến độ BDTT {reportYear} · Tổ TB ĐL&ĐK
             </h2>
-            <p className="mt-1 hidden text-xs font-medium text-[var(--text-muted)] lg:block lg:text-sm">
+            <p className="mt-1 text-xs font-medium text-[var(--text-muted)] [overflow-wrap:anywhere] lg:text-sm">
               Dữ liệu lũy kế toàn bộ kỳ · Mỗi hạng mục dùng mức tiến độ cao nhất đã ghi nhận.
             </p>
           </div>
@@ -173,7 +173,7 @@ export const ProgressCharts = ({
             subtitle="Nhóm task lấy trực tiếp từ cột E (Nhóm) của Google Sheet. Mỗi card hiển thị Top người thực hiện theo cột L."
             title="Chi tiết theo nhóm task"
           />
-          <span className="hidden rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-1 text-xs font-medium text-[var(--text-muted)] ring-1 ring-[var(--border)] lg:inline-flex">
+          <span className="inline-flex rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-1 text-xs font-medium text-[var(--text-muted)] ring-1 ring-[var(--border)] [overflow-wrap:anywhere]">
             Nguồn: DATA!E:E
           </span>
         </div>
@@ -251,7 +251,7 @@ const Metric = ({
       </p>
     </div>
     <p className="mt-2 text-2xl font-semibold leading-none tabular-nums">{value}</p>
-    <p className="mt-2 hidden text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere] lg:block">
+    <p className="mt-2 text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">
       {note}
     </p>
   </div>
@@ -284,7 +284,7 @@ const ExecutiveInsight = ({
         </span>
         <div className="min-w-0">
           <h3 className="text-sm font-semibold">{title}</h3>
-          <p className="mt-1 hidden text-sm font-medium leading-6 text-[var(--text-muted)] lg:block">{message}</p>
+          <p className="mt-1 text-sm font-medium leading-6 text-[var(--text-muted)] [overflow-wrap:anywhere]">{message}</p>
         </div>
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
@@ -448,7 +448,7 @@ const SectionTitle = ({
         {title}
       </h2>
       {subtitle ? (
-        <p className="mt-1 hidden text-xs font-medium leading-5 text-[var(--text-muted)] lg:block">{subtitle}</p>
+        <p className="mt-1 text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">{subtitle}</p>
       ) : null}
     </div>
   </div>

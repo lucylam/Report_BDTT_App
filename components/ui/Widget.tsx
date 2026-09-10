@@ -76,12 +76,7 @@ export const WidgetHeader = ({
             {title}
           </h2>
           {subtitle ? (
-            <p
-              className={cn(
-                "mt-0.5 break-words text-[11px] leading-4 text-[var(--text-muted)]",
-                mobileCompact && "hidden lg:block"
-              )}
-            >
+            <p className="mt-0.5 break-words text-[11px] leading-4 text-[var(--text-muted)] [overflow-wrap:anywhere]">
               {subtitle}
             </p>
           ) : null}

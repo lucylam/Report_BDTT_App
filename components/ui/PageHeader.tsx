@@ -28,12 +28,7 @@ export const PageHeader = ({
     >
       <div className="min-w-0 flex-1">
         {eyebrow ? (
-          <p
-            className={cn(
-              "text-xs font-semibold uppercase text-[var(--primary-strong)]",
-              mobileCompact && "hidden lg:block"
-            )}
-          >
+          <p className="text-xs font-semibold uppercase text-[var(--primary-strong)] [overflow-wrap:anywhere]">
             {eyebrow}
           </p>
         ) : null}
@@ -46,12 +41,7 @@ export const PageHeader = ({
           {title}
         </h1>
         {description ? (
-          <p
-            className={cn(
-              "mt-1 break-words text-sm font-semibold leading-5 text-[var(--text-muted)]",
-              mobileCompact && "hidden lg:block"
-            )}
-          >
+          <p className="mt-1 break-words text-sm font-semibold leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">
             {description}
           </p>
         ) : null}

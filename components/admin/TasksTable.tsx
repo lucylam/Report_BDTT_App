@@ -139,17 +139,16 @@ export const TasksTable = ({
       />
 
       <Widget className="p-2 lg:p-5">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <WidgetHeader
-            className="mb-0 hidden lg:flex"
+            className="mb-0 min-w-[min(100%,18rem)] flex-1"
             icon="list"
             subtitle={`Hiển thị ${rows.length}/${filteredRows.length} dòng phù hợp`}
             title="Danh sách hạng mục"
           />
-          <div className="flex min-w-0 flex-1 items-center justify-between gap-2 lg:flex-initial lg:justify-end">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2 sm:flex-initial sm:justify-end">
             <p className="shrink-0 rounded-full bg-[var(--surface-muted)] px-2.5 py-1.5 text-xs font-semibold text-[var(--foreground)] ring-1 ring-[var(--border-strong)] lg:px-3 lg:py-2 lg:text-sm">
-              <span className="lg:hidden">{rows.length}/{filteredRows.length}</span>
-              <span className="hidden lg:inline">Tổng dữ liệu: {allRows.length} hạng mục</span>
+              Tổng dữ liệu: {allRows.length} hạng mục
             </p>
             {canManage ? (
               <LeaderTaskManager

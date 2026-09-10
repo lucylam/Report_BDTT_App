@@ -47,7 +47,7 @@ export const AccountMenu = ({
         </span>
         {!compact ? (
           <>
-            <span className="hidden min-w-0 sm:block">
+            <span className="min-w-0">
               <span className="block truncate text-sm font-semibold text-[var(--foreground)]">
                 {account.fullName}
               </span>

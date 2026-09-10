@@ -1411,7 +1411,7 @@ const AmPage = (): React.ReactElement => {
                     <h2 className="text-lg font-semibold text-[var(--foreground)]">
                       Báo cáo và phê duyệt AM
                     </h2>
-                    <p className="mt-1 hidden max-w-3xl text-sm leading-6 text-[var(--text-muted)] lg:block">
+                    <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--text-muted)] [overflow-wrap:anywhere]">
                       Lọc công việc cần chú ý, mở từng nhiệm vụ để đối chiếu ảnh trước và sau, sau đó duyệt hoặc yêu cầu bổ sung.
                     </p>
                   </div>

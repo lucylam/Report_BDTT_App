@@ -441,7 +441,7 @@ const WorkerStatusRow = ({
   <button
     aria-haspopup="dialog"
     aria-label={`${row.profile.fullName}, ${row.submittedDays}/${row.totalDays} ngày có báo cáo, tiến độ ${row.percent}%, ${getSubmissionLabel(row)}. Bấm để xem chi tiết.`}
-    className={`focus-ring pressable flex min-h-14 min-w-0 items-center gap-2 border-x-0 border-t-0 border-b px-3 py-2 text-left lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)_minmax(0,1.8fr)_minmax(0,1fr)] lg:gap-3 lg:px-4 lg:py-2.5 ${
+    className={`focus-ring pressable flex min-h-14 min-w-0 flex-wrap items-center gap-2 border-x-0 border-t-0 border-b px-3 py-2 text-left lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)_minmax(0,1.8fr)_minmax(0,1fr)] lg:gap-3 lg:px-4 lg:py-2.5 ${
       active
         ? "border-l-2 border-b-[var(--line)] border-l-[var(--primary)] bg-[var(--primary-soft)]"
         : "border-b-[var(--line)] bg-[var(--surface)] hover:bg-[var(--line-soft)]"
@@ -449,9 +449,9 @@ const WorkerStatusRow = ({
     onClick={onSelect}
     type="button"
   >
-    <div className="min-w-0 flex-1 lg:block">
+    <div className="min-w-0 basis-full lg:block">
       <p className="truncate font-semibold">{row.profile.fullName}</p>
-      <p className="mt-1 hidden truncate text-xs text-[var(--text-muted)] lg:block">@{row.profile.username}</p>
+      <p className="mt-1 truncate text-xs text-[var(--text-muted)]">@{row.profile.username}</p>
     </div>
 
     <div className="hidden min-w-0 lg:block">

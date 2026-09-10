@@ -60,9 +60,9 @@ const LoginPage = (): React.ReactElement => {
   return (
     <main className="flex min-h-dvh items-center justify-center px-4 py-5 md:py-8">
       <section className="app-shell grid w-full max-w-5xl overflow-hidden rounded-[var(--radius-panel)] p-4 md:grid-cols-[0.92fr_1.08fr] md:p-5">
-        <div className="hidden rounded-[var(--radius-card)] bg-[var(--foreground)] p-7 text-[var(--surface)] shadow-[var(--shadow-soft-md)] md:flex md:flex-col md:justify-between">
+        <div className="flex flex-col gap-6 rounded-[var(--radius-card)] bg-[var(--foreground)] p-5 text-[var(--surface)] shadow-[var(--shadow-soft-md)] md:justify-between md:p-7">
           <div>
-            <h1 className="text-5xl font-semibold leading-tight">BDTT 2026</h1>
+            <h1 className="text-3xl font-semibold leading-tight md:text-5xl">BDTT 2026</h1>
             <p className="mt-4 max-w-sm text-base font-semibold leading-6 opacity-80">
               Tổ Thiết bị Đo lường & Điều khiển
             </p>

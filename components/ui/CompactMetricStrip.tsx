@@ -44,7 +44,7 @@ const MetricContent = ({ item }: { readonly item: CompactMetricItem }): React.Re
       <span className="text-lg font-semibold leading-5 tabular-nums">{item.value}</span>
     </span>
     <span className="mt-1 block min-w-0 break-words text-center text-xs font-semibold leading-4 text-current opacity-80">
-      {item.shortLabel ?? item.label}
+      {item.label}
     </span>
   </>
 );
