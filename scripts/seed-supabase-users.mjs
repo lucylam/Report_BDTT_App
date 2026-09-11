@@ -11,6 +11,17 @@ const ACCOUNT_SOURCE = "lib/org2026.ts";
 const args = new Set(process.argv.slice(2));
 const isDryRun = args.has("--dry-run");
 const shouldResetPassword = args.has("--reset-password");
+const selectedUsernamesArg = process.argv
+  .slice(2)
+  .find((arg) => arg.startsWith("--usernames="));
+const selectedUsernames = new Set(
+  (selectedUsernamesArg?.slice("--usernames=".length) ?? "")
+    .split(",")
+    .map((username) => username.trim().toLowerCase())
+    .filter(Boolean)
+);
+const seedPassword = process.env.BDTT_SEED_PASSWORD?.trim() || DEFAULT_PASSWORD;
+const zoneViewerUsernames = new Set(["zoneamo", "zoneure", "zoneuti"]);
 
 const supabaseUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey =
@@ -59,7 +70,27 @@ const parsePersonRows = (source) => {
       employeeCode: match[2],
       sourceEmail: match[3],
       explicitRole: match[4],
-      canLogin: true
+      canLogin: true,
+      mustChangePassword: true
+    });
+  }
+
+  return rows;
+};
+
+const parseZoneViewerRows = (source) => {
+  const rows = [];
+  const rowPattern = /zoneViewer\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\)/g;
+
+  for (const match of source.matchAll(rowPattern)) {
+    rows.push({
+      fullName: match[1],
+      employeeCode: match[2].toUpperCase(),
+      sourceEmail: `${match[2]}@bdtt.local`,
+      explicitRole: "worker",
+      username: match[2],
+      canLogin: true,
+      mustChangePassword: false
     });
   }
 
@@ -77,7 +108,8 @@ const parsePlaceholderRows = (source) => {
       sourceEmail: `${match[1]}@placeholder.local`,
       explicitRole: "worker",
       username: match[1],
-      canLogin: false
+      canLogin: false,
+      mustChangePassword: false
     });
   }
 
@@ -86,7 +118,11 @@ const parsePlaceholderRows = (source) => {
 
 const loadAccounts = async () => {
   const source = await readFile(path.join(process.cwd(), ACCOUNT_SOURCE), "utf8");
-  const seeds = [...parsePersonRows(source), ...parsePlaceholderRows(source)];
+  const seeds = [
+    ...parsePersonRows(source),
+    ...parseZoneViewerRows(source),
+    ...parsePlaceholderRows(source)
+  ];
 
   if (seeds.length === 0) {
     throw new Error(`Cannot find organization seed rows in ${ACCOUNT_SOURCE}`);
@@ -106,7 +142,8 @@ const loadAccounts = async () => {
       nhomTruong: "",
       role,
       sourceEmail: seed.sourceEmail.toLowerCase(),
-      canLogin: seed.canLogin
+      canLogin: seed.canLogin,
+      mustChangePassword: seed.mustChangePassword
     };
   });
 };
@@ -168,7 +205,7 @@ const createOrUpdateAuthUser = async (account, existingUser) => {
     }
 
     const { data, error } = await supabase.auth.admin.updateUserById(existingUser.id, {
-      password: DEFAULT_PASSWORD,
+      password: seedPassword,
       email_confirm: true,
       user_metadata: {
         username: account.username,
@@ -185,7 +222,7 @@ const createOrUpdateAuthUser = async (account, existingUser) => {
 
   const { data, error } = await supabase.auth.admin.createUser({
     email: account.authEmail,
-    password: DEFAULT_PASSWORD,
+    password: seedPassword,
     email_confirm: true,
     user_metadata: {
       username: account.username,
@@ -215,8 +252,8 @@ const upsertProfile = async (account, authUserId, action) => {
   };
 
   if (action === "create" || action === "reset-password") {
-    profile.password_hash = hashPassword(DEFAULT_PASSWORD);
-    profile.must_change_password = true;
+    profile.password_hash = hashPassword(seedPassword);
+    profile.must_change_password = account.mustChangePassword;
   }
 
   if (isDryRun) return;
@@ -231,7 +268,22 @@ const upsertProfile = async (account, authUserId, action) => {
 };
 
 const main = async () => {
-  const accounts = await loadAccounts();
+  const allAccounts = await loadAccounts();
+  const accounts = selectedUsernames.size > 0
+    ? allAccounts.filter((account) => selectedUsernames.has(account.username))
+    : allAccounts;
+  if (selectedUsernames.size > 0 && accounts.length !== selectedUsernames.size) {
+    const found = new Set(accounts.map((account) => account.username));
+    const missing = [...selectedUsernames].filter((username) => !found.has(username));
+    throw new Error(`Unknown usernames: ${missing.join(", ")}`);
+  }
+  if (
+    !isDryRun &&
+    accounts.some((account) => zoneViewerUsernames.has(account.username)) &&
+    !process.env.BDTT_SEED_PASSWORD?.trim()
+  ) {
+    throw new Error("Set BDTT_SEED_PASSWORD before creating zone viewer accounts.");
+  }
   const duplicateUsernames = accounts
     .map((account) => account.username)
     .filter((username, index, usernames) => usernames.indexOf(username) !== index);

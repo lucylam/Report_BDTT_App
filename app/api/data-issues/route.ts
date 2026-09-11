@@ -4,7 +4,7 @@ import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/securi
 import { loadBdttSnapshot } from "@/lib/api/bdttSnapshot";
 import { getScopedBdttManagerIds } from "@/lib/api/bdttRecipients";
 import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
-import { canManageBdttTasks, canViewTask } from "@/lib/permissions";
+import { canManageBdttTasks, canViewTask, isZoneViewerAccount } from "@/lib/permissions";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   canTransitionDataIssue,
@@ -82,6 +82,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!supabase) return errorResponse("Chưa cấu hình Supabase cho báo sai dữ liệu.", 503);
   const auth = await getAuthenticatedAccount(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
+  if (isZoneViewerAccount(auth.account)) {
+    return errorResponse("Tài khoản vận hành chỉ có quyền xem dữ liệu.", 403);
+  }
   const trialRun = await getActiveBdttTrialRun(supabase);
 
   const body = (await request.json()) as DataIssueBody;

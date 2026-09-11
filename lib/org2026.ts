@@ -33,6 +33,7 @@ export interface AccountSeed2026 extends OrgMetadata {
   readonly username?: string;
   readonly role: UserRole;
   readonly resourceName?: string;
+  readonly mustChangePassword?: boolean;
 }
 
 const groupKey = (orgGroup: string, subgroup: string): string =>
@@ -160,6 +161,29 @@ const person = (
   };
 };
 
+const zoneViewer = (
+  fullName: string,
+  username: string,
+  zone: string
+): AccountSeed2026 => ({
+  fullName,
+  employeeCode: username.toUpperCase(),
+  email: `${username}@bdtt.local`,
+  username,
+  role: "worker",
+  orgRole: "member",
+  orgGroup: "Vận hành",
+  subgroup: zone,
+  orgTitle: `Tài khoản chỉ xem - Zone ${zone}`,
+  orgAssignment: `Theo dõi toàn bộ WorkOrder thuộc ${zone}`,
+  managedGroups: [],
+  managedSubgroups: [],
+  isPlaceholder: true,
+  canLogin: true,
+  mustChangePassword: false,
+  resourceName: fullName.toUpperCase()
+});
+
 const placeholder = (
   username: string,
   fullName: string,
@@ -247,6 +271,10 @@ export const ORG_2026_SEEDS: readonly AccountSeed2026[] = [
   person("Trần Tuyết Quyên", "000326", "quyentt@pvcfc.com.vn", "admin", "nhomTruong", ORG_GROUPS.hauCan, "", [ORG_GROUPS.hauCan], []),
   person("Nguyễn Hoàng Mai", "000685", "mainh@pvcfc.com.vn", "worker", "member", ORG_GROUPS.hauCan),
   person("Lâm Phùng Phước Vinh", "001496", "vinhlpp@pvcfc.com.vn", "admin", "member", ORG_GROUPS.hauCan),
+
+  zoneViewer("Vận hành Zone Amonia", "zoneamo", "AMONIA"),
+  zoneViewer("Vận hành Zone Urea", "zoneure", "UREA"),
+  zoneViewer("Vận hành Zone Utility", "zoneuti", "UTILITY"),
 
   placeholder("bsr-chap-hanh-pn1-01", "BSR Chấp hành PN1 01", ORG_GROUPS.chapHanh, "PN1"),
   placeholder("bsr-chap-hanh-pn4-01", "BSR Chấp hành PN4 01", ORG_GROUPS.chapHanh, "PN4"),

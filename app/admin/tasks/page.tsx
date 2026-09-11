@@ -11,7 +11,13 @@ import { DataIssueQueue } from "@/components/admin/workorder/DataIssueQueue";
 import { WorkOrderTabs, type WorkOrderTab } from "@/components/admin/workorder/WorkOrderTabs";
 import { AppLoadingState, Icon } from "@/components/ui";
 import { useAppData } from "@/hooks/useAppData";
-import { canManageBdttTasks, getOrgScopeLabel, getScopedAppData } from "@/lib/permissions";
+import {
+  canManageBdttTasks,
+  canOpenBdttWorkOrders,
+  getOrgScopeLabel,
+  getScopedAppData,
+  isZoneViewerAccount
+} from "@/lib/permissions";
 
 const validTabs: readonly WorkOrderTab[] = ["tasks", "personnel", "abnormalities", "issues"];
 
@@ -21,7 +27,6 @@ const AdminTasksContent = (): React.ReactElement => {
   const { currentAccount, data, logout, refreshRemoteData } = useAppData();
   const requestedTab = searchParams.get("tab") as WorkOrderTab | null;
   const initialQuery = searchParams.get("query") ?? "";
-  const activeTab = requestedTab && validTabs.includes(requestedTab) ? requestedTab : "tasks";
 
   useEffect(() => {
     if (!data) return;
@@ -38,10 +43,16 @@ const AdminTasksContent = (): React.ReactElement => {
       />
     );
   }
-  if (currentAccount.role !== "admin") {
+  if (!canOpenBdttWorkOrders(currentAccount)) {
     return <main className="min-h-dvh p-6"><Link className="focus-ring text-sm font-semibold text-[var(--primary)]" href="/worker">Về trang công việc</Link></main>;
   }
 
+  const readOnlyZoneViewer = isZoneViewerAccount(currentAccount);
+  const activeTab = readOnlyZoneViewer
+    ? "tasks"
+    : requestedTab && validTabs.includes(requestedTab)
+      ? requestedTab
+      : "tasks";
   const scopedData = data ? getScopedAppData(data, currentAccount) : null;
   const canManage = canManageBdttTasks(currentAccount);
 
@@ -53,7 +64,13 @@ const AdminTasksContent = (): React.ReactElement => {
       title="WorkOrder"
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <WorkOrderTabs active={activeTab} />
+        {readOnlyZoneViewer ? (
+          <p className="rounded-full bg-[var(--primary-soft)] px-3 py-2 text-sm font-semibold text-[var(--primary-strong)] ring-1 ring-[var(--border-strong)]">
+            Chế độ chỉ xem · không thể nhập hoặc sửa dữ liệu
+          </p>
+        ) : (
+          <WorkOrderTabs active={activeTab} />
+        )}
         <a
           className="focus-ring pressable inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--foreground)] no-underline shadow-[var(--shadow-soft-sm)] hover:bg-[var(--surface-muted)]"
           href="/api/exports/tasks"

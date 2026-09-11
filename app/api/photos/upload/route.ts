@@ -8,6 +8,7 @@ import {
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { getActiveBdttTrialRun, isTrialRunContextCurrent } from "@/lib/api/demoMode";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isZoneViewerAccount } from "@/lib/permissions";
 import type { Task } from "@/types/domain";
 
 export const runtime = "nodejs";
@@ -40,6 +41,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const auth = await getAuthenticatedProfile(request, supabase);
   if (!auth.ok) return toErrorResponse(auth.error, auth.status);
+  if (isZoneViewerAccount(auth.profile)) {
+    return toErrorResponse("Tài khoản vận hành chỉ có quyền xem dữ liệu.", 403);
+  }
 
   const body = (await request.json()) as UploadPhotoBody;
   const trialRun = await getActiveBdttTrialRun(supabase);

@@ -13,6 +13,7 @@ import { writeBdttTaskEvent } from "@/lib/api/taskEvents";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { resolveReportDateAtSubmission } from "@/lib/date";
 import { isPercentAllowedForMode } from "@/lib/progressMode";
+import { isZoneViewerAccount } from "@/lib/permissions";
 import type { Task } from "@/types/domain";
 
 export const runtime = "nodejs";
@@ -58,6 +59,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const auth = await getAuthenticatedProfile(request, supabase);
   if (!auth.ok) return toErrorResponse(auth.error, auth.status);
   const { profile } = auth;
+  if (isZoneViewerAccount(profile)) {
+    return toErrorResponse("Tài khoản vận hành chỉ có quyền xem dữ liệu.", 403);
+  }
 
   const body = (await request.json()) as SubmitProgressBody;
   const trialRun = await getActiveBdttTrialRun(supabase);

@@ -533,3 +533,87 @@ describe("getScopedAppData", () => {
     ]);
   });
 });
+
+describe("zone viewer accounts", () => {
+  const zoneViewer = makeAccount({
+    id: "user-zoneamo",
+    username: "zoneamo",
+    role: "worker",
+    orgGroup: "Vận hành",
+    subgroup: "AMONIA"
+  });
+  const responsible = makeProfile({ id: "user-responsible" });
+  const amoniaTask: Task = {
+    id: "task-amonia",
+    stt: 1,
+    wo: "WO-AMO",
+    tagname: "TAG-AMO",
+    taskName: "Task Amonia",
+    nhom: "Nhóm A",
+    donVi: "AMONIA",
+    section: "1000",
+    duration: "1d",
+    priority: 1,
+    startDate: "",
+    finishDate: "",
+    resourceName: "RESPONSIBLE",
+    nhomTruong: "",
+    assignedTo: responsible.id,
+    reporterId: responsible.id,
+    isCancelled: false,
+    cancelReason: ""
+  };
+  const ureaTask = { ...amoniaTask, id: "task-urea", donVi: "UREA" };
+
+  it("chỉ xem toàn bộ WO trong đúng zone và không được báo cáo", () => {
+    expect(canViewTask(zoneViewer, amoniaTask, [responsible])).toBe(true);
+    expect(canViewTask(zoneViewer, ureaTask, [responsible])).toBe(false);
+    expect(
+      canReportBdttTask(
+        zoneViewer,
+        { ...amoniaTask, assignedTo: zoneViewer.id, reporterId: zoneViewer.id },
+        [responsible]
+      )
+    ).toBe(false);
+  });
+
+  it("lọc cả task, tiến độ và hồ sơ theo WO thuộc zone", () => {
+    const scoped = getScopedAppData(
+      {
+        accounts: [zoneViewer],
+        profiles: [
+          makeProfile({ id: zoneViewer.id, username: zoneViewer.username }),
+          responsible,
+          makeProfile({ id: "user-outside" })
+        ],
+        tasks: [amoniaTask, ureaTask],
+        progress: [
+          {
+            taskId: amoniaTask.id,
+            userId: responsible.id,
+            reportDate: "2026-09-11",
+            percent: 50,
+            note: ""
+          },
+          {
+            taskId: ureaTask.id,
+            userId: responsible.id,
+            reportDate: "2026-09-11",
+            percent: 75,
+            note: ""
+          }
+        ],
+        dailySnapshots: [],
+        offlineQueue: [],
+        activeUserId: zoneViewer.id
+      },
+      zoneViewer
+    );
+
+    expect(scoped.tasks.map((task) => task.id)).toEqual([amoniaTask.id]);
+    expect(scoped.progress.map((record) => record.taskId)).toEqual([amoniaTask.id]);
+    expect(scoped.profiles.map((profile) => profile.id).sort()).toEqual(
+      [zoneViewer.id, responsible.id].sort()
+    );
+  });
+});

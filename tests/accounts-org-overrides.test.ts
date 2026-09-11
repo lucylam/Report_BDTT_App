@@ -35,6 +35,16 @@ describe("sơ đồ tổ chức chính thức", () => {
     expect(profilesByUsername.get("vinhlpp")?.orgAssignment).toContain(
       "kiêm thành viên PN1 - Nhóm TB Chấp hành"
     );
+    expect(profilesByUsername.get("zoneamo")).toMatchObject({
+      role: "worker",
+      orgGroup: "Vận hành",
+      subgroup: "AMONIA",
+      isPlaceholder: true,
+      canLogin: true,
+      mustChangePassword: false
+    });
+    expect(profilesByUsername.get("zoneure")?.subgroup).toBe("UREA");
+    expect(profilesByUsername.get("zoneuti")?.subgroup).toBe("UTILITY");
     expect(profilesByUsername.get("hautv")).toMatchObject({
       role: "admin",
       orgRole: "nhomPho",

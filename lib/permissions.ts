@@ -8,6 +8,12 @@ export const PERSONNEL_ADMIN_USERNAMES = [
   TOP_MANAGER_USERNAME
 ] as const;
 
+export const ZONE_VIEW_UNITS_BY_USERNAME: Readonly<Record<string, string>> = {
+  zoneamo: "AMONIA",
+  zoneure: "UREA",
+  zoneuti: "UTILITY"
+};
+
 type ScopeAccount = Pick<
   AuthAccount,
   | "id"
@@ -29,6 +35,31 @@ const SHARED_TBCH_PN1_SCOPE = getOrgScopeKey(ORG_GROUPS.chapHanh, "PN1");
 const ADDITIONAL_TASK_SCOPES_BY_USERNAME: Readonly<Record<string, readonly string[]>> = {
   vinhlpp: [SHARED_TBCH_PN1_SCOPE]
 };
+
+const normalizeUsername = (value: string): string => value.trim().toLowerCase();
+const normalizeUnit = (value: string): string => value.trim().toUpperCase();
+
+export const getZoneViewerUnit = (
+  account: Pick<AuthAccount, "username"> | null
+): string | null => {
+  if (!account) return null;
+  return ZONE_VIEW_UNITS_BY_USERNAME[normalizeUsername(account.username)] ?? null;
+};
+
+export const isZoneViewerAccount = (
+  account: Pick<AuthAccount, "username"> | null
+): boolean => Boolean(getZoneViewerUnit(account));
+
+export const canViewBdttUnit = (
+  account: Pick<AuthAccount, "username"> | null,
+  unit: string
+): boolean => {
+  const viewerUnit = getZoneViewerUnit(account);
+  return Boolean(viewerUnit && normalizeUnit(unit) === viewerUnit);
+};
+
+export const canOpenBdttWorkOrders = (account: ScopeAccount | null): boolean =>
+  Boolean(account && (account.role === "admin" || isZoneViewerAccount(account)));
 
 const getPrimarySharedTaskScope = (
   person: TaskCollaborationPerson
@@ -112,6 +143,7 @@ export const canReportBdttTask = (
   task: Pick<Task, "assignedTo" | "reporterId">,
   profiles: readonly TaskCollaborationPerson[]
 ): boolean => {
+  if (isZoneViewerAccount(person)) return false;
   if (isTaskParticipant(task, person.id)) return true;
   const collaborationScopes = new Set(getTaskCollaborationScopes(person));
   if (collaborationScopes.size === 0) return false;
@@ -133,6 +165,7 @@ export const canViewTask = (
   profiles: readonly Profile[]
 ): boolean => {
   if (!account) return false;
+  if (isZoneViewerAccount(account)) return canViewBdttUnit(account, task.donVi);
   if (hasFullOrgScope(account)) return true;
   if (canReportBdttTask(account, task, profiles)) return true;
   const responsibleProfileIds = [task.assignedTo, task.reporterId].filter(
@@ -170,6 +203,8 @@ export const getScopedAppData = (
 
 export const getOrgScopeLabel = (account: ScopeAccount | null): string => {
   if (!account) return "Phạm vi: chưa đăng nhập";
+  const viewerUnit = getZoneViewerUnit(account);
+  if (viewerUnit) return `Phạm vi chỉ xem: ${viewerUnit}`;
   if (hasFullOrgScope(account)) return "Phạm vi: toàn bộ tổ";
   if (account.managedGroups.length > 0) {
     return `Phạm vi: ${account.managedGroups.join(", ")}`;

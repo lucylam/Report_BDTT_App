@@ -16,7 +16,11 @@ import { ModuleSwitcher } from "@/components/ModuleSwitcher";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Icon, PageHeader } from "@/components/ui";
 import { DEFAULT_REPORT_DATE } from "@/lib/date";
-import { canManagePersonnelOrg, isDataAdminAccount } from "@/lib/permissions";
+import {
+  canManagePersonnelOrg,
+  isDataAdminAccount,
+  isZoneViewerAccount
+} from "@/lib/permissions";
 import type { AuthAccount } from "@/types/domain";
 
 interface AdminShellProps {
@@ -42,8 +46,10 @@ export const AdminShell = ({
   onLogout
 }: AdminShellProps): React.ReactElement => {
   const pathname = usePathname();
+  const readOnlyZoneViewer = isZoneViewerAccount(account);
   const visibleLinks = links.filter(
     (link) =>
+      (!readOnlyZoneViewer || link.href === "/admin/tasks") &&
       (!("dataAdminOnly" in link) || !link.dataAdminOnly || isDataAdminAccount(account)) &&
       (!("personnelAdminOnly" in link) ||
         !link.personnelAdminOnly ||
@@ -55,7 +61,7 @@ export const AdminShell = ({
       <div className="app-shell mobile-native-shell desktop-shell-grid mx-auto min-h-[calc(100dvh-1rem)] w-full max-w-none overflow-hidden rounded-[var(--radius-panel)] lg:grid lg:min-h-[calc(100dvh-1.5rem)] 2xl:min-h-[calc(100dvh-2rem)]">
         <aside className="desktop-sidebar-safe hidden border-r border-[var(--line)] bg-[var(--surface)] p-4 lg:flex lg:flex-col">
           <Link className="focus-ring p-1" href="/"><CompanyBrand variant="sidebar" /></Link>
-          <ModuleSwitcher activeModule="bdtt" bdttHref="/admin" className="mt-4" compact />
+          <ModuleSwitcher activeModule="bdtt" bdttHref={readOnlyZoneViewer ? "/admin/tasks" : "/admin"} className="mt-4" compact />
           <nav aria-label="Điều hướng giám sát" className="mt-4 flex-1 space-y-1.5">
             <p className="px-3 text-xs font-medium uppercase tracking-[0.08em] text-[var(--text-soft)]">Chức năng BDTT</p>
             <div className="space-y-1">
@@ -84,8 +90,8 @@ export const AdminShell = ({
           </nav>
           <div className="rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3">
             <p className="text-xs font-medium uppercase text-[var(--text-soft)]">Phiên giám sát</p>
-            <p className="mt-2 truncate text-sm font-semibold text-[var(--foreground)]">{account.fullName}</p>
-            <p className="mt-0.5 truncate text-xs font-semibold text-[var(--text-muted)]">{account.orgTitle}</p>
+            <p className="mt-2 break-words text-sm font-semibold text-[var(--foreground)]">{account.fullName}</p>
+            <p className="mt-0.5 break-words text-xs font-semibold text-[var(--text-muted)]">{account.orgTitle}</p>
           </div>
           <DeveloperMark className="mt-3" compact />
         </aside>
@@ -93,14 +99,17 @@ export const AdminShell = ({
         <section className="min-w-0">
           <MobileAppHeader
             account={account}
-            accountStatusLabel="Phiên giám sát"
+            accountStatusLabel={readOnlyZoneViewer ? "Chỉ xem" : "Phiên giám sát"}
             activeModule="bdtt"
-            bdttHref="/admin"
+            bdttHref={readOnlyZoneViewer ? "/admin/tasks" : "/admin"}
             contextAction={
               <ModeSwitch
                 activeMode="supervision"
                 className="w-full max-w-none text-[11px]"
                 showSupervision
+                showWorkspace={!readOnlyZoneViewer}
+                supervisionHref={readOnlyZoneViewer ? "/admin/tasks" : "/admin"}
+                supervisionLabel={readOnlyZoneViewer ? "WorkOrder" : "Giám sát"}
               />
             }
             onLogout={onLogout}
@@ -113,8 +122,14 @@ export const AdminShell = ({
                 <Link aria-label="Mở trợ giúp" className="focus-ring pressable icon-button" href="/help"><Icon name="help" /></Link>
                 <GlobalNotifications />
                 <ThemeToggle />
-                <ModeSwitch activeMode="supervision" showSupervision />
-                <AccountMenu account={account} onLogout={onLogout} statusLabel="Phiên giám sát" />
+                <ModeSwitch
+                  activeMode="supervision"
+                  showSupervision
+                  showWorkspace={!readOnlyZoneViewer}
+                  supervisionHref={readOnlyZoneViewer ? "/admin/tasks" : "/admin"}
+                  supervisionLabel={readOnlyZoneViewer ? "WorkOrder" : "Giám sát"}
+                />
+                <AccountMenu account={account} onLogout={onLogout} statusLabel={readOnlyZoneViewer ? "Chỉ xem" : "Phiên giám sát"} />
               </div>
             </div>
           </header>

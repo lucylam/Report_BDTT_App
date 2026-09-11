@@ -10,6 +10,7 @@ import { TaskInformationView } from "@/components/task-info/TaskInformationView"
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AppLoadingState, PageHeader } from "@/components/ui";
 import { useAppData } from "@/hooks/useAppData";
+import { isZoneViewerAccount } from "@/lib/permissions";
 
 const TaskInfoPage = (): React.ReactElement => {
   const router = useRouter();
@@ -25,7 +26,8 @@ const TaskInfoPage = (): React.ReactElement => {
     return <AppLoadingState title="Đang tải lịch BDTT 2026" />;
   }
 
-  const showSupervision = currentAccount.role === "admin";
+  const readOnlyZoneViewer = isZoneViewerAccount(currentAccount);
+  const showSupervision = currentAccount.role === "admin" || readOnlyZoneViewer;
 
   return (
     <main className="mobile-native-page min-h-dvh w-full max-w-[100vw] overflow-x-hidden px-2 pb-2 pt-2 sm:px-3 sm:pt-3 lg:p-3 2xl:p-4">
@@ -40,6 +42,9 @@ const TaskInfoPage = (): React.ReactElement => {
               activeMode="taskInfo"
               className="w-full max-w-none text-[11px]"
               showSupervision={showSupervision}
+              showWorkspace={!readOnlyZoneViewer}
+              supervisionHref={readOnlyZoneViewer ? "/admin/tasks" : "/admin"}
+              supervisionLabel={readOnlyZoneViewer ? "WorkOrder" : "Giám sát"}
             />
           }
           onLogout={logout}
@@ -58,7 +63,13 @@ const TaskInfoPage = (): React.ReactElement => {
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <GlobalNotifications />
               <ThemeToggle />
-              <ModeSwitch activeMode="taskInfo" showSupervision={showSupervision} />
+              <ModeSwitch
+                activeMode="taskInfo"
+                showSupervision={showSupervision}
+                showWorkspace={!readOnlyZoneViewer}
+                supervisionHref={readOnlyZoneViewer ? "/admin/tasks" : "/admin"}
+                supervisionLabel={readOnlyZoneViewer ? "WorkOrder" : "Giám sát"}
+              />
               <AccountMenu
                 account={currentAccount}
                 onLogout={logout}

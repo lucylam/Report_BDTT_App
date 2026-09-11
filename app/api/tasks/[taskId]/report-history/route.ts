@@ -4,7 +4,7 @@ import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { getAuthenticatedAccount, isUuid } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { getOrgScopeKey } from "@/lib/org2026";
-import { canReportBdttTask, hasFullOrgScope } from "@/lib/permissions";
+import { canReportBdttTask, canViewBdttUnit, hasFullOrgScope } from "@/lib/permissions";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { deduplicateTaskReportHistory } from "@/lib/taskReportHistory";
 import type {
@@ -19,6 +19,7 @@ interface DbTaskScope {
   readonly assigned_to: string | null;
   readonly reporter_id: string | null;
   readonly nhom_truong: string | null;
+  readonly don_vi: string | null;
 }
 
 interface DbProfileSummary {
@@ -103,6 +104,7 @@ const canViewHistory = (
   account: AuthAccount,
   responsibleProfiles: readonly DbProfileSummary[]
 ): boolean => {
+  if (canViewBdttUnit(account, task.don_vi ?? "")) return true;
   if (task.assigned_to === profileId || task.reporter_id === profileId) return true;
   if (
     canReportBdttTask(
@@ -192,7 +194,7 @@ export const GET = async (
 
   const { data: taskData, error: taskError } = await supabase
     .from("tasks")
-    .select("assigned_to, reporter_id, nhom_truong")
+    .select("assigned_to, reporter_id, nhom_truong, don_vi")
     .eq("id", taskId)
     .maybeSingle();
   if (taskError) return toErrorResponse(taskError.message, 500);

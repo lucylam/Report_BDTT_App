@@ -6,6 +6,9 @@ interface ModeSwitchProps {
   readonly activeMode: "workspace" | "supervision" | "taskInfo";
   readonly className?: string;
   readonly showSupervision?: boolean;
+  readonly showWorkspace?: boolean;
+  readonly supervisionHref?: string;
+  readonly supervisionLabel?: string;
 }
 
 interface ModeItem {
@@ -18,20 +21,24 @@ interface ModeItem {
 export const ModeSwitch = ({
   activeMode,
   className,
-  showSupervision = false
+  showSupervision = false,
+  showWorkspace = true,
+  supervisionHref = "/admin",
+  supervisionLabel = "Giám sát"
 }: ModeSwitchProps): React.ReactElement => {
-  const items: ModeItem[] = [
-    { key: "workspace", href: "/worker", icon: "list", label: "Workspace" },
-    { key: "taskInfo", href: "/task-info", icon: "calendar", label: "Thông tin" }
-  ];
+  const items: ModeItem[] = [];
+  if (showWorkspace) {
+    items.push({ key: "workspace", href: "/worker", icon: "list", label: "Workspace" });
+  }
   if (showSupervision) {
-    items.splice(1, 0, {
+    items.push({
       key: "supervision",
-      href: "/admin",
+      href: supervisionHref,
       icon: "dashboard",
-      label: "Giám sát"
+      label: supervisionLabel
     });
   }
+  items.push({ key: "taskInfo", href: "/task-info", icon: "calendar", label: "Thông tin" });
 
   return (
     <nav

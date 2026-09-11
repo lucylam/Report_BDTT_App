@@ -4,7 +4,7 @@ import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { getScopedBdttManagerIds } from "@/lib/api/bdttRecipients";
 import { getAuthenticatedAccount, findReportableTask, isUuid } from "@/lib/api/session";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
-import { canManageBdttTasks, canViewProfile, canViewTask } from "@/lib/permissions";
+import { canManageBdttTasks, canViewProfile, canViewTask, isZoneViewerAccount } from "@/lib/permissions";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { AbnormalitySeverity, AbnormalityStatus, Task } from "@/types/domain";
 import { canTransitionAbnormality } from "@/lib/abnormalityWorkflow";
@@ -83,6 +83,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!supabase) return errorResponse("Chưa cấu hình Supabase cho bất thường.", 503);
   const auth = await getAuthenticatedAccount(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
+  if (isZoneViewerAccount(auth.account)) {
+    return errorResponse("Tài khoản vận hành chỉ có quyền xem dữ liệu.", 403);
+  }
   const trialRun = await getActiveBdttTrialRun(supabase);
   const body = (await request.json()) as AbnormalityBody;
   const title = text(body.title);

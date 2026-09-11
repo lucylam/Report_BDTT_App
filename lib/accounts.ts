@@ -39,7 +39,7 @@ export const createSeedAccounts = (): AuthAccount[] => {
       isPlaceholder: seed.isPlaceholder,
       canLogin: seed.canLogin,
       password: DEFAULT_INITIAL_PASSWORD,
-      mustChangePassword: seed.canLogin
+      mustChangePassword: seed.mustChangePassword ?? seed.canLogin
     };
   });
 };

@@ -36,7 +36,7 @@ import {
   storeOfflinePhoto
 } from "@/lib/offlinePhotoStore";
 import { getTaskPercent, getTaskProgress } from "@/lib/progress";
-import { canReportBdttTask } from "@/lib/permissions";
+import { canReportBdttTask, isZoneViewerAccount } from "@/lib/permissions";
 import { useAppData } from "@/hooks/useAppData";
 import type { ProgressPercent, Task } from "@/types/domain";
 
@@ -263,6 +263,7 @@ const WorkerPage = (): React.ReactElement => {
     if (!data) return;
     if (!currentAccount) router.replace("/login");
     if (currentAccount?.mustChangePassword) router.replace("/change-password");
+    if (isZoneViewerAccount(currentAccount)) router.replace("/admin/tasks");
   }, [currentAccount, data, router]);
 
   const syncOfflineQueue = useCallback(async (): Promise<void> => {
@@ -442,7 +443,7 @@ const WorkerPage = (): React.ReactElement => {
     selectedUnit
   ]);
 
-  if (!data || !currentAccount || !worker || currentAccount.mustChangePassword) {
+  if (!data || !currentAccount || !worker || currentAccount.mustChangePassword || isZoneViewerAccount(currentAccount)) {
     return (
       <AppLoadingState
         description="Đang đồng bộ danh sách công việc và tiến độ gần nhất của bạn."

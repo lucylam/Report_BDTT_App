@@ -6,7 +6,7 @@ import { loadBdttSnapshot } from "@/lib/api/bdttSnapshot";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import { parsePhotoDataUrl, TASK_PHOTOS_BUCKET } from "@/lib/api/photoStorage";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { canManageBdttTasks, canViewProfile, canViewTask } from "@/lib/permissions";
+import { canManageBdttTasks, canViewProfile, canViewTask, isZoneViewerAccount } from "@/lib/permissions";
 
 export const runtime = "nodejs";
 
@@ -24,6 +24,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!supabase) return errorResponse("Chưa cấu hình Supabase cho ảnh bất thường.", 503);
   const auth = await getAuthenticatedAccount(request, supabase);
   if (!auth.ok) return errorResponse(auth.error, auth.status);
+  if (isZoneViewerAccount(auth.account)) {
+    return errorResponse("Tài khoản vận hành chỉ có quyền xem dữ liệu.", 403);
+  }
   const trialRun = await getActiveBdttTrialRun(supabase);
   const body = (await request.json()) as PhotoBody;
   if (!isUuid(body.abnormalityId ?? "")) return errorResponse("Mã bất thường không hợp lệ.", 400);

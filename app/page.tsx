@@ -12,6 +12,7 @@ import { useAppData } from "@/hooks/useAppData";
 import { usePortalModules } from "@/hooks/usePortalModules";
 import { formatViDate, getPlanReportDate } from "@/lib/date";
 import { calculateMetrics } from "@/lib/progress";
+import { isZoneViewerAccount } from "@/lib/permissions";
 import { cn } from "@/lib/ui";
 
 interface CockpitResponse {
@@ -32,6 +33,7 @@ const HomePage = (): React.ReactElement => {
   const { modules, loading, error } = usePortalModules(Boolean(currentAccount));
   const [cockpit, setCockpit] = useState<CockpitResponse | null>(null);
   const reportDate = getPlanReportDate(data?.tasks ?? []);
+  const readOnlyZoneViewer = isZoneViewerAccount(currentAccount);
   const isExecutive = Boolean(
     currentAccount?.role === "admin" ||
       modules.some((module) => ["leader", "workshop_manager", "web_admin"].includes(module.role ?? ""))
@@ -90,10 +92,10 @@ const HomePage = (): React.ReactElement => {
           {currentAccount ? (
             <Link
               className="focus-ring pressable mt-3 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-field)] bg-[var(--primary-strong)] px-5 text-base font-semibold text-[var(--primary-contrast)] no-underline shadow-[var(--shadow-soft-sm)] hover:bg-[var(--success-strong)] sm:w-auto"
-              href={currentAccount.role === "admin" ? "/admin/tasks" : "/worker"}
+              href={currentAccount.role === "admin" || readOnlyZoneViewer ? "/admin/tasks" : "/worker"}
             >
               <Icon name="list" />
-              {currentAccount.role === "admin" ? "Mở WorkOrder" : "Nhập liệu hôm nay"}
+              {currentAccount.role === "admin" || readOnlyZoneViewer ? "Mở WorkOrder" : "Nhập liệu hôm nay"}
             </Link>
           ) : null}
 
