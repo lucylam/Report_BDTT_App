@@ -23,14 +23,11 @@ interface ScheduleMapProps {
 
 const phaseColor: Record<SchedulePhase, string> = {
   dung: "bg-[var(--danger)]",
-  bangiao: "bg-[var(--warning)]",
-  bdtt: "bg-[var(--info)]",
+  pssr: "bg-[var(--warning)]",
   khoidong: "bg-[var(--success)]"
 };
 
-const mapPhases = schedulePhases.filter(
-  (phase) => phase.key === "dung" || phase.key === "khoidong"
-);
+const mapPhases = schedulePhases;
 
 const formatMapDate = (value: string): string => {
   const [year, month, day] = value.split("-").map(Number);
@@ -45,8 +42,7 @@ const countByPhase = (
   events: readonly ScheduleEvent[]
 ): Record<SchedulePhase, number> => ({
   dung: events.filter((event) => event.p === "dung").length,
-  bangiao: events.filter((event) => event.p === "bangiao").length,
-  bdtt: events.filter((event) => event.p === "bdtt").length,
+  pssr: events.filter((event) => event.p === "pssr").length,
   khoidong: events.filter((event) => event.p === "khoidong").length
 });
 
@@ -93,7 +89,7 @@ export const ScheduleMap = ({
   onDateSelect,
   onSelect
 }: ScheduleMapProps): React.ReactElement => {
-  const mobileDate = selectedDate === "all" ? (dates[0] ?? "2026-09-14") : selectedDate;
+  const mobileDate = selectedDate === "all" ? (dates[0] ?? "2026-09-19") : selectedDate;
   const hasMapSelection = selectedDate !== "all" || selectedArea !== "all";
 
   const eventsFor = (date: string, area: ScheduleArea): readonly ScheduleEvent[] =>

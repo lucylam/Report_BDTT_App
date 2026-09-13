@@ -259,15 +259,15 @@ export const WorkerDesktopView = ({
 
         <section className="min-w-0">
           <header className="border-b border-[var(--line)] bg-[var(--surface)]/96 px-5 py-5 backdrop-blur-xl">
-            <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="grid min-w-0 gap-3 min-[1800px]:grid-cols-[minmax(18rem,1fr)_auto] min-[1800px]:items-center">
               <PageHeader
-                className="min-w-0 flex-1"
+                className="min-w-0"
                 description={`Ngày báo cáo: ${formatViDate(reportDate)} · ${worker.orgTitle}${planVersion ? ` · KH cập nhật ${new Date(planVersion.importedAt).toLocaleString("vi-VN")}` : ""}`}
                 eyebrow={`Công việc · BDTT ${reportDate.slice(0, 4)}`}
                 title="Báo cáo tiến độ"
               />
 
-              <div className="flex min-w-0 items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2 min-[1800px]:justify-end">
                 <p
                   aria-live="polite"
                   className={`inline-flex min-h-8 items-center rounded-full px-3 text-xs font-semibold ${
@@ -281,15 +281,14 @@ export const WorkerDesktopView = ({
                 <GlobalNotifications />
                 <ThemeToggle />
                 <ModeSwitch activeMode="workspace" showSupervision={isAdminAccount} />
+                <AccountMenu
+                  account={account}
+                  onLogout={onLogout}
+                  showInstallButton
+                  statusLabel={isOnline ? "Trực tuyến" : "Ngoại tuyến"}
+                  statusTone={isOnline ? "success" : "warning"}
+                />
               </div>
-
-              <AccountMenu
-                account={account}
-                onLogout={onLogout}
-                showInstallButton
-                statusLabel={isOnline ? "Trực tuyến" : "Ngoại tuyến"}
-                statusTone={isOnline ? "success" : "warning"}
-              />
             </div>
           </header>
 

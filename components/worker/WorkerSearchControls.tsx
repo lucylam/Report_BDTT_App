@@ -68,10 +68,10 @@ export const WorkerSearchControls = ({
     selectedTaskDate
       ? { label: `Ngày: ${formatViDate(selectedTaskDate)}`, clear: () => onTaskDateChange("") }
       : null,
-    filter !== "today"
+    filter !== "all"
       ? {
           label: `Trạng thái: ${filterOptions.find((option) => option.key === filter)?.label ?? filter}`,
-          clear: () => onFilterChange("today")
+          clear: () => onFilterChange("all")
         }
       : null,
     selectedPriority
@@ -95,7 +95,7 @@ export const WorkerSearchControls = ({
     onPriorityChange("");
     onAssigneeChange("");
     onUnitChange("");
-    onFilterChange("today");
+    onFilterChange("all");
     onGroupModeChange("unit");
   };
 
@@ -155,7 +155,7 @@ export const WorkerSearchControls = ({
           className="mt-3 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3"
           id={`${inputId}-filters`}
         >
-          <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3 min-[1800px]:grid-cols-6">
             <label className="min-w-0">
               <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
                 Ngày thực hiện
@@ -165,7 +165,7 @@ export const WorkerSearchControls = ({
                 onChange={(event) => onTaskDateChange(event.target.value)}
                 value={selectedTaskDate}
               >
-                <option value="">Tất cả ngày</option>
+                <option value="">Tất cả các ngày</option>
                 {taskDateOptions.map((date) => (
                   <option key={date} value={date}>
                     {formatViDate(date)}

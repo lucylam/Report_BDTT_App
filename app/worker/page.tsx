@@ -210,7 +210,7 @@ const WorkerPage = (): React.ReactElement => {
     getOperationalReportDate()
   );
   const reportDate = getPlanReportDate(data?.tasks ?? [], currentReportDate);
-  const [filter, setFilter] = useState<WorkerFilter>("today");
+  const [filter, setFilter] = useState<WorkerFilter>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedUnit, setSelectedUnit] = useState<string>("");
   const [selectedTaskDate, setSelectedTaskDate] = useState<string>("");

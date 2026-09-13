@@ -56,7 +56,7 @@ const TaskInfoPage = (): React.ReactElement => {
           <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center">
             <PageHeader
               className="min-w-0 flex-1"
-              description="Lịch dừng máy và chạy lại"
+              description="Lịch dừng và khởi động Nhà máy"
               eyebrow="Thông tin · BDTT 2026"
               title="Thông tin kế hoạch"
             />
