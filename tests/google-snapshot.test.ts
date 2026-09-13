@@ -39,4 +39,15 @@ describe("Google Sheet outbound snapshot", () => {
 
     expect(compareSheetSnapshot([row], [], 0).cancelledTasks).toBe(1);
   });
+
+  it("dùng WO làm khóa và xem Tagname đổi là cập nhật", () => {
+    const previous = makeRow("A", "");
+    const changedTag = makeRow("A", "");
+    changedTag[3] = "TAG-MỚI";
+
+    expect(compareSheetSnapshot([changedTag], [previous], 0)).toMatchObject({
+      newTasks: 0,
+      changedTasks: 1
+    });
+  });
 });

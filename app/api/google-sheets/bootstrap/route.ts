@@ -117,6 +117,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         unmappedResourceNames: preview.unmappedResourceNames,
         missingColumns: preview.missingColumns,
         incompleteRows: preview.incompleteRows,
+        issues: preview.issues,
         progressModeHeaderMissing: preview.progressModeHeaderMissing,
         hasBlockingErrors,
         sample: preview.tasks.slice(0, 5)

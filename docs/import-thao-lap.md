@@ -2,9 +2,9 @@
 
 Chức năng nằm tại `/admin/upload`, dành cho DATA admin `vinhlpp`. Excel của nhóm là đầu vào; dữ liệu đã import nằm trong database và được các màn hình web đọc như công việc/báo cáo bình thường.
 
-## Trạng thái triển khai
+## Yêu cầu triển khai
 
-Mã nguồn và migration được chuẩn bị, kiểm thử ở local. Chưa deploy và chưa áp dụng migration lên Supabase đang sử dụng. Khi phát hành được cho phép, database đích cần migration `supabase/migrations/20260907000100_bdtt_thao_lap_import.sql` trước khi sử dụng API mới. Migration phụ thuộc các migration BDTT hiện có, gồm completion, leader task management, personnel org management và demo mode.
+Database đích cần áp dụng lần lượt `supabase/migrations/20260907000100_bdtt_thao_lap_import.sql` và `supabase/migrations/20260913000100_bdtt_unique_wo.sql` trước khi sử dụng API mới. Các migration phụ thuộc các migration BDTT hiện có, gồm completion, leader task management, personnel org management và demo mode.
 
 Migration thêm hai loại nhật ký (`group_import`, `sheet_imported`) và các hàm PostgreSQL phục vụ đọc/ghi import. Không thay thế kế hoạch, không sửa phân quyền đăng nhập, không cập nhật dữ liệu nghiệp vụ khi chạy migration.
 
@@ -13,7 +13,7 @@ Migration thêm hai loại nhật ký (`group_import`, `sheet_imported`) và cá
 1. Trong spreadsheet đang cấu hình cho web, tạo tab riêng **IMPORT_THAO_LAP**. Không dùng tab DATA đầu ra để nhập lại.
 2. Dùng **Tải mẫu Excel của nhóm** để lấy cấu trúc và danh sách hiện có của nhóm. Mẫu giữ các ngày đã có báo cáo và bổ sung ngày báo cáo vận hành hiện tại.
 3. Đưa dữ liệu Excel nhóm gửi vào tab import: dòng 2 là tiêu đề, dữ liệu từ dòng 3. Cần thay vùng dữ liệu cũ trong tab import để tránh lặp dòng khi dán.
-4. Bấm **Đọc và xem trước import nhóm**. Kiểm tra dòng mới, nội dung trước/sau, tiến độ theo ngày, hủy, lỗi dữ liệu và danh sách vắng khỏi Sheet được giữ nguyên.
+4. Bấm **Đọc và xem trước import nhóm**. Kiểm tra dòng mới, nội dung trước/sau, tiến độ theo ngày, hủy, lỗi dữ liệu kèm dòng/ô cần sửa và danh sách vắng khỏi Sheet được giữ nguyên.
 5. Bấm **Xác nhận import nhóm**. Sau khi thành công, web tải lại dữ liệu. Thao tác import không ghi ngược vào Google Sheet.
 
 Mặc định dùng cùng `GOOGLE_SHEETS_SPREADSHEET_ID` và service account của luồng hiện tại. Có thể cấu hình tên tab riêng bằng `GOOGLE_SHEETS_THAO_LAP_IMPORT_SHEET_NAME`; không cần thư viện mới. Không sửa cấu hình production khi chưa được phép.
@@ -41,7 +41,7 @@ Mặc định dùng cùng `GOOGLE_SHEETS_SPREADSHEET_ID` và service account c�
 
 ## Quy tắc cập nhật và lịch sử
 
-- Khóa đối chiếu là **Tagname + WO**, bỏ khoảng trắng đầu/cuối và không phân biệt hoa thường. Một WO có nhiều Tagname vẫn có thể có nhiều công việc. Đổi khóa sẽ được hiểu là công việc mới; không tự liên kết với WO cũ.
+- Khóa đối chiếu duy nhất là **WO**, bỏ khoảng trắng đầu/cuối và không phân biệt hoa thường. Tagname được phép trùng giữa nhiều WO; khi Tagname của một WO thay đổi, công việc hiện có được cập nhật thay vì tạo mới.
 - WO mới thuộc nhóm được thêm với nguồn `ad_hoc` (phát sinh). Công việc hiện có giữ ID, nguồn kế hoạch/phát sinh, batch kế hoạch gốc và các liên kết.
 - Thông tin công việc hiện có được cập nhật theo A:M, gồm lịch hiện hành, nội dung và phân công. Giá trị trước khi sửa được lưu trong nhật ký import; không tạo lại toàn bộ kế hoạch.
 - Giữ người báo cáo đã được phân công nếu người thực hiện không đổi và người báo cáo vẫn hợp lệ trong nhóm. Khi đổi người thực hiện, xác định người báo cáo theo quy tắc nhóm/phân nhóm của web.

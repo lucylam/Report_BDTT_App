@@ -30,8 +30,8 @@ try {
   create function storage.foldername(text) returns text[] language sql as 'select string_to_array($1, ''/'')';`);
   const migrations = readdirSync("supabase/migrations").filter((name) => name.endsWith(".sql")).sort();
   for (const name of migrations) sql(readFileSync(`supabase/migrations/${name}`, "utf8"));
-  // Run the new migration twice to verify repeatability.
-  sql(readFileSync("supabase/migrations/20260907000100_bdtt_thao_lap_import.sql", "utf8"));
+  // Run the current WO-identity migration twice to verify repeatability.
+  sql(readFileSync("supabase/migrations/20260913000100_bdtt_unique_wo.sql", "utf8"));
   console.log(sql(readFileSync("tests/sql/thao-lap-import.sql", "utf8")));
   console.log("PASS: existing migrations + import migration and PostgreSQL transaction checks");
 } finally {

@@ -319,6 +319,24 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       return toErrorResponse("Ngày kết thúc phải từ ngày bắt đầu trở đi.", 400);
     }
 
+    let duplicateWoQuery = supabase
+      .from("tasks")
+      .select("id")
+      .ilike("wo", wo)
+      .limit(1);
+    duplicateWoQuery = trialRunId
+      ? duplicateWoQuery.eq("trial_run_id", trialRunId)
+      : duplicateWoQuery.is("trial_run_id", null);
+    const { data: duplicateWo, error: duplicateWoError } =
+      await duplicateWoQuery.maybeSingle();
+    if (duplicateWoError) return toErrorResponse(duplicateWoError.message, 500);
+    if (duplicateWo) {
+      return toErrorResponse(
+        `WO “${wo}” đã tồn tại. Tagname được phép trùng nhưng WO phải duy nhất.`,
+        409
+      );
+    }
+
     const { data: latestTask } = await supabase
       .from("tasks")
       .select("stt")
@@ -362,7 +380,15 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       })
       .select("id")
       .single();
-    if (error) return toErrorResponse(error.message, 500);
+    if (error) {
+      if (error.code === "23505") {
+        return toErrorResponse(
+          `WO “${wo}” đã tồn tại. Tagname được phép trùng nhưng WO phải duy nhất.`,
+          409
+        );
+      }
+      return toErrorResponse(error.message, 500);
+    }
     const taskId = (insertedTask as { id: string }).id;
     await writeEvent(supabase, taskId, "created_ad_hoc", auth.profile.id, {
       assignee_id: assignee.db.id,

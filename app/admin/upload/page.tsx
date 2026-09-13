@@ -20,6 +20,12 @@ interface BootstrapPreview {
   readonly unmappedResourceNames?: string[];
   readonly missingColumns?: string[];
   readonly incompleteRows?: number[];
+  readonly issues?: readonly {
+    readonly type: "missing_column" | "duplicate_key" | "unmapped_resource" | "incomplete_row" | "empty_sheet";
+    readonly rows: readonly number[];
+    readonly cells: readonly string[];
+    readonly message: string;
+  }[];
   readonly progressModeHeaderMissing?: boolean;
   readonly hasBlockingErrors?: boolean;
   readonly sample?: readonly {
@@ -252,15 +258,26 @@ const BootstrapPanel = ({ preview }: { readonly preview: BootstrapPreview }): Re
     ) : null}
     {!preview.initialized ? (
       <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Key trùng Tag + WO" value={String(preview.duplicateKeys?.length ?? 0)} />
+        <Metric label="WO bị trùng" value={String(preview.duplicateKeys?.length ?? 0)} />
         <Metric label="Resource chưa map" value={String(preview.unmappedResourceNames?.length ?? 0)} />
         <Metric label="Cột thiếu" value={String(preview.missingColumns?.length ?? 0)} />
         <Metric label="Dòng thiếu trường bắt buộc" value={String(preview.incompleteRows?.length ?? 0)} />
-        {preview.incompleteRows?.length ? (
-          <p className="text-sm font-medium text-[var(--danger-strong)] sm:col-span-2 xl:col-span-4">
-            Cần bổ sung tại dòng: {preview.incompleteRows.slice(0, 20).join(", ")}
-            {preview.incompleteRows.length > 20 ? "…" : ""}
-          </p>
+        {preview.issues?.length ? (
+          <div className="min-w-0 rounded-[var(--radius-field)] border border-[var(--danger)]/30 bg-[var(--danger-soft)] p-3 sm:col-span-2 xl:col-span-4">
+            <p className="font-semibold text-[var(--danger-strong)]">
+              {preview.issues.length} vị trí cần sửa trong Google Sheet
+            </p>
+            <ul className="mt-2 space-y-2 text-sm leading-6">
+              {preview.issues.map((issue, index) => (
+                <li className="min-w-0 break-words" key={`${issue.type}-${issue.cells.join("-")}-${index}`}>
+                  <span className="font-semibold text-[var(--danger-strong)]">
+                    Dòng {issue.rows.join(", ")} · ô {issue.cells.join(", ")}
+                  </span>
+                  {` — ${issue.message}`}
+                </li>
+              ))}
+            </ul>
+          </div>
         ) : null}
         {preview.progressModeHeaderMissing ? (
           <p className="text-sm text-[var(--text-muted)] sm:col-span-2 xl:col-span-4">

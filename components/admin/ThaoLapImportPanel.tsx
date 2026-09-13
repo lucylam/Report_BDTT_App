@@ -91,7 +91,7 @@ export const ThaoLapImportPanel = ({ busy, demoMode, onBusyChange, onImported }:
         <ul className="mt-2 list-disc space-y-2 pl-5">
           <li>A:M giữ cấu trúc mẫu ban đầu: Stt, Task Name, WO, Tagname, Nhóm, Đơn vị chủ quản, Section, Duration, Priority, Start, Finish, Resource Names, Nhóm trưởng.</li>
           <li>Từ N trở đi: cột ngày tiến độ (ví dụ 07/09/2026), Cancel, Ghi chú; có thể thêm Lý do hủy và Chế độ tiến độ. Total, %Complete, Còn lại không dùng để ghi tiến độ.</li>
-          <li>Nhóm điền “Tháo/Lắp TB ĐK”. Resource Names phải khớp tên nhân sự của nhóm trên web. Tagname + WO là khóa đối chiếu; WO mới được ghi nhận là phát sinh.</li>
+          <li>Nhóm điền “Tháo/Lắp TB ĐK”. Resource Names phải khớp tên nhân sự của nhóm trên web. WO là khóa đối chiếu duy nhất; Tagname được phép trùng. WO mới được ghi nhận là phát sinh.</li>
           <li>Tiến độ nhận 50%, 0,5 hoặc 50; số 1 được hiểu là 100%, muốn nhập một phần trăm hãy điền 1%. Ô trống giữ nguyên; nhập 0 để ghi nhận 0%.</li>
           <li>Cancel = X hoặc Hủy phải có Lý do hủy hoặc Ghi chú. Để trống Cancel không mở lại WO đã hủy. WO không có trong Sheet được giữ nguyên.</li>
           <li>Ghi chú được cập nhật cho ngày tiến độ mới nhất có dữ liệu trên mỗi dòng; ghi chú trống và ảnh cũ được giữ nguyên. Các ngày có số liệu được đối chiếu và cập nhật, có lưu lịch sử chỉnh sửa.</li>
@@ -135,7 +135,14 @@ export const ThaoLapImportPanel = ({ busy, demoMode, onBusyChange, onImported }:
             <div className="rounded-[var(--radius-field)] border border-[var(--line)] p-3">
               <p className="font-semibold text-[var(--danger-strong)]">{preview.errors.length} lỗi · Chưa ghi dữ liệu nào</p>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6">
-                {preview.errors.map((issue, index) => <li className="break-words" key={index}>Dòng {issue.row}: {issue.message}</li>)}
+                {preview.errors.map((issue, index) => (
+                  <li className="break-words" key={index}>
+                    <span className="font-semibold text-[var(--danger-strong)]">
+                      Dòng {issue.row}{issue.cells.length ? ` · ô ${issue.cells.join(", ")}` : ""}
+                    </span>
+                    {` — ${issue.message}`}
+                  </li>
+                ))}
               </ul>
             </div>
           ) : null}

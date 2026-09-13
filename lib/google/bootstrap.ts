@@ -35,6 +35,14 @@ export interface BootstrapPreview {
   readonly missingColumns: string[];
   readonly incompleteRows: number[];
   readonly progressModeHeaderMissing: boolean;
+  readonly issues: BootstrapSheetIssue[];
+}
+
+export interface BootstrapSheetIssue {
+  readonly type: "missing_column" | "duplicate_key" | "unmapped_resource" | "incomplete_row" | "empty_sheet";
+  readonly rows: number[];
+  readonly cells: string[];
+  readonly message: string;
 }
 
 export interface BootstrapLockState {
@@ -72,6 +80,20 @@ export const getBootstrapLockState = (
 
 const cell = (value: ExportCellValue | undefined): string =>
   value === undefined || value === null ? "" : String(value).trim();
+
+const columnLetter = (zeroBasedIndex: number): string => {
+  let value = zeroBasedIndex + 1;
+  let result = "";
+  while (value > 0) {
+    value -= 1;
+    result = String.fromCharCode(65 + (value % 26)) + result;
+    value = Math.floor(value / 26);
+  }
+  return result;
+};
+
+const cellAddress = (columnIndex: number, row: number): string =>
+  `${columnLetter(columnIndex)}${row}`;
 
 const comparable = (value: string): string =>
   value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase();
@@ -137,15 +159,24 @@ export const parseBootstrapSheet = (
     [11, "Resource Names"],
     [12, "Nhóm trưởng"]
   ] as const;
-  const missingColumns = required
-    .filter(([index, label]) => comparable(cell(headers[index])) !== comparable(label))
-    .map(([, label]) => label);
+  const missingColumnDefinitions = required.filter(
+    ([index, label]) => comparable(cell(headers[index])) !== comparable(label)
+  );
+  const missingColumns = missingColumnDefinitions.map(([, label]) => label);
 
   const unmapped = new Set<string>();
   const incompleteRows: number[] = [];
-  const tasks = values.slice(1).flatMap((row, index): BootstrapTaskRow[] => {
+  const issues: BootstrapSheetIssue[] = missingColumnDefinitions.map(([index, label]) => ({
+    type: "missing_column",
+    rows: [2],
+    cells: [cellAddress(index, 2)],
+    message: `Tiêu đề phải là “${label}”.`
+  }));
+  const taskRows = values.slice(1).flatMap((row, index): { readonly task: BootstrapTaskRow; readonly sheetRow: number }[] => {
     const hasData = row.slice(0, 13).some((value) => Boolean(cell(value)));
     if (!hasData) return [];
+
+    const sheetRow = index + 3;
 
     const taskName = cell(row[1]);
     const wo = cell(row[2]);
@@ -157,22 +188,40 @@ export const parseBootstrapSheet = (
     const resourceName = cell(row[11]);
     const nhomTruong = cell(row[12]);
     const requiredValues = [
-      tagname,
-      resourceName,
-      nhomTruong,
-      startDate,
-      finishDate,
-      nhom,
-      duration,
-      wo,
-      taskName
+      { column: 1, label: "Task Name", value: taskName },
+      { column: 2, label: "WO", value: wo },
+      { column: 3, label: "Tagname", value: tagname },
+      { column: 4, label: "Nhóm", value: nhom },
+      { column: 7, label: "Duration", value: duration },
+      { column: 9, label: "Start (trống hoặc sai định dạng)", value: startDate },
+      { column: 10, label: "Finish (trống hoặc sai định dạng)", value: finishDate },
+      { column: 11, label: "Resource Names", value: resourceName },
+      { column: 12, label: "Nhóm trưởng", value: nhomTruong }
     ];
-    if (requiredValues.some((value) => !value)) incompleteRows.push(index + 3);
+    const missingValues = requiredValues.filter((item) => !item.value);
+    if (missingValues.length > 0) {
+      incompleteRows.push(sheetRow);
+      const addresses = missingValues.map((item) => cellAddress(item.column, sheetRow));
+      issues.push({
+        type: "incomplete_row",
+        rows: [sheetRow],
+        cells: addresses,
+        message: `Thiếu hoặc sai: ${missingValues.map((item) => item.label).join(", ")}.`
+      });
+    }
     if (!tagname) return [];
 
     const assignedTo = findProfile(profiles, resourceName);
-    if (resourceName && !assignedTo) unmapped.add(resourceName);
-    return [{
+    if (resourceName && !assignedTo) {
+      unmapped.add(resourceName);
+      issues.push({
+        type: "unmapped_resource",
+        rows: [sheetRow],
+        cells: [cellAddress(11, sheetRow)],
+        message: `Resource “${resourceName}” chưa khớp tài khoản trên web.`
+      });
+    }
+    return [{ task: {
       stt: Number(row[0]) || index + 1,
       taskName,
       wo,
@@ -188,25 +237,42 @@ export const parseBootstrapSheet = (
       nhomTruong,
       assignedTo,
       progressMode: normalizeProgressMode(row[32])
-    }];
+    }, sheetRow }];
   });
+  const tasks = taskRows.map((item) => item.task);
+  if (tasks.length === 0 && issues.length === 0) {
+    issues.push({
+      type: "empty_sheet",
+      rows: [3],
+      cells: ["A3:AG3"],
+      message: "Sheet chưa có dòng công việc để khởi tạo."
+    });
+  }
 
-  const counts = new Map<string, number>();
-  tasks.forEach((task) => {
-    const key = `${task.tagname.trim().toUpperCase()}|${task.wo.trim().toUpperCase()}`;
-    counts.set(key, (counts.get(key) ?? 0) + 1);
+  const rowsByWo = new Map<string, number[]>();
+  taskRows.forEach(({ task, sheetRow }) => {
+    const wo = task.wo.trim().toUpperCase();
+    rowsByWo.set(wo, [...(rowsByWo.get(wo) ?? []), sheetRow]);
+  });
+  const duplicateEntries = Array.from(rowsByWo.entries()).filter(([, rows]) => rows.length > 1);
+  duplicateEntries.forEach(([wo, rows]) => {
+    issues.push({
+      type: "duplicate_key",
+      rows,
+      cells: rows.map((row) => cellAddress(2, row)),
+      message: `WO “${wo}” bị trùng. Tagname được phép trùng nhưng WO phải duy nhất.`
+    });
   });
 
   return {
     tasks,
     rowCount: tasks.length,
-    duplicateKeys: Array.from(counts.entries())
-      .filter(([, count]) => count > 1)
-      .map(([key]) => key),
+    duplicateKeys: duplicateEntries.map(([key]) => key),
     unmappedResourceNames: Array.from(unmapped).sort((a, b) => a.localeCompare(b, "vi")),
     missingColumns,
     incompleteRows,
     progressModeHeaderMissing:
-      comparable(cell(headers[32])) !== comparable("Chế độ tiến độ")
+      comparable(cell(headers[32])) !== comparable("Chế độ tiến độ"),
+    issues
   };
 };

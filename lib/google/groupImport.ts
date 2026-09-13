@@ -106,7 +106,7 @@ export interface GroupImportPreview {
   readonly sheetName: string;
   readonly groupName: string;
   readonly hasBlockingErrors: boolean;
-  readonly errors: readonly { readonly row: number; readonly message: string }[];
+  readonly errors: readonly { readonly row: number; readonly cells: readonly string[]; readonly message: string }[];
   readonly stats: {
     readonly total: number;
     readonly added: number;
@@ -126,8 +126,22 @@ const normalize = (value: unknown): string => text(value).normalize("NFD")
   .replace(/[^a-z0-9%]+/g, " ").trim();
 const GROUP_ALIASES = [GROUP_IMPORT_NAME, "Tháo lắp TB HTĐK", "Tháo lắp TB điều khiển"].map(normalize);
 export const isImportGroupName = (value: unknown): boolean => GROUP_ALIASES.includes(normalize(value));
-const keyOf = (task: { readonly tagname: string; readonly wo: string }): string =>
-  `${task.tagname.trim().toUpperCase()}|${task.wo.trim().toUpperCase()}`;
+const woKey = (task: { readonly wo: string }): string =>
+  task.wo.trim().toUpperCase();
+
+const columnLetter = (zeroBasedIndex: number): string => {
+  let value = zeroBasedIndex + 1;
+  let result = "";
+  while (value > 0) {
+    value -= 1;
+    result = String.fromCharCode(65 + (value % 26)) + result;
+    value = Math.floor(value / 26);
+  }
+  return result;
+};
+
+const cellsAt = (row: number, columnIndexes: readonly number[]): string[] =>
+  columnIndexes.filter((index) => index >= 0).map((index) => `${columnLetter(index)}${row}`);
 
 export const isImportGroupTask = (task: ImportDbTask, profiles: readonly ImportProfile[]): boolean => {
   if (task.trial_run_id) return false;
@@ -177,48 +191,51 @@ export const planGroupImport = (
   sheetName = GROUP_IMPORT_SHEET
 ): { readonly preview: GroupImportPreview; readonly rows: readonly GroupImportRow[] } => {
   const headers = values[0] ?? [];
-  const errors: { row: number; message: string }[] = [];
-  const fail = (row: number, message: string): void => { errors.push({ row, message }); };
+  const errors: { row: number; cells: string[]; message: string }[] = [];
+  const fail = (row: number, message: string, columnIndexes: readonly number[] = []): void => {
+    errors.push({ row, cells: cellsAt(row, columnIndexes), message });
+  };
   const requiredHeaders = ["Stt", "Task Name", "WO", "Tagname", "Nhóm", "Đơn vị chủ quản", "Section", "Duration", "Priority", "Start", "Finish", "Resource Names", "Nhóm trưởng"];
   requiredHeaders.forEach((label, index) => {
-    if (normalize(headers[index]) !== normalize(label)) fail(2, `Cột ${index + 1} phải có tiêu đề “${label}”.`);
+    if (normalize(headers[index]) !== normalize(label)) fail(2, `Cột ${index + 1} phải có tiêu đề “${label}”.`, [index]);
   });
   const findColumn = (name: string): number => {
     const matches = headers.flatMap((header, index) => normalize(header) === normalize(name) ? [index] : []);
-    if (matches.length > 1) fail(2, `Trùng cột “${name}”.`);
+    if (matches.length > 1) fail(2, `Trùng cột “${name}”.`, matches);
     return matches[0] ?? -1;
   };
   const cancelColumn = findColumn("Cancel");
   const noteColumn = findColumn("Ghi chú");
   const reasonColumn = findColumn("Lý do hủy");
   const modeColumn = findColumn("Chế độ tiến độ");
-  if (cancelColumn < 0) fail(2, "Thiếu cột Cancel (X = hủy; để trống = giữ trạng thái hiện có).");
+  if (cancelColumn < 0) fail(2, "Thiếu cột Cancel trong vùng tiêu đề từ N2 trở đi.", [13]);
   const dates: { index: number; date: string }[] = [];
   const ignoredHeaders = ["Total", "%Complete", "Còn lại", "Cancel", "Ghi chú", "Lý do hủy", "Chế độ tiến độ"].map(normalize);
   headers.slice(13).forEach((header, offset) => {
     const date = parseImportDate(header);
     if (date) {
-      if (dates.some((entry) => entry.date === date)) fail(2, `Trùng ngày tiến độ ${date}.`);
+      const previous = dates.find((entry) => entry.date === date);
+      if (previous) fail(2, `Trùng ngày tiến độ ${date}.`, [previous.index, offset + 13]);
       dates.push({ index: offset + 13, date });
     } else if (text(header) && !ignoredHeaders.includes(normalize(header))) {
-      fail(2, `Cột “${text(header)}” không được nhận diện. Ngày tiến độ cần đủ ngày/tháng/năm.`);
+      fail(2, `Cột “${text(header)}” không được nhận diện. Ngày tiến độ cần đủ ngày/tháng/năm.`, [offset + 13]);
     }
   });
-  if (!dates.length) fail(2, "Cần ít nhất một cột tiến độ có tiêu đề ngày, ví dụ 07/09/2026.");
-  if (values.length > 10001) fail(2, "Mỗi lần import tối đa 10.000 công việc.");
+  if (!dates.length) fail(2, "Cần ít nhất một cột tiến độ có tiêu đề ngày, ví dụ 07/09/2026.", [13]);
+  if (values.length > 10001) fail(10003, "Mỗi lần import tối đa 10.000 công việc.", [0]);
   const people = state.profiles.filter((profile) => profile.is_active).map((profile) => ({
     id: profile.id, orgGroup: profile.org_group ?? "", subgroup: profile.subgroup ?? "", orgRole: profile.org_role ?? "member" as OrgRole
   }));
   const groupProfiles = state.profiles.filter((profile) => profile.is_active && profile.org_group === GROUP_IMPORT_NAME);
-  const dbByKey = new Map<string, ImportDbTask[]>();
-  state.tasks.forEach((task) => dbByKey.set(keyOf(task), [...(dbByKey.get(keyOf(task)) ?? []), task]));
+  const dbByWo = new Map<string, ImportDbTask[]>();
+  state.tasks.forEach((task) => dbByWo.set(woKey(task), [...(dbByWo.get(woKey(task)) ?? []), task]));
   const latestReports = new Map<string, ImportDbProgress>();
   state.progress.forEach((report) => {
     const key = `${report.task_id}|${report.report_date}`;
     const previous = latestReports.get(key);
     if (!previous || report.submitted_at > previous.submitted_at || (report.submitted_at === previous.submitted_at && report.id > previous.id)) latestReports.set(key, report);
   });
-  const seen = new Set<string>();
+  const seenWos = new Set<string>();
   const rows: GroupImportRow[] = [];
   const changes: GroupImportChange[] = [];
   let progressCount = 0;
@@ -229,44 +246,46 @@ export const planGroupImport = (
     const errorCount = errors.length;
     const tagname = text(cells[3]);
     const wo = text(cells[2]);
-    const key = keyOf({ tagname, wo });
-    if (!tagname || !wo || !text(cells[1])) fail(sheetRow, "Thiếu Task Name, WO hoặc Tagname.");
-    if (seen.has(key)) fail(sheetRow, `Trùng Tagname + WO: ${tagname} / ${wo}.`);
-    seen.add(key);
-    if (!isImportGroupName(cells[4])) fail(sheetRow, `Nhóm phải là “${GROUP_IMPORT_NAME}”; không được import nhóm khác.`);
-    const candidates = dbByKey.get(key) ?? [];
-    if (candidates.length > 1) fail(sheetRow, "Database có nhiều công việc cùng Tagname + WO; cần xử lý trùng trước.");
+    const key = woKey({ wo });
+    const missingIdentityColumns = [1, 2, 3].filter((index) => !text(cells[index]));
+    if (missingIdentityColumns.length > 0) fail(sheetRow, "Thiếu Task Name, WO hoặc Tagname.", missingIdentityColumns);
+    if (seenWos.has(key)) fail(sheetRow, `WO bị trùng: ${wo}. Tagname được phép trùng nhưng WO phải duy nhất.`, [2]);
+    seenWos.add(key);
+    if (!isImportGroupName(cells[4])) fail(sheetRow, `Nhóm phải là “${GROUP_IMPORT_NAME}”; không được import nhóm khác.`, [4]);
+    const candidates = dbByWo.get(key) ?? [];
+    if (candidates.length > 1) fail(sheetRow, "Database có nhiều công việc cùng WO; cần xử lý trùng trước.", [2]);
     const existing = candidates[0];
-    if (existing && !isImportGroupTask(existing, state.profiles)) fail(sheetRow, "Tagname + WO đã thuộc nhóm khác hoặc dữ liệu demo.");
+    if (existing && !isImportGroupTask(existing, state.profiles)) fail(sheetRow, "WO đã thuộc nhóm khác hoặc dữ liệu demo.", [2]);
     const resource = normalize(cells[11]);
     const matches = groupProfiles.filter((profile) => resource && [profile.resource_name, profile.username].some((name) => normalize(name) === resource));
-    if (matches.length !== 1) fail(sheetRow, "Resource Names phải khớp duy nhất một nhân sự đang hoạt động của nhóm Tháo/Lắp TB ĐK.");
+    if (matches.length !== 1) fail(sheetRow, "Resource Names phải khớp duy nhất một nhân sự đang hoạt động của nhóm Tháo/Lắp TB ĐK.", [11]);
     const assignee = matches[0];
     const resolvedReporter = resolveTaskReporterId(assignee?.id, people);
     const reporter = existing?.assigned_to === assignee?.id && groupProfiles.some((profile) => profile.id === existing?.reporter_id)
       ? existing!.reporter_id! : resolvedReporter ?? "";
     const start = parseImportDate(cells[9]);
     const finish = parseImportDate(cells[10]);
-    if (!start || !finish || finish < start) fail(sheetRow, "Start/Finish phải là ngày hợp lệ; Finish không trước Start.");
-    if (!text(cells[7]) || !text(cells[12])) fail(sheetRow, "Thiếu Duration hoặc Nhóm trưởng.");
+    if (!start || !finish || finish < start) fail(sheetRow, "Start/Finish phải là ngày hợp lệ; Finish không trước Start.", [9, 10]);
+    const missingWorkColumns = [7, 12].filter((index) => !text(cells[index]));
+    if (missingWorkColumns.length > 0) fail(sheetRow, "Thiếu Duration hoặc Nhóm trưởng.", missingWorkColumns);
     const priority = text(cells[8]) ? Number(cells[8]) : 2;
-    if (![1, 2, 3].includes(priority)) fail(sheetRow, "Priority chỉ nhận 1, 2 hoặc 3.");
+    if (![1, 2, 3].includes(priority)) fail(sheetRow, "Priority chỉ nhận 1, 2 hoặc 3.", [8]);
     const modeText = text(cells[modeColumn]);
     let mode = existing?.progress_mode ?? "continuous";
     if (modeText) {
       if (["0/100", "binary"].includes(modeText.toLowerCase())) mode = "binary";
       else if (["0-100", "continuous"].includes(modeText.toLowerCase())) mode = "continuous";
-      else fail(sheetRow, "Chế độ tiến độ chỉ nhận 0/100 hoặc 0-100.");
+      else fail(sheetRow, "Chế độ tiến độ chỉ nhận 0/100 hoặc 0-100.", [modeColumn]);
     }
     if (mode === "binary" && existing && state.progress.some((report) => report.task_id === existing.id && report.percent !== 0 && report.percent !== 100)) {
-      fail(sheetRow, "Đã có tiến độ trung gian; không thể đổi chế độ sang 0/100.");
+      fail(sheetRow, "Đã có tiến độ trung gian; không thể đổi chế độ sang 0/100.", [modeColumn]);
     }
     const cancel = text(cells[cancelColumn]);
-    if (cancel && normalize(cancel) !== "x" && normalize(cancel) !== "huy") fail(sheetRow, "Cancel chỉ nhận X, Hủy hoặc để trống.");
+    if (cancel && normalize(cancel) !== "x" && normalize(cancel) !== "huy") fail(sheetRow, "Cancel chỉ nhận X, Hủy hoặc để trống.", [cancelColumn]);
     const isCancelled = Boolean(cancel) || Boolean(existing?.is_cancelled);
     const note = text(cells[noteColumn]);
     const reason = text(cells[reasonColumn]) || (cancel ? note : "") || existing?.cancel_reason || "";
-    if (cancel && reason.length < 3) fail(sheetRow, "WO hủy phải có Lý do hủy hoặc Ghi chú từ 3 ký tự.");
+    if (cancel && reason.length < 3) fail(sheetRow, "WO hủy phải có Lý do hủy hoặc Ghi chú từ 3 ký tự.", [cancelColumn, reasonColumn, noteColumn]);
     // Empty dated cells are not zero and must never erase a previous report.
     const reports: ImportedReport[] = [];
     const reportChanges: GroupImportChange["reports"][number][] = [];
@@ -275,7 +294,7 @@ export const planGroupImport = (
       if (!text(cells[index])) return;
       const percent = parseImportPercent(cells[index]);
       if (percent === null || (mode === "binary" && percent !== 0 && percent !== 100)) {
-        fail(sheetRow, `Tiến độ ${date} không hợp lệ (${mode === "binary" ? "chỉ 0% hoặc 100%" : "số nguyên 0–100%"}).`);
+        fail(sheetRow, `Tiến độ ${date} không hợp lệ (${mode === "binary" ? "chỉ 0% hoặc 100%" : "số nguyên 0–100%"}).`, [index]);
         return;
       }
       const previous = existing ? latestReports.get(`${existing.id}|${date}`) : undefined;
@@ -285,11 +304,11 @@ export const planGroupImport = (
       reportChanges.push({ date, before: previous?.percent ?? null, after: percent, ...(reportNote ? { note: reportNote } : {}) });
     });
     cells.forEach((value, index) => {
-      if (index >= 13 && text(value) && !text(headers[index])) fail(sheetRow, `Cột ${index + 1} có dữ liệu nhưng thiếu tiêu đề.`);
+      if (index >= 13 && text(value) && !text(headers[index])) fail(sheetRow, `Cột ${index + 1} có dữ liệu nhưng thiếu tiêu đề.`, [index]);
     });
     if (errors.length !== errorCount || !assignee) return;
     const fields: ImportTaskFields = {
-      task_name: text(cells[1]), tagname: existing?.tagname ?? tagname, wo: existing?.wo ?? wo,
+      task_name: text(cells[1]), tagname, wo: existing?.wo ?? wo,
       nhom: existing?.nhom ?? GROUP_IMPORT_NAME, don_vi: text(cells[5]), section: text(cells[6]), duration: text(cells[7]), priority,
       start_date: start, finish_date: finish, resource_name: assignee.resource_name || text(cells[11]), nhom_truong: text(cells[12]),
       assigned_to: assignee.id, reporter_id: reporter, progress_mode: mode, is_cancelled: isCancelled,
@@ -313,14 +332,14 @@ export const planGroupImport = (
       reports: reportChanges, cancelled });
     if (kind !== "unchanged") rows.push({ ...fields, id: existing?.id ?? null, sheetRow, reports });
   });
-  if (!seen.size) fail(3, "Sheet không có công việc. Không thay đổi dữ liệu web.");
-  const missingTasks = state.tasks.filter((task) => isImportGroupTask(task, state.profiles) && !seen.has(keyOf(task)))
+  if (!seenWos.size) fail(3, "Sheet không có công việc. Không thay đổi dữ liệu web.", [0]);
+  const missingTasks = state.tasks.filter((task) => isImportGroupTask(task, state.profiles) && !seenWos.has(woKey(task)))
     .map((task) => ({ wo: task.wo, tagname: task.tagname, taskName: task.task_name }));
   return {
     rows,
     preview: {
       sheetName, groupName: GROUP_IMPORT_NAME, hasBlockingErrors: errors.length > 0, errors, changes, missingTasks,
-      stats: { total: seen.size, added: changes.filter((change) => change.kind === "new").length,
+      stats: { total: seenWos.size, added: changes.filter((change) => change.kind === "new").length,
         updated: changes.filter((change) => change.kind === "updated").length,
         unchanged: changes.filter((change) => change.kind === "unchanged").length,
         cancelled: cancelCount, progress: progressCount, missing: missingTasks.length }

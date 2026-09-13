@@ -57,21 +57,10 @@ const getResourceNameSuffix = (value: string): string => {
   return normalizeResourceName(parts[parts.length - 1] ?? value);
 };
 
-const createTaskKey = (task: {
-  readonly tagname: string | null;
-  readonly wo: string | null;
-  readonly resource_name: string | null;
-}): string =>
-  [
-    normalizeText(task.tagname).toUpperCase(),
-    normalizeText(task.wo).toUpperCase(),
-    normalizeResourceName(normalizeText(task.resource_name))
-  ].join("|");
+const createTaskKey = (task: { readonly wo: string | null }): string =>
+  normalizeText(task.wo).toUpperCase();
 
-const describeTaskKey = (key: string): string => {
-  const [tagname, wo, resourceName] = key.split("|");
-  return `${tagname || "NO_TAG"} / ${wo || "NO_WO"} / ${resourceName || "NO_RESOURCE"}`;
-};
+const describeTaskKey = (key: string): string => `WO ${key || "TRỐNG"}`;
 
 const findAssignedProfileId = (
   profiles: readonly DbProfile[],
@@ -223,11 +212,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
     const incomingCountsByKey = new Map<string, number>();
     tasks.forEach((task) => {
-      const key = createTaskKey({
-        tagname: task.tagname,
-        wo: task.wo,
-        resource_name: task.resourceName
-      });
+      const key = createTaskKey({ wo: task.wo });
       incomingCountsByKey.set(key, (incomingCountsByKey.get(key) ?? 0) + 1);
     });
     const duplicateIncomingKeys = Array.from(incomingCountsByKey.entries())
@@ -237,10 +222,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       return NextResponse.json(
         {
           ok: false,
-          error: `File import co key hang muc bi trung: ${duplicateIncomingKeys
+          error: `File import có WO bị trùng: ${duplicateIncomingKeys
             .slice(0, 8)
             .map(describeTaskKey)
-            .join("; ")}. Hay kiem tra DATA truoc khi ghi database.`
+            .join("; ")}. Tagname được phép trùng nhưng WO phải duy nhất.`
         },
         { status: 409 }
       );
@@ -269,10 +254,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       return NextResponse.json(
         {
           ok: false,
-          error: `Database dang co nhieu hang muc cung key import: ${duplicateExistingKeys
+          error: `Database đang có nhiều hạng mục cùng WO: ${duplicateExistingKeys
             .slice(0, 8)
             .map(describeTaskKey)
-            .join("; ")}. Can lam sach du lieu truoc khi upsert.`
+            .join("; ")}. Cần làm sạch dữ liệu trước khi import.`
         },
         { status: 409 }
       );
@@ -288,11 +273,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       const reporterId = resolveTaskReporterId(assignedTo, reporterPeople);
       const row = toTaskRow(task, importBatchId, assignedTo, reporterId);
       const existingId = existingByKey.get(
-        createTaskKey({
-          tagname: task.tagname,
-          wo: task.wo,
-          resource_name: task.resourceName
-        })
+        createTaskKey({ wo: task.wo })
       );
       if (existingId) {
         rowsToUpdate.push({ id: existingId, ...row });

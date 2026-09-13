@@ -17,7 +17,7 @@ const normalizeRow = (row: readonly ExportCellValue[]): string[] =>
   Array.from({ length: 33 }, (_, index) => normalizeCell(row[index]));
 
 const rowKey = (row: readonly ExportCellValue[]): string =>
-  `${normalizeCell(row[3]).toUpperCase()}|${normalizeCell(row[2]).toUpperCase()}`;
+  normalizeCell(row[2]).toUpperCase();
 
 const getCancelCell = (row: readonly ExportCellValue[]): string => {
   const totalIndex = row.findIndex(
@@ -32,7 +32,7 @@ export const compareSheetSnapshot = (
   adHocTaskCount: number
 ): SheetSnapshotStats => {
   const existingByKey = new Map(
-    existingRows.filter((row) => rowKey(row) !== "|").map((row) => [rowKey(row), normalizeRow(row)])
+    existingRows.filter((row) => rowKey(row)).map((row) => [rowKey(row), normalizeRow(row)])
   );
   let newTasks = 0;
   let changedTasks = 0;

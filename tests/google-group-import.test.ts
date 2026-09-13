@@ -83,9 +83,35 @@ describe("Tháo lắp incremental import", () => {
     const result = planGroupImport([headers, row()], { ...state, tasks: [{ ...task, assigned_to: "person-2" }] });
     expect(result.preview.errors.some((issue) => issue.message.includes("nhóm khác"))).toBe(true);
   });
-  it("rejects duplicate case-insensitive keys in Sheet and database", () => {
-    expect(planGroupImport([headers, row(), row({ 2: "wo-01", 3: "tag-01" })], state).preview.hasBlockingErrors).toBe(true);
-    expect(planGroupImport([headers, row()], { ...state, tasks: [task, { ...task, id: "duplicate" }] }).preview.hasBlockingErrors).toBe(true);
+  it("rejects duplicate WO case-insensitively in Sheet and database", () => {
+    const duplicate = planGroupImport([headers, row(), row({ 2: "wo-01", 3: "ANOTHER-TAG" })], state);
+    expect(duplicate.preview.hasBlockingErrors).toBe(true);
+    expect(duplicate.preview.errors.find((issue) => issue.message.includes("WO bị trùng"))).toMatchObject({
+      row: 4,
+      cells: ["C4"]
+    });
+    expect(planGroupImport([headers, row()], { ...state, tasks: [task, { ...task, id: "duplicate", tagname: "ANOTHER-TAG" }] }).preview.hasBlockingErrors).toBe(true);
+  });
+  it("allows duplicate Tagname across different WOs and updates Tagname by WO", () => {
+    const separateWo = planGroupImport([headers, row(), row({ 2: "WO-02" })], state);
+    expect(separateWo.preview.errors).toEqual([]);
+
+    const changedTag = planGroupImport([headers, row({ 3: "TAG-CHANGED" })], state);
+    expect(changedTag.preview.errors).toEqual([]);
+    expect(changedTag.rows[0]).toMatchObject({ id: task.id, wo: task.wo, tagname: "TAG-CHANGED" });
+  });
+  it("reports the exact cells for invalid task and progress values", () => {
+    const missingTag = planGroupImport([headers, row({ 3: "" })], state).preview.errors;
+    const invalidPercent = planGroupImport([headers, row({ 13: "#REF!" })], state).preview.errors;
+
+    expect(missingTag.find((issue) => issue.message.includes("Thiếu Task Name"))).toMatchObject({
+      row: 3,
+      cells: ["D3"]
+    });
+    expect(invalidPercent.find((issue) => issue.message.includes("Tiến độ"))).toMatchObject({
+      row: 3,
+      cells: ["N3"]
+    });
   });
   it("rejects empty Sheets, shifted headers, undated totals, and duplicate date columns", () => {
     expect(planGroupImport([headers], state).preview.hasBlockingErrors).toBe(true);

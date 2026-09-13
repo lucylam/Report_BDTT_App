@@ -25,16 +25,17 @@ declare
   existing jsonb;
   outside jsonb;
   task_count integer;
+  duplicate_wo_rejected boolean := false;
 begin
   assert not has_function_privilege('anon', 'public.import_bdtt_thao_lap(uuid,text,text,text,jsonb)', 'execute'), 'anon must not execute';
   assert not has_function_privilege('authenticated', 'public.get_bdtt_thao_lap_import_state()', 'execute'), 'authenticated must not read import state directly';
   assert has_function_privilege('service_role', 'public.import_bdtt_thao_lap(uuid,text,text,text,jsonb)', 'execute'), 'service role can execute';
-  base := jsonb_build_object('id', null, 'wo', 'WO-NEW', 'tagname', 'TAG-NEW', 'task_name', 'Phát sinh độc lập',
+  base := jsonb_build_object('id', null, 'wo', 'WO-NEW', 'tagname', 'TAG-PLAN', 'task_name', 'Phát sinh độc lập',
     'nhom', 'Tháo/Lắp TB ĐK', 'don_vi', '', 'section', 'PN1', 'duration', '8 hours', 'priority', 2,
     'start_date', '2026-09-07', 'finish_date', '2026-09-08', 'resource_name', 'Đinh Văn Triển', 'nhom_truong', 'Phạm Quyết Chiến',
     'assigned_to', person, 'reporter_id', person, 'progress_mode', 'continuous', 'is_cancelled', false, 'cancel_reason', '', 'sheetRow', 3,
     'reports', jsonb_build_array(jsonb_build_object('report_date', '2026-09-07', 'percent', 50, 'note', null)));
-  existing := base || jsonb_build_object('id', '00000000-0000-4000-8000-000000000011', 'wo', 'WO-PLAN', 'tagname', 'TAG-PLAN', 'is_cancelled', true, 'cancel_reason', 'Bỏ công việc theo thực tế');
+  existing := base || jsonb_build_object('id', '00000000-0000-4000-8000-000000000011', 'wo', 'WO-PLAN', 'tagname', 'TAG-UPDATED', 'is_cancelled', true, 'cancel_reason', 'Bỏ công việc theo thực tế');
   outside := base || jsonb_build_object('id', '00000000-0000-4000-8000-000000000012', 'wo', 'WO-OTHER', 'tagname', 'TAG-OTHER');
   version := public.get_bdtt_thao_lap_import_state()->>'version';
   before_state := public.get_bdtt_thao_lap_import_state();
@@ -52,6 +53,13 @@ begin
     perform public.import_bdtt_thao_lap(actor, repeat('a',64), version, 'IMPORT_THAO_LAP', jsonb_build_array(base, outside));
     raise exception 'Expected out-of-group rejection';
   exception when insufficient_privilege then null; end;
+  begin
+    perform public.import_bdtt_thao_lap(actor, repeat('a',64), version, 'IMPORT_THAO_LAP',
+      jsonb_build_array(base, base || jsonb_build_object('tagname', 'TAG-OTHER')));
+  exception when raise_exception then
+    duplicate_wo_rejected := position('Trùng WO' in sqlerrm) > 0;
+  end;
+  assert duplicate_wo_rejected, 'same WO with another Tagname must be rejected';
   assert before_state = public.get_bdtt_thao_lap_import_state(), 'failed batch must leave all data unchanged';
   assert (select count(*) from public.bdtt_task_events) = 0, 'no partial history';
   assert (select count(*) from public.google_sheet_sync_runs where run_type='group_import') = 0, 'no partial receipt';
@@ -59,7 +67,9 @@ begin
   result := public.import_bdtt_thao_lap(actor, repeat('a',64), version, 'IMPORT_THAO_LAP', jsonb_build_array(base, existing));
   assert result->>'added' = '1' and result->>'updated' = '1' and result->>'progress' = '2' and result->>'cancelled' = '1', 'wrong import counts';
   assert (select task_source from public.tasks where wo='WO-NEW') = 'ad_hoc', 'new WO must be ad hoc';
+  assert (select tagname from public.tasks where wo='WO-NEW') = 'TAG-PLAN', 'duplicate Tagname across WOs must be accepted';
   assert (select task_source from public.tasks where wo='WO-PLAN') = 'plan', 'original source must survive';
+  assert (select tagname from public.tasks where wo='WO-PLAN') = 'TAG-UPDATED', 'Tagname must update by WO identity';
   assert (select is_cancelled from public.tasks where wo='WO-PLAN'), 'explicit cancellation';
   assert not (select is_cancelled from public.tasks where wo='WO-MISSING'), 'missing row must not cancel';
   assert (select task_name from public.tasks where wo='WO-OTHER') = 'Nhóm khác', 'other group changed';
@@ -67,6 +77,10 @@ begin
   assert (select percent=50 and note='Ghi chú gốc' and photo_paths=array['photo-a','photo-b'] and photo_path='photo-a' and submitted_by=actor
     from public.progress where task_id='00000000-0000-4000-8000-000000000011'), 'preserve notes/photos and record actor';
   assert exists(select 1 from public.bdtt_task_events where event_type='report_updated' and details->'previous_reports'->0->>'percent'='25'), 'old progress history missing';
+  begin
+    insert into public.tasks(wo, tagname, task_name) values (' wo-new ', 'ANOTHER-TAG', 'Duplicate WO');
+    raise exception 'Expected database unique WO rejection';
+  exception when unique_violation then null; end;
   before_state := public.get_bdtt_thao_lap_import_state();
   result := public.import_bdtt_thao_lap(actor, repeat('b',64), before_state->>'version', 'IMPORT_THAO_LAP', '[]');
   assert result->>'added'='0' and before_state=public.get_bdtt_thao_lap_import_state(), 'no-change import mutated data';
