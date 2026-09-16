@@ -15,7 +15,7 @@ export const SummaryPills = ({ percents }: SummaryPillsProps): React.ReactElemen
       legend
       segments={[
         { value: done, tone: "success", label: "Hoàn thành" },
-        { value: progress, tone: "accent", label: "Đang làm" },
+        { value: progress, tone: "info", label: "Đang làm" },
         { value: todo, tone: "warning", label: "Chưa làm" }
       ]}
     />

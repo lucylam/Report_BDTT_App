@@ -26,15 +26,15 @@ const priorityTone = (priority: 1 | 2 | 3): "danger" | "warning" | "neutral" => 
 
 const progressTone = (percent: number): ProgressTone => {
   if (percent >= 100) return "success";
-  if (percent > 0) return "accent";
-  return "primary";
+  if (percent > 0) return "info";
+  return "warning";
 };
 
 const progressBadgeTone = (cancelled: boolean, percent: number): BadgeTone => {
   if (cancelled) return "danger";
   if (percent >= 100) return "success";
-  if (percent > 0) return "accent";
-  return "neutral";
+  if (percent > 0) return "info";
+  return "warning";
 };
 
 export const TaskCard = ({

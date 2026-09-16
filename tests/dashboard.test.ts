@@ -147,6 +147,93 @@ describe("buildExcelDashboard", () => {
     expect(dcs?.rows[0]?.name).toBe("VÕ QUANG MINH");
   });
 
+  it("tổng hợp đủ năm cấp Nhóm, Phân nhóm, nhóm chuyên môn, Đơn vị và Section", () => {
+    const leadA = "HTĐK_VÕ QUANG MINH";
+    const leadB = "TBCH_LÝ NGỌC LĨNH";
+    const data = makeData(
+      [
+        makeTask({
+          id: "five-levels-a",
+          assignedTo: "user-1",
+          nhomTruong: leadA,
+          nhom: "DK-DCS",
+          donVi: "UTILITY",
+          section: "41000"
+        }),
+        makeTask({
+          id: "five-levels-b",
+          assignedTo: "user-2",
+          nhomTruong: leadB,
+          nhom: "DK-VALVE",
+          donVi: "UREA",
+          section: "21000"
+        })
+      ],
+      [
+        makeProgress("five-levels-a", 100),
+        makeProgress("five-levels-b", 50, reportDate, "user-2")
+      ],
+      [
+        {
+          ...makeProfile("user-1"),
+          orgGroup: "TB HT Điều khiển",
+          subgroup: "PN1"
+        },
+        {
+          ...makeProfile("user-2"),
+          orgGroup: "TB Chấp hành",
+          subgroup: "PN1"
+        }
+      ]
+    );
+
+    const dashboard = buildExcelDashboard(data);
+
+    expect(dashboard.byLead).toEqual([
+      expect.objectContaining({ name: leadA, total: 1, percent: 100 }),
+      expect.objectContaining({ name: leadB, total: 1, percent: 50 })
+    ]);
+    expect(dashboard.bySubgroup).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "TB HT Điều khiển · PN1", total: 1, percent: 100 }),
+      expect.objectContaining({ name: "TB Chấp hành · PN1", total: 1, percent: 50 })
+    ]));
+    expect(dashboard.subgroupsByLead).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: "HT Điều khiển",
+        context: leadA.replace("_", " "),
+        rows: [expect.objectContaining({ name: "PN1", total: 1, percent: 100 })]
+      }),
+      expect.objectContaining({
+        name: "TB Chấp hành",
+        context: leadB.replace("_", " "),
+        rows: [expect.objectContaining({ name: "PN1", total: 1, percent: 50 })]
+      })
+    ]));
+    expect(dashboard.bySpecialtyGroup).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "DK-DCS", total: 1, percent: 100 }),
+      expect.objectContaining({ name: "DK-VALVE", total: 1, percent: 50 })
+    ]));
+    expect(dashboard.byOwnerUnit).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "UTILITY", total: 1, percent: 100 }),
+      expect.objectContaining({ name: "UREA", total: 1, percent: 50 })
+    ]));
+    expect(dashboard.bySection).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "41000", total: 1, percent: 100 }),
+      expect.objectContaining({ name: "21000", total: 1, percent: 50 })
+    ]));
+    expect(dashboard.sectionsByOwnerUnit).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: "UTILITY",
+        rows: [expect.objectContaining({ name: "41000", total: 1, percent: 100 })]
+      }),
+      expect.objectContaining({
+        name: "UREA",
+        rows: [expect.objectContaining({ name: "21000", total: 1, percent: 50 })]
+      })
+    ]));
+    expect(dashboard.bySectionAndLead.find((row) => row.name === "41000")?.totals[leadA]).toBe(1);
+  });
+
   it("task hủy xuất hiện trong status nhưng không làm lệch completion totals", () => {
     const lead = "TB ĐO_NGUYỄN THANH HẢI";
     const data = makeData(
@@ -228,6 +315,160 @@ describe("buildExcelDashboard", () => {
     expect(unitLead?.totals[lead]).toBe(2);
     expect(dcs?.rows).toHaveLength(1);
     expect(dcs?.rows[0]).toMatchObject({ total: 2, percent: 75 });
+  });
+
+  it("không tạo Nhóm riêng từ người phụ trách ngoài bốn Nhóm trưởng chính", () => {
+    const lead = "TBCH_LÝ NGỌC LĨNH";
+    const data = makeData(
+      [
+        makeTask({ id: "tbch", nhomTruong: "Lý Ngọc Lĩnh", assignedTo: "user-cung" }),
+        makeTask({
+          id: "hau-can-vinh",
+          nhom: "Hậu cần & Tổng hợp",
+          nhomTruong: "Lâm Phùng Phước Vinh",
+          assignedTo: "user-vinh"
+        })
+      ],
+      [makeProgress("tbch", 50), makeProgress("hau-can-vinh", 100)],
+      [
+        {
+          ...makeProfile("user-cung"),
+          orgGroup: "TB Chấp hành",
+          subgroup: "PN1"
+        },
+        {
+          ...makeProfile("user-vinh"),
+          username: "vinhlpp",
+          fullName: "Lâm Phùng Phước Vinh",
+          resourceName: "Lâm Phùng Phước Vinh",
+          orgGroup: "Hậu cần & Tổng hợp",
+          subgroup: ""
+        }
+      ]
+    );
+
+    const dashboard = buildExcelDashboard(data);
+
+    expect(dashboard.overall).toMatchObject({ total: 2, percent: 75 });
+    expect(dashboard.leadNames).toEqual([lead]);
+    expect(dashboard.byLead).toEqual([
+      expect.objectContaining({ name: lead, total: 1, percent: 50 })
+    ]);
+    expect(dashboard.leadStatus.map((row) => row.name)).not.toContain(
+      "Lâm Phùng Phước Vinh"
+    );
+    expect(dashboard.subgroupsByLead).toEqual([
+      expect.objectContaining({
+        name: "TB Chấp hành",
+        rows: [expect.objectContaining({ name: "PN1", total: 1, percent: 50 })]
+      })
+    ]);
+  });
+
+  it("tạo đủ bảy chart chuyên môn và dữ liệu lọc Đơn vị–Section", () => {
+    const leadA = "HTĐK_VÕ QUANG MINH";
+    const leadB = "TBCH_LÝ NGỌC LĨNH";
+    const data = makeData(
+      [
+        makeTask({ id: "dcs", nhom: "DK-DCS", resourceName: "LÊ BÁ TỨ", nhomTruong: leadA }),
+        makeTask({ id: "plc", nhom: "DK-PLC", resourceName: "LÊ BÁ TỨ", nhomTruong: leadA }),
+        makeTask({
+          id: "valve",
+          nhom: "DK-VALVE",
+          resourceName: "HỮU VĂN CƯNG",
+          nhomTruong: "Lý Ngọc Lĩnh",
+          donVi: "UREA",
+          section: "21000"
+        }),
+        makeTask({ id: "thao-lap", nhom: "DK-T.CA", resourceName: "ĐINH VĂN TRIỂN" }),
+        makeTask({ id: "amll", nhom: "DK- AMLL", resourceName: "CÙ MINH THÀNH" }),
+        makeTask({ id: "bently", nhom: "DK-BENT", resourceName: "NGUYỄN VĂN NGÀ" }),
+        makeTask({ id: "nhiet", nhom: "DK-NHIET", resourceName: "ĐÀM TRUNG HIẾU" }),
+        makeTask({ id: "pi", nhom: "DK-HC", resourceName: "TRẦN CHÍ BẰNG" })
+      ],
+      [
+        makeProgress("dcs", 100),
+        makeProgress("plc", 50),
+        makeProgress("valve", 75)
+      ]
+    );
+
+    const dashboard = buildExcelDashboard(data);
+
+    expect(dashboard.operationalGroups.map((group) => group.title)).toEqual([
+      "Nhóm thiết bị Hệ thống điều khiển",
+      "Nhóm thiết bị Chấp hành",
+      "Nhóm Tháo lắp TBĐK",
+      "Nhóm TB Đo - Áp, Mức, Lưu lượng",
+      "Nhóm TB Đo - Bently",
+      "Nhóm TB Đo - Nhiệt độ",
+      "Nhóm TB Đo - PI"
+    ]);
+    expect(dashboard.operationalGroups[0]?.rows).toEqual([
+      expect.objectContaining({ name: "LÊ BÁ TỨ", total: 2, percent: 75 })
+    ]);
+    expect(dashboard.byUnitSectionAndLead).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        unit: "UREA",
+        section: "21000",
+        values: expect.objectContaining({ [leadB]: 75 }),
+        totals: expect.objectContaining({ [leadB]: 1 })
+      })
+    ]));
+  });
+
+  it("theo dõi sáu tag Van và pipeline lũy kế của Hữu Văn Cưng", () => {
+    const data = makeData(
+      [
+        makeTask({
+          id: "voting-75",
+          tagname: "06HV-1005",
+          nhom: "DK-VALVE",
+          resourceName: "HỮU VĂN CƯNG",
+          nhomTruong: "Lý Ngọc Lĩnh"
+        }),
+        makeTask({
+          id: "voting-100",
+          tagname: "06HV-1008",
+          nhom: "DK-VALVE",
+          resourceName: "HỮU VĂN CƯNG",
+          nhomTruong: "Lý Ngọc Lĩnh"
+        }),
+        makeTask({
+          id: "other-valve",
+          tagname: "TAG-KHÁC",
+          nhom: "DK-VALVE",
+          resourceName: "HỮU VĂN CƯNG",
+          nhomTruong: "Lý Ngọc Lĩnh"
+        })
+      ],
+      [
+        makeProgress("voting-75", 75),
+        makeProgress("voting-100", 100),
+        makeProgress("other-valve", 25)
+      ]
+    );
+
+    const dashboard = buildExcelDashboard(data);
+
+    expect(dashboard.votingValveRows).toHaveLength(6);
+    expect(dashboard.votingValveRows[0]).toMatchObject({
+      name: "06HV-1005",
+      total: 1,
+      percent: 75
+    });
+    expect(dashboard.votingValveRows[5]).toMatchObject({
+      name: "04TV-2577",
+      total: 0,
+      percent: 0
+    });
+    expect(dashboard.valveMilestones).toEqual([
+      expect.objectContaining({ threshold: 20, count: 3, total: 3, percent: 100 }),
+      expect.objectContaining({ threshold: 30, count: 2, total: 3, percent: 67 }),
+      expect.objectContaining({ threshold: 50, count: 2, total: 3, percent: 67 }),
+      expect.objectContaining({ threshold: 70, count: 2, total: 3, percent: 67 }),
+      expect.objectContaining({ threshold: 90, count: 1, total: 3, percent: 33 })
+    ]);
   });
 
   it("tạo card động cho mọi nhóm có dữ liệu ở cột E", () => {

@@ -150,7 +150,7 @@ export const TaskReportTimeline = ({
 
               <div className="min-w-0 flex-1 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-3">
                 <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                  <Badge solid tone={item.percent >= 100 ? "success" : "accent"}>
+                  <Badge solid tone={item.percent >= 100 ? "success" : item.percent > 0 ? "info" : "warning"}>
                     {item.percent}%
                   </Badge>
                   <time

@@ -1,26 +1,19 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
-} from "recharts";
+import { useState } from "react";
+import type { EChartsOption } from "echarts";
 import { DashboardExportButton } from "@/components/admin/DashboardExportButton";
-import { Badge, Icon, type IconName } from "@/components/ui";
+import { ExcelLikeChart } from "@/components/admin/ExcelLikeChart";
+import { Icon, type IconName } from "@/components/ui";
 import type {
   CompletionRow,
+  CompletionBreakdownGroup,
   ExcelDashboardData,
   LeadStatusRow,
+  MilestoneProgressRow,
   ResourceGroupDashboard,
-  UnitLeadRow
+  UnitLeadRow,
+  UnitSectionLeadRow
 } from "@/lib/dashboard";
 import { cn } from "@/lib/ui";
 
@@ -31,70 +24,90 @@ const statusColors = {
   notStarted: "var(--chart-warning)"
 } as const;
 const doneFill = "var(--chart-done-strong)";
-const remainingFill = "var(--chart-remaining-strong)";
-const gridStroke = "var(--chart-grid)";
-const softGridProps = {
-  stroke: gridStroke,
-  strokeDasharray: "0",
-  strokeOpacity: 0.52
-};
-const softAxisProps = {
-  axisLine: { stroke: gridStroke, strokeOpacity: 0.72 },
-  tick: {
-    fill: "var(--text-muted)",
-    fontFamily: "var(--font-mono)",
-    fontSize: 14,
-    fontWeight: 500
-  },
-  tickLine: false
-} as const;
-const categoryAxisProps = {
-  ...softAxisProps,
-  tick: {
-    fill: "var(--foreground)",
-    fontFamily: "var(--font-sans)",
-    fontSize: 14,
-    fontWeight: 500
-  }
-} as const;
-const legendTextStyle = {
-  color: "var(--foreground)",
-  fontFamily: "var(--font-sans)",
-  fontSize: 14,
-  fontWeight: 500,
-  lineHeight: "18px"
-} as const;
-const tooltipStyle = {
-  backgroundColor: "var(--surface)",
-  border: "1px solid var(--border-strong)",
-  borderRadius: "var(--radius-field)",
-  boxShadow: "var(--shadow-floating)",
-  fontFamily: "var(--font-sans)",
-  fontSize: "15px"
-} as const;
-const tooltipLabelStyle = {
-  color: "var(--foreground)",
-  fontWeight: 500
-} as const;
-const tooltipItemStyle = {
-  color: "var(--text-muted)",
-  fontWeight: 400
-} as const;
+const doneText = "var(--chart-done-text)";
+const pnGroupDefinitions = [
+  { key: "htdk", name: "HT Điều khiển" },
+  { key: "tb-do", name: "TB Đo lường" },
+  { key: "tbch", name: "TB Chấp hành" },
+  { key: "thao-lap", name: "Tháo/Lắp TBĐK" }
+] as const;
+type PnGroupKey = (typeof pnGroupDefinitions)[number]["key"];
 const normalizeChartLabel = (value: unknown): string =>
   String(value ?? "")
     .replace(/_+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-const formatAxisName = (value: unknown): string => {
-  return normalizeChartLabel(value);
+
+const chartTextStyle = {
+  color: "var(--foreground)",
+  fontFamily: "var(--font-sans)",
+  fontSize: 14,
+  fontWeight: 600
+} as const;
+
+const excelTooltip = (valueLabel = "Giá trị"): NonNullable<EChartsOption["tooltip"]> => ({
+  appendToBody: true,
+  backgroundColor: "var(--surface)",
+  borderColor: "var(--border-strong)",
+  borderWidth: 1,
+  confine: true,
+  extraCssText: "box-shadow: var(--shadow-floating); border-radius: var(--radius-field);",
+  textStyle: chartTextStyle,
+  trigger: "item",
+  valueFormatter: (value) => `${formatNumber(Number(value))} ${valueLabel}`
+});
+
+const percentAxis = {
+  axisLabel: {
+    ...chartTextStyle,
+    color: "var(--text-muted)",
+    formatter: "{value}%"
+  },
+  axisLine: { lineStyle: { color: "var(--chart-grid)" } },
+  axisTick: { show: false },
+  max: 100,
+  min: 0,
+  splitLine: { lineStyle: { color: "var(--chart-grid)", type: "solid" as const } },
+  type: "value" as const
 };
-const getCategoryAxisWidth = (
-  values: readonly unknown[],
-  minimum = 96,
-  maximum = 240
-): number => {
-  const longest = Math.max(0, ...values.map((value) => normalizeChartLabel(value).length));
-  return Math.max(minimum, Math.min(maximum, Math.ceil(longest * 7 + 18)));
+
+const categoryAxis = (data: readonly string[], rotate = 0) => ({
+  axisLabel: {
+    ...chartTextStyle,
+    color: "var(--foreground)",
+    formatter: (value: string) => wrapChartLabel(value, rotate ? 16 : 22),
+    interval: 0,
+    lineHeight: 18,
+    rotate
+  },
+  axisLine: { lineStyle: { color: "var(--chart-grid)" } },
+  axisTick: { alignWithLabel: true, lineStyle: { color: "var(--chart-grid)" } },
+  data: [...data],
+  type: "category" as const
+});
+
+const leadCategoryAxis = (data: readonly string[]) => ({
+  ...categoryAxis(data),
+  axisLabel: {
+    ...categoryAxis(data).axisLabel,
+    fontSize: 12,
+    formatter: (value: string) => wrapChartLabel(value, 12),
+    lineHeight: 16
+  }
+});
+
+const wrapChartLabel = (value: string, maximumLineLength: number): string => {
+  const words = normalizeChartLabel(value).split(" ");
+  const lines: string[] = [];
+  words.forEach((word) => {
+    const current = lines.at(-1) ?? "";
+    if (!current || `${current} ${word}`.length > maximumLineLength) {
+      lines.push(word);
+      return;
+    }
+    lines[lines.length - 1] = `${current} ${word}`;
+  });
+  return lines.join("\n");
 };
 
 type MetricTone = "attention" | "done" | "neutral" | "progress" | "remaining" | "worker";
@@ -139,7 +152,7 @@ export const ProgressCharts = ({
               Báo cáo ngắn tiến độ BDTT {reportYear} · Tổ TB ĐL&ĐK
             </h2>
             <p className="mt-1 text-xs font-medium text-[var(--text-muted)] [overflow-wrap:anywhere] lg:text-sm">
-              Dữ liệu lũy kế toàn bộ kỳ · Mỗi hạng mục dùng mức tiến độ cao nhất đã ghi nhận.
+              Dữ liệu lũy kế · Mức tiến độ cao nhất của từng hạng mục.
             </p>
           </div>
           <DashboardExportButton
@@ -149,40 +162,43 @@ export const ProgressCharts = ({
         <ExecutiveBoard dashboard={dashboard} />
       </header>
 
-      <section className="grid min-w-0 items-stretch gap-3 xl:grid-cols-[minmax(340px,2fr)_minmax(0,3fr)]">
-        <OverallPie executive={dashboard.executive} reportYear={reportYear} row={dashboard.overall} />
-        <UnitProgressDotPlot
-          data={dashboard.byOwnerUnit}
-          subtitle="Vị trí ô vuông là % hoàn thành; số bên phải cho biết khối lượng đã làm trên tổng kế hoạch."
-          title="Vị thế tiến độ theo đơn vị chủ quản"
+      <section className="grid min-w-0 items-start gap-3 xl:grid-cols-[minmax(520px,1.15fr)_minmax(0,0.85fr)]">
+        <OverallPie
+          chartNumber={1}
+          executive={dashboard.executive}
+          reportYear={reportYear}
+          row={dashboard.overall}
         />
+        <OwnerUnitProgressChart chartNumber={2} data={dashboard.byOwnerUnit} />
       </section>
 
-      <section className="grid min-w-0 items-stretch gap-3 xl:grid-cols-2">
-        <UnitLeadChart
-          data={dashboard.byOwnerUnitAndLead}
+      <section className="grid min-w-0 items-stretch gap-3 xl:grid-cols-[minmax(360px,0.9fr)_minmax(0,1.1fr)]">
+        <LeadStatusColumns chartNumber={3} data={dashboard.leadStatus} />
+        <UnitSectionLeadChart
+          chartNumber={4}
           leadNames={dashboard.leadNames}
-          title="Ma trận tiến độ đơn vị × nhóm trưởng"
+          sectionRows={dashboard.byUnitSectionAndLead}
+          unitRows={dashboard.byOwnerUnitAndLead}
         />
-        <LeadStatusChart data={dashboard.leadStatus} />
       </section>
 
-      <section className="glass-card min-w-0 rounded-[var(--radius-card)] p-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <SectionTitle
-            subtitle="Nhóm task lấy trực tiếp từ cột E (Nhóm) của Google Sheet. Mỗi card hiển thị Top người thực hiện theo cột L."
-            title="Chi tiết theo nhóm task"
-          />
-          <span className="inline-flex rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-1 text-xs font-medium text-[var(--text-muted)] ring-1 ring-[var(--border)] [overflow-wrap:anywhere]">
-            Nguồn: DATA!E:E
-          </span>
-        </div>
-        <div className="mt-3 grid min-w-0 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-          {dashboard.resourceGroups.map((group) => (
-            <ResourceGroupChart group={group} key={group.key} />
+      <SubgroupProgressChart chartNumber={5} groups={dashboard.subgroupsByLead} />
+
+      <section className="glass-card min-w-0 rounded-[var(--radius-card)] p-4 sm:p-5">
+        <SectionTitle
+          subtitle="Hạng mục quy đổi theo % hoàn thành."
+          title="Tiến độ theo Nhóm và Phân nhóm chuyên môn"
+        />
+        <div className="mt-4 grid min-w-0 gap-3 xl:grid-cols-2">
+          {dashboard.operationalGroups.map((group, index) => (
+            <div className="min-w-0" key={group.key}>
+              <OperationalGroupChart chartNumber={index + 6} group={group} />
+            </div>
           ))}
         </div>
       </section>
+
+      <ValveMilestoneChart chartNumber={13} rows={dashboard.valveMilestones} />
 
     </section>
   );
@@ -223,11 +239,6 @@ const ExecutiveBoard = ({
         />
       </div>
 
-      <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)]">
-        <ExecutiveInsight dashboard={dashboard} />
-        <AttentionOwnerUnits rows={dashboard.attentionOwnerUnits} />
-        <AttentionLeads rows={dashboard.attentionLeads} />
-      </div>
     </div>
   );
 };
@@ -258,41 +269,32 @@ const Metric = ({
 );
 
 const ExecutiveInsight = ({
-  dashboard
+  executive,
+  overall
 }: {
-  readonly dashboard: ExcelDashboardData;
+  readonly executive: ExcelDashboardData["executive"];
+  readonly overall: CompletionRow;
 }): React.ReactElement => {
-  const { executive, overall } = dashboard;
   const hasUpdates = executive.updatedTasks > 0;
-  const title = hasUpdates ? "Tình hình điều hành" : "Chưa có cập nhật tiến độ";
   const message = hasUpdates
-    ? `Đã ghi nhận lũy kế ${formatNumber(executive.updatedTasks)} hạng mục có tiến độ trong toàn bộ kỳ. Tiến độ quy đổi toàn tổ đạt ${overall.percent}%.`
-    : `Dashboard đang phản ánh kế hoạch gốc: ${formatNumber(executive.activeTasks)} hạng mục chưa có record tiến độ. Khi worker bấm Cập nhật, khu vực này sẽ tự chuyển sang báo cáo điều hành.`;
+    ? `${formatNumber(executive.updatedTasks)} hạng mục đã cập nhật · Tiến độ quy đổi ${overall.percent}%.`
+    : `${formatNumber(executive.activeTasks)} hạng mục chưa có cập nhật tiến độ.`;
 
   return (
-    <section className="rounded-[var(--radius-card)] bg-[var(--surface-muted)] p-4 ring-1 ring-[var(--border)]">
-      <div className="flex items-start gap-3">
-        <span
-          className={cn(
-            "grid h-10 w-10 shrink-0 place-items-center rounded-[var(--radius-field)] ring-1",
-            hasUpdates
-              ? "bg-[var(--primary-soft)] text-[var(--primary-strong)] ring-[var(--primary-soft)]"
-              : "bg-[var(--accent-soft)] text-[var(--accent-strong)] ring-[var(--accent-soft)]"
-          )}
-        >
+    <div className="min-w-0">
+      <div className="flex items-center gap-2">
+        <span className="text-[var(--primary-strong)]">
           <Icon name={hasUpdates ? "shield" : "bell"} />
         </span>
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold">{title}</h3>
-          <p className="mt-1 text-sm font-medium leading-6 text-[var(--text-muted)] [overflow-wrap:anywhere]">{message}</p>
-        </div>
+        <h3 className="text-sm font-semibold">Tình hình điều hành</h3>
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-        <MiniStat label="Tổng active" value={executive.activeTasks} />
+      <p className="mt-1 text-sm font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">{message}</p>
+      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+        <MiniStat label="Tổng WO" value={executive.activeTasks} />
         <MiniStat label="Hoàn thành" value={executive.completedTasks} />
         <MiniStat label="Hủy" value={executive.cancelledTasks} />
       </div>
-    </section>
+    </div>
   );
 };
 
@@ -303,129 +305,27 @@ const MiniStat = ({
   readonly label: string;
   readonly value: number;
 }): React.ReactElement => (
-  <div className="rounded-[var(--radius-field)] bg-[var(--surface)] px-3 py-2 ring-1 ring-[var(--border)]">
+  <div className="border-l-2 border-[var(--line)] px-3 py-1">
     <p className="text-[10px] font-normal uppercase text-[var(--text-soft)]">{label}</p>
     <p className="mt-1 text-lg font-semibold tabular-nums">{formatNumber(value)}</p>
   </div>
 );
 
-const AttentionOwnerUnits = ({
-  rows
-}: {
-  readonly rows: readonly CompletionRow[];
-}): React.ReactElement => (
-  <AttentionCard
-    emptyText="Tất cả đơn vị đã hoàn thành."
-    rows={rows}
-    title="Đơn vị cần ưu tiên"
-  >
-    {(row) => (
-      <AttentionRow
-        key={row.name}
-        label={row.name}
-        meta={`${formatNumber(row.remaining)} còn lại · ${row.percent}% hoàn thành`}
-        percent={row.percent}
-      />
-    )}
-  </AttentionCard>
-);
-
-const AttentionLeads = ({
-  rows
-}: {
-  readonly rows: readonly LeadStatusRow[];
-}): React.ReactElement => (
-  <AttentionCard
-    emptyText="Không còn nhóm nào cần bám tiến độ."
-    rows={rows}
-    title="Nhóm cần bám"
-  >
-    {(row) => {
-      const open = row.notStarted + row.inProgress;
-      const percent = row.total === 0 ? 0 : Math.round((row.completed / row.total) * 100);
-      return (
-        <AttentionRow
-          key={row.name}
-          label={row.name}
-          meta={`${formatNumber(open)} chưa xong · ${formatNumber(row.completed)} hoàn thành`}
-          percent={percent}
-        />
-      );
-    }}
-  </AttentionCard>
-);
-
-const AttentionCard = <T,>({
-  children,
-  emptyText,
-  rows,
-  title
-}: {
-  readonly children: (row: T) => React.ReactNode;
-  readonly emptyText: string;
-  readonly rows: readonly T[];
-  readonly title: string;
-}): React.ReactElement => (
-  <section className="rounded-[var(--radius-card)] bg-[var(--surface)] p-4 ring-1 ring-[var(--border)]">
-    <div className="flex items-center justify-between gap-3">
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <Badge tone="accent">Top {Math.min(rows.length, 5)}</Badge>
-    </div>
-    {rows.length > 0 ? (
-      <div className="mt-3 grid gap-2">{rows.slice(0, 5).map((row) => children(row))}</div>
-    ) : (
-      <p className="mt-3 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3 text-sm font-medium text-[var(--text-muted)]">
-        {emptyText}
-      </p>
-    )}
-  </section>
-);
-
-const AttentionRow = ({
-  label,
-  meta,
-  percent
-}: {
-  readonly label: string;
-  readonly meta: string;
-  readonly percent: number;
-}): React.ReactElement => (
-  <div className="min-w-0 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-3">
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold">{label}</p>
-        <p className="mt-0.5 text-xs font-medium text-[var(--text-muted)]">{meta}</p>
-      </div>
-      <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--accent-strong)]">
-        {percent}%
-      </span>
-    </div>
-    {percent > 0 ? <MiniProgressBar percent={percent} /> : null}
-  </div>
-);
-
-const MiniProgressBar = ({ percent }: { readonly percent: number }): React.ReactElement => (
-  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--line)]">
-    <div
-      className="h-full rounded-full bg-[var(--primary-strong)]"
-      style={{ width: `${Math.max(0, Math.min(100, percent))}%` }}
-    />
-  </div>
-);
-
 const ChartShell = ({
+  chartNumber,
   children,
   subtitle,
   title
 }: {
+  readonly chartNumber?: number;
   readonly children: React.ReactNode;
   readonly subtitle?: string;
   readonly title: string;
 }): React.ReactElement => {
   return (
-    <section className="glass-card flex h-full min-w-0 flex-col rounded-[var(--radius-card)] p-4 sm:p-5">
+    <section className="glass-card flex min-w-0 flex-col rounded-[var(--radius-card)] p-4 sm:p-5">
       <div>
-        <SectionTitle subtitle={subtitle} title={title} />
+        <SectionTitle chartNumber={chartNumber} subtitle={subtitle} title={title} />
       </div>
       {children}
     </section>
@@ -433,9 +333,11 @@ const ChartShell = ({
 };
 
 const SectionTitle = ({
+  chartNumber,
   subtitle,
   title
 }: {
+  readonly chartNumber?: number;
   readonly subtitle?: string;
   readonly title: string;
 }): React.ReactElement => (
@@ -444,21 +346,28 @@ const SectionTitle = ({
       <Icon name="chart" />
     </span>
     <div className="min-w-0">
+      {chartNumber ? (
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--primary-strong)]">
+          Biểu đồ {String(chartNumber).padStart(2, "0")}
+        </p>
+      ) : null}
       <h2 className="text-balance text-[15px] font-semibold leading-5 sm:text-base">
         {title}
       </h2>
       {subtitle ? (
-        <p className="mt-1 text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">{subtitle}</p>
+        <p className="mt-1 text-sm font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">{subtitle}</p>
       ) : null}
     </div>
   </div>
 );
 
 const OverallPie = ({
+  chartNumber,
   executive,
   reportYear,
   row
 }: {
+  readonly chartNumber: number;
   readonly executive: ExcelDashboardData["executive"];
   readonly reportYear: string;
   readonly row: CompletionRow;
@@ -466,64 +375,69 @@ const OverallPie = ({
   if (row.total <= 0) {
     return (
       <EmptyChart
+        chartNumber={chartNumber}
         subtitle="Chưa có hạng mục để tính tiến độ tổng."
         title={`Tiến độ BDTT ${reportYear} · Tổ TB ĐL&ĐK`}
       />
     );
   }
-  const chartData = [
-    { name: "Đã thực hiện", value: row.done },
-    { name: "Còn lại", value: row.remaining }
-  ];
+  const option: EChartsOption = {
+    animationDuration: 500,
+    aria: { enabled: true },
+    color: [doneFill, "var(--chart-remaining-soft)"],
+    legend: {
+      bottom: 0,
+      icon: "square",
+      itemHeight: 12,
+      itemWidth: 12,
+      textStyle: chartTextStyle
+    },
+    series: [
+      {
+        avoidLabelOverlap: true,
+        center: ["50%", "45%"],
+        data: [
+          { name: "Đã thực hiện", value: row.done },
+          { name: "Còn lại", value: row.remaining }
+        ],
+        emphasis: { scale: true, scaleSize: 5 },
+        itemStyle: {
+          borderColor: "var(--surface)",
+          borderRadius: 5,
+          borderWidth: 3
+        },
+        label: { show: false },
+        labelLine: { show: false },
+        radius: ["55%", "78%"],
+        type: "pie"
+      }
+    ],
+    tooltip: excelTooltip("Hạng mục quy đổi")
+  };
   return (
     <ChartShell
-      subtitle={`${formatNumber(row.total)} hạng mục · ${formatNumber(executive.updatedTasks)} hạng mục đã có cập nhật`}
+      chartNumber={chartNumber}
       title={`Tiến độ BDTT ${reportYear} · Tổ TB ĐL&ĐK`}
     >
-      <div className="grid flex-1 content-center gap-4 pt-4 sm:grid-cols-[minmax(13rem,0.9fr)_minmax(0,1.1fr)] sm:items-center">
-        <div
-          aria-label={`Tiến độ hoàn thành trung bình ${row.percent}%`}
-          className="relative mx-auto h-[240px] w-full max-w-[280px] rounded-[var(--radius-card)] bg-[var(--surface-muted)] p-3 ring-1 ring-[var(--border)]"
-          role="img"
-        >
-          <ResponsiveContainer height="100%" width="100%">
-            <PieChart>
-              <Pie
-                cornerRadius={8}
-                cx="50%"
-                cy="50%"
-                data={chartData}
-                dataKey="value"
-                endAngle={-270}
-                innerRadius={70}
-                nameKey="name"
-                outerRadius={92}
-                paddingAngle={2}
-                startAngle={90}
-                stroke="var(--surface-muted)"
-                strokeWidth={3}
-              >
-                <Cell fill={doneFill} fillOpacity={1} />
-                <Cell fill="var(--chart-remaining-soft)" fillOpacity={1} />
-              </Pie>
-              <Tooltip
-                contentStyle={tooltipStyle}
-                formatter={(value) => [formatNumber(Number(value)), "Hạng mục quy đổi"]}
-                itemStyle={tooltipItemStyle}
-                labelStyle={tooltipLabelStyle}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-            <p className="text-4xl font-semibold tabular-nums text-[var(--primary-strong)]">{row.percent}%</p>
-            <p className="mt-1 text-xs font-semibold text-[var(--text-muted)]">Hoàn thành trung bình</p>
+      <div className="grid content-center gap-5 pt-3 sm:grid-cols-[minmax(17rem,1fr)_minmax(18rem,1fr)] sm:items-center">
+        <div className="relative mx-auto w-full max-w-[390px]">
+          <ExcelLikeChart
+            ariaLabel={`Tiến độ hoàn thành ${row.percent}%`}
+            className="min-h-[320px]"
+            height={320}
+            option={option}
+          />
+          <div className="pointer-events-none absolute inset-x-0 top-[45%] flex -translate-y-1/2 flex-col items-center justify-center px-2 text-center">
+            <p className="text-4xl font-semibold tabular-nums text-[var(--primary-strong)] sm:text-5xl">{row.percent}%</p>
+            <p className="mt-1 whitespace-nowrap text-base font-semibold text-[var(--text-muted)]">Hoàn thành</p>
           </div>
         </div>
-        <div className="mobile-adaptive-grid grid grid-cols-2 gap-2">
-          <ChartMetric label="Tổng hạng mục" tone="neutral" value={row.total} />
-          <ChartMetric label="Đã thực hiện" tone="done" value={row.done} />
-          <ChartMetric label="Còn lại" tone="remaining" value={row.remaining} />
-          <ChartMetric label="Đã cập nhật" tone="progress" value={executive.updatedTasks} />
+        <div className="min-w-0">
+          <ExecutiveInsight executive={executive} overall={row} />
+          <div className="mobile-adaptive-grid mt-4 grid grid-cols-2 gap-3">
+            <ChartMetric label="Đã thực hiện" tone="done" value={row.done} />
+            <ChartMetric label="Còn lại" tone="remaining" value={row.remaining} />
+          </div>
         </div>
       </div>
     </ChartShell>
@@ -536,10 +450,10 @@ const ChartMetric = ({
   value
 }: {
   readonly label: string;
-  readonly tone: "done" | "neutral" | "progress" | "remaining";
+  readonly tone: "done" | "remaining";
   readonly value: number;
 }): React.ReactElement => (
-  <div className="rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[var(--shadow-soft-sm)]">
+  <div className="border-l-2 border-[var(--line)] px-3 py-1">
     <p className="text-xs font-medium leading-4 text-[var(--text-muted)]">{label}</p>
     <p className={cn("mt-2 text-xl font-semibold tabular-nums", metricToneClasses[tone])}>
       {formatNumber(value)}
@@ -547,509 +461,585 @@ const ChartMetric = ({
   </div>
 );
 
-const UnitProgressDotPlot = ({
-  data,
-  subtitle,
-  title
-}: {
-  readonly data: readonly CompletionRow[];
-  readonly subtitle: string;
-  readonly title: string;
-}): React.ReactElement => {
-  const rows = data.filter((row) => row.total > 0).slice(0, 10);
-  if (rows.length === 0) return <EmptyChart subtitle={subtitle} title={title} />;
-
-  const total = rows.reduce((sum, row) => sum + row.total, 0);
-  const done = rows.reduce((sum, row) => sum + row.done, 0);
-  const overallPercent = total === 0 ? 0 : Math.round((done / total) * 100);
-
-  return (
-    <ChartShell subtitle={subtitle} title={title}>
-      <div
-        aria-label={`So sánh phần trăm hoàn thành của ${rows.length} đơn vị. Mức hoàn thành chung là ${overallPercent}%.`}
-        className="mt-4 min-w-0"
-        role="img"
-      >
-        <div className="hidden grid-cols-[minmax(7rem,1fr)_minmax(10rem,2.5fr)_auto] items-center gap-3 px-3 text-[11px] font-medium text-[var(--text-muted)] sm:grid">
-          <span>Đơn vị</span>
-          <div className="grid grid-cols-5 font-mono tabular-nums">
-            {[0, 25, 50, 75, 100].map((tick) => (
-              <span
-                className={tick === 100 ? "text-right" : tick === 0 ? "text-left" : "text-center"}
-                key={tick}
-              >
-                {tick}%
-              </span>
-            ))}
-          </div>
-          <span className="min-w-[5.5rem] text-right">Đã làm / Tổng</span>
-        </div>
-
-        <div className="mt-2 grid gap-2">
-          {rows.map((row) => {
-            const markerPosition = Math.max(1, Math.min(99, row.percent));
-            return (
-              <article
-                className="grid min-w-0 gap-2 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface-muted)] p-3 sm:grid-cols-[minmax(7rem,1fr)_minmax(10rem,2.5fr)_auto] sm:items-center sm:gap-3"
-                key={row.name}
-              >
-                <div className="flex min-w-0 items-center justify-between gap-2 sm:block">
-                  <span className="min-w-0 break-words text-sm font-semibold leading-5">{row.name}</span>
-                  <span className="shrink-0 text-xs font-semibold tabular-nums text-[var(--primary-strong)] sm:hidden">
-                    {row.percent}%
-                  </span>
-                </div>
-                <div className="relative h-7" title={`${row.name}: ${row.percent}%`}>
-                  <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[var(--line-soft)]" />
-                  {[0, 25, 50, 75, 100].map((tick) => (
-                    <span
-                      aria-hidden="true"
-                      className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-[var(--border-strong)]"
-                      key={tick}
-                      style={{ left: `${tick}%` }}
-                    />
-                  ))}
-                  <span
-                    aria-hidden="true"
-                    className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-[0.3rem] border-2 border-[var(--surface)] bg-[var(--chart-primary)] shadow-[var(--shadow-soft-sm)] ring-1 ring-[var(--primary-strong)]"
-                    style={{ left: `${markerPosition}%` }}
-                  />
-                  <span
-                    className="absolute -top-1 hidden -translate-x-1/2 rounded-[0.25rem] bg-[var(--surface)] px-1 font-mono text-[11px] font-semibold tabular-nums text-[var(--foreground)] sm:block"
-                    style={{ left: `${markerPosition}%` }}
-                  >
-                    {row.percent}%
-                  </span>
-                </div>
-                <span className="min-w-[5.5rem] text-right text-xs font-semibold tabular-nums text-[var(--foreground)]">
-                  {formatNumber(row.done)} / {formatNumber(row.total)}
-                </span>
-              </article>
-            );
-          })}
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-field)] bg-[var(--primary-pale)] px-3 py-2.5 text-xs text-[var(--primary-strong)]">
-          <span>Marker vuông thể hiện vị trí hoàn thành trên thang 0–100%</span>
-          <span className="font-semibold tabular-nums">
-            Toàn tổ: {overallPercent}%
-          </span>
-        </div>
-      </div>
-    </ChartShell>
-  );
-};
-
-const CompletionChart = ({
-  compact = false,
-  data,
-  showLegend = true,
-  subtitle,
-  title
-}: {
-  readonly compact?: boolean;
-  readonly data: readonly CompletionRow[];
-  readonly showLegend?: boolean;
-  readonly subtitle?: string;
-  readonly title: string;
-}): React.ReactElement => {
-  if (data.length === 0 || !data.some((row) => row.total > 0)) {
-    return (
-      <EmptyChart
-        subtitle={subtitle ?? "Chưa có dữ liệu để hiển thị chart."}
-        title={title}
-      />
-    );
-  }
-  const chartRows = [...data].slice(0, compact ? 5 : 10);
-  if (compact) {
-    return <CompactCompletionBars rows={chartRows} subtitle={subtitle} title={title} />;
-  }
-  const categoryAxisWidth = getCategoryAxisWidth(chartRows.map((row) => row.name));
-
-  return (
-    <ChartShell subtitle={subtitle} title={title}>
-      <div className="mt-3 h-[260px] min-w-0">
-        <ResponsiveContainer height="100%" width="100%">
-          <BarChart
-            barCategoryGap={8}
-            data={chartRows}
-            layout="vertical"
-            margin={{ bottom: 8, left: 4, right: 32, top: 4 }}
-          >
-            <CartesianGrid {...softGridProps} horizontal={false} />
-            <XAxis
-              {...softAxisProps}
-              tickMargin={8}
-              tickFormatter={(value) => formatNumber(Number(value))}
-              type="number"
-            />
-            <YAxis
-              {...categoryAxisProps}
-              dataKey="name"
-              tickFormatter={formatAxisName}
-              tickMargin={8}
-              type="category"
-              width={categoryAxisWidth}
-            />
-            <Tooltip
-              contentStyle={tooltipStyle}
-              formatter={(value) => [formatNumber(Number(value)), ""]}
-              itemStyle={tooltipItemStyle}
-              labelFormatter={formatAxisName}
-              labelStyle={tooltipLabelStyle}
-            />
-            {showLegend ? <Legend iconSize={10} iconType="square" wrapperStyle={legendTextStyle} /> : null}
-            <Bar
-              barSize={12}
-              dataKey="done"
-              fill={doneFill}
-              fillOpacity={0.98}
-              name="Đã thực hiện"
-              radius={[6, 0, 0, 6]}
-              stackId="a"
-            />
-            <Bar
-              barSize={12}
-              dataKey="remaining"
-              fill={remainingFill}
-              fillOpacity={0.84}
-              name="Còn lại"
-              radius={[0, 6, 6, 0]}
-              stackId="a"
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </ChartShell>
-  );
-};
-
-const CompactCompletionBars = ({
-  rows,
-  subtitle,
-  title
-}: {
-  readonly rows: readonly CompletionRow[];
-  readonly subtitle?: string;
-  readonly title: string;
-}): React.ReactElement => {
-  return (
-    <ChartShell subtitle={subtitle} title={title}>
-      <div className="mt-3 divide-y divide-[var(--line-soft)] border-y border-[var(--line)]">
-        {rows.map((row) => {
-          const progressWidth = `${Math.max(0, Math.min(100, row.percent))}%`;
-
-          return (
-            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-2.5" key={row.name}>
-              <div className="min-w-0">
-                <p className="min-w-0 text-sm font-semibold leading-5 text-[var(--foreground)] [overflow-wrap:anywhere]">
-                  {row.name}
-                </p>
-                <p className="mt-0.5 text-xs font-medium leading-5 text-[var(--text-muted)]">
-                  {formatNumber(row.done)} đã thực hiện · {formatNumber(row.remaining)} còn lại · tổng {formatNumber(row.total)}
-                </p>
-              </div>
-              <div className="grid w-28 shrink-0 grid-cols-[1fr_auto] items-center gap-2">
-                <div
-                  aria-label={`${row.name}: ${formatNumber(row.done)} đã thực hiện, ${formatNumber(row.remaining)} còn lại, ${row.percent}% hoàn thành`}
-                  className="h-2 overflow-hidden rounded-full bg-[var(--line)]"
-                  role="img"
-                >
-                  <div
-                    className="h-full max-w-full rounded-full bg-[var(--chart-done-strong)]"
-                    style={{ width: progressWidth }}
-                  />
-                </div>
-                <span className="min-w-9 text-right text-xs font-semibold tabular-nums text-[var(--foreground)]">
-                  {row.percent}%
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </ChartShell>
-  );
-};
-
-const UnitLeadChart = ({
-  data,
-  leadNames,
-  title
-}: {
-  readonly data: readonly UnitLeadRow[];
-  readonly leadNames: readonly string[];
-  readonly title: string;
-}): React.ReactElement => {
-  const visibleLeads = leadNames.slice(0, 4);
-  const rows = data
-    .filter((row) => visibleLeads.some((lead) => (row.totals[lead] ?? 0) > 0))
-    .slice(0, 10);
-  if (rows.length === 0 || visibleLeads.length === 0) {
-    return (
-      <EmptyChart
-        subtitle="Chưa có phân công theo đơn vị và nhóm trưởng để lập ma trận."
-        title={title}
-      />
-    );
-  }
-  const desktopGridClass =
-    visibleLeads.length === 1
-      ? "md:grid-cols-[minmax(8rem,1.15fr)_minmax(7rem,4fr)]"
-      : visibleLeads.length === 2
-        ? "md:grid-cols-[minmax(8rem,1.15fr)_repeat(2,minmax(7rem,1fr))]"
-        : visibleLeads.length === 3
-          ? "md:grid-cols-[minmax(8rem,1.15fr)_repeat(3,minmax(7rem,1fr))]"
-          : "md:grid-cols-[minmax(8rem,1.15fr)_repeat(4,minmax(7rem,1fr))]";
-
-  return (
-    <ChartShell
-      subtitle="Mỗi ô là % hoàn thành trong đúng cụm đơn vị–nhóm trưởng; số nhỏ là lượng task được tính."
-      title={title}
-    >
-      <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-2.5 text-xs font-medium text-[var(--text-muted)] ring-1 ring-[var(--border)]">
-        <HeatLegend className="bg-[var(--danger-soft)]" label="1–24%" />
-        <HeatLegend className="bg-[var(--warning-soft)]" label="25–49%" />
-        <HeatLegend className="bg-[var(--info-soft)]" label="50–74%" />
-        <HeatLegend className="bg-[var(--primary-soft)]" label="75–99%" />
-        <HeatLegend className="bg-[var(--success-soft)]" label="100%" />
-      </div>
-
-      <div
-        aria-label={`Ma trận tiến độ gồm ${rows.length} đơn vị và ${visibleLeads.length} nhóm trưởng.`}
-        className="mt-3 grid gap-2"
-        role="table"
-      >
-        <div className={cn("hidden gap-2 rounded-[var(--radius-field)] bg-[var(--surface-muted)] p-2 md:grid", desktopGridClass)} role="row">
-          <div className="p-2 text-xs font-semibold text-[var(--text-muted)]" role="columnheader">
-            Đơn vị
-          </div>
-          {visibleLeads.map((lead) => (
-            <div
-              className="min-w-0 break-words p-2 text-xs font-semibold leading-5 text-[var(--foreground)]"
-              key={lead}
-              role="columnheader"
-            >
-              {normalizeChartLabel(lead)}
-            </div>
-          ))}
-        </div>
-
-        <div className="grid gap-2">
-          {rows.map((row) => (
-            <div
-              className={cn("grid grid-cols-2 gap-2 rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-2 shadow-[var(--shadow-soft-sm)]", desktopGridClass)}
-              key={row.name}
-              role="row"
-            >
-              <div
-                className="col-span-2 min-w-0 break-words px-1 py-2 text-sm font-semibold leading-5 md:col-span-1 md:flex md:items-center md:p-2"
-                role="rowheader"
-              >
-                {row.name}
-              </div>
-              {visibleLeads.map((lead) => {
-                const taskCount = row.totals[lead] ?? 0;
-                const percent = row.values[lead] ?? 0;
-                return (
-                  <div
-                    className={cn(
-                      "min-h-14 min-w-0 rounded-[var(--radius-field)] border p-2 md:flex md:min-h-16 md:flex-col md:justify-center",
-                      taskCount === 0
-                        ? "border-[var(--line)] bg-[var(--surface-muted)] text-[var(--text-muted)]"
-                        : getHeatCellClass(percent)
-                    )}
-                    key={lead}
-                    role="cell"
-                    title={`${normalizeChartLabel(lead)} · ${row.name}: ${percent}% trên ${taskCount} task`}
-                  >
-                    <span className="block break-words text-xs font-medium leading-4 md:hidden">
-                      {normalizeChartLabel(lead)}
-                    </span>
-                    {taskCount > 0 ? (
-                      <>
-                        <strong className="mt-1 block font-mono text-base font-semibold tabular-nums md:mt-0">
-                          {percent}%
-                        </strong>
-                        <span className="block text-xs font-medium opacity-80">
-                          {formatNumber(taskCount)} task
-                        </span>
-                      </>
-                    ) : (
-                      <span className="mt-1 block text-sm md:mt-0">Không phân công</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
-    </ChartShell>
-  );
-};
-
-const HeatLegend = ({
-  className,
-  label
-}: {
-  readonly className: string;
-  readonly label: string;
-}): React.ReactElement => (
-  <span className="inline-flex items-center gap-1.5">
-    <span aria-hidden="true" className={cn("h-3 w-3 rounded-[0.25rem] border border-[var(--border-strong)]", className)} />
-    {label}
-  </span>
-);
-
-const getHeatCellClass = (percent: number): string => {
-  if (percent >= 100) {
-    return "border-[var(--success)] bg-[var(--success-soft)] text-[var(--success-strong)]";
-  }
-  if (percent >= 75) {
-    return "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary-strong)]";
-  }
-  if (percent >= 50) {
-    return "border-[var(--info)] bg-[var(--info-soft)] text-[var(--info-strong)]";
-  }
-  if (percent >= 25) {
-    return "border-[var(--warning)] bg-[var(--warning-soft)] text-[var(--warning-strong)]";
-  }
-  if (percent > 0) {
-    return "border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger-strong)]";
-  }
-  return "border-[var(--line)] bg-[var(--surface-muted)] text-[var(--foreground)]";
-};
-
-const LeadStatusChart = ({
+const OwnerUnitProgressChart = ({
+  chartNumber,
   data
 }: {
-  readonly data: readonly LeadStatusRow[];
+  readonly chartNumber: number;
+  readonly data: readonly CompletionRow[];
 }): React.ReactElement => {
-  const hasSignal = data.some(
-    (row) => row.completed + row.inProgress + row.cancelled + row.notStarted > 0
-  );
-  if (data.length === 0 || !hasSignal) {
+  const rows = data.filter((row) => row.total > 0);
+  if (rows.length === 0) {
     return (
       <EmptyChart
-        subtitle="Chưa có hạng mục để thống kê trạng thái theo nhóm trưởng."
-        title="Thống kê tiến độ theo các nhóm"
+        chartNumber={chartNumber}
+        subtitle="Chưa có dữ liệu Đơn vị chủ quản để tổng hợp."
+        title="Tiến độ theo Đơn vị chủ quản"
       />
     );
   }
-  const visibleRows = data.slice(0, 10);
+
+  const option: EChartsOption = {
+    animationDuration: 450,
+    aria: { enabled: true },
+    grid: { bottom: 34, containLabel: true, left: 10, right: 56, top: 44 },
+    legend: {
+      icon: "square",
+      itemHeight: 12,
+      itemWidth: 12,
+      left: 0,
+      textStyle: chartTextStyle,
+      top: 0
+    },
+    series: [
+      {
+        barMaxWidth: 26,
+        data: rows.map((row) => clampPercent(row.percent)),
+        itemStyle: { borderRadius: [4, 0, 0, 4], color: doneFill },
+        label: {
+          color: doneText,
+          formatter: (params) => Number(params.value) >= 12 ? `${params.value}%` : "",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 700,
+          position: "insideRight",
+          show: true
+        },
+        name: "Đã thực hiện",
+        stack: "total",
+        type: "bar"
+      },
+      {
+        barMaxWidth: 26,
+        data: rows.map((row) => 100 - clampPercent(row.percent)),
+        itemStyle: { borderRadius: [0, 4, 4, 0], color: "var(--chart-remaining-strong)" },
+        label: {
+          color: "var(--foreground)",
+          formatter: (params) => {
+            const row = rows[params.dataIndex];
+            return row && row.percent < 12 ? `${row.percent}%` : "";
+          },
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 700,
+          position: "right",
+          show: true
+        },
+        name: "Còn lại",
+        stack: "total",
+        type: "bar"
+      }
+    ],
+    tooltip: { ...excelTooltip("%"), trigger: "axis" },
+    xAxis: percentAxis,
+    yAxis: {
+      ...categoryAxis(rows.map((row) => normalizeChartLabel(row.name))),
+      axisLabel: {
+        ...chartTextStyle,
+        color: "var(--foreground)",
+        formatter: (value: string) => wrapChartLabel(value, 24),
+        lineHeight: 16
+      }
+    }
+  };
+
   return (
     <ChartShell
-      subtitle="Cơ cấu trạng thái theo nhóm trưởng; mỗi hàng hiển thị trực tiếp tỷ lệ hoàn thành và khối lượng công việc."
-      title="Thống kê tiến độ theo các nhóm"
+      chartNumber={chartNumber}
+      title="Tiến độ theo Đơn vị chủ quản"
     >
-      <div className="mt-4 flex flex-wrap gap-x-3 gap-y-2 rounded-[var(--radius-field)] bg-[var(--surface-muted)] px-3 py-2.5 text-xs font-medium text-[var(--text-muted)] ring-1 ring-[var(--border)]">
-        <StatusLegend color={statusColors.completed} label="Hoàn thành" />
-        <StatusLegend color={statusColors.inProgress} label="Đang thực hiện" />
-        <StatusLegend color={statusColors.notStarted} label="Chưa thực hiện" />
-        <StatusLegend color={statusColors.cancelled} label="Hủy" />
-      </div>
-      <div className="mt-3 grid min-w-0 gap-2">
-        {visibleRows.map((row) => {
-          const total = Math.max(0, row.completed + row.inProgress + row.cancelled + row.notStarted);
-          const percent = total === 0 ? 0 : Math.round((row.completed / total) * 100);
-          const segments = [
-            { color: statusColors.completed, label: "Hoàn thành", value: row.completed },
-            { color: statusColors.inProgress, label: "Đang thực hiện", value: row.inProgress },
-            { color: statusColors.notStarted, label: "Chưa thực hiện", value: row.notStarted },
-            { color: statusColors.cancelled, label: "Hủy", value: row.cancelled }
-          ];
-
-          return (
-            <article
-              className="rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-3 shadow-[var(--shadow-soft-sm)]"
-              key={row.name}
-            >
-              <div className="flex min-w-0 items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="break-words text-sm font-semibold leading-5 text-[var(--foreground)]">
-                    {formatAxisName(row.name)}
-                  </p>
-                  <p className="mt-0.5 text-xs font-medium text-[var(--text-muted)]">
-                    {formatNumber(row.completed)} hoàn thành / {formatNumber(total)} hạng mục
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-[var(--radius-field)] bg-[var(--primary-pale)] px-2 py-1 text-sm font-semibold tabular-nums text-[var(--primary-strong)]">
-                  {percent}%
-                </span>
-              </div>
-              <div
-                aria-label={`${formatAxisName(row.name)}: ${formatNumber(row.completed)} hoàn thành, ${formatNumber(row.inProgress)} đang thực hiện, ${formatNumber(row.notStarted)} chưa thực hiện, ${formatNumber(row.cancelled)} đã hủy`}
-                className="mt-3 flex h-3 overflow-hidden rounded-full bg-[var(--line-soft)]"
-                role="img"
-              >
-                {segments.map((segment) =>
-                  segment.value > 0 ? (
-                    <span
-                      key={segment.label}
-                      style={{
-                        backgroundColor: segment.color,
-                        width: `${total === 0 ? 0 : (segment.value / total) * 100}%`
-                      }}
-                      title={`${segment.label}: ${formatNumber(segment.value)}`}
-                    />
-                  ) : null
-                )}
-              </div>
-            </article>
-          );
-        })}
-      </div>
+      <ExcelLikeChart
+        ariaLabel="Biểu đồ thanh ngang tiến độ theo Đơn vị chủ quản"
+        className="mt-4"
+        height={Math.max(290, rows.length * 42 + 82)}
+        option={option}
+      />
     </ChartShell>
   );
 };
 
-const StatusLegend = ({
-  color,
-  label
+const SubgroupProgressChart = ({
+  chartNumber,
+  groups
 }: {
-  readonly color: string;
-  readonly label: string;
-}): React.ReactElement => (
-  <span className="inline-flex items-center gap-1.5">
-    <span
-      aria-hidden="true"
-      className="h-3 w-3 rounded-[0.25rem] border border-[var(--border-strong)]"
-      style={{ backgroundColor: color }}
-    />
-    {label}
-  </span>
-);
+  readonly chartNumber: number;
+  readonly groups: readonly CompletionBreakdownGroup[];
+}): React.ReactElement => {
+  const [selectedKey, setSelectedKey] = useState<PnGroupKey>(pnGroupDefinitions[0].key);
+  const selectedDefinition = pnGroupDefinitions.find((group) => group.key === selectedKey)
+    ?? pnGroupDefinitions[0];
+  const selectedGroup = groups.find((group) => group.name === selectedDefinition.name);
+  const rows = selectedGroup?.rows.filter((row) => row.total > 0) ?? [];
+  const option: EChartsOption = {
+    animationDuration: 450,
+    aria: { enabled: true },
+    grid: { bottom: 32, containLabel: true, left: 10, right: 108, top: 44 },
+    legend: {
+      icon: "square",
+      itemHeight: 12,
+      itemWidth: 12,
+      left: 0,
+      textStyle: chartTextStyle,
+      top: 0
+    },
+    series: [
+      {
+        barMaxWidth: 26,
+        data: rows.map((row) => clampPercent(row.percent)),
+        itemStyle: { borderRadius: [4, 0, 0, 4], color: doneFill },
+        label: {
+          color: doneText,
+          formatter: (params) => Number(params.value) >= 12 ? `${params.value}%` : "",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 700,
+          position: "insideRight",
+          show: true
+        },
+        name: "Đã thực hiện",
+        stack: "progress",
+        type: "bar"
+      },
+      {
+        barMaxWidth: 26,
+        data: rows.map((row) => 100 - clampPercent(row.percent)),
+        itemStyle: { borderRadius: [0, 4, 4, 0], color: "var(--chart-remaining-strong)" },
+        label: {
+          color: "var(--foreground)",
+          formatter: (params) => {
+            const row = rows[params.dataIndex];
+            return row ? `${formatNumber(row.done)}/${formatNumber(row.total)} WO` : "";
+          },
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 700,
+          position: "right",
+          show: true
+        },
+        name: "Còn lại",
+        stack: "progress",
+        type: "bar"
+      }
+    ],
+    tooltip: { ...excelTooltip("%"), trigger: "axis" },
+    xAxis: percentAxis,
+    yAxis: {
+      ...categoryAxis(rows.map((row) => normalizeChartLabel(row.name))),
+      axisLabel: {
+        ...chartTextStyle,
+        color: "var(--foreground)",
+        formatter: (value: string) => wrapChartLabel(value, 24),
+        lineHeight: 16
+      },
+      inverse: true
+    }
+  };
 
-const ResourceGroupChart = ({
+  return (
+    <ChartShell
+      chartNumber={chartNumber}
+      subtitle="Chọn Nhóm để xem từng PN."
+      title="Tiến độ theo Phân nhóm (PN)"
+    >
+      <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Chọn Nhóm để xem tiến độ Phân nhóm">
+        {pnGroupDefinitions.map((group) => {
+          const active = group.key === selectedDefinition.key;
+          return (
+            <button
+              aria-pressed={active}
+              className={cn(
+                "inline-flex min-h-11 items-center justify-center rounded-[var(--radius-field)] border px-3 py-1.5 text-sm font-semibold leading-5 transition-colors [overflow-wrap:anywhere]",
+                active
+                  ? "border-[var(--primary-strong)] bg-[var(--primary-strong)] text-[var(--on-success)]"
+                  : "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--surface-muted)]"
+              )}
+              key={group.key}
+              onClick={() => setSelectedKey(group.key)}
+              type="button"
+            >
+              {group.name}
+            </button>
+          );
+        })}
+      </div>
+      {rows.length > 0 ? (
+        <ExcelLikeChart
+          ariaLabel={`Biểu đồ thanh tiến độ các PN thuộc ${selectedDefinition.name}`}
+          className="mt-3"
+          height={Math.max(260, rows.length * 44 + 88)}
+          option={option}
+        />
+      ) : (
+        <div className="mt-4 flex min-h-52 items-center justify-center rounded-[var(--radius-card)] border border-dashed border-[var(--line)] bg-[var(--surface-muted)] p-4 text-center text-sm font-medium text-[var(--text-muted)]">
+          Chưa có dữ liệu PN thuộc Nhóm {selectedDefinition.name}.
+        </div>
+      )}
+    </ChartShell>
+  );
+};
+
+const LeadStatusColumns = ({
+  chartNumber,
+  data
+}: {
+  readonly chartNumber: number;
+  readonly data: readonly LeadStatusRow[];
+}): React.ReactElement => {
+  const rows = data.filter((row) => row.total > 0);
+  if (rows.length === 0) {
+    return (
+      <EmptyChart
+        chartNumber={chartNumber}
+        subtitle="Chưa có hạng mục được phân vào bốn Nhóm phụ trách."
+        title="Thống kê trạng thái theo bốn Nhóm"
+      />
+    );
+  }
+
+  const statusSeries = [
+    { color: statusColors.completed, key: "completed" as const, label: "Hoàn thành", text: doneText },
+    { color: statusColors.inProgress, key: "inProgress" as const, label: "Đang làm", text: "var(--on-info)" },
+    { color: statusColors.cancelled, key: "cancelled" as const, label: "Đã hủy", text: "var(--on-danger)" },
+    { color: statusColors.notStarted, key: "notStarted" as const, label: "Chưa làm", text: "var(--on-warning)" }
+  ];
+  const option: EChartsOption = {
+    animationDuration: 450,
+    aria: { enabled: true },
+    grid: { bottom: 74, containLabel: true, left: 38, right: 16, top: 56 },
+    legend: {
+      icon: "square",
+      itemGap: 16,
+      itemHeight: 12,
+      itemWidth: 12,
+      textStyle: chartTextStyle,
+      top: 0
+    },
+    series: statusSeries.map((status) => ({
+      barMaxWidth: 64,
+      data: rows.map((row) => row.total > 0 ? Math.round((row[status.key] / row.total) * 100) : 0),
+      itemStyle: { color: status.color },
+      label: {
+        color: status.text,
+        formatter: (params) => Number(params.value) >= 8 ? `${params.value}%` : "",
+        fontFamily: "var(--font-sans)",
+        fontSize: 13,
+        fontWeight: 700,
+        position: "inside",
+        show: true
+      },
+      name: status.label,
+      stack: "status",
+      type: "bar"
+    })),
+    tooltip: { ...excelTooltip("%"), trigger: "axis" },
+    xAxis: leadCategoryAxis(rows.map((row) => normalizeChartLabel(row.name))),
+    yAxis: percentAxis
+  };
+
+  return (
+    <ChartShell
+      chartNumber={chartNumber}
+      title="Thống kê trạng thái theo bốn Nhóm"
+    >
+      <ExcelLikeChart
+        ariaLabel="Biểu đồ cột chồng 100% trạng thái theo bốn Nhóm"
+        className="mt-4"
+        height={350}
+        option={option}
+      />
+    </ChartShell>
+  );
+};
+
+const UnitSectionLeadChart = ({
+  chartNumber,
+  leadNames,
+  sectionRows,
+  unitRows
+}: {
+  readonly chartNumber: number;
+  readonly leadNames: readonly string[];
+  readonly sectionRows: readonly UnitSectionLeadRow[];
+  readonly unitRows: readonly UnitLeadRow[];
+}): React.ReactElement => {
+  const unitNames = unitRows
+    .filter((row) => leadNames.some((lead) => (row.totals[lead] ?? 0) > 0))
+    .map((row) => row.name);
+  const [requestedUnit, setRequestedUnit] = useState(unitNames[0] ?? "");
+  const [requestedSection, setRequestedSection] = useState("");
+  const selectedUnit = unitNames.includes(requestedUnit) ? requestedUnit : (unitNames[0] ?? "");
+  const sectionNames = sectionRows
+    .filter((row) => row.unit === selectedUnit)
+    .map((row) => row.section)
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .sort((left, right) => left.localeCompare(right, "vi"));
+  const selectedSection = sectionNames.includes(requestedSection) ? requestedSection : "";
+  const selectedRow = selectedSection
+    ? sectionRows.find((row) => row.unit === selectedUnit && row.section === selectedSection)
+    : unitRows.find((row) => row.name === selectedUnit);
+  const hasData = Boolean(selectedRow && leadNames.some((lead) => (selectedRow.totals[lead] ?? 0) > 0));
+
+  if (unitNames.length === 0) {
+    return (
+      <EmptyChart
+        chartNumber={chartNumber}
+        subtitle="Chưa có phân công đồng thời theo Đơn vị và Nhóm trưởng."
+        title="Tiến độ theo Đơn vị và Section"
+      />
+    );
+  }
+
+  const visibleLeads = selectedRow
+    ? leadNames.filter((lead) => (selectedRow.totals[lead] ?? 0) > 0)
+    : [];
+  const option: EChartsOption = {
+    animationDuration: 450,
+    aria: { enabled: true },
+    grid: { bottom: 78, containLabel: true, left: 42, right: 16, top: 24 },
+    series: [
+      {
+        barMaxWidth: 74,
+        data: visibleLeads.map((lead) => clampPercent(selectedRow?.values[lead] ?? 0)),
+        itemStyle: {
+          borderRadius: [5, 5, 0, 0],
+          color: doneFill
+        },
+        label: {
+          color: "var(--foreground)",
+          formatter: "{c}%",
+          fontFamily: "var(--font-sans)",
+          fontSize: 14,
+          fontWeight: 700,
+          position: "top",
+          show: true
+        },
+        name: "%Complete trung bình",
+        type: "bar"
+      }
+    ],
+    tooltip: excelTooltip("%"),
+    xAxis: leadCategoryAxis(visibleLeads.map(normalizeChartLabel)),
+    yAxis: percentAxis
+  };
+
+  return (
+    <ChartShell
+      chartNumber={chartNumber}
+      title="Tiến độ theo Đơn vị và Section"
+    >
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <label className="grid min-w-0 gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
+          Đơn vị
+          <select
+            className="min-h-11 min-w-0 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--foreground)]"
+            onChange={(event) => {
+              setRequestedUnit(event.target.value);
+              setRequestedSection("");
+            }}
+            value={selectedUnit}
+          >
+            {unitNames.map((unit) => (
+              <option key={unit} value={unit}>{normalizeChartLabel(unit)}</option>
+            ))}
+          </select>
+        </label>
+        <label className="grid min-w-0 gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
+          Section
+          <select
+            className="min-h-11 min-w-0 rounded-[var(--radius-field)] border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--foreground)] disabled:opacity-60"
+            disabled={sectionNames.length === 0}
+            onChange={(event) => setRequestedSection(event.target.value)}
+            value={selectedSection}
+          >
+            <option value="">Tất cả Section</option>
+            {sectionNames.map((section) => (
+              <option key={section} value={section}>{normalizeChartLabel(section)}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {hasData && selectedRow ? (
+        <ExcelLikeChart
+          ariaLabel={`Biểu đồ cột tiến độ ${normalizeChartLabel(selectedUnit)} ${selectedSection || "tất cả Section"}`}
+          className="mt-4"
+          height={330}
+          option={option}
+        />
+      ) : (
+        <div className="mt-4 flex min-h-48 items-center justify-center rounded-[var(--radius-card)] border border-dashed border-[var(--line)] bg-[var(--surface-muted)] p-4 text-center text-sm font-medium text-[var(--text-muted)]">
+          Không có WO phù hợp với Đơn vị và Section đã chọn.
+        </div>
+      )}
+    </ChartShell>
+  );
+};
+
+const OperationalGroupChart = ({
+  chartNumber,
   group
 }: {
+  readonly chartNumber: number;
   readonly group: ResourceGroupDashboard;
 }): React.ReactElement => {
-  return (
-    <CompletionChart
-      compact
-      data={group.rows}
-      showLegend={false}
-      subtitle={
-        group.rows.length === 0
-          ? "Chưa có hạng mục thuộc nhóm này trong dữ liệu hiện tại."
-          : undefined
+  const rows = group.rows.filter((row) => row.total > 0);
+  if (rows.length === 0) {
+    return (
+      <EmptyChart
+        chartNumber={chartNumber}
+        subtitle="Chưa có hạng mục thuộc nhóm chuyên môn này trong dữ liệu hiện tại."
+        title={group.title}
+      />
+    );
+  }
+  const total = rows.reduce((sum, row) => sum + row.total, 0);
+  const done = rows.reduce((sum, row) => sum + row.done, 0);
+  const option: EChartsOption = {
+    animationDuration: 450,
+    aria: { enabled: true },
+    grid: { bottom: rows.length > 5 ? 106 : 76, containLabel: true, left: 42, right: 16, top: 50 },
+    legend: {
+      icon: "square",
+      itemHeight: 12,
+      itemWidth: 12,
+      textStyle: chartTextStyle,
+      top: 0
+    },
+    series: [
+      {
+        barMaxWidth: 54,
+        data: rows.map((row) => clampPercent(row.percent)),
+        itemStyle: { color: doneFill },
+        label: {
+          color: doneText,
+          formatter: (params) => Number(params.value) >= 10 ? `${params.value}%` : "",
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 700,
+          position: "inside",
+          show: true
+        },
+        name: "Đã thực hiện",
+        stack: "progress",
+        type: "bar"
+      },
+      {
+        barMaxWidth: 54,
+        data: rows.map((row) => 100 - clampPercent(row.percent)),
+        itemStyle: { color: "var(--chart-remaining-strong)" },
+        name: "Còn lại",
+        stack: "progress",
+        type: "bar"
       }
+    ],
+    tooltip: { ...excelTooltip("%"), trigger: "axis" },
+    xAxis: categoryAxis(
+      rows.map((row) => normalizeChartLabel(row.name)),
+      rows.length > 5 ? 35 : 0
+    ),
+    yAxis: percentAxis
+  };
+
+  return (
+    <ChartShell
+      chartNumber={chartNumber}
+      subtitle={`${formatNumber(total)} WO · ${formatNumber(done)} đã thực hiện`}
       title={group.title}
-    />
+    >
+      <ExcelLikeChart
+        ariaLabel={`Biểu đồ cột chồng 100% ${group.title}`}
+        className="mt-4"
+        height={rows.length > 5 ? 380 : 330}
+        option={option}
+      />
+    </ChartShell>
+  );
+};
+
+const ValveMilestoneChart = ({
+  chartNumber,
+  rows
+}: {
+  readonly chartNumber: number;
+  readonly rows: readonly MilestoneProgressRow[];
+}): React.ReactElement => {
+  const total = rows[0]?.total ?? 0;
+  if (total <= 0) {
+    return (
+      <EmptyChart
+        chartNumber={chartNumber}
+        subtitle="Chưa có hạng mục của Hữu Văn Cưng để lập pipeline BDSC van."
+        title="Phân nhóm BDSC cùng Cơ khí và giám sát Van"
+      />
+    );
+  }
+
+  const option: EChartsOption = {
+    animationDuration: 450,
+    aria: { enabled: true },
+    grid: { bottom: 32, containLabel: true, left: 10, right: 88, top: 20 },
+    series: [
+      {
+        backgroundStyle: { color: "var(--chart-remaining-soft)" },
+        barMaxWidth: 30,
+        data: rows.map((row) => clampPercent(row.percent)),
+        itemStyle: { borderRadius: 4, color: doneFill },
+        label: {
+          color: "var(--foreground)",
+          formatter: (params) => {
+            const row = rows[params.dataIndex];
+            return row ? `${row.percent}% · ${row.count}/${row.total} WO` : `${params.value}%`;
+          },
+          fontFamily: "var(--font-sans)",
+          fontSize: 13,
+          fontWeight: 700,
+          position: "right",
+          show: true
+        },
+        name: "WO đạt mốc",
+        showBackground: true,
+        type: "bar"
+      }
+    ],
+    tooltip: excelTooltip("%"),
+    xAxis: percentAxis,
+    yAxis: {
+      ...categoryAxis(rows.map((row, index) => `${index + 1}. ${row.label}`)),
+      axisLabel: {
+        ...chartTextStyle,
+        color: "var(--foreground)",
+        formatter: (value: string) => wrapChartLabel(value, 27),
+        lineHeight: 16
+      },
+      inverse: true
+    }
+  };
+
+  return (
+    <ChartShell
+      chartNumber={chartNumber}
+      subtitle="Các mốc được tính lũy kế."
+      title="Phân nhóm BDSC cùng Cơ khí và giám sát Van"
+    >
+      <ExcelLikeChart
+        ariaLabel="Biểu đồ thanh pipeline lũy kế BDSC van"
+        className="mt-4"
+        height={340}
+        option={option}
+      />
+    </ChartShell>
   );
 };
 
 const EmptyChart = ({
+  chartNumber,
   subtitle,
   title
 }: {
+  readonly chartNumber?: number;
   readonly subtitle: string;
   readonly title: string;
 }): React.ReactElement => (
-  <ChartShell subtitle={subtitle} title={title}>
+  <ChartShell chartNumber={chartNumber} subtitle={subtitle} title={title}>
     <div className="mt-3 flex min-h-40 flex-1 items-center justify-center rounded-[var(--radius-card)] border border-dashed border-[var(--line)] bg-[var(--surface-muted)] p-4 text-center text-sm font-medium text-[var(--text-muted)] lg:mt-4 lg:min-h-[260px]">
       Không có dữ liệu đủ ý nghĩa để hiển thị chart.
     </div>
@@ -1058,4 +1048,8 @@ const EmptyChart = ({
 
 const formatNumber = (value: number): string => {
   return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(value);
+};
+
+const clampPercent = (value: number): number => {
+  return Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
 };

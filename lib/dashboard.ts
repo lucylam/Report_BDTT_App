@@ -34,9 +34,32 @@ export interface UnitLeadRow {
   readonly totals: Record<string, number>;
 }
 
+export interface UnitSectionLeadRow {
+  readonly unit: string;
+  readonly section: string;
+  readonly values: Record<string, number>;
+  readonly totals: Record<string, number>;
+}
+
+export interface MilestoneProgressRow {
+  readonly key: string;
+  readonly label: string;
+  readonly threshold: number;
+  readonly count: number;
+  readonly total: number;
+  readonly percent: number;
+}
+
 export interface ResourceGroupDashboard {
   readonly key: string;
   readonly title: string;
+  readonly rows: CompletionRow[];
+}
+
+export interface CompletionBreakdownGroup {
+  readonly key: string;
+  readonly name: string;
+  readonly context: string;
   readonly rows: CompletionRow[];
 }
 
@@ -57,13 +80,23 @@ export interface ExecutiveDashboardSummary {
 export interface ExcelDashboardData {
   readonly overall: CompletionRow;
   readonly executive: ExecutiveDashboardSummary;
+  readonly byLead: CompletionRow[];
+  readonly bySubgroup: CompletionRow[];
+  readonly subgroupsByLead: CompletionBreakdownGroup[];
+  readonly bySpecialtyGroup: CompletionRow[];
   readonly byOwnerUnit: CompletionRow[];
+  readonly bySection: CompletionRow[];
+  readonly sectionsByOwnerUnit: CompletionBreakdownGroup[];
   readonly byOwnerUnitAndLead: UnitLeadRow[];
+  readonly byUnitSectionAndLead: UnitSectionLeadRow[];
   readonly attentionOwnerUnits: CompletionRow[];
   readonly attentionLeads: LeadStatusRow[];
   readonly leadNames: string[];
   readonly leadStatus: LeadStatusRow[];
   readonly resourceGroups: ResourceGroupDashboard[];
+  readonly operationalGroups: ResourceGroupDashboard[];
+  readonly votingValveRows: CompletionRow[];
+  readonly valveMilestones: MilestoneProgressRow[];
 
   /*
    * Compatibility aliases for older dashboard calls. They point to the
@@ -97,6 +130,75 @@ const preferredLeadOrder = [
   "TBCH_LÝ NGỌC LĨNH",
   "TLTBĐK_PHẠM QUYẾT CHIẾN"
 ];
+
+const preferredLeadNames = [
+  "VÕ QUANG MINH",
+  "NGUYỄN THANH HẢI",
+  "LÝ NGỌC LĨNH",
+  "PHẠM QUYẾT CHIẾN"
+] as const;
+
+const preferredLeadGroupLabels = [
+  "HT Điều khiển",
+  "TB Đo lường",
+  "TB Chấp hành",
+  "Tháo/Lắp TBĐK"
+] as const;
+
+const operationalGroupDefinitions = [
+  {
+    key: "htdk",
+    title: "Nhóm thiết bị Hệ thống điều khiển",
+    taskGroups: ["DK-DCS", "DK-PLC", "DK-F&G"]
+  },
+  {
+    key: "tbch",
+    title: "Nhóm thiết bị Chấp hành",
+    taskGroups: ["DK-VALVE", "DK-SP", "DK-PT"]
+  },
+  {
+    key: "thao-lap",
+    title: "Nhóm Tháo lắp TBĐK",
+    taskGroups: ["DK-T.CA"]
+  },
+  {
+    key: "amll",
+    title: "Nhóm TB Đo - Áp, Mức, Lưu lượng",
+    taskGroups: ["DK-AMLL"]
+  },
+  {
+    key: "bently",
+    title: "Nhóm TB Đo - Bently",
+    taskGroups: ["DK-BENT"]
+  },
+  {
+    key: "nhiet-do",
+    title: "Nhóm TB Đo - Nhiệt độ",
+    taskGroups: ["DK-NHIET"]
+  },
+  {
+    key: "pi",
+    title: "Nhóm TB Đo - PI",
+    taskGroups: ["DK-HC"]
+  }
+] as const;
+
+const votingValveTags = [
+  "06HV-1005",
+  "06PV-1021A",
+  "06HV-1008",
+  "06HV-1055",
+  "06HV-1006",
+  "04TV-2577"
+] as const;
+
+const valveMilestoneDefinitions = [
+  { key: "workshop", label: "Đã mang về Workshop", threshold: 20 },
+  { key: "separated", label: "Đã tách Actuator và Body", threshold: 30 },
+  { key: "overhauled", label: "Đã thực hiện xong BDSC", threshold: 50 },
+  { key: "site", label: "Đã mang ra Site", threshold: 70 },
+  { key: "connected", label: "Đã đấu điện, khí", threshold: 90 }
+] as const;
 
 export const getCumulativePercent = (
   progress: readonly ProgressRecord[],
@@ -183,28 +285,89 @@ export const buildExcelDashboard = (
   data: AppData
 ): ExcelDashboardData => {
   const activeTasks = data.tasks.filter((task) => !task.isCancelled);
+  const activeLeadTasks = activeTasks.filter(hasDashboardLead);
+  const leadTasks = data.tasks.filter(hasDashboardLead);
+  const profileById = new Map(data.profiles.map((profile) => [profile.id, profile]));
+  const profileByResource = new Map(
+    data.profiles.map((profile) => [getDashboardKey(profile.resourceName), profile])
+  );
+  const leadNames = getLeadNames(leadTasks);
+  const byLead = createCompletionRows(
+    activeLeadTasks,
+    data.progress,
+    (task) => getDashboardLead(task.nhomTruong) ?? unclassified,
+    preferredLeadOrder
+  );
+  const bySubgroup = createCompletionRows(
+    activeTasks,
+    data.progress,
+    (task) => getTaskSubgroupName(task, profileById, profileByResource)
+  );
+  const subgroupsByLead = leadNames.flatMap((lead): CompletionBreakdownGroup[] => {
+    const matchingLeadTasks = activeLeadTasks.filter(
+      (task) => getDashboardLead(task.nhomTruong) === lead
+    );
+    if (matchingLeadTasks.length === 0) return [];
+    return [{
+      key: getDashboardKey(lead),
+      name: getLeadGroupLabel(lead),
+      context: normalizeChartSourceLabel(lead),
+      rows: createCompletionRows(
+        matchingLeadTasks,
+        data.progress,
+        (task) => getTaskSubgroupName(task, profileById, profileByResource, false)
+      )
+    }];
+  });
+  const bySpecialtyGroup = createCompletionRows(
+    activeTasks,
+    data.progress,
+    (task) => task.nhom
+  );
   const byOwnerUnit = createCompletionRows(
     activeTasks,
     data.progress,
     (task) => task.donVi,
     preferredOwnerUnitOrder
   );
-  const overall = mergeCompletionRows("Tiến độ BDTT", byOwnerUnit);
-  const leadNames = getLeadNames(data.tasks);
-  const byOwnerUnitAndLead = buildGroupedLeadRows(
+  const bySection = createCompletionRows(
     activeTasks,
+    data.progress,
+    (task) => task.section
+  );
+  const sectionsByOwnerUnit = byOwnerUnit.flatMap((unit): CompletionBreakdownGroup[] => {
+    const unitTasks = activeTasks.filter(
+      (task) => getDashboardKey(task.donVi) === getDashboardKey(unit.name)
+    );
+    if (unitTasks.length === 0) return [];
+    return [{
+      key: getDashboardKey(unit.name),
+      name: unit.name,
+      context: `${unitTasks.length} WO đang hoạt động`,
+      rows: createCompletionRows(unitTasks, data.progress, (task) => task.section)
+    }];
+  });
+  const overall = mergeCompletionRows("Tiến độ BDTT", byOwnerUnit);
+  const byOwnerUnitAndLead = buildGroupedLeadRows(
+    activeLeadTasks,
     data.progress,
     leadNames,
     (task) => task.donVi,
     preferredOwnerUnitOrder
   );
-  const leadStatus = buildLeadStatusRows(data.tasks, data.progress, leadNames);
-  const sheetGroups = createCompletionRows(
-    activeTasks,
+  const bySectionAndLead = buildGroupedLeadRows(
+    activeLeadTasks,
     data.progress,
-    (task) => task.nhom
+    leadNames,
+    (task) => task.section
   );
-  const resourceGroups = sheetGroups.map((group) => ({
+  const byUnitSectionAndLead = buildUnitSectionLeadRows(
+    activeLeadTasks,
+    data.progress,
+    leadNames
+  );
+  const leadStatus = buildLeadStatusRows(leadTasks, data.progress, leadNames);
+  const resourceGroups = bySpecialtyGroup.map((group) => ({
     key: getDashboardKey(group.name),
     title: group.name,
     rows: createCompletionRows(
@@ -215,20 +378,69 @@ export const buildExcelDashboard = (
       (task) => task.resourceName
     )
   }));
+  const operationalGroups = operationalGroupDefinitions.map((definition) => {
+    const allowedGroups = new Set(definition.taskGroups.map(getDashboardKey));
+    return {
+      key: definition.key,
+      title: definition.title,
+      rows: createCompletionRows(
+        activeTasks.filter((task) => allowedGroups.has(getDashboardKey(task.nhom))),
+        data.progress,
+        (task) => task.resourceName
+      )
+    };
+  });
+  const votingRowsByTag = new Map(
+    createCompletionRows(
+      activeTasks.filter((task) =>
+        votingValveTags.some((tag) => getDashboardKey(tag) === getDashboardKey(task.tagname))
+      ),
+      data.progress,
+      (task) => task.tagname,
+      votingValveTags
+    ).map((row) => [getDashboardKey(row.name), row])
+  );
+  const votingValveRows = votingValveTags.map(
+    (tag) => votingRowsByTag.get(getDashboardKey(tag)) ?? emptyCompletion(tag)
+  );
+  const valveTasks = activeTasks.filter((task) =>
+    getDashboardKey(task.resourceName).endsWith(getDashboardKey("Hữu Văn Cưng"))
+  );
+  const valveMilestones = valveMilestoneDefinitions.map((milestone) => {
+    const count = valveTasks.filter(
+      (task) => getCumulativePercent(data.progress, task.id) >= milestone.threshold
+    ).length;
+    return {
+      ...milestone,
+      count,
+      total: valveTasks.length,
+      percent: valveTasks.length === 0 ? 0 : Math.round((count / valveTasks.length) * 100)
+    };
+  });
 
   return {
     overall,
     executive: buildExecutiveSummary(data, activeTasks, overall),
+    byLead,
+    bySubgroup,
+    subgroupsByLead,
+    bySpecialtyGroup,
     byOwnerUnit,
+    bySection,
+    sectionsByOwnerUnit,
     byOwnerUnitAndLead,
+    byUnitSectionAndLead,
     attentionOwnerUnits: getAttentionOwnerUnits(byOwnerUnit),
     attentionLeads: getAttentionLeads(leadStatus),
     leadNames,
     leadStatus,
     resourceGroups,
+    operationalGroups,
+    votingValveRows,
+    valveMilestones,
     byUnit: byOwnerUnit,
     byUnitAndLead: byOwnerUnitAndLead,
-    bySectionAndLead: byOwnerUnitAndLead,
+    bySectionAndLead,
     byLeadStatus: leadStatus
   };
 };
@@ -278,6 +490,39 @@ const buildExecutiveSummary = (
   };
 };
 
+const getTaskSubgroupName = (
+  task: Task,
+  profileById: ReadonlyMap<string, AppData["profiles"][number]>,
+  profileByResource: ReadonlyMap<string, AppData["profiles"][number]>,
+  includeGroup = true
+): string => {
+  const candidateIds = [task.assignedTo, task.reporterId].filter(
+    (profileId): profileId is string => Boolean(profileId)
+  );
+  const profile = candidateIds
+    .map((profileId) => profileById.get(profileId))
+    .find((candidate) => Boolean(candidate?.subgroup))
+    ?? profileByResource.get(getDashboardKey(task.resourceName));
+
+  if (!profile?.subgroup) return unclassified;
+  return includeGroup && profile.orgGroup
+    ? `${profile.orgGroup} · ${profile.subgroup}`
+    : profile.subgroup;
+};
+
+const getLeadGroupLabel = (lead: string): string => {
+  const leadKey = getDashboardKey(lead);
+  const preferredIndex = preferredLeadOrder.findIndex(
+    (preferredLead) => getDashboardKey(preferredLead) === leadKey
+  );
+  if (preferredIndex >= 0) return preferredLeadGroupLabels[preferredIndex] ?? lead;
+  return normalizeChartSourceLabel(lead).split(" ").slice(0, -3).join(" ") || normalizeChartSourceLabel(lead);
+};
+
+const normalizeChartSourceLabel = (value: string): string => {
+  return value.replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+};
+
 const getAttentionOwnerUnits = (rows: readonly CompletionRow[]): CompletionRow[] => {
   return [...rows]
     .filter((row) => row.total > 0 && row.percent < 100)
@@ -308,7 +553,8 @@ const buildLeadStatusRows = (
 ): LeadStatusRow[] => {
   const map = new Map<string, LeadStatusRow>();
   tasks.forEach((task) => {
-    const rawName = task.nhomTruong || unclassified;
+    const rawName = getDashboardLead(task.nhomTruong);
+    if (!rawName) return;
     const key = getDashboardKey(rawName);
     const current =
       map.get(key) ??
@@ -351,7 +597,8 @@ const buildGroupedLeadRows = (
   tasks.forEach((task) => {
     const rawGroupName = getGroupName(task)?.trim() || unclassified;
     const groupKey = getDashboardKey(rawGroupName);
-    const rawLead = task.nhomTruong || unclassified;
+    const rawLead = getDashboardLead(task.nhomTruong);
+    if (!rawLead) return;
     const leadKey = getDashboardKey(rawLead);
     const currentGroup = grouped.get(groupKey) ?? {
       name: getPreferredDisplayName(rawGroupName, preferredOrder),
@@ -390,10 +637,76 @@ const buildGroupedLeadRows = (
     );
 };
 
+const buildUnitSectionLeadRows = (
+  tasks: readonly Task[],
+  progress: readonly ProgressRecord[],
+  leadNames: readonly string[]
+): UnitSectionLeadRow[] => {
+  const grouped = new Map<
+    string,
+    {
+      unit: string;
+      section: string;
+      leads: Map<string, { total: number; percentSum: number }>;
+    }
+  >();
+
+  tasks.forEach((task) => {
+    const rawUnit = task.donVi?.trim() || unclassified;
+    const rawSection = task.section?.trim() || unclassified;
+    const lead = getDashboardLead(task.nhomTruong);
+    if (!lead) return;
+    const unit = getPreferredDisplayName(rawUnit, preferredOwnerUnitOrder);
+    const key = `${getDashboardKey(unit)}|${getDashboardKey(rawSection)}`;
+    const current = grouped.get(key) ?? {
+      unit,
+      section: rawSection,
+      leads: new Map<string, { total: number; percentSum: number }>()
+    };
+    const leadKey = getDashboardKey(lead);
+    const leadValue = current.leads.get(leadKey) ?? { total: 0, percentSum: 0 };
+    current.leads.set(leadKey, {
+      total: leadValue.total + 1,
+      percentSum: leadValue.percentSum + getCumulativePercent(progress, task.id)
+    });
+    grouped.set(key, current);
+  });
+
+  return Array.from(grouped.values())
+    .map((group) => {
+      const values: Record<string, number> = {};
+      const totals: Record<string, number> = {};
+      leadNames.forEach((lead) => {
+        const item = group.leads.get(getDashboardKey(lead));
+        values[lead] = item && item.total > 0
+          ? Math.round(item.percentSum / item.total)
+          : 0;
+        totals[lead] = item?.total ?? 0;
+      });
+      return {
+        unit: group.unit,
+        section: group.section,
+        values,
+        totals
+      };
+    })
+    .sort((left, right) => {
+      const unitOrder = compareByPreferredOrder(
+        left.unit,
+        right.unit,
+        preferredOwnerUnitOrder,
+        left.unit.localeCompare(right.unit, "vi")
+      );
+      return unitOrder !== 0
+        ? unitOrder
+        : left.section.localeCompare(right.section, "vi", { numeric: true });
+    });
+};
+
 const getLeadNames = (tasks: readonly Task[]): string[] => {
   const names = Array.from(
     tasks.reduce<Map<string, string>>((map, task) => {
-      const name = task.nhomTruong || "";
+      const name = getDashboardLead(task.nhomTruong);
       if (!name) return map;
       const key = getDashboardKey(name);
       map.set(key, chooseDisplayName(map.get(key) ?? name, name, preferredLeadOrder));
@@ -403,6 +716,22 @@ const getLeadNames = (tasks: readonly Task[]): string[] => {
   return names.sort((left, right) =>
     compareByPreferredOrder(left, right, preferredLeadOrder, left.localeCompare(right, "vi"))
   );
+};
+
+const getDashboardLead = (value: string): string | null => {
+  const key = getDashboardKey(value);
+  const directMatch = preferredLeadOrder.find((lead) => getDashboardKey(lead) === key);
+  if (directMatch) return directMatch;
+
+  const nameIndex = preferredLeadNames.findIndex((name) => {
+    const nameKey = getDashboardKey(name);
+    return key === nameKey || key.endsWith(` ${nameKey}`);
+  });
+  return nameIndex >= 0 ? preferredLeadOrder[nameIndex] ?? null : null;
+};
+
+const hasDashboardLead = (task: Task): boolean => {
+  return getDashboardLead(task.nhomTruong) !== null;
 };
 
 const compareByPreferredOrder = (

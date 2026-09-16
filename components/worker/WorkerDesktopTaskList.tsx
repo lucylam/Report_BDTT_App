@@ -14,9 +14,8 @@ interface WorkerDesktopTaskListProps {
 
 const percentTone = (percent: number): string => {
   if (percent === 100) return "bg-[var(--success)]";
-  if (percent >= 75) return "bg-[var(--info)]";
-  if (percent > 0) return "bg-[var(--accent)]";
-  return "bg-[var(--line)]";
+  if (percent > 0) return "bg-[var(--info)]";
+  return "bg-[var(--warning)]";
 };
 
 export const WorkerDesktopTaskList = ({

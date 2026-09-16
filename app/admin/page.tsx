@@ -523,8 +523,8 @@ const ReportCoverage = ({
           value={`${coveragePercent}%`}
         />
         <DashboardMetricCard icon="check" label="Hoàn thành" tone="success" value={formatNumber(metrics.completed)} />
-        <DashboardMetricCard icon="chart" label="Đang làm" tone="warning" value={formatNumber(metrics.inProgress)} />
-        <DashboardMetricCard icon="list" label="Chưa làm" tone="info" value={formatNumber(metrics.notStarted)} />
+        <DashboardMetricCard icon="chart" label="Đang làm" tone="info" value={formatNumber(metrics.inProgress)} />
+        <DashboardMetricCard icon="list" label="Chưa làm" tone="warning" value={formatNumber(metrics.notStarted)} />
         <DashboardMetricCard icon="logout" label="Đã hủy" tone="danger" value={formatNumber(metrics.cancelled)} />
       </div>
     </Widget>
@@ -601,7 +601,7 @@ const ManagementRow = ({
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
           <Badge tone="success">HT {row.completed}</Badge>
-          <Badge tone="accent">ĐTH {row.inProgress}</Badge>
+          <Badge tone="info">ĐTH {row.inProgress}</Badge>
           <Badge tone="danger">Trễ {row.overdue}</Badge>
           <Badge>Tổng {row.tasks}</Badge>
         </div>
@@ -630,9 +630,9 @@ const ManagementRow = ({
 const StatusLegend = (): React.ReactElement => (
   <Widget className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 px-4 py-3 text-sm">
     <LegendDot className="bg-[var(--success)]" label="Hoàn thành" />
-    <LegendDot className="bg-[var(--warning)]" label="Đang thực hiện" />
+    <LegendDot className="bg-[var(--info)]" label="Đang thực hiện" />
     <LegendDot className="bg-[var(--danger)]" label="Trễ tiến độ" />
-    <LegendDot className="bg-[var(--text-soft)]" label="Chưa triển khai" />
+    <LegendDot className="bg-[var(--warning)]" label="Chưa triển khai" />
   </Widget>
 );
 
@@ -729,8 +729,8 @@ const formatProgressSubmittedAt = (record: {
 
 const recentPercentPillClass = (percent: number): string => {
   if (percent >= 100) return "bg-[var(--success-soft)] text-[var(--success)]";
-  if (percent > 0) return "bg-[var(--surface-warm)] text-[var(--accent-strong)]";
-  return "bg-[var(--line-soft)] text-[var(--text-muted)]";
+  if (percent > 0) return "bg-[var(--info-soft)] text-[var(--info-strong)]";
+  return "bg-[var(--warning-soft)] text-[var(--warning-strong)]";
 };
 
 const buildOrgUnitRows = (

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedProfile } from "@/lib/api/session";
-import { createDueBdttReminderNotifications } from "@/lib/api/bdttReminderNotifications";
+import {
+  createDueBdttReminderNotifications,
+  getFirstBdttTaskStartDate,
+  isBdttReminderNotificationVisible
+} from "@/lib/api/bdttReminderNotifications";
 import { getActiveBdttTrialRun } from "@/lib/api/demoMode";
 import { forbiddenOriginMessage, isAllowedRequestOrigin } from "@/lib/api/security";
 import type { AppNotification } from "@/lib/notifications";
@@ -48,11 +52,17 @@ export const GET = async (request: Request): Promise<NextResponse> => {
   const context = await getContext(request);
   if (!context.ok) return context.response;
   const trialRun = await getActiveBdttTrialRun(context.supabase);
+  let firstTaskStartDate: string | null | undefined;
   try {
+    firstTaskStartDate = await getFirstBdttTaskStartDate(
+      context.supabase,
+      trialRun?.id ?? null
+    );
     await createDueBdttReminderNotifications(
       context.supabase,
       context.profile,
-      trialRun
+      trialRun,
+      firstTaskStartDate
     );
   } catch (error) {
     console.error(
@@ -93,7 +103,17 @@ export const GET = async (request: Request): Promise<NextResponse> => {
     );
   }
 
-  const notifications: AppNotification[] = ((data ?? []) as DbNotification[]).map(
+  const visibleRows = ((data ?? []) as DbNotification[]).filter(
+    (notification) =>
+      firstTaskStartDate === undefined ||
+      notification.module !== "bdtt" ||
+      isBdttReminderNotificationVisible({
+        eventType: notification.event_type,
+        createdAt: notification.created_at,
+        firstTaskStartDate
+      })
+  );
+  const notifications: AppNotification[] = visibleRows.map(
     (notification) => ({
       id: notification.id,
       module: notification.module,

@@ -3,7 +3,9 @@ import {
   createBdttReminderNotificationId,
   getBdttReportActionWindow,
   getBdttReminderPhase,
-  getMissingBdttReporters
+  getMissingBdttReporters,
+  isBdttReminderDateEligible,
+  isBdttReminderNotificationVisible
 } from "@/lib/api/bdttReminderNotifications";
 
 describe("BDTT reminder notifications", () => {
@@ -26,6 +28,30 @@ describe("BDTT reminder notifications", () => {
       start: "2026-09-14T17:00:00.000Z",
       end: "2026-09-15T17:00:00.000Z"
     });
+  });
+
+  it("only enables missing-report reminders from the first task start date", () => {
+    expect(isBdttReminderDateEligible("2026-09-19", "2026-09-20")).toBe(false);
+    expect(isBdttReminderDateEligible("2026-09-20", "2026-09-20")).toBe(true);
+    expect(isBdttReminderDateEligible("2026-09-21", "2026-09-20")).toBe(true);
+    expect(isBdttReminderDateEligible("2026-09-20", null)).toBe(false);
+  });
+
+  it("hides old BDTT reminders but keeps unrelated notifications", () => {
+    const oldReminder = {
+      eventType: "bdtt_admin_missing_report_summary",
+      createdAt: "2026-09-13T07:21:34.000Z",
+      firstTaskStartDate: "2026-09-20"
+    };
+    expect(isBdttReminderNotificationVisible(oldReminder)).toBe(false);
+    expect(isBdttReminderNotificationVisible({
+      ...oldReminder,
+      createdAt: "2026-09-20T07:00:00.000Z"
+    })).toBe(true);
+    expect(isBdttReminderNotificationVisible({
+      ...oldReminder,
+      eventType: "am_task_assigned"
+    })).toBe(true);
   });
 
   it("lists only missing reporting-role profiles inside the requested group", () => {

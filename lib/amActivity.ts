@@ -234,7 +234,7 @@ export const getAmStatusMeta = (status: AmActivityStatus): AmStatusMeta => {
   if (status === "approved") return { label: "Đạt", tone: "success" };
   if (status === "submitted") return { label: "Chờ duyệt", tone: "info" };
   if (status === "needsRevision") return { label: "Bổ sung", tone: "warning" };
-  if (status === "inProgress") return { label: "Đang làm", tone: "accent" };
+  if (status === "inProgress") return { label: "Đang làm", tone: "info" };
   return { label: "Đã giao", tone: "primary" };
 };
 

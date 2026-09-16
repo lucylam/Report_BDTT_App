@@ -811,7 +811,7 @@ const MobileWorkerTaskList = ({
 
 const ProgressInline = ({ percent }: { readonly percent: number }): React.ReactElement => {
   const tone =
-    percent === 100 ? "success" : percent > 0 ? "warning" : "info";
+    percent === 100 ? "success" : percent > 0 ? "info" : "warning";
   return (
     <div className="flex items-center gap-2">
       <div className="progress-track min-w-0 flex-1">

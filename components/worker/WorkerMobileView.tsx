@@ -425,7 +425,7 @@ export const ProgressDonutChart = ({
 
       <div className="mobile-reflow-grid mt-3 grid grid-cols-3 gap-1.5">
         <ChartStat label="Xong" tone="success" value={completed} />
-        <ChartStat label="Đang làm" tone="accent" value={inProgress} />
+        <ChartStat label="Đang làm" tone="info" value={inProgress} />
         <ChartStat label="Chưa làm" tone="warning" value={notStarted} />
       </div>
     </section>
@@ -571,18 +571,18 @@ const ChartStat = ({
   value
 }: {
   readonly label: string;
-  readonly tone: "success" | "accent" | "warning";
+  readonly tone: "success" | "info" | "warning";
   readonly value: number;
 }): React.ReactElement => {
   const toneClass =
     tone === "success"
       ? "text-[var(--success-strong)]"
-      : tone === "accent"
-        ? "text-[var(--accent-strong)]"
+      : tone === "info"
+        ? "text-[var(--info-strong)]"
         : "text-[var(--warning-strong)]";
   const iconName: Record<typeof tone, IconName> = {
     success: "check",
-    accent: "chart",
+    info: "chart",
     warning: "list"
   };
 

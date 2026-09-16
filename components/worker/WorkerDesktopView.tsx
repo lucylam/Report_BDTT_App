@@ -466,7 +466,7 @@ const TasksWorkspace = ({
           label="Chưa làm"
           onFilterChange={onFilterChange}
           selected={filter === "todo"}
-          tone="info"
+          tone="warning"
           value={notStartedCount}
         />
         <WorkspaceMetric
@@ -475,7 +475,7 @@ const TasksWorkspace = ({
           label="Đang làm"
           onFilterChange={onFilterChange}
           selected={filter === "progress"}
-          tone="warning"
+          tone="info"
           value={inProgressCount}
         />
         <WorkspaceMetric
@@ -594,8 +594,8 @@ const OverviewWorkspace = ({
     <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
       <WorkspaceMetric icon="chart" label="Tiến độ trung bình" value={`${overallPercent}%`} tone="success" />
       <WorkspaceMetric icon="check" label="Hoàn thành" value={completedCount} tone="success" />
-      <WorkspaceMetric icon="chart" label="Đang làm" value={inProgressCount} tone="warning" />
-      <WorkspaceMetric icon="list" label="Chưa làm" value={notStartedCount} tone="info" />
+      <WorkspaceMetric icon="chart" label="Đang làm" value={inProgressCount} tone="info" />
+      <WorkspaceMetric icon="list" label="Chưa làm" value={notStartedCount} tone="warning" />
     </section>
 
     <section className="grid gap-3 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">

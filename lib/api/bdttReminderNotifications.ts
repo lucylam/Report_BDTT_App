@@ -26,6 +26,16 @@ interface ReporterSummary {
   readonly orgGroup: string;
 }
 
+interface TaskStartRow {
+  readonly start_date: string | null;
+}
+
+const BDTT_REMINDER_EVENT_TYPES = new Set([
+  "bdtt_reporter_reminder",
+  "bdtt_admin_missing_report_summary",
+  "bdtt_group_missing_report_summary"
+]);
+
 export const getBdttReminderPhase = (now: Date = new Date()): BdttReminderPhase => {
   const clock = getReportClock(now);
   const minutes = clock.hour * 60 + clock.minute;
@@ -66,6 +76,47 @@ export const getBdttReportActionWindow = (
   const start = new Date(`${calendarDate}T00:00:00+07:00`);
   const end = new Date(start.getTime() + 86_400_000);
   return { start: start.toISOString(), end: end.toISOString() };
+};
+
+export const isBdttReminderDateEligible = (
+  reportDate: string,
+  firstTaskStartDate: string | null
+): boolean => Boolean(firstTaskStartDate && reportDate >= firstTaskStartDate);
+
+export const isBdttReminderNotificationVisible = ({
+  eventType,
+  createdAt,
+  firstTaskStartDate
+}: {
+  readonly eventType: string;
+  readonly createdAt: string;
+  readonly firstTaskStartDate: string | null;
+}): boolean => {
+  if (!BDTT_REMINDER_EVENT_TYPES.has(eventType)) return true;
+  if (!firstTaskStartDate) return false;
+  const firstStart = Date.parse(getBdttReportActionWindow(firstTaskStartDate).start);
+  const created = Date.parse(createdAt);
+  return Number.isFinite(created) && created >= firstStart;
+};
+
+export const getFirstBdttTaskStartDate = async (
+  supabase: SupabaseClient,
+  trialRunId: string | null
+): Promise<string | null> => {
+  let query = supabase
+    .from("tasks")
+    .select("start_date")
+    .eq("is_cancelled", false)
+    .not("start_date", "is", null)
+    .order("start_date", { ascending: true })
+    .limit(1);
+  query = trialRunId
+    ? query.or(`trial_run_id.is.null,trial_run_id.eq.${trialRunId}`)
+    : query.is("trial_run_id", null);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  const startDate = ((data ?? []) as TaskStartRow[])[0]?.start_date?.trim() ?? "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? startDate : null;
 };
 
 const hasNotification = async (
@@ -320,11 +371,13 @@ export const createDueBdttReminderNotifications = async (
   supabase: SupabaseClient,
   profile: AuthenticatedProfile,
   trialRun: ActiveBdttTrialRun | null,
+  firstTaskStartDate: string | null,
   now: Date = new Date()
 ): Promise<void> => {
   const phase = getBdttReminderPhase(now);
   if (phase === "none") return;
   const reportDate = getReportClock(now).calendarDate;
+  if (!isBdttReminderDateEligible(reportDate, firstTaskStartDate)) return;
   const trialRunId = trialRun?.id ?? null;
   if (phase === "reporter") {
     await createReporterReminder(supabase, profile, reportDate, trialRunId);

@@ -49,7 +49,7 @@ export const KpiCards = ({ metrics }: KpiCardsProps): React.ReactElement => {
       value: String(metrics.inProgress),
       helper: "0 < % < 100",
       icon: "list" as IconName,
-      emphasis: "accent"
+      emphasis: "info"
     }
   ];
 
@@ -84,6 +84,9 @@ const toneClass = (emphasis: string): string => {
   }
   if (emphasis === "accent") {
     return "text-[var(--accent-strong)]";
+  }
+  if (emphasis === "info") {
+    return "text-[var(--info-strong)]";
   }
   if (emphasis === "success") {
     return "text-[var(--success-strong)]";
