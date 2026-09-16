@@ -9,6 +9,7 @@ import {
   getReportablePersonnel,
   hasSubmittedAnyReport
 } from "@/lib/reportingPersonnel";
+import { ORG_GROUPS, getOrgTaskSubgroup } from "@/lib/org2026";
 import { getTaskCumulativePercent } from "@/lib/progress";
 
 export interface CompletionRow {
@@ -60,6 +61,7 @@ export interface CompletionBreakdownGroup {
   readonly key: string;
   readonly name: string;
   readonly context: string;
+  readonly rowLabels?: Readonly<Record<string, string>>;
   readonly rows: CompletionRow[];
 }
 
@@ -79,6 +81,7 @@ export interface ExecutiveDashboardSummary {
 
 export interface ExcelDashboardData {
   readonly overall: CompletionRow;
+  readonly nominalOverall: CompletionRow;
   readonly executive: ExecutiveDashboardSummary;
   readonly byLead: CompletionRow[];
   readonly bySubgroup: CompletionRow[];
@@ -143,6 +146,13 @@ const preferredLeadGroupLabels = [
   "TB Đo lường",
   "TB Chấp hành",
   "Tháo/Lắp TBĐK"
+] as const;
+
+const preferredLeadOrgGroups = [
+  ORG_GROUPS.htDieuKhien,
+  ORG_GROUPS.doLuong,
+  ORG_GROUPS.chapHanh,
+  ORG_GROUPS.thaoLap
 ] as const;
 
 const operationalGroupDefinitions = [
@@ -308,15 +318,30 @@ export const buildExcelDashboard = (
       (task) => getDashboardLead(task.nhomTruong) === lead
     );
     if (matchingLeadTasks.length === 0) return [];
+    const rows = createCompletionRows(
+      matchingLeadTasks,
+      data.progress,
+      (task) => getTaskSubgroupName(task, profileById, profileByResource, false)
+    );
+    const leadOrgGroup = getLeadOrgGroup(lead);
+    const subgroupLeaderByName = new Map(
+      data.profiles
+        .filter((profile) =>
+          profile.orgRole === "pnt" &&
+          Boolean(profile.subgroup) &&
+          getDashboardKey(profile.orgGroup) === getDashboardKey(leadOrgGroup)
+        )
+        .map((profile) => [getDashboardKey(profile.subgroup), profile.fullName] as const)
+    );
     return [{
       key: getDashboardKey(lead),
       name: getLeadGroupLabel(lead),
       context: normalizeChartSourceLabel(lead),
-      rows: createCompletionRows(
-        matchingLeadTasks,
-        data.progress,
-        (task) => getTaskSubgroupName(task, profileById, profileByResource, false)
-      )
+      rowLabels: Object.fromEntries(rows.map((row) => {
+        const leaderName = subgroupLeaderByName.get(getDashboardKey(row.name));
+        return [row.name, leaderName ? `${row.name} · ${leaderName}` : row.name];
+      })),
+      rows
     }];
   });
   const bySpecialtyGroup = createCompletionRows(
@@ -348,6 +373,11 @@ export const buildExcelDashboard = (
     }];
   });
   const overall = mergeCompletionRows("Tiến độ BDTT", byOwnerUnit);
+  const nominalOverall = createCompletionRows(
+    data.tasks,
+    data.progress,
+    () => "Tiến độ danh nghĩa"
+  )[0] ?? emptyCompletion("Tiến độ danh nghĩa");
   const byOwnerUnitAndLead = buildGroupedLeadRows(
     activeLeadTasks,
     data.progress,
@@ -420,7 +450,8 @@ export const buildExcelDashboard = (
 
   return {
     overall,
-    executive: buildExecutiveSummary(data, activeTasks, overall),
+    nominalOverall,
+    executive: buildExecutiveSummary(data, activeTasks, nominalOverall),
     byLead,
     bySubgroup,
     subgroupsByLead,
@@ -450,7 +481,7 @@ export const buildPhaseOneDashboard = buildExcelDashboard;
 const buildExecutiveSummary = (
   data: AppData,
   activeTasks: readonly Task[],
-  overall: CompletionRow
+  nominalOverall: CompletionRow
 ): ExecutiveDashboardSummary => {
   const activeTaskIds = new Set(activeTasks.map((task) => task.id));
   const reportablePersonnel = getReportablePersonnel(data.profiles, activeTasks);
@@ -486,7 +517,7 @@ const buildExecutiveSummary = (
     updatedTasks: new Set(cumulativeRecords.map((record) => record.taskId)).size,
     submittedWorkers: submittedPersonnel.length,
     totalWorkers: reportablePersonnel.length,
-    overallPercent: overall.percent
+    overallPercent: nominalOverall.percent
   };
 };
 
@@ -504,10 +535,12 @@ const getTaskSubgroupName = (
     .find((candidate) => Boolean(candidate?.subgroup))
     ?? profileByResource.get(getDashboardKey(task.resourceName));
 
-  if (!profile?.subgroup) return unclassified;
+  if (!profile) return unclassified;
+  const subgroup = getOrgTaskSubgroup(profile.username, profile.subgroup);
+  if (!subgroup) return unclassified;
   return includeGroup && profile.orgGroup
-    ? `${profile.orgGroup} · ${profile.subgroup}`
-    : profile.subgroup;
+    ? `${profile.orgGroup} · ${subgroup}`
+    : subgroup;
 };
 
 const getLeadGroupLabel = (lead: string): string => {
@@ -517,6 +550,14 @@ const getLeadGroupLabel = (lead: string): string => {
   );
   if (preferredIndex >= 0) return preferredLeadGroupLabels[preferredIndex] ?? lead;
   return normalizeChartSourceLabel(lead).split(" ").slice(0, -3).join(" ") || normalizeChartSourceLabel(lead);
+};
+
+const getLeadOrgGroup = (lead: string): string => {
+  const leadKey = getDashboardKey(lead);
+  const preferredIndex = preferredLeadOrder.findIndex(
+    (preferredLead) => getDashboardKey(preferredLead) === leadKey
+  );
+  return preferredLeadOrgGroups[preferredIndex] ?? getLeadGroupLabel(lead);
 };
 
 const normalizeChartSourceLabel = (value: string): string => {

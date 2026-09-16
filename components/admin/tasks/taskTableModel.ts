@@ -1,6 +1,7 @@
 import { getPlanReportDate } from "@/lib/date";
+import { getOrgTaskSubgroup } from "@/lib/org2026";
 import { getTaskPercent, getTaskProgress } from "@/lib/progress";
-import type { AppData, ProgressPercent, ProgressRecord, Task } from "@/types/domain";
+import type { AppData, Profile, ProgressPercent, ProgressRecord, Task } from "@/types/domain";
 
 export type StatusFilter = "all" | "completed" | "inProgress" | "notStarted" | "cancelled";
 export type QuickFilter = "all" | "p1Open" | "cancelled" | "notStarted" | "inProgress";
@@ -21,6 +22,63 @@ export interface TaskKpis {
   readonly cancelled: number;
   readonly p1Open: number;
 }
+
+export interface TaskOrgScope {
+  readonly orgGroup: string;
+  readonly subgroup: string;
+}
+
+const normalizeResourceName = (value: string): string =>
+  value.trim().replace(/\s+/g, " ").toLocaleUpperCase("vi");
+
+export const buildTaskOrgScopes = (
+  tasks: readonly Task[],
+  profiles: readonly Profile[]
+): ReadonlyMap<string, TaskOrgScope> => {
+  const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
+  const profileByResource = new Map(
+    profiles.map((profile) => [normalizeResourceName(profile.resourceName), profile])
+  );
+
+  return new Map(tasks.map((task) => {
+    const candidates = [task.assignedTo, task.reporterId]
+      .filter((id): id is string => Boolean(id))
+      .map((id) => profileById.get(id))
+      .filter((profile): profile is Profile => Boolean(profile));
+    const resourceProfile = profileByResource.get(normalizeResourceName(task.resourceName));
+    if (resourceProfile) candidates.push(resourceProfile);
+    const profile = candidates.find((person) =>
+      Boolean(getOrgTaskSubgroup(person.username, person.subgroup))
+    ) ?? candidates.find((person) => Boolean(person.orgGroup));
+
+    return [task.id, {
+      orgGroup: profile?.orgGroup ?? "",
+      subgroup: profile ? getOrgTaskSubgroup(profile.username, profile.subgroup) : ""
+    }];
+  }));
+};
+
+export const matchesTaskOrgScope = (
+  scope: TaskOrgScope | undefined,
+  orgGroup: string,
+  subgroup: string
+): boolean =>
+  (orgGroup === "all" || scope?.orgGroup === orgGroup) &&
+  (subgroup === "all" || scope?.subgroup === subgroup);
+
+export const getTaskOrgGroups = (scopes: ReadonlyMap<string, TaskOrgScope>): string[] =>
+  [...new Set([...scopes.values()].map((scope) => scope.orgGroup).filter(Boolean))]
+    .sort((left, right) => left.localeCompare(right, "vi"));
+
+export const getTaskSubgroups = (
+  scopes: ReadonlyMap<string, TaskOrgScope>,
+  orgGroup: string
+): string[] => orgGroup === "all"
+  ? []
+  : [...new Set([...scopes.values()]
+    .filter((scope) => scope.orgGroup === orgGroup)
+    .map((scope) => scope.subgroup)
+    .filter(Boolean))].sort((left, right) => left.localeCompare(right, "vi", { numeric: true }));
 
 export const getStatus = (task: Task, percent: ProgressPercent): StatusFilter => {
   if (task.isCancelled) return "cancelled";

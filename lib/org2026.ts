@@ -75,7 +75,8 @@ const subgroupAssignments: Record<string, string> = {
   [groupKey(ORG_GROUPS.doLuong, "PN8")]: "Áp, mức, lưu lượng 2",
   [groupKey(ORG_GROUPS.doLuong, "PN9")]: "Áp, mức, lưu lượng 3",
   [groupKey(ORG_GROUPS.doLuong, "PN10")]: "Áp, mức, lưu lượng 4",
-  [groupKey(ORG_GROUPS.doLuong, "PN11")]: "Kiểm định PI",
+  [groupKey(ORG_GROUPS.doLuong, "PN11")]: "Áp, mức, lưu lượng 5",
+  [groupKey(ORG_GROUPS.doLuong, "PN12")]: "Kiểm định PI",
   [groupKey(ORG_GROUPS.htDieuKhien, "PN1")]: "Hệ thống điều khiển PN1",
   [groupKey(ORG_GROUPS.htDieuKhien, "PN2")]: "Hệ thống điều khiển PN2",
   [groupKey(ORG_GROUPS.htDieuKhien, "PN3")]: "Hệ thống điều khiển PN3",
@@ -90,7 +91,35 @@ const subgroupAssignments: Record<string, string> = {
 
 const personalAssignments: Record<string, string> = {
   kiaq: "Phụ trách chung Tổ Thiết bị Đo lường & Điều khiển",
+  haint: "Phụ trách chung Nhóm TB Đo lường",
+  sangpt: "Phụ trách trực tiếp chuyên môn Nhiệt độ, độ rung",
+  hoangvm: "Phụ trách trực tiếp chuyên môn Áp, mức, lưu lượng",
   vinhlpp: "Hậu cần & Tổng hợp; kiêm thành viên PN1 - Nhóm TB Chấp hành"
+};
+
+const doLuongDeputySubgroups: Readonly<Record<string, readonly string[]>> = {
+  sangpt: ["PN1", "PN2", "PN3", "PN4", "PN5", "PN6"],
+  hoangvm: ["PN7", "PN8", "PN9", "PN10", "PN11"]
+};
+
+const taskSubgroupByUsername: Readonly<Record<string, string>> = {
+  hoangvm: "PN8"
+};
+
+export const getOrgTaskSubgroup = (
+  username: string,
+  subgroup: string
+): string => subgroup || taskSubgroupByUsername[username.trim().toLowerCase()] || "";
+
+const getDeputyManagedSubgroups = (
+  username: string,
+  orgRole: OrgRole,
+  orgGroup: string
+): readonly string[] => {
+  if (orgRole !== "nhomPho" || orgGroup !== ORG_GROUPS.doLuong) return [];
+  return (doLuongDeputySubgroups[username.trim().toLowerCase()] ?? []).map(
+    (subgroup) => groupKey(orgGroup, subgroup)
+  );
 };
 
 export const getOrgRoleLabel = (orgRole: OrgRole): string => {
@@ -233,22 +262,22 @@ export const ORG_2026_SEEDS: readonly AccountSeed2026[] = [
   person("Trần Trung Hiếu", "000935", "hieutt@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.chapHanh, "PN12", [], [groupKey(ORG_GROUPS.chapHanh, "PN12")]),
 
   person("Nguyễn Thanh Hải", "000332", "haint@pvcfc.com.vn", "admin", "nhomTruong", ORG_GROUPS.doLuong, "", [ORG_GROUPS.doLuong], []),
-  person("Phan Thanh Sang", "000334", "sangpt@pvcfc.com.vn", "admin", "nhomPho", ORG_GROUPS.doLuong, "", nhomPhoGroups(ORG_GROUPS.doLuong), []),
-  person("Võ Minh Hoàng", "001160", "hoangvm@pvcfc.com.vn", "admin", "nhomPho", ORG_GROUPS.doLuong, "", nhomPhoGroups(ORG_GROUPS.doLuong), []),
+  person("Phan Thanh Sang", "000334", "sangpt@pvcfc.com.vn", "admin", "nhomPho", ORG_GROUPS.doLuong, "", [], getDeputyManagedSubgroups("sangpt", "nhomPho", ORG_GROUPS.doLuong)),
+  person("Võ Minh Hoàng", "001160", "hoangvm@pvcfc.com.vn", "admin", "nhomPho", ORG_GROUPS.doLuong, "", [], getDeputyManagedSubgroups("hoangvm", "nhomPho", ORG_GROUPS.doLuong)),
   person("Dương Quốc Thạnh", "000097", "thanhdq@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN1", [], [groupKey(ORG_GROUPS.doLuong, "PN1")]),
   person("Dương Chí Chiến", "000467", "chiendc@pvcfc.com.vn", "worker", "member", ORG_GROUPS.doLuong, "PN1"),
   person("Đặng Trung Hậu", "000952", "haudt@pvcfc.com.vn", "worker", "member", ORG_GROUPS.doLuong, "PN1"),
   person("Nguyễn Văn Ngà", "001261", "nganv@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN2", [], [groupKey(ORG_GROUPS.doLuong, "PN2")]),
   person("Huỳnh Chí Hiền", "000329", "hienhc@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN3", [], [groupKey(ORG_GROUPS.doLuong, "PN3")]),
   person("Trần Nhựt Quang", "000350", "quangtn@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN4", [], [groupKey(ORG_GROUPS.doLuong, "PN4")]),
-  person("Đàm Trung Hiếu", "001068", "hieudt2@pvcfc.com.vn", "worker", "member", ORG_GROUPS.doLuong, "PN4"),
+  person("Đàm Trung Hiếu", "001068", "hieudt2@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN11", [], [groupKey(ORG_GROUPS.doLuong, "PN11")]),
   person("Trần Trương Kiên", "001260", "kientt@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN5", [], [groupKey(ORG_GROUPS.doLuong, "PN5")]),
   person("Lưu Quang Linh", "000881", "linhlq@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN6", [], [groupKey(ORG_GROUPS.doLuong, "PN6")]),
   person("Cù Minh Thành", "000682", "thanhcm@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN7", [], [groupKey(ORG_GROUPS.doLuong, "PN7")]),
   person("Trịnh Phước Tùng", "001382", "tungtp@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN8", [], [groupKey(ORG_GROUPS.doLuong, "PN8")]),
   person("Trần Khánh Hòa", "001303", "hoatk@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN9", [], [groupKey(ORG_GROUPS.doLuong, "PN9")]),
   person("Nguyễn Văn Hiếu", "000472", "hieunv@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN10", [], [groupKey(ORG_GROUPS.doLuong, "PN10")]),
-  person("Trần Chí Bằng", "000248", "bangtc@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN11", [], [groupKey(ORG_GROUPS.doLuong, "PN11")]),
+  person("Trần Chí Bằng", "000248", "bangtc@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.doLuong, "PN12", [], [groupKey(ORG_GROUPS.doLuong, "PN12")]),
 
   person("Võ Quang Minh", "000125", "minhvq@pvcfc.com.vn", "admin", "nhomTruong", ORG_GROUPS.htDieuKhien, "", [ORG_GROUPS.htDieuKhien], []),
   person("Phan Trung Kiên", "001207", "kienpt@pvcfc.com.vn", "admin", "pnt", ORG_GROUPS.htDieuKhien, "PN1", [], [groupKey(ORG_GROUPS.htDieuKhien, "PN1")]),
@@ -288,27 +317,11 @@ export const ORG_2026_SEEDS: readonly AccountSeed2026[] = [
   placeholder("dpm-chap-hanh-pn10-01", "ĐPM Chấp hành PN10 01", ORG_GROUPS.chapHanh, "PN10"),
   placeholder("dpm-chap-hanh-pn11-01", "ĐPM Chấp hành PN11 01", ORG_GROUPS.chapHanh, "PN11"),
   placeholder("dpm-chap-hanh-pn12-01", "ĐPM Chấp hành PN12 01", ORG_GROUPS.chapHanh, "PN12"),
-  placeholder("dpm-do-luong-pn4-01", "ĐPM Đo lường PN4 01", ORG_GROUPS.doLuong, "PN4"),
-  placeholder("dpm-do-luong-pn5-01", "ĐPM Đo lường PN5 01", ORG_GROUPS.doLuong, "PN5"),
-  placeholder("dpm-do-luong-pn6-01", "ĐPM Đo lường PN6 01", ORG_GROUPS.doLuong, "PN6"),
-  placeholder("dpm-do-luong-pn8-01", "ĐPM Đo lường PN8 01", ORG_GROUPS.doLuong, "PN8"),
-  placeholder("dpm-do-luong-pn9-01", "ĐPM Đo lường PN9 01", ORG_GROUPS.doLuong, "PN9"),
-  placeholder("dpm-do-luong-pn10-01", "ĐPM Đo lường PN10 01", ORG_GROUPS.doLuong, "PN10"),
   placeholder("cnkt-tdh-chap-hanh-pn2-01", "CNKT TĐH Chấp hành PN2 01", ORG_GROUPS.chapHanh, "PN2"),
   placeholder("cnkt-tdh-chap-hanh-pn2-02", "CNKT TĐH Chấp hành PN2 02", ORG_GROUPS.chapHanh, "PN2"),
   placeholder("cnkt-tdh-chap-hanh-pn3-01", "CNKT TĐH Chấp hành PN3 01", ORG_GROUPS.chapHanh, "PN3"),
   placeholder("cnkt-tdh-chap-hanh-pn7-01", "CNKT TĐH Chấp hành PN7 01", ORG_GROUPS.chapHanh, "PN7"),
   placeholder("cnkt-tdh-chap-hanh-pn12-01", "CNKT TĐH Chấp hành PN12 01", ORG_GROUPS.chapHanh, "PN12"),
-  placeholder("cnkt-tdh-do-luong-pn2-01", "CNKT TĐH Đo lường PN2 01", ORG_GROUPS.doLuong, "PN2"),
-  placeholder("cnkt-tdh-do-luong-pn3-01", "CNKT TĐH Đo lường PN3 01", ORG_GROUPS.doLuong, "PN3"),
-  placeholder("cnkt-tdh-do-luong-pn3-02", "CNKT TĐH Đo lường PN3 02", ORG_GROUPS.doLuong, "PN3"),
-  placeholder("cnkt-tdh-do-luong-pn4-01", "CNKT TĐH Đo lường PN4 01", ORG_GROUPS.doLuong, "PN4"),
-  placeholder("cnkt-tdh-do-luong-pn7-01", "CNKT TĐH Đo lường PN7 01", ORG_GROUPS.doLuong, "PN7"),
-  placeholder("cnkt-tdh-do-luong-pn7-02", "CNKT TĐH Đo lường PN7 02", ORG_GROUPS.doLuong, "PN7"),
-  placeholder("cnkt-tdh-do-luong-pn8-01", "CNKT TĐH Đo lường PN8 01", ORG_GROUPS.doLuong, "PN8"),
-  placeholder("cnkt-tdh-do-luong-pn10-01", "CNKT TĐH Đo lường PN10 01", ORG_GROUPS.doLuong, "PN10"),
-  placeholder("cnkt-tdh-do-luong-pn11-01", "CNKT TĐH Đo lường PN11 01", ORG_GROUPS.doLuong, "PN11"),
-  placeholder("cnkt-tdh-do-luong-pn11-02", "CNKT TĐH Đo lường PN11 02", ORG_GROUPS.doLuong, "PN11"),
   placeholder("cnkt-han-htdk-pn1-01", "CNKT Thợ hàn 3G HTĐK PN1 01", ORG_GROUPS.htDieuKhien, "PN1"),
   placeholder("cnkt-ck-htdk-pn1-01", "CNKT CK tháo lắp HTĐK PN1 01", ORG_GROUPS.htDieuKhien, "PN1"),
   placeholder("cnkt-tdh-htdk-pn4-01", "CNKT TĐH HTĐK PN4 01", ORG_GROUPS.htDieuKhien, "PN4"),
@@ -342,14 +355,24 @@ export const deriveOrgMetadata = (
   OrgMetadata,
   "orgTitle" | "orgAssignment" | "managedGroups" | "managedSubgroups"
 > => {
+  const deputyManagedSubgroups = getDeputyManagedSubgroups(
+    username,
+    orgRole,
+    orgGroup
+  );
   const managedGroups =
     orgRole === "toTruong" || orgRole === "supervisor"
       ? [...ORG_GROUP_NAMES]
-      : orgRole === "nhomTruong" || orgRole === "nhomPho"
+      : orgRole === "nhomTruong" ||
+          (orgRole === "nhomPho" && deputyManagedSubgroups.length === 0)
         ? [orgGroup]
         : [];
   const managedSubgroups =
-    orgRole === "pnt" && subgroup ? [getOrgScopeKey(orgGroup, subgroup)] : [];
+    deputyManagedSubgroups.length > 0
+      ? [...deputyManagedSubgroups]
+      : orgRole === "pnt" && subgroup
+        ? [getOrgScopeKey(orgGroup, subgroup)]
+        : [];
 
   return {
     orgTitle: getOrgTitle(orgRole, orgGroup, subgroup),

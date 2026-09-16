@@ -9,18 +9,24 @@ import { Icon, Input, Select, Widget, WidgetHeader } from "@/components/ui";
 interface TaskFilterToolbarProps {
   readonly query: string;
   readonly group: string;
+  readonly orgGroup: string;
+  readonly subgroup: string;
   readonly unit: string;
   readonly section: string;
   readonly priority: string;
   readonly status: StatusFilter;
   readonly quickFilter: QuickFilter;
   readonly groups: readonly string[];
+  readonly orgGroups: readonly string[];
+  readonly subgroups: readonly string[];
   readonly units: readonly string[];
   readonly sections: readonly string[];
   readonly kpis: TaskKpis;
   readonly resultLabel: string;
   readonly onQueryChange: (value: string) => void;
   readonly onGroupChange: (value: string) => void;
+  readonly onOrgGroupChange: (value: string) => void;
+  readonly onSubgroupChange: (value: string) => void;
   readonly onUnitChange: (value: string) => void;
   readonly onSectionChange: (value: string) => void;
   readonly onPriorityChange: (value: string) => void;
@@ -46,18 +52,24 @@ const quickFilterLabels: Record<Exclude<QuickFilter, "all">, string> = {
 export const TaskFilterToolbar = ({
   query,
   group,
+  orgGroup,
+  subgroup,
   unit,
   section,
   priority,
   status,
   quickFilter,
   groups,
+  orgGroups,
+  subgroups,
   units,
   sections,
   kpis,
   resultLabel,
   onQueryChange,
   onGroupChange,
+  onOrgGroupChange,
+  onSubgroupChange,
   onUnitChange,
   onSectionChange,
   onPriorityChange,
@@ -68,7 +80,13 @@ export const TaskFilterToolbar = ({
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const activeFilters = [
     group !== "all"
-      ? { label: `Nhóm: ${group}`, clear: () => onGroupChange("all") }
+      ? { label: `Nhóm chuyên môn: ${group}`, clear: () => onGroupChange("all") }
+      : null,
+    orgGroup !== "all"
+      ? { label: `Nhóm: ${orgGroup}`, clear: () => onOrgGroupChange("all") }
+      : null,
+    subgroup !== "all"
+      ? { label: `Phân nhóm: ${subgroup}`, clear: () => onSubgroupChange("all") }
       : null,
     unit !== "all"
       ? { label: `Đơn vị: ${unit}`, clear: () => onUnitChange("all") }
@@ -152,8 +170,27 @@ export const TaskFilterToolbar = ({
           className="mt-3 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-3"
           id="admin-task-filters"
         >
-          <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
-            <FilterSelect label="Nhóm" onChange={onGroupChange} value={group} values={groups} />
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <FilterSelect label="Nhóm chuyên môn" onChange={onGroupChange} value={group} values={groups} />
+            <FilterSelect label="Nhóm" onChange={onOrgGroupChange} value={orgGroup} values={orgGroups} />
+            <label className="min-w-0">
+              <span className="mb-1 block text-xs font-medium text-[var(--text-muted)]">
+                Phân nhóm
+              </span>
+              <Select
+                className="min-h-11"
+                disabled={orgGroup === "all" || subgroups.length === 0}
+                onChange={(event) => onSubgroupChange(event.target.value)}
+                value={subgroup}
+              >
+                <option value="all">
+                  {orgGroup === "all" ? "Chọn Nhóm trước" : "Tất cả phân nhóm"}
+                </option>
+                {subgroups.map((item) => (
+                  <option key={item} value={item}>{item}</option>
+                ))}
+              </Select>
+            </label>
             <FilterSelect label="Đơn vị" onChange={onUnitChange} value={unit} values={units} />
             <FilterSelect label="Section" onChange={onSectionChange} value={section} values={sections} />
 

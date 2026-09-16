@@ -6,7 +6,8 @@ import {
 import {
   ORG_2026_SEEDS,
   ORG_GROUPS,
-  getOrgScopeKey
+  getOrgScopeKey,
+  getOrgSubgroups
 } from "@/lib/org2026";
 
 describe("sơ đồ tổ chức chính thức", () => {
@@ -69,6 +70,90 @@ describe("sơ đồ tổ chức chính thức", () => {
       orgGroup: ORG_GROUPS.chapHanh,
       subgroup: "PN12"
     });
+    expect(profilesByUsername.get("sangpt")).toMatchObject({
+      role: "admin",
+      orgRole: "nhomPho",
+      orgGroup: ORG_GROUPS.doLuong,
+      managedGroups: [],
+      managedSubgroups: [
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN1"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN2"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN3"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN4"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN5"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN6")
+      ]
+    });
+    expect(profilesByUsername.get("hoangvm")).toMatchObject({
+      role: "admin",
+      orgRole: "nhomPho",
+      orgGroup: ORG_GROUPS.doLuong,
+      managedGroups: [],
+      managedSubgroups: [
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN7"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN8"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN9"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN10"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN11")
+      ]
+    });
+    expect(profilesByUsername.get("hieudt2")).toMatchObject({
+      role: "admin",
+      orgRole: "pnt",
+      orgGroup: ORG_GROUPS.doLuong,
+      subgroup: "PN11",
+      managedSubgroups: [getOrgScopeKey(ORG_GROUPS.doLuong, "PN11")]
+    });
+    expect(profilesByUsername.get("bangtc")).toMatchObject({
+      role: "admin",
+      orgRole: "pnt",
+      orgGroup: ORG_GROUPS.doLuong,
+      subgroup: "PN12",
+      managedSubgroups: [getOrgScopeKey(ORG_GROUPS.doLuong, "PN12")]
+    });
+    expect(getOrgSubgroups(ORG_GROUPS.doLuong)).toEqual([
+      "PN1",
+      "PN2",
+      "PN3",
+      "PN4",
+      "PN5",
+      "PN6",
+      "PN7",
+      "PN8",
+      "PN9",
+      "PN10",
+      "PN11",
+      "PN12"
+    ]);
+  });
+
+  it("không đưa nhân sự bên ngoài của Nhóm TB Đo lường vào dữ liệu", () => {
+    const externalNames = new Set([
+      "Trà Việt Trọng Tín",
+      "Trần Nguyễn Bá Thiện",
+      "Hoàng Đình Thành",
+      "Trần Đình Chiều",
+      "Trần Thanh Tiến",
+      "Nguyễn Văn Tú",
+      "Phùng Minh Đức",
+      "Bùi Hải Nam",
+      "Hồ Minh Sum",
+      "Lê Bá Hồng",
+      "Tô Thanh Toàn",
+      "Đỗ Văn Thiện",
+      "Tô Quang Tuấn",
+      "Đoàn Hữu Lực",
+      "Nguyễn Hoàng Giang",
+      "Nguyễn Gia Hạo"
+    ]);
+    const doLuongProfiles = ORG_2026_SEEDS.filter(
+      (profile) => profile.orgGroup === ORG_GROUPS.doLuong
+    );
+
+    expect(doLuongProfiles.every((profile) => !profile.isPlaceholder)).toBe(true);
+    expect(
+      doLuongProfiles.filter((profile) => externalNames.has(profile.fullName))
+    ).toEqual([]);
   });
 
   it("không trùng username trong cơ cấu chính thức", () => {
@@ -81,6 +166,31 @@ describe("sơ đồ tổ chức chính thức", () => {
 });
 
 describe("applyAccountProfileOverrides", () => {
+  it("giữ phạm vi PN1-PN6 cho Phan Thanh Sang khi Supabase có metadata cơ cấu", () => {
+    const accounts = applyAccountProfileOverrides(createSeedAccounts(), [
+      {
+        username: "sangpt",
+        role: "admin",
+        org_group: ORG_GROUPS.doLuong,
+        subgroup: null,
+        org_role: "nhomPho"
+      }
+    ]);
+    const account = accounts.find((item) => item.username === "sangpt");
+
+    expect(account).toMatchObject({
+      managedGroups: [],
+      managedSubgroups: [
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN1"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN2"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN3"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN4"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN5"),
+        getOrgScopeKey(ORG_GROUPS.doLuong, "PN6")
+      ]
+    });
+  });
+
   it("cập nhật vai trò PNT và tính lại đúng phạm vi phân nhóm", () => {
     const accounts = applyAccountProfileOverrides(createSeedAccounts(), [
       {

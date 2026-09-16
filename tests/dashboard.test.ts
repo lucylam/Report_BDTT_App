@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildExcelDashboard } from "@/lib/dashboard";
+import { createProfilesFromAccounts, createSeedAccounts } from "@/lib/accounts";
 import type { AppData, Profile, ProgressPercent, ProgressRecord, Task } from "@/types/domain";
 
 const reportDate = "2025-08-22";
@@ -88,6 +89,12 @@ describe("buildExcelDashboard", () => {
     const dashboard = buildExcelDashboard(data);
 
     expect(dashboard.overall).toMatchObject({
+      done: 1.5,
+      remaining: 1.5,
+      total: 3,
+      percent: 50
+    });
+    expect(dashboard.nominalOverall).toMatchObject({
       done: 1.5,
       remaining: 1.5,
       total: 3,
@@ -183,6 +190,13 @@ describe("buildExcelDashboard", () => {
           ...makeProfile("user-2"),
           orgGroup: "TB Chấp hành",
           subgroup: "PN1"
+        },
+        {
+          ...makeProfile("leader-pn1"),
+          fullName: "Phan Trung Kiên",
+          orgGroup: "TB HT Điều khiển",
+          orgRole: "pnt",
+          subgroup: "PN1"
         }
       ]
     );
@@ -201,6 +215,7 @@ describe("buildExcelDashboard", () => {
       expect.objectContaining({
         name: "HT Điều khiển",
         context: leadA.replace("_", " "),
+        rowLabels: { PN1: "PN1 · Phan Trung Kiên" },
         rows: [expect.objectContaining({ name: "PN1", total: 1, percent: 100 })]
       }),
       expect.objectContaining({
@@ -234,6 +249,66 @@ describe("buildExcelDashboard", () => {
     expect(dashboard.bySectionAndLead.find((row) => row.name === "41000")?.totals[leadA]).toBe(1);
   });
 
+  it("phân đúng WO của Võ Minh Hoàng, Đàm Trung Hiếu và Trần Chí Bằng về PN", () => {
+    const profiles = createProfilesFromAccounts(createSeedAccounts());
+    const voMinhHoang = profiles.find((profile) => profile.username === "hoangvm");
+    const damTrungHieu = profiles.find((profile) => profile.username === "hieudt2");
+    const tranChiBang = profiles.find((profile) => profile.username === "bangtc");
+    expect(voMinhHoang).toBeDefined();
+    expect(damTrungHieu).toBeDefined();
+    expect(tranChiBang).toBeDefined();
+    if (!voMinhHoang || !damTrungHieu || !tranChiBang) {
+      throw new Error("Thiếu seed Nhóm TB Đo lường");
+    }
+
+    const lead = "TB ĐO_NGUYỄN THANH HẢI";
+    const data = makeData(
+      [
+        makeTask({
+          id: "do-luong-pn8-deputy",
+          assignedTo: voMinhHoang.id,
+          reporterId: voMinhHoang.id,
+          resourceName: voMinhHoang.resourceName,
+          nhomTruong: lead
+        }),
+        makeTask({
+          id: "do-luong-pn11",
+          assignedTo: damTrungHieu.id,
+          reporterId: damTrungHieu.id,
+          resourceName: damTrungHieu.resourceName,
+          nhomTruong: lead
+        }),
+        makeTask({
+          id: "do-luong-pn12",
+          assignedTo: tranChiBang.id,
+          reporterId: tranChiBang.id,
+          resourceName: tranChiBang.resourceName,
+          nhomTruong: lead
+        })
+      ],
+      [],
+      profiles
+    );
+
+    const dashboard = buildExcelDashboard(data);
+
+    expect(dashboard.bySubgroup).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "TB Đo lường · PN8", total: 1 }),
+      expect.objectContaining({ name: "TB Đo lường · PN11", total: 1 }),
+      expect.objectContaining({ name: "TB Đo lường · PN12", total: 1 })
+    ]));
+    expect(dashboard.subgroupsByLead).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: "TB Đo lường",
+        rowLabels: expect.objectContaining({
+          PN8: "PN8 · Trịnh Phước Tùng",
+          PN11: "PN11 · Đàm Trung Hiếu",
+          PN12: "PN12 · Trần Chí Bằng"
+        })
+      })
+    ]));
+  });
+
   it("task hủy xuất hiện trong status nhưng không làm lệch completion totals", () => {
     const lead = "TB ĐO_NGUYỄN THANH HẢI";
     const data = makeData(
@@ -250,6 +325,41 @@ describe("buildExcelDashboard", () => {
     expect(dashboard.overall.total).toBe(1);
     expect(dashboard.overall.percent).toBe(100);
     expect(leadStatus).toMatchObject({ completed: 1, cancelled: 1, total: 2 });
+  });
+
+  it("Biểu đồ 01 tính tiến độ danh nghĩa trên tất cả WO và đếm trạng thái riêng", () => {
+    const data = makeData(
+      [
+        makeTask({ id: "done" }),
+        makeTask({ id: "doing" }),
+        makeTask({ id: "remaining" }),
+        makeTask({ id: "cancelled", isCancelled: true })
+      ],
+      [
+        makeProgress("done", 100),
+        makeProgress("doing", 25),
+        makeProgress("cancelled", 50)
+      ]
+    );
+
+    const dashboard = buildExcelDashboard(data);
+
+    expect(dashboard.nominalOverall).toMatchObject({
+      done: 1.75,
+      remaining: 2.25,
+      total: 4,
+      percent: 44
+    });
+    expect(dashboard.executive).toMatchObject({
+      totalTasks: 4,
+      activeTasks: 3,
+      completedTasks: 1,
+      inProgressTasks: 1,
+      notStartedTasks: 1,
+      cancelledTasks: 1,
+      overallPercent: 44
+    });
+    expect(dashboard.overall).toMatchObject({ total: 3, percent: 42 });
   });
 
   it("tạo đúng summary điều hành từ record progress và worker báo cáo trong ngày", () => {

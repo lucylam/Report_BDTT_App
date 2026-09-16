@@ -4,6 +4,7 @@ import { Badge, Icon, Widget, WidgetHeader } from "@/components/ui";
 import {
   ORG_GROUP_NAMES,
   ORG_GROUPS,
+  getOrgScopeKey,
   getOrgRoleLabel
 } from "@/lib/org2026";
 import type { OrgRole, Profile } from "@/types/domain";
@@ -174,12 +175,52 @@ const GroupBranch = ({
   const leaders = profiles.filter(
     (profile) => profile.orgRole === "nhomTruong" || profile.orgRole === "nhomPho"
   );
+  const groupLeaders = leaders.filter((profile) => profile.orgRole === "nhomTruong");
+  const deputies = leaders.filter((profile) => profile.orgRole === "nhomPho");
   const remaining = profiles.filter(
     (profile) => profile.orgRole !== "nhomTruong" && profile.orgRole !== "nhomPho"
   );
   const subgroupNames = Array.from(
     new Set(remaining.map((profile) => profile.subgroup || "Chưa phân nhóm"))
   ).sort((left, right) => left.localeCompare(right, "vi", { numeric: true }));
+  const useDeputyBranches = deputies.some((profile) => profile.managedSubgroups.length > 0);
+  const deputySubgroups = new Set(
+    deputies.flatMap((profile) => profile.managedSubgroups)
+  );
+  const directSubgroups = subgroupNames.filter(
+    (subgroup) => !deputySubgroups.has(getOrgScopeKey(group, subgroup))
+  );
+
+  const renderSubgroup = (subgroup: string): React.ReactElement => {
+    const subgroupProfiles = remaining.filter(
+      (profile) => (profile.subgroup || "Chưa phân nhóm") === subgroup
+    );
+    const subgroupLead = subgroupProfiles.find((profile) => profile.orgRole === "pnt");
+
+    return (
+      <section
+        className="relative rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-2 before:absolute before:-left-2 before:top-4 before:w-2 before:border-t-2 before:border-[var(--border-strong)]"
+        key={subgroup}
+      >
+        <div className="mb-1.5 flex min-w-0 items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h4 className="text-xs font-semibold uppercase text-[var(--text-muted)]">{subgroup}</h4>
+            {subgroupLead?.orgAssignment ? (
+              <p className="mt-0.5 break-words text-xs leading-4 text-[var(--text-soft)]">
+                {subgroupLead.orgAssignment}
+              </p>
+            ) : null}
+          </div>
+          <span className="shrink-0 text-xs font-semibold tabular-nums text-[var(--text-soft)]">{subgroupProfiles.length}</span>
+        </div>
+        <div className="grid gap-1">
+          {subgroupProfiles.map((profile) => (
+            <PersonNode key={profile.id} onEdit={onEdit} profile={profile} />
+          ))}
+        </div>
+      </section>
+    );
+  };
 
   return (
     <article className="min-w-0 rounded-[var(--radius-card)] border border-[var(--line)] bg-[var(--surface-muted)] p-2.5 shadow-[var(--shadow-soft-sm)]">
@@ -197,8 +238,8 @@ const GroupBranch = ({
         <>
           <div aria-hidden="true" className="mx-auto h-2 w-0 border-l-2 border-[var(--border-strong)]" />
           <div className="grid gap-1.5">
-            {leaders.map((profile) => (
-              <PersonNode key={profile.id} onEdit={onEdit} profile={profile} />
+            {(useDeputyBranches ? groupLeaders : leaders).map((profile) => (
+              <PersonNode key={profile.id} onEdit={onEdit} profile={profile} showAssignment />
             ))}
           </div>
         </>
@@ -208,29 +249,40 @@ const GroupBranch = ({
         </p>
       )}
 
-      <div className="relative mt-2 grid gap-1.5 pl-3 before:absolute before:bottom-4 before:left-1 before:top-4 before:border-l-2 before:border-[var(--border-strong)]">
-        {subgroupNames.map((subgroup) => {
-          const subgroupProfiles = remaining.filter(
-            (profile) => (profile.subgroup || "Chưa phân nhóm") === subgroup
-          );
-          return (
-            <section
-              className="relative rounded-[var(--radius-field)] border border-[var(--line)] bg-[var(--surface)] p-2 before:absolute before:-left-2 before:top-4 before:w-2 before:border-t-2 before:border-[var(--border-strong)]"
-              key={subgroup}
-            >
-              <div className="mb-1.5 flex items-center justify-between gap-2">
-                <h4 className="text-xs font-semibold uppercase text-[var(--text-muted)]">{subgroup}</h4>
-                <span className="text-xs font-semibold tabular-nums text-[var(--text-soft)]">{subgroupProfiles.length}</span>
-              </div>
-              <div className="grid gap-1">
-                {subgroupProfiles.map((profile) => (
-                  <PersonNode key={profile.id} onEdit={onEdit} profile={profile} />
-                ))}
+      {useDeputyBranches ? (
+        <div className="mt-2 grid gap-2">
+          {deputies.map((deputy) => {
+            const assignedSubgroups = subgroupNames.filter((subgroup) =>
+              deputy.managedSubgroups.includes(getOrgScopeKey(group, subgroup))
+            );
+            return (
+              <section
+                className="rounded-[var(--radius-field)] border border-[var(--info)] bg-[var(--info-soft)] p-1.5"
+                key={deputy.id}
+              >
+                <PersonNode onEdit={onEdit} profile={deputy} showAssignment />
+                <div className="relative mt-1.5 grid gap-1.5 pl-3 before:absolute before:bottom-4 before:left-1 before:top-4 before:border-l-2 before:border-[var(--border-strong)]">
+                  {assignedSubgroups.map(renderSubgroup)}
+                </div>
+              </section>
+            );
+          })}
+          {directSubgroups.length > 0 ? (
+            <section className="rounded-[var(--radius-field)] border border-[var(--primary)] bg-[var(--primary-soft)] p-1.5">
+              <p className="px-1 pb-1 text-xs font-semibold uppercase text-[var(--primary-strong)]">
+                Trực tiếp Nhóm trưởng
+              </p>
+              <div className="relative grid gap-1.5 pl-3 before:absolute before:bottom-4 before:left-1 before:top-4 before:border-l-2 before:border-[var(--border-strong)]">
+                {directSubgroups.map(renderSubgroup)}
               </div>
             </section>
-          );
-        })}
-      </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="relative mt-2 grid gap-1.5 pl-3 before:absolute before:bottom-4 before:left-1 before:top-4 before:border-l-2 before:border-[var(--border-strong)]">
+          {subgroupNames.map(renderSubgroup)}
+        </div>
+      )}
     </article>
   );
 };
@@ -238,11 +290,13 @@ const GroupBranch = ({
 const PersonNode = ({
   profile,
   onEdit,
-  prominent = false
+  prominent = false,
+  showAssignment = false
 }: {
   readonly profile: Profile;
   readonly onEdit: (profile: Profile) => void;
   readonly prominent?: boolean;
+  readonly showAssignment?: boolean;
 }): React.ReactElement => (
   <button
     aria-label={`Chỉnh vai trò của ${profile.fullName}`}
@@ -265,6 +319,11 @@ const PersonNode = ({
       <span className={`block break-words text-xs font-semibold leading-4 ${roleTextClass(profile.orgRole)}`}>
         {getOrgRoleLabel(profile.orgRole)} · {profile.username}
       </span>
+      {showAssignment && profile.orgAssignment ? (
+        <span className="mt-0.5 block break-words text-xs leading-4 text-[var(--text-muted)]">
+          {profile.orgAssignment}
+        </span>
+      ) : null}
     </span>
     <Icon className="h-3.5 w-3.5 shrink-0 text-[var(--text-soft)]" name="settings" />
   </button>

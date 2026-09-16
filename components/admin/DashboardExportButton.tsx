@@ -7,6 +7,7 @@ const MAX_CANVAS_SIDE = 12000;
 const MAX_CANVAS_PIXELS = 80_000_000;
 const EXPORT_ROOT_SELECTOR = "[data-dashboard-export-root]";
 const EXPORT_HIDDEN_SELECTOR = "[data-export-hidden]";
+const EXPORT_NOWRAP_SELECTOR = "[data-export-nowrap]";
 
 interface DashboardExportButtonProps {
   readonly className?: string;
@@ -52,7 +53,7 @@ const captureElementAsPng = async (target: HTMLElement): Promise<Blob> => {
   if (width <= 0 || height <= 0) throw new Error("Dashboard export không có kích thước hợp lệ.");
 
   const scale = exportScale(width, height);
-  const svg = elementToSvg(target, width, height);
+  const svg = await elementToSvg(target, width, height);
   const image = await loadImage(svgToDataUrl(svg));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(width * scale);
@@ -66,14 +67,18 @@ const captureElementAsPng = async (target: HTMLElement): Promise<Blob> => {
   return canvasToPngBlob(canvas);
 };
 
-const elementToSvg = (
+const elementToSvg = async (
   target: HTMLElement,
   width: number,
   height: number
-): string => {
+): Promise<string> => {
   const clone = target.cloneNode(true) as HTMLElement;
   inlineComputedStyles(target, clone);
   clone.querySelectorAll(EXPORT_HIDDEN_SELECTOR).forEach((node) => node.remove());
+  clone.querySelectorAll<HTMLElement>(EXPORT_NOWRAP_SELECTOR).forEach((node) => {
+    node.style.setProperty("white-space", "nowrap");
+    node.style.setProperty("overflow", "visible");
+  });
 
   const wrapper = document.createElement("div");
   wrapper.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
@@ -93,6 +98,12 @@ const elementToSvg = (
     ].join(";")
   );
 
+  const embeddedFonts = await getEmbeddedFontCss();
+  if (embeddedFonts) {
+    const style = document.createElement("style");
+    style.textContent = embeddedFonts;
+    wrapper.append(style);
+  }
   wrapper.append(clone);
 
   return [
@@ -102,6 +113,55 @@ const elementToSvg = (
     `</foreignObject>`,
     `</svg>`
   ].join("");
+};
+
+const getEmbeddedFontCss = async (): Promise<string> => {
+  const fontFaceRules: Array<{ readonly cssText: string; readonly baseUrl: string }> = [];
+  Array.from(document.styleSheets).forEach((styleSheet) => {
+    try {
+      Array.from(styleSheet.cssRules).forEach((rule) => {
+        if (rule instanceof CSSFontFaceRule) {
+          fontFaceRules.push({
+            cssText: rule.cssText,
+            baseUrl: styleSheet.href ?? document.baseURI
+          });
+        }
+      });
+    } catch {
+      // A cross-origin stylesheet may block CSSOM access. Local Next fonts remain readable.
+    }
+  });
+  const embeddedRules = await Promise.all(
+    fontFaceRules.map(({ cssText, baseUrl }) => embedFontUrls(cssText, baseUrl))
+  );
+  return embeddedRules.join("\n");
+};
+
+const embedFontUrls = async (cssText: string, baseUrl: string): Promise<string> => {
+  const urlPattern = /url\((['"]?)([^'")]+)\1\)/g;
+  const urls = Array.from(cssText.matchAll(urlPattern), (match) => match[2])
+    .filter((url) => !url.startsWith("data:"));
+  let embeddedCss = cssText;
+  for (const rawUrl of [...new Set(urls)]) {
+    try {
+      const response = await fetch(new URL(rawUrl, baseUrl));
+      if (!response.ok) continue;
+      const dataUrl = await blobToDataUrl(await response.blob());
+      embeddedCss = embeddedCss.split(rawUrl).join(dataUrl);
+    } catch {
+      // Keep the original source so the browser can still try its normal font fallback.
+    }
+  }
+  return embeddedCss;
+};
+
+const blobToDataUrl = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error ?? new Error("Không đọc được font export."));
+    reader.readAsDataURL(blob);
+  });
 };
 
 const svgToDataUrl = (svg: string): string => {

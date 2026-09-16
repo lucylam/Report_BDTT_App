@@ -117,9 +117,17 @@ const metricToneClasses: Record<MetricTone, string> = {
   done: "text-[var(--success-strong)]",
   neutral: "text-[var(--foreground)]",
   progress: "text-[var(--primary-strong)]",
-  remaining: "text-[var(--text-muted)]",
+  remaining: "text-[var(--warning-strong)]",
   worker: "text-[var(--info-strong)]"
 };
+
+const miniStatToneClasses = {
+  danger: "border-[var(--danger)] text-[var(--danger-strong)]",
+  gold: "border-[var(--yellow)] text-[var(--yellow-strong)]",
+  info: "border-[var(--info)] text-[var(--info-strong)]",
+  success: "border-[var(--success)] text-[var(--success-strong)]",
+  warning: "border-[var(--warning)] text-[var(--warning-strong)]"
+} as const;
 
 const metricIcons: Record<MetricTone, IconName> = {
   attention: "bell",
@@ -167,7 +175,7 @@ export const ProgressCharts = ({
           chartNumber={1}
           executive={dashboard.executive}
           reportYear={reportYear}
-          row={dashboard.overall}
+          row={dashboard.nominalOverall}
         />
         <OwnerUnitProgressChart chartNumber={2} data={dashboard.byOwnerUnit} />
       </section>
@@ -209,13 +217,13 @@ const ExecutiveBoard = ({
 }: {
   readonly dashboard: ExcelDashboardData;
 }): React.ReactElement => {
-  const { executive, overall } = dashboard;
+  const { executive, nominalOverall } = dashboard;
   return (
     <div className="grid gap-3 px-4 py-3 lg:px-5">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
           label="Tiến độ tổng"
-          note={`${formatNumber(overall.done)}/${formatNumber(executive.activeTasks)} hạng mục quy đổi`}
+          note={`${formatNumber(nominalOverall.done)}/${formatNumber(executive.totalTasks)} WO quy đổi`}
           tone="progress"
           value={`${executive.overallPercent}%`}
         />
@@ -257,7 +265,7 @@ const Metric = ({
   <div className={cn("metric-card min-w-0 rounded-[var(--radius-card)] p-4", metricToneClasses[tone])}>
     <div className="flex min-w-0 items-center gap-2 pr-6">
       <Icon name={metricIcons[tone]} />
-      <p className="min-w-0 text-xs font-semibold uppercase leading-5 text-current opacity-80 [overflow-wrap:anywhere]">
+      <p className="min-w-0 text-xs font-semibold uppercase leading-5 text-current opacity-80 [overflow-wrap:anywhere]" data-export-nowrap>
         {label}
       </p>
     </div>
@@ -277,8 +285,8 @@ const ExecutiveInsight = ({
 }): React.ReactElement => {
   const hasUpdates = executive.updatedTasks > 0;
   const message = hasUpdates
-    ? `${formatNumber(executive.updatedTasks)} hạng mục đã cập nhật · Tiến độ quy đổi ${overall.percent}%.`
-    : `${formatNumber(executive.activeTasks)} hạng mục chưa có cập nhật tiến độ.`;
+    ? `${formatNumber(executive.updatedTasks)} WO đã cập nhật · Hoàn thành danh nghĩa ${overall.percent}%.`
+    : `${formatNumber(executive.totalTasks)} WO chưa có cập nhật tiến độ.`;
 
   return (
     <div className="min-w-0">
@@ -286,13 +294,15 @@ const ExecutiveInsight = ({
         <span className="text-[var(--primary-strong)]">
           <Icon name={hasUpdates ? "shield" : "bell"} />
         </span>
-        <h3 className="text-sm font-semibold">Tình hình điều hành</h3>
+        <h3 className="text-sm font-semibold" data-export-nowrap>Tình hình điều hành</h3>
       </div>
       <p className="mt-1 text-sm font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">{message}</p>
-      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-        <MiniStat label="Tổng WO" value={executive.activeTasks} />
-        <MiniStat label="Hoàn thành" value={executive.completedTasks} />
-        <MiniStat label="Hủy" value={executive.cancelledTasks} />
+      <div className="mt-3 grid grid-cols-2 gap-x-2 gap-y-4 text-xs sm:grid-cols-3">
+        <MiniStat label="Tổng WO" tone="info" value={executive.totalTasks} />
+        <MiniStat label="Hoàn thành" tone="success" value={executive.completedTasks} />
+        <MiniStat label="Đang thực hiện" tone="gold" value={executive.inProgressTasks} />
+        <MiniStat label="Còn lại" tone="warning" value={executive.notStartedTasks} />
+        <MiniStat label="Hủy" tone="danger" value={executive.cancelledTasks} />
       </div>
     </div>
   );
@@ -300,13 +310,15 @@ const ExecutiveInsight = ({
 
 const MiniStat = ({
   label,
+  tone,
   value
 }: {
   readonly label: string;
+  readonly tone: keyof typeof miniStatToneClasses;
   readonly value: number;
 }): React.ReactElement => (
-  <div className="border-l-2 border-[var(--line)] px-3 py-1">
-    <p className="text-[10px] font-normal uppercase text-[var(--text-soft)]">{label}</p>
+  <div className={cn("min-w-0 border-l-2 px-3 py-1", miniStatToneClasses[tone])}>
+    <p className="break-words text-[11px] font-semibold uppercase leading-4 text-current opacity-80">{label}</p>
     <p className="mt-1 text-lg font-semibold tabular-nums">{formatNumber(value)}</p>
   </div>
 );
@@ -398,7 +410,7 @@ const OverallPie = ({
         center: ["50%", "45%"],
         data: [
           { name: "Đã thực hiện", value: row.done },
-          { name: "Còn lại", value: row.remaining }
+          { name: "Chưa thực hiện", value: row.remaining }
         ],
         emphasis: { scale: true, scaleSize: 5 },
         itemStyle: {
@@ -412,7 +424,7 @@ const OverallPie = ({
         type: "pie"
       }
     ],
-    tooltip: excelTooltip("Hạng mục quy đổi")
+    tooltip: excelTooltip("WO quy đổi")
   };
   return (
     <ChartShell
@@ -422,44 +434,23 @@ const OverallPie = ({
       <div className="grid content-center gap-5 pt-3 sm:grid-cols-[minmax(17rem,1fr)_minmax(18rem,1fr)] sm:items-center">
         <div className="relative mx-auto w-full max-w-[390px]">
           <ExcelLikeChart
-            ariaLabel={`Tiến độ hoàn thành ${row.percent}%`}
+            ariaLabel={`Hoàn thành danh nghĩa ${row.percent}% trên ${executive.totalTasks} WO`}
             className="min-h-[320px]"
             height={320}
             option={option}
           />
           <div className="pointer-events-none absolute inset-x-0 top-[45%] flex -translate-y-1/2 flex-col items-center justify-center px-2 text-center">
             <p className="text-4xl font-semibold tabular-nums text-[var(--primary-strong)] sm:text-5xl">{row.percent}%</p>
-            <p className="mt-1 whitespace-nowrap text-base font-semibold text-[var(--text-muted)]">Hoàn thành</p>
+            <p className="mt-1 text-center text-sm font-semibold leading-tight text-[var(--text-muted)] sm:text-base">Hoàn thành</p>
           </div>
         </div>
         <div className="min-w-0">
           <ExecutiveInsight executive={executive} overall={row} />
-          <div className="mobile-adaptive-grid mt-4 grid grid-cols-2 gap-3">
-            <ChartMetric label="Đã thực hiện" tone="done" value={row.done} />
-            <ChartMetric label="Còn lại" tone="remaining" value={row.remaining} />
-          </div>
         </div>
       </div>
     </ChartShell>
   );
 };
-
-const ChartMetric = ({
-  label,
-  tone,
-  value
-}: {
-  readonly label: string;
-  readonly tone: "done" | "remaining";
-  readonly value: number;
-}): React.ReactElement => (
-  <div className="border-l-2 border-[var(--line)] px-3 py-1">
-    <p className="text-xs font-medium leading-4 text-[var(--text-muted)]">{label}</p>
-    <p className={cn("mt-2 text-xl font-semibold tabular-nums", metricToneClasses[tone])}>
-      {formatNumber(value)}
-    </p>
-  </div>
-);
 
 const OwnerUnitProgressChart = ({
   chartNumber,
@@ -570,6 +561,7 @@ const SubgroupProgressChart = ({
     ?? pnGroupDefinitions[0];
   const selectedGroup = groups.find((group) => group.name === selectedDefinition.name);
   const rows = selectedGroup?.rows.filter((row) => row.total > 0) ?? [];
+  const rowLabels = rows.map((row) => selectedGroup?.rowLabels?.[row.name] ?? row.name);
   const option: EChartsOption = {
     animationDuration: 450,
     aria: { enabled: true },
@@ -624,12 +616,12 @@ const SubgroupProgressChart = ({
     tooltip: { ...excelTooltip("%"), trigger: "axis" },
     xAxis: percentAxis,
     yAxis: {
-      ...categoryAxis(rows.map((row) => normalizeChartLabel(row.name))),
+      ...categoryAxis(rowLabels),
       axisLabel: {
         ...chartTextStyle,
         color: "var(--foreground)",
-        formatter: (value: string) => wrapChartLabel(value, 24),
-        lineHeight: 16
+        formatter: formatSubgroupAxisLabel,
+        lineHeight: 18
       },
       inverse: true
     }
@@ -1052,4 +1044,9 @@ const formatNumber = (value: number): string => {
 
 const clampPercent = (value: number): number => {
   return Math.max(0, Math.min(100, Number.isFinite(value) ? value : 0));
+};
+
+const formatSubgroupAxisLabel = (value: string): string => {
+  const [subgroup, leaderName] = normalizeChartLabel(value).split(" · ", 2);
+  return leaderName ? `${subgroup}\n${wrapChartLabel(leaderName, 24)}` : subgroup;
 };

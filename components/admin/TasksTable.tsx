@@ -8,7 +8,11 @@ import { TaskMobileCards } from "@/components/admin/tasks/TaskMobileCards";
 import { LeaderTaskManager } from "@/components/admin/tasks/LeaderTaskManager";
 import {
   buildTaskKpis,
+  buildTaskOrgScopes,
   buildTaskRows,
+  getTaskOrgGroups,
+  getTaskSubgroups,
+  matchesTaskOrgScope,
   matchesTaskQuery,
   uniqueValues,
   type QuickFilter,
@@ -45,6 +49,8 @@ export const TasksTable = ({
 }: TasksTableProps): React.ReactElement => {
   const [query, setQuery] = useState<string>(initialQuery);
   const [group, setGroup] = useState<string>("all");
+  const [orgGroup, setOrgGroup] = useState<string>("all");
+  const [subgroup, setSubgroup] = useState<string>("all");
   const [unit, setUnit] = useState<string>("all");
   const [section, setSection] = useState<string>("all");
   const [priority, setPriority] = useState<string>("all");
@@ -56,6 +62,18 @@ export const TasksTable = ({
   const allRows = useMemo(() => buildTaskRows(data), [data]);
   const kpis = useMemo(() => buildTaskKpis(allRows), [allRows]);
   const groups = useMemo(() => uniqueValues(data.tasks, "nhom"), [data.tasks]);
+  const orgScopes = useMemo(
+    () => buildTaskOrgScopes(data.tasks, data.profiles),
+    [data.tasks, data.profiles]
+  );
+  const orgGroups = useMemo(
+    () => getTaskOrgGroups(orgScopes),
+    [orgScopes]
+  );
+  const subgroups = useMemo(
+    () => getTaskSubgroups(orgScopes, orgGroup),
+    [orgGroup, orgScopes]
+  );
   const units = useMemo(() => uniqueValues(data.tasks, "donVi"), [data.tasks]);
   const sections = useMemo(() => uniqueValues(data.tasks, "section"), [data.tasks]);
 
@@ -63,6 +81,7 @@ export const TasksTable = ({
 
   const filteredRows = allRows.filter((row) => {
     const matchesGroup = group === "all" || row.task.nhom === group;
+    const matchesOrg = matchesTaskOrgScope(orgScopes.get(row.task.id), orgGroup, subgroup);
     const matchesUnit = unit === "all" || row.task.donVi === unit;
     const matchesSection = section === "all" || row.task.section === section;
     const matchesPriority = priority === "all" || String(row.task.priority) === priority;
@@ -70,6 +89,7 @@ export const TasksTable = ({
     return (
       matchesTaskQuery(row.task, query) &&
       matchesGroup &&
+      matchesOrg &&
       matchesUnit &&
       matchesSection &&
       matchesPriority &&
@@ -83,6 +103,13 @@ export const TasksTable = ({
 
   const updateFilter = <T,>(setter: (value: T) => void, value: T): void => {
     setter(value);
+    resetVisibleRows();
+    setSelectedTaskId(null);
+  };
+
+  const updateOrgGroup = (value: string): void => {
+    setOrgGroup(value);
+    setSubgroup("all");
     resetVisibleRows();
     setSelectedTaskId(null);
   };
@@ -102,6 +129,8 @@ export const TasksTable = ({
   const resetFilters = (): void => {
     setQuery("");
     setGroup("all");
+    setOrgGroup("all");
+    setSubgroup("all");
     setUnit("all");
     setSection("all");
     setPriority("all");
@@ -120,20 +149,26 @@ export const TasksTable = ({
         groups={groups}
         kpis={kpis}
         onGroupChange={(value) => updateFilter(setGroup, value)}
+        onOrgGroupChange={updateOrgGroup}
         onPriorityChange={(value) => updateFilter(setPriority, value)}
         onQueryChange={(value) => updateFilter(setQuery, value)}
         onQuickFilterChange={(value) => updateFilter(setQuickFilter, value)}
         onReset={resetFilters}
         onSectionChange={(value) => updateFilter(setSection, value)}
         onStatusChange={(value) => updateFilter(setStatus, value)}
+        onSubgroupChange={(value) => updateFilter(setSubgroup, value)}
         onUnitChange={(value) => updateFilter(setUnit, value)}
         priority={priority}
+        orgGroup={orgGroup}
+        orgGroups={orgGroups}
         query={query}
         quickFilter={quickFilter}
         resultLabel={`${filteredRows.length}/${allRows.length} hạng mục`}
         section={section}
         sections={sections}
         status={status}
+        subgroup={subgroup}
+        subgroups={subgroups}
         unit={unit}
         units={units}
       />
