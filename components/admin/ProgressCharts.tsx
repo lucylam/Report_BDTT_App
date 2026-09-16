@@ -162,7 +162,7 @@ export const ProgressCharts = ({
         <ExecutiveBoard dashboard={dashboard} />
       </header>
 
-      <section className="grid min-w-0 items-start gap-3 xl:grid-cols-[minmax(520px,1.15fr)_minmax(0,0.85fr)]">
+      <section className="grid min-w-0 items-stretch gap-3 xl:grid-cols-[minmax(520px,1.15fr)_minmax(0,0.85fr)]">
         <OverallPie
           chartNumber={1}
           executive={dashboard.executive}
@@ -191,7 +191,7 @@ export const ProgressCharts = ({
         />
         <div className="mt-4 grid min-w-0 gap-3 xl:grid-cols-2">
           {dashboard.operationalGroups.map((group, index) => (
-            <div className="min-w-0" key={group.key}>
+            <div className="h-full min-w-0" key={group.key}>
               <OperationalGroupChart chartNumber={index + 6} group={group} />
             </div>
           ))}
@@ -323,7 +323,7 @@ const ChartShell = ({
   readonly title: string;
 }): React.ReactElement => {
   return (
-    <section className="glass-card flex min-w-0 flex-col rounded-[var(--radius-card)] p-4 sm:p-5">
+    <section className="glass-card flex h-full min-w-0 flex-col rounded-[var(--radius-card)] p-4 sm:p-5">
       <div>
         <SectionTitle chartNumber={chartNumber} subtitle={subtitle} title={title} />
       </div>
