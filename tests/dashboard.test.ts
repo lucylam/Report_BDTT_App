@@ -249,6 +249,54 @@ describe("buildExcelDashboard", () => {
     expect(dashboard.bySectionAndLead.find((row) => row.name === "41000")?.totals[leadA]).toBe(1);
   });
 
+  it("hiển thị tên Nhóm trưởng cho WO do chính Nhóm trưởng thực hiện", () => {
+    const profiles = createProfilesFromAccounts(createSeedAccounts());
+    const leader = profiles.find((profile) => profile.username === "minhvq");
+    const pn5 = profiles.find((profile) => profile.username === "minhnc");
+    expect(leader).toBeDefined();
+    expect(pn5).toBeDefined();
+    if (!leader || !pn5) throw new Error("Thiếu hồ sơ Nhóm HT Điều khiển");
+
+    const lead = "HTĐK_VÕ QUANG MINH";
+    const data = makeData(
+      [
+        makeTask({
+          id: "leader-task",
+          nhomTruong: lead,
+          assignedTo: leader.id,
+          reporterId: pn5.id,
+          resourceName: leader.resourceName
+        }),
+        makeTask({
+          id: "pn5-task",
+          nhomTruong: lead,
+          assignedTo: pn5.id,
+          resourceName: pn5.resourceName
+        }),
+        makeTask({
+          id: "unknown-task",
+          nhomTruong: lead,
+          assignedTo: "missing-user",
+          resourceName: "KHÔNG CÓ HỒ SƠ"
+        })
+      ],
+      [makeProgress("leader-task", 100), makeProgress("pn5-task", 50)],
+      profiles
+    );
+
+    const dashboard = buildExcelDashboard(data);
+    const rows = dashboard.subgroupsByLead.find((group) => group.name === "HT Điều khiển")?.rows;
+    expect(rows).toHaveLength(3);
+    expect(rows).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: "Võ Quang Minh", total: 1, percent: 100 }),
+      expect.objectContaining({ name: "PN5", total: 1, percent: 50 }),
+      expect.objectContaining({ name: "Chưa phân loại", total: 1, percent: 0 })
+    ]));
+    expect(dashboard.bySubgroup).toContainEqual(
+      expect.objectContaining({ name: "TB HT Điều khiển · Võ Quang Minh", total: 1 })
+    );
+  });
+
   it("phân đúng WO của Võ Minh Hoàng, Đàm Trung Hiếu và Trần Chí Bằng về PN", () => {
     const profiles = createProfilesFromAccounts(createSeedAccounts());
     const voMinhHoang = profiles.find((profile) => profile.username === "hoangvm");

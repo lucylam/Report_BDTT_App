@@ -527,16 +527,20 @@ const getTaskSubgroupName = (
   profileByResource: ReadonlyMap<string, AppData["profiles"][number]>,
   includeGroup = true
 ): string => {
+  const assignedProfile = task.assignedTo ? profileById.get(task.assignedTo) : undefined;
   const candidateIds = [task.assignedTo, task.reporterId].filter(
     (profileId): profileId is string => Boolean(profileId)
   );
-  const profile = candidateIds
-    .map((profileId) => profileById.get(profileId))
-    .find((candidate) => Boolean(candidate?.subgroup))
-    ?? profileByResource.get(getDashboardKey(task.resourceName));
+  const profile = assignedProfile?.orgRole === "nhomTruong"
+    ? assignedProfile
+    : candidateIds
+      .map((profileId) => profileById.get(profileId))
+      .find((candidate) => Boolean(candidate?.subgroup))
+      ?? profileByResource.get(getDashboardKey(task.resourceName));
 
   if (!profile) return unclassified;
-  const subgroup = getOrgTaskSubgroup(profile.username, profile.subgroup);
+  const subgroup = getOrgTaskSubgroup(profile.username, profile.subgroup)
+    || (profile.orgRole === "nhomTruong" ? profile.fullName.trim() : "");
   if (!subgroup) return unclassified;
   return includeGroup && profile.orgGroup
     ? `${profile.orgGroup} · ${subgroup}`
