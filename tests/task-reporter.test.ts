@@ -7,7 +7,11 @@ import {
   matchesTaskOrgScope
 } from "@/components/admin/tasks/taskTableModel";
 import { ORG_GROUPS } from "@/lib/org2026";
-import { resolveTaskReporterId, type TaskReporterPerson } from "@/lib/taskReporter";
+import {
+  createTaskReporterPeople,
+  resolveTaskReporterId,
+  type TaskReporterPerson
+} from "@/lib/taskReporter";
 import type { Task } from "@/types/domain";
 
 const people: TaskReporterPerson[] = [
@@ -23,6 +27,22 @@ const people: TaskReporterPerson[] = [
 ];
 
 describe("resolveTaskReporterId", () => {
+  it("gán WO của Đàm Trung Hiếu PN11 cho chính Hiếu, tách khỏi Trần Nhựt Quang PN4", () => {
+    const currentPeople = createTaskReporterPeople([
+      { id: "hieu", username: "hieudt2", org_group: null, subgroup: null, org_role: null },
+      { id: "quang", username: "quangtn", org_group: null, subgroup: null, org_role: null }
+    ]);
+
+    expect(currentPeople.find((person) => person.id === "hieu")).toMatchObject({
+      orgGroup: ORG_GROUPS.doLuong,
+      subgroup: "PN11",
+      orgRole: "pnt"
+    });
+    expect(currentPeople.find((person) => person.id === "quang")?.subgroup).toBe("PN4");
+    expect(resolveTaskReporterId("hieu", currentPeople)).toBe("hieu");
+    expect(resolveTaskReporterId("quang", currentPeople)).toBe("quang");
+  });
+
   it("gán mọi task TB HTĐK cho Võ Quang Minh báo cáo", () => {
     expect(resolveTaskReporterId("htdk-pnt", people)).toBe("htdk-leader");
     expect(resolveTaskReporterId("htdk-member", people)).toBe("htdk-leader");
