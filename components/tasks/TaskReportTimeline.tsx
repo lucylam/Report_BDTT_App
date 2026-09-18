@@ -34,21 +34,9 @@ const dateTimeFormatter = new Intl.DateTimeFormat("vi-VN", {
   timeZone: "Asia/Ho_Chi_Minh"
 });
 
-const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  timeZone: "UTC"
-});
-
 const formatDateTime = (value: string): string => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : dateTimeFormatter.format(date);
-};
-
-const formatReportDate = (value: string): string => {
-  const date = new Date(`${value}T00:00:00Z`);
-  return Number.isNaN(date.getTime()) ? value : dateFormatter.format(date);
 };
 
 export const TaskReportTimeline = ({
@@ -166,7 +154,6 @@ export const TaskReportTimeline = ({
                 <p className="mt-2 break-words text-xs font-medium leading-5 text-[var(--text-muted)] [overflow-wrap:anywhere]">
                   {item.actorName}
                   {item.actorUsername ? ` · @${item.actorUsername}` : ""}
-                  {` · Ngày báo cáo ${formatReportDate(item.reportDate)}`}
                 </p>
               </div>
             </li>
