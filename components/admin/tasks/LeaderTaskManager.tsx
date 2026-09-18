@@ -4,7 +4,11 @@ import { useMemo, useState } from "react";
 import { Alert, Button, Dialog, Field, Input, Select, Textarea } from "@/components/ui";
 import type { TaskRow } from "@/components/admin/tasks/taskTableModel";
 import { getPlanReportDate } from "@/lib/date";
-import { getMissingLeaderTaskCreateFields } from "@/lib/leaderTaskCreate";
+import {
+  getLeaderTaskLocations,
+  getMissingLeaderTaskCreateFields,
+  inferLeaderTaskOrg
+} from "@/lib/leaderTaskCreate";
 import { resolveTaskReporterId } from "@/lib/taskReporter";
 import type { AppData, Profile } from "@/types/domain";
 
@@ -49,6 +53,7 @@ export const LeaderTaskManager = ({
   showCreate = false
 }: LeaderTaskManagerProps): React.ReactElement => {
   const members = useMemo(() => getMemberOptions(data), [data]);
+  const [locations, setLocations] = useState(() => getLeaderTaskLocations(data.tasks));
   const planReportDate = getPlanReportDate(data.tasks);
   const [mode, setMode] = useState<DialogMode>(null);
   const [assigneeUsername, setAssigneeUsername] = useState("");
@@ -67,14 +72,20 @@ export const LeaderTaskManager = ({
   const [finishDate, setFinishDate] = useState(planReportDate);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const sections = locations.find((location) => location.unit === unit)?.sections ?? [];
 
+  const assignee = useMemo(
+    () => data.profiles.find((profile) => profile.username === assigneeUsername) ?? null,
+    [assigneeUsername, data.profiles]
+  );
   const reporter = useMemo(() => {
-    const assignee = data.profiles.find(
-      (profile) => profile.username === assigneeUsername
-    );
     const reporterId = resolveTaskReporterId(assignee?.id, data.profiles);
     return data.profiles.find((profile) => profile.id === reporterId) ?? assignee ?? null;
-  }, [assigneeUsername, data.profiles]);
+  }, [assignee, data.profiles]);
+  const taskOrg = useMemo(
+    () => inferLeaderTaskOrg(assignee, reporter, data.profiles),
+    [assignee, reporter, data.profiles]
+  );
   const reporterUsername = reporter?.username ?? "";
 
   const setDefaultPeople = (): void => {
@@ -86,6 +97,23 @@ export const LeaderTaskManager = ({
   const open = (nextMode: OpenDialogMode): void => {
     setError("");
     setDefaultPeople();
+    if (nextMode === "create") {
+      setUnit("");
+      setSection("");
+      setLocations(getLeaderTaskLocations(data.tasks));
+      void fetch("/api/tasks/leader")
+        .then(async (response) => {
+          const result = (await response.json()) as {
+            readonly locations?: ReturnType<typeof getLeaderTaskLocations>;
+            readonly error?: string;
+          };
+          if (!response.ok) throw new Error(result.error || "Không tải được danh sách Đơn vị và Section.");
+          if (result.locations) setLocations(result.locations);
+        })
+        .catch((loadError: unknown) => {
+          setError(loadError instanceof Error ? loadError.message : "Không tải được danh sách Đơn vị và Section.");
+        });
+    }
     if (nextMode === "report") {
       setReportDate(getPlanReportDate(data.tasks));
       setPercent(String(row?.percent ?? 0));
@@ -116,6 +144,10 @@ export const LeaderTaskManager = ({
       });
       if (missingFields.length > 0) {
         setError(`Cần nhập hoặc chọn đầy đủ: ${missingFields.join(", ")}.`);
+        return;
+      }
+      if (!taskOrg) {
+        setError("Không xác định được Nhóm và Phân nhóm từ người thực hiện, người báo cáo.");
         return;
       }
     }
@@ -232,23 +264,36 @@ export const LeaderTaskManager = ({
             {mode === "create" ? (
               <>
                 <p className="text-sm font-semibold text-[var(--text-muted)]">
-                  Tất cả thông tin dưới đây đều bắt buộc.
+                  Các trường có dấu * là bắt buộc. Nhóm và Phân nhóm được xác định tự động.
                 </p>
                 <Field label="Tên công việc *">
                   <Input required onChange={(event) => setTaskName(event.target.value)} value={taskName} />
                 </Field>
                 <div className="grid gap-3 md:grid-cols-2">
-                  <Field label="Tagname *">
-                    <Input required onChange={(event) => setTagname(event.target.value)} value={tagname} />
+                  <Field label="Tagname (không bắt buộc)">
+                    <Input onChange={(event) => setTagname(event.target.value)} value={tagname} />
                   </Field>
                   <Field label="WorkOrder *">
                     <Input required onChange={(event) => setWo(event.target.value)} value={wo} />
                   </Field>
                   <Field label="Đơn vị chủ quản *">
-                    <Input required onChange={(event) => setUnit(event.target.value)} value={unit} />
+                    <Select required onChange={(event) => {
+                      setUnit(event.target.value);
+                      setSection("");
+                    }} value={unit}>
+                      <option disabled value="">Chọn đơn vị</option>
+                      {locations.map((location) => (
+                        <option key={location.unit} value={location.unit}>{location.unit}</option>
+                      ))}
+                    </Select>
                   </Field>
                   <Field label="Section *">
-                    <Input required onChange={(event) => setSection(event.target.value)} value={section} />
+                    <Select disabled={!unit} required onChange={(event) => setSection(event.target.value)} value={section}>
+                      <option disabled value="">Chọn Section</option>
+                      {sections.map((item) => (
+                        <option key={item} value={item}>{item}</option>
+                      ))}
+                    </Select>
                   </Field>
                   <Field label="Ngày bắt đầu *">
                     <Input required onChange={(event) => setStartDate(event.target.value)} type="date" value={startDate} />
@@ -280,9 +325,21 @@ export const LeaderTaskManager = ({
             ) : null}
 
             {mode === "create" || mode === "reassign" ? (
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-3">
                 <MemberField label={mode === "create" ? "Người thực hiện *" : "Người thực hiện"} members={members} onChange={setAssigneeUsername} required value={assigneeUsername} />
                 <ReadonlyMemberField label="Người báo cáo (tự động)" member={reporter} />
+              </div>
+            ) : null}
+
+            {mode === "create" ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                <ReadonlyTextField label="Nhóm (tự động)" value={taskOrg?.orgGroup ?? "Chưa xác định"} />
+                <ReadonlyTextField
+                  label="Phân nhóm (tự động)"
+                  value={taskOrg?.subgroup || (assignee?.orgRole === "nhomTruong"
+                    ? `Nhóm trưởng: ${assignee.fullName}`
+                    : "Chưa có phân nhóm")}
+                />
               </div>
             ) : null}
 
@@ -356,10 +413,21 @@ const MemberField = ({ label, members, onChange, required, value }: {
     <Select required={required} onChange={(event) => onChange(event.target.value)} value={value}>
       {members.map((member) => (
         <option key={member.id} value={member.username}>
-          {member.fullName} · {member.orgTitle}
+          {member.fullName} · {member.subgroup || member.orgGroup}
         </option>
       ))}
     </Select>
+  </Field>
+);
+
+const ReadonlyTextField = ({ label, value }: {
+  readonly label: string;
+  readonly value: string;
+}): React.ReactElement => (
+  <Field label={label}>
+    <div className="control-pill flex min-h-12 items-center rounded-[var(--radius-field)] px-4 py-2 text-base font-semibold [overflow-wrap:anywhere]">
+      {value}
+    </div>
   </Field>
 );
 
@@ -367,12 +435,10 @@ const ReadonlyMemberField = ({ label, member }: {
   readonly label: string;
   readonly member: Profile | null;
 }): React.ReactElement => (
-  <Field label={label}>
-    <Input
-      disabled
-      value={member ? `${member.fullName} · ${member.orgTitle}` : "Chưa xác định"}
-    />
-  </Field>
+  <ReadonlyTextField
+    label={label}
+    value={member ? `${member.fullName} · ${member.orgTitle}` : "Chưa xác định"}
+  />
 );
 
 const getTitle = (mode: OpenDialogMode): string => {

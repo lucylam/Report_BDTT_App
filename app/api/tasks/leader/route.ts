@@ -12,7 +12,11 @@ import {
   saveBdttTrialTaskBackup
 } from "@/lib/api/demoMode";
 import { writeBdttTaskEvent } from "@/lib/api/taskEvents";
-import { getMissingLeaderTaskCreateFields } from "@/lib/leaderTaskCreate";
+import {
+  getLeaderTaskLocations,
+  getMissingLeaderTaskCreateFields,
+  inferLeaderTaskOrg
+} from "@/lib/leaderTaskCreate";
 import {
   canManageBdttTasks,
   canViewProfile,
@@ -41,7 +45,6 @@ interface LeaderTaskBody {
     readonly taskName?: string;
     readonly wo?: string;
     readonly tagname?: string;
-    readonly nhom?: string;
     readonly donVi?: string;
     readonly section?: string;
     readonly duration?: string;
@@ -76,6 +79,12 @@ interface TeamMember {
   readonly account: AuthAccount;
   readonly profile: Profile;
   readonly db: DbProfile;
+}
+
+interface DbTaskLocation {
+  readonly id: string;
+  readonly don_vi: string | null;
+  readonly section: string | null;
 }
 
 const normalizeText = (value: unknown): string =>
@@ -240,6 +249,52 @@ const notifyProfiles = async (
   if (error) console.error("[api/tasks/leader.notifyProfiles]", error.message);
 };
 
+const listKnownLocations = async (
+  supabase: NonNullable<Awaited<ReturnType<typeof createServerSupabaseClient>>>,
+  trialRunId: string | null
+): Promise<{ readonly locations: ReturnType<typeof getLeaderTaskLocations>; readonly error: string | null }> => {
+  const rows: DbTaskLocation[] = [];
+  const pageSize = 1000;
+  for (let offset = 0; ; offset += pageSize) {
+    let query = supabase
+      .from("tasks")
+      .select("id, don_vi, section")
+      .order("id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    query = trialRunId
+      ? query.or(`trial_run_id.is.null,trial_run_id.eq.${trialRunId}`)
+      : query.is("trial_run_id", null);
+    const { data, error } = await query;
+    if (error) return { locations: [], error: error.message };
+    rows.push(...((data ?? []) as DbTaskLocation[]));
+    if (!data || data.length < pageSize) break;
+  }
+  return {
+    locations: getLeaderTaskLocations(rows.map((row) => ({
+      donVi: row.don_vi ?? "",
+      section: row.section ?? ""
+    }))),
+    error: null
+  };
+};
+
+export const GET = async (request: Request): Promise<NextResponse> => {
+  if (!isAllowedRequestOrigin(request)) {
+    return toErrorResponse(forbiddenOriginMessage, 403);
+  }
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) return toErrorResponse("Chưa cấu hình Supabase server cho quản lý task.", 503);
+  const auth = await getAuthenticatedAccount(request, supabase);
+  if (!auth.ok) return toErrorResponse(auth.error, auth.status);
+  if (!canManageBdttTasks(auth.account)) {
+    return toErrorResponse("Không có quyền xem dữ liệu tạo task.", 403);
+  }
+  const trialRun = await getActiveBdttTrialRun(supabase);
+  const { locations, error } = await listKnownLocations(supabase, trialRun?.id ?? null);
+  if (error) return toErrorResponse(error, 500);
+  return NextResponse.json({ ok: true, locations });
+};
+
 export const POST = async (request: Request): Promise<NextResponse> => {
   if (!isAllowedRequestOrigin(request)) {
     return toErrorResponse(forbiddenOriginMessage, 403);
@@ -303,8 +358,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         400
       );
     }
-    if (taskName.length < 3 || tagname.length < 2) {
-      return toErrorResponse("Task phát sinh cần có tên công việc và tagname.", 400);
+    if (taskName.length < 3) {
+      return toErrorResponse("Tên công việc cần có ít nhất 3 ký tự.", 400);
     }
     if (!assignee || !reporter) {
       return toErrorResponse("Cần chọn người thực hiện và người báo cáo hợp lệ.", 400);
@@ -312,11 +367,27 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     if (!canManageMember(auth.account, assignee)) {
       return toErrorResponse("Không thể giao task cho người ngoài phạm vi phụ trách.", 403);
     }
+    const taskOrg = inferLeaderTaskOrg(
+      assignee.profile,
+      reporter.profile,
+      members.map((member) => member.profile)
+    );
+    if (!taskOrg?.leaderName) {
+      return toErrorResponse("Không xác định được Nhóm và Nhóm trưởng từ người thực hiện, người báo cáo.", 400);
+    }
     if (!isDateText(startDate) || !isDateText(finishDate)) {
       return toErrorResponse("Ngày bắt đầu hoặc ngày kết thúc không hợp lệ.", 400);
     }
     if (finishDate < startDate) {
       return toErrorResponse("Ngày kết thúc phải từ ngày bắt đầu trở đi.", 400);
+    }
+
+    const { locations, error: locationError } = await listKnownLocations(supabase, trialRunId);
+    if (locationError) return toErrorResponse(locationError, 500);
+    if (!locations.some((location) =>
+      location.unit === donVi && location.sections.includes(section)
+    )) {
+      return toErrorResponse("Đơn vị chủ quản và Section phải là một cặp đã có trong dữ liệu.", 400);
     }
 
     let duplicateWoQuery = supabase
@@ -357,7 +428,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         wo,
         tagname,
         task_name: taskName,
-        nhom: normalizeText(taskInput?.nhom) || assignee.profile.subgroup || assignee.profile.orgGroup,
+        nhom: taskOrg.orgGroup,
         don_vi: donVi,
         section,
         duration: normalizeText(taskInput?.duration),
@@ -365,7 +436,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         start_date: startDate,
         finish_date: finishDate,
         resource_name: assignee.db.resource_name || assignee.account.resourceName,
-        nhom_truong: auth.account.fullName,
+        nhom_truong: taskOrg.leaderName,
         assigned_to: assignee.db.id,
         reporter_id: reporter.db.id,
         task_source: "ad_hoc",
@@ -400,7 +471,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       auth.profile.id,
       taskId,
       "task_created",
-      `Task phát sinh: ${tagname}`,
+      `Task phát sinh: ${tagname || wo}`,
       `${auth.account.fullName} đã giao task “${taskName}”.`,
       trialRunId
     );
