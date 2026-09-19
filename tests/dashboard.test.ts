@@ -621,6 +621,13 @@ describe("buildExcelDashboard", () => {
       percent: 0
     });
     expect(dashboard.valveMilestones).toEqual([
+      expect.objectContaining({
+        label: "Đã tháo nguồn, tháo khí",
+        threshold: 10,
+        count: 3,
+        total: 3,
+        percent: 100
+      }),
       expect.objectContaining({ threshold: 20, count: 3, total: 3, percent: 100 }),
       expect.objectContaining({ threshold: 30, count: 2, total: 3, percent: 67 }),
       expect.objectContaining({ threshold: 50, count: 2, total: 3, percent: 67 }),

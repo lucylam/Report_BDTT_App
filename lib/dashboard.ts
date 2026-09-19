@@ -203,6 +203,7 @@ const votingValveTags = [
 ] as const;
 
 const valveMilestoneDefinitions = [
+  { key: "isolated", label: "Đã tháo nguồn, tháo khí", threshold: 10 },
   { key: "workshop", label: "Đã mang về Workshop", threshold: 20 },
   { key: "separated", label: "Đã tách Actuator và Body", threshold: 30 },
   { key: "overhauled", label: "Đã thực hiện xong BDSC", threshold: 50 },
